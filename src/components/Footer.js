@@ -11,7 +11,7 @@ function Footer() {
        <hr className="border-t border-gray-700 w-full mx-auto rounded-full" />
 
        {/* Główna sekcja stopki */}
-       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 py-8 px-20"> {/* Dodane px-20 dla wyśrodkowania */}
+       <div className="grid grid-cols-1 md:grid-cols-4 gap-8 py-8">
          
          {/* Logo z ikonami social media */}
          <div className="flex flex-col items-center md:items-start">
@@ -44,10 +44,19 @@ function Footer() {
            <h3 className="text-base font-semibold text-white mb-3">AutoSell</h3>
            <ul className="space-y-1 text-sm">
              <li><Link to="/cennik" className="hover:text-white">Cennik</Link></li>
-             <li><Link to="/kontakt" className="hover:text-white">Kontakt</Link></li>
              <li><Link to="/reklama" className="hover:text-white">Reklama</Link></li>
              <li><Link to="/polityka-prywatnosci" className="hover:text-white">Polityka prywatności</Link></li>
              <li><Link to="/regulamin" className="hover:text-white">Regulamin</Link></li>
+           </ul>
+         </div>
+
+         {/* Nowa sekcja z linkami usuniętymi z nawigacji */}
+         <div className="text-center md:text-left">
+           <h3 className="text-base font-semibold text-white mb-3">Informacje</h3>
+           <ul className="space-y-1 text-sm">
+             <li><Link to="/FAQ" className="hover:text-white">FAQ</Link></li>
+             <li><Link to="/Aboutcompany" className="hover:text-white">O Firmie</Link></li>
+             <li><Link to="/contact" className="hover:text-white">Kontakt</Link></li>
            </ul>
          </div>
        </div>

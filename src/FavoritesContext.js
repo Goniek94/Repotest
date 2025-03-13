@@ -1,26 +1,33 @@
-import React, { createContext, useContext, useState } from 'react';
+// context/FavoritesContext.js
+import { createContext, useContext, useEffect, useState } from 'react';
 
-// Kontekst ulubionych
 const FavoritesContext = createContext();
 
-// Provider kontekstu
 export const FavoritesProvider = ({ children }) => {
   const [favorites, setFavorites] = useState([]);
 
-  const toggleFavorite = (listing) => {
-    setFavorites((prevFavorites) =>
-      prevFavorites.some((fav) => fav.id === listing.id)
-        ? prevFavorites.filter((fav) => fav.id !== listing.id)
-        : [...prevFavorites, listing]
-    );
+  useEffect(() => {
+    const saved = localStorage.getItem('favorites');
+    if (saved) setFavorites(JSON.parse(saved));
+  }, []);
+
+  const addFavorite = (car) => {
+    const updated = [...favorites, car];
+    setFavorites(updated);
+    localStorage.setItem('favorites', JSON.stringify(updated));
+  };
+
+  const removeFavorite = (id) => {
+    const updated = favorites.filter(car => car.id !== id);
+    setFavorites(updated);
+    localStorage.setItem('favorites', JSON.stringify(updated));
   };
 
   return (
-    <FavoritesContext.Provider value={{ favorites, toggleFavorite }}>
+    <FavoritesContext.Provider value={{ favorites, addFavorite, removeFavorite }}>
       {children}
     </FavoritesContext.Provider>
   );
 };
 
-// Hook do używania kontekstu
 export const useFavorites = () => useContext(FavoritesContext);
