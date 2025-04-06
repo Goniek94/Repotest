@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Heart } from 'lucide-react';
 
-const ListingCard = ({ listing, onNavigate, onFavorite, isFavorite }) => {
+const ListingCard = memo(({ listing, onNavigate, onFavorite, isFavorite }) => {
+  // Sprawdzamy, czy ogłoszenie jest wyróżnione
+  const isFeatured = listing.featured || listing.listingType === 'wyróżnione';
+  
   // Skracamy opis do 60 znaków + "..."
   const shortDescription = listing.description
     ? listing.description.slice(0, 60) + (listing.description.length > 60 ? '...' : '')
@@ -11,11 +14,11 @@ const ListingCard = ({ listing, onNavigate, onFavorite, isFavorite }) => {
     <div
       // Dodajemy zieloną ramkę, jeśli featured === true
       className={`relative bg-white shadow-sm rounded-sm overflow-hidden flex flex-col h-full ${
-        listing.featured ? 'border-2 border-green-600' : ''
+        isFeatured ? 'border-2 border-green-600' : ''
       }`}
     >
       {/* Badge wyróżnionej oferty */}
-      {listing.featured && (
+      {isFeatured && (
         <div className="absolute top-2 left-2 bg-green-600 text-white py-1 px-3 rounded-sm z-10 flex items-center">
           <span className="mr-1">★</span>
           <span className="text-xs font-medium">WYRÓŻNIONE</span>
@@ -140,6 +143,6 @@ const ListingCard = ({ listing, onNavigate, onFavorite, isFavorite }) => {
       </div>
     </div>
   );
-};
+});
 
 export default ListingCard;

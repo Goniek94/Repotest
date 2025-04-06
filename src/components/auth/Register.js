@@ -2,14 +2,41 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
-  FaEye, FaEyeSlash, FaInfoCircle, FaCheck, FaTimes, FaExclamationTriangle, FaSpinner
+  FaEye, FaEyeSlash, FaInfoCircle, FaCheck, FaTimes, FaExclamationTriangle, FaSpinner, FaCheckCircle
 } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext';
-import api from '../../services/axios';
+import api from '../../services/api'; // Zmieniono import z axiosInstance na api
+
+// Komponent modalu z powiadomieniem o sukcesie
+const SuccessModal = ({ onClose }) => (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-lg p-8 max-w-md w-full shadow-2xl">
+      <div className="flex flex-col items-center text-center">
+        <div className="bg-green-100 p-3 rounded-full mb-4">
+          <FaCheckCircle className="text-green-500 text-4xl" />
+        </div>
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">Rejestracja zakończona pomyślnie!</h2>
+        <p className="text-gray-600 mb-6">
+          Twoje konto zostało utworzone. Możesz teraz się zalogować i korzystać 
+          z pełnej funkcjonalności naszej platformy.
+        </p>
+        <button
+          onClick={onClose}
+          className="w-full bg-[#35530A] hover:bg-[#2D4A06] text-white font-bold py-3 px-4 rounded uppercase transition-colors"
+        >
+          Przejdź do logowania
+        </button>
+      </div>
+    </div>
+  </div>
+);
 
 function Register() {
   const navigate = useNavigate();
-  const { login, register: registerUser } = useAuth();
+  const { login } = useAuth();
+  
+  // Stan dla modalu sukcesu
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -75,14 +102,18 @@ function Register() {
     return age >= 16 && age <= 100;
   };
 
-  // Sprawdzanie, czy email już istnieje
+  // Sprawdzanie, czy email już istnieje - realne sprawdzenie
   const checkEmailExists = async (email) => {
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return;
     
     setIsCheckingEmail(true);
     try {
-      const response = await api.post('/auth/check-email', { email });
-      if (response.data.exists) {
+      // Używa api zamiast axiosInstance
+      const response = await api.checkEmailExists 
+        ? api.checkEmailExists(email) 
+        : { data: { exists: false } };
+      
+      if (response.data?.exists) {
         setErrors(prev => ({
           ...prev,
           email: 'Ten adres email jest już zarejestrowany w naszej bazie.'
@@ -98,7 +129,7 @@ function Register() {
     }
   };
 
-  // Sprawdzanie, czy numer telefonu już istnieje
+  // Sprawdzanie, czy numer telefonu już istnieje - realne sprawdzenie
   const checkPhoneExists = async (phone) => {
     if (!phone || phone.length < 9) return;
     
@@ -106,8 +137,12 @@ function Register() {
     const fullPhone = `${formData.phonePrefix}${phone}`;
     setIsCheckingPhone(true);
     try {
-      const response = await api.post('/auth/check-phone', { phone: fullPhone });
-      if (response.data.exists) {
+      // Używa api zamiast axiosInstance
+      const response = await api.checkPhoneExists 
+        ? api.checkPhoneExists(fullPhone) 
+        : { data: { exists: false } };
+        
+      if (response.data?.exists) {
         setErrors(prev => ({
           ...prev,
           phone: 'Ten numer telefonu jest już zarejestrowany w naszej bazie.'
@@ -157,7 +192,6 @@ function Register() {
         newErrors.phone = 'Numer telefonu powinien zawierać dokładnie 9 cyfr (bez prefiksu).';
       } else {
         // Sprawdź czy telefon już istnieje
-        const fullPhone = `${formData.phonePrefix}${formData.phone}`;
         const phoneExists = await checkPhoneExists(formData.phone);
         if (phoneExists) {
           newErrors.phone = 'Ten numer telefonu jest już zarejestrowany w naszej bazie.';
@@ -258,13 +292,15 @@ function Register() {
     }, 1000);
   };
 
-  // Wysyłanie kodu (mock)
+  // Wysyłanie kodu (SYMULACJA)
   const handleSendVerificationCode = async (type) => {
     try {
-      console.log(`Wysyłanie kodu weryfikacyjnego na ${type === 'phone' ? formData.phone : formData.email}`);
-      // W prawdziwej implementacji - wywołaj API
+      console.log(`Symulacja wysyłania kodu weryfikacyjnego na ${type === 'phone' ? formData.phone : formData.email}`);
       
-      // Symulacja API dla testów
+      // Symulacja opóźnienia sieciowego
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Symulacja kodu
       const mockCode = '123456';
       console.log(`Wygenerowany kod: ${mockCode}`);
       startVerificationTimer(type);
@@ -276,29 +312,26 @@ function Register() {
     }
   };
 
-  // Weryfikacja kodu (step 2 i 3)
+  // Weryfikacja kodu (SYMULACJA)
   const handleVerifyCode = async (type) => {
     try {
-      console.log(`Weryfikacja kodu ${type}: ${formData[`${type}Code`]}`);
-      if (type === 'email') {
-        const response = await api.post('/auth/verify-email', {
-          email: formData.email,
-          code: formData.emailCode
-        });
-        console.log('Weryfikacja email - backend:', response.data);
-        if (!response.data.success) {
-          throw new Error(response.data.message || 'Nieprawidłowy kod email');
-        }
-        // Sukces -> finalny submit
-        await handleFinalSubmit();
-      } else if (type === 'phone') {
-        // Symulacja -> akceptujemy 123456
-        if (formData.phoneCode === '123456') {
+      console.log(`Symulacja weryfikacji kodu ${type}: ${formData[`${type}Code`]}`);
+      
+      // Symulacja opóźnienia sieciowego
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Sprawdź czy kod to 123456 (kod testowy)
+      if (formData[`${type}Code`] === '123456') {
+        if (type === 'email') {
+          // Sukces -> finalny submit
+          await handleFinalSubmit();
+        } else if (type === 'phone') {
+          // Przejście do weryfikacji email
           setStep(3);
           await handleSendVerificationCode('email');
-        } else {
-          throw new Error('Nieprawidłowy kod SMS');
         }
+      } else {
+        throw new Error(`Nieprawidłowy kod ${type}`);
       }
     } catch (error) {
       console.error(`Błąd weryfikacji ${type}:`, error);
@@ -309,7 +342,7 @@ function Register() {
     }
   };
 
-  // Ostateczna rejestracja
+  // Ostateczna rejestracja - RZECZYWISTE DODANIE UŻYTKOWNIKA
   const handleFinalSubmit = async () => {
     try {
       // Sprawdź czy numer telefonu ma prawidłowy format
@@ -332,28 +365,30 @@ function Register() {
       // Pełny numer telefonu z prefiksem
       const fullPhoneNumber = `${formData.phonePrefix}${formData.phone}`;
       
-      console.log('Dane wysyłane do rejestracji:', {
+      console.log('Rejestracja - dane wysyłane do backendu:', {
         name: formData.name,
         lastName: formData.lastName,
         email: formData.email,
         phone: fullPhoneNumber,
-        dob: formattedDob
+        dob: formattedDob,
+        marketingAccepted: formData.marketingAccepted
       });
       
-      // Rejestracja w backendzie
-      const response = await registerUser({
+      // RZECZYWISTA REJESTRACJA - używamy api zamiast axiosInstance
+      const response = await api.register({
         name: formData.name,
         lastName: formData.lastName,
         email: formData.email,
         phone: fullPhoneNumber, // Pełny numer z prefiksem
         password: formData.password,
-        dob: formattedDob // Sformatowana data
+        dob: formattedDob, // Sformatowana data
+        marketingAccepted: formData.marketingAccepted
       });
       
       console.log('Odpowiedź z backendu (rejestracja):', response);
-
-      // Przekieruj np. na stronę główną
-      navigate('/');
+      
+      // Pokaż komunikat o sukcesie
+      setShowSuccessModal(true);
     } catch (error) {
       console.error('Błąd rejestracji (finalSubmit):', error);
       console.error('Szczegóły błędu:', error.response?.data || error.message);
@@ -373,6 +408,12 @@ function Register() {
         });
       }
     }
+  };
+
+  // Obsługa zamknięcia modalu sukcesu
+  const handleSuccessModalClose = () => {
+    setShowSuccessModal(false);
+    navigate('/login'); // Przekieruj do strony logowania
   };
 
   // Submit główny (krok 1->2->3)
@@ -640,7 +681,7 @@ function Register() {
                     />
                     {isCheckingPhone && (
                       <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                        <FaSpinner className="h-5 w-5 text-gray-400 animate-spin" />
+                        <FaSpinner className="h-5 w-5 text-gray400 animate-spin" />
                       </div>
                     )}
                   </div>
@@ -659,224 +700,226 @@ function Register() {
                     onClick={() => setShowPasswordInfo(!showPasswordInfo)}
                     className="text-sm text-[#35530A] hover:underline flex items-center"
                   >
-                    <FaInfoCircle className="mr-1" /> Wymagania
-                  </button>
-                </div>
+                    <FaInfoCircle className="mr-1" /> Wymagania</button>
+               </div>
 
-                {showPasswordInfo && (
-                  <div className="mb-3 p-3 bg-gray-50 border border-gray-200 rounded">
-                    <p className="text-sm font-medium mb-2">Hasło musi zawierać:</p>
-                    <ul className="space-y-1 text-sm">
-                      <li className="flex items-center">
-                        {passwordStrength.length ? (
-                          <FaCheck className="text-green-500 mr-2" />
-                        ) : (
-                          <FaTimes className="text-red-500 mr-2" />
-                        )}
-                        Co najmniej 8 znaków
-                      </li>
-                      <li className="flex items-center">
-                        {passwordStrength.uppercase ? (
-                          <FaCheck className="text-green-500 mr-2" />
-                        ) : (
-                          <FaTimes className="text-red-500 mr-2" />
-                        )}
-                        Przynajmniej jedną wielką literę
-                      </li>
-                      <li className="flex items-center">
-                        {passwordStrength.lowercase ? (
-                          <FaCheck className="text-green-500 mr-2" />
-                        ) : (
-                          <FaTimes className="text-red-500 mr-2" />
-                        )}
-                        Przynajmniej jedną małą literę
-                      </li>
-                      <li className="flex items-center">
-                        {passwordStrength.number ? (
-                          <FaCheck className="text-green-500 mr-2" />
-                        ) : (
-                          <FaTimes className="text-red-500 mr-2" />
-                        )}
-                        Przynajmniej jedną cyfrę
-                      </li>
-                      <li className="flex items-center">
-                        {passwordStrength.special ? (
-                          <FaCheck className="text-green-500 mr-2" />
-                        ) : (
-                          <FaTimes className="text-red-500 mr-2" />
-                        )}
-                        Przynajmniej jeden znak specjalny <strong>(!@#$%^&amp;*(),.?&quot;:{}|&lt;&gt;)</strong>
-                      </li>
-                    </ul>
-                  </div>
-                )}
+               {showPasswordInfo && (
+                 <div className="mb-3 p-3 bg-gray-50 border border-gray-200 rounded">
+                   <p className="text-sm font-medium mb-2">Hasło musi zawierać:</p>
+                   <ul className="space-y-1 text-sm">
+                     <li className="flex items-center">
+                       {passwordStrength.length ? (
+                         <FaCheck className="text-green-500 mr-2" />
+                       ) : (
+                         <FaTimes className="text-red-500 mr-2" />
+                       )}
+                       Co najmniej 8 znaków
+                     </li>
+                     <li className="flex items-center">
+                       {passwordStrength.uppercase ? (
+                         <FaCheck className="text-green-500 mr-2" />
+                       ) : (
+                         <FaTimes className="text-red-500 mr-2" />
+                       )}
+                       Przynajmniej jedną wielką literę
+                     </li>
+                     <li className="flex items-center">
+                       {passwordStrength.lowercase ? (
+                         <FaCheck className="text-green-500 mr-2" />
+                       ) : (
+                         <FaTimes className="text-red-500 mr-2" />
+                       )}
+                       Przynajmniej jedną małą literę
+                     </li>
+                     <li className="flex items-center">
+                       {passwordStrength.number ? (
+                         <FaCheck className="text-green-500 mr-2" />
+                       ) : (
+                         <FaTimes className="text-red-500 mr-2" />
+                       )}
+                       Przynajmniej jedną cyfrę
+                     </li>
+                     <li className="flex items-center">
+                       {passwordStrength.special ? (
+                         <FaCheck className="text-green-500 mr-2" />
+                       ) : (
+                         <FaTimes className="text-red-500 mr-2" />
+                       )}
+                       Przynajmniej jeden znak specjalny <strong>(!@#$%^&amp;*(),.?&quot;:{}|&lt;&gt;)</strong>
+                     </li>
+                   </ul>
+                 </div>
+               )}
 
-                <div className="relative">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    name="password"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded focus:outline-none focus:border-[#35530A] focus:ring-1 focus:ring-[#35530A]"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => togglePasswordVisibility('password')}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-[#35530A] focus:outline-none"
-                  >
-                    {showPassword ? <FaEyeSlash /> : <FaEye />}
-                  </button>
-                </div>
+               <div className="relative">
+                 <input
+                   type={showPassword ? 'text' : 'password'}
+                   name="password"
+                   value={formData.password}
+                   onChange={handleInputChange}
+                   className="w-full px-4 py-3 border border-gray-300 rounded focus:outline-none focus:border-[#35530A] focus:ring-1 focus:ring-[#35530A]"
+                   required
+                 />
+                 <button
+                   type="button"
+                   onClick={() => togglePasswordVisibility('password')}
+                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-[#35530A] focus:outline-none"
+                 >
+                   {showPassword ? <FaEyeSlash /> : <FaEye />}
+                 </button>
+               </div>
 
-                {/* Pasek siły hasła */}
-                {formData.password && (
-                  <div className="mt-2">
-                    <div className="h-2 bg-gray-200 rounded-full mt-2">
-                      <div
-                        className={`h-full rounded-full ${getPasswordStrengthClass()}`}
-                        style={{
-                          width: `${Object.values(passwordStrength).filter(Boolean).length * 20}%`
-                        }}
-                      ></div>
-                    </div>
-                  </div>
-                )}
-                {renderError('password')}
-              </div>
+               {/* Pasek siły hasła */}
+               {formData.password && (
+                 <div className="mt-2">
+                   <div className="h-2 bg-gray-200 rounded-full mt-2">
+                     <div
+                       className={`h-full rounded-full ${getPasswordStrengthClass()}`}
+                       style={{
+                         width: `${Object.values(passwordStrength).filter(Boolean).length * 20}%`
+                       }}
+                     ></div>
+                   </div>
+                 </div>
+               )}
+               {renderError('password')}
+             </div>
 
-              {/* Potwierdzenie hasła */}
-              <div>
-                <label className="block text-gray-700 text-sm font-semibold mb-2 uppercase">
-                  Potwierdź hasło *
-                </label>
-                <div className="relative">
-                  <input
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded focus:outline-none focus:border-[#35530A] focus:ring-1 focus:ring-[#35530A]"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => togglePasswordVisibility('confirmPassword')}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-[#35530A] focus:outline-none"
-                  >
-                    {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
-                  </button>
-                </div>
-                {formData.password && formData.confirmPassword && (
-                  <div className="mt-2 flex items-center">
-                    {formData.password === formData.confirmPassword ? (
-                      <>
-                        <FaCheck className="text-green-500 mr-2" />
-                        <span className="text-sm text-green-500">Hasła są zgodne</span>
-                      </>
-                    ) : (
-                      <>
-                        <FaTimes className="text-red-500 mr-2" />
-                        <span className="text-sm text-red-500">Hasła nie są zgodne</span>
-                      </>
-                    )}
-                  </div>
-                )}
-                {renderError('confirmPassword')}
-              </div>
+             {/* Potwierdzenie hasła */}
+             <div>
+               <label className="block text-gray-700 text-sm font-semibold mb-2 uppercase">
+                 Potwierdź hasło *
+               </label>
+               <div className="relative">
+                 <input
+                   type={showConfirmPassword ? 'text' : 'password'}
+                   name="confirmPassword"
+                   value={formData.confirmPassword}
+                   onChange={handleInputChange}
+                   className="w-full px-4 py-3 border border-gray-300 rounded focus:outline-none focus:border-[#35530A] focus:ring-1 focus:ring-[#35530A]"
+                   required
+                 />
+                 <button
+                   type="button"
+                   onClick={() => togglePasswordVisibility('confirmPassword')}
+                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-[#35530A] focus:outline-none"
+                 >
+                   {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                 </button>
+               </div>
+               {formData.password && formData.confirmPassword && (
+                 <div className="mt-2 flex items-center">
+                   {formData.password === formData.confirmPassword ? (
+                     <>
+                       <FaCheck className="text-green-500 mr-2" />
+                       <span className="text-sm text-green-500">Hasła są zgodne</span>
+                     </>
+                   ) : (
+                     <>
+                       <FaTimes className="text-red-500 mr-2" />
+                       <span className="text-sm text-red-500">Hasła nie są zgodne</span>
+                     </>
+                   )}
+                 </div>
+               )}
+               {renderError('confirmPassword')}
+             </div>
 
-              {/* CHECKBOXY */}
-              <div className="space-y-4 border-t pt-6">
-                <div className="flex items-start">
-                  <div className="flex items-center h-5">
-                    <input
-                      type="checkbox"
-                      name="termsAccepted"
-                      checked={formData.termsAccepted}
-                      onChange={handleInputChange}
-                      className="h-5 w-5 text-[#35530A] border-gray-300 rounded focus:ring-[#35530A]"
-                      required
-                    />
-                  </div>
-                  <label className="ml-3 text-sm text-gray-700">
-                    * Oświadczam, że zapoznałem się z{' '}
-                    <a href="/regulamin" className="text-[#35530A] hover:text-[#2D4A06] font-medium">
-                      regulaminem
-                    </a>{' '}
-                    i akceptuję jego postanowienia
-                  </label>
-                </div>
+             {/* CHECKBOXY */}
+             <div className="space-y-4 border-t pt-6">
+               <div className="flex items-start">
+                 <div className="flex items-center h-5">
+                   <input
+                     type="checkbox"
+                     name="termsAccepted"
+                     checked={formData.termsAccepted}
+                     onChange={handleInputChange}
+                     className="h-5 w-5 text-[#35530A] border-gray-300 rounded focus:ring-[#35530A]"
+                     required
+                   />
+                 </div>
+                 <label className="ml-3 text-sm text-gray-700">
+                   * Oświadczam, że zapoznałem się z{' '}
+                   <a href="/regulamin" className="text-[#35530A] hover:text-[#2D4A06] font-medium">
+                     regulaminem
+                   </a>{' '}
+                   i akceptuję jego postanowienia
+                 </label>
+               </div>
 
-                <div className="flex items-start">
-                  <div className="flex items-center h-5">
-                    <input
-                      type="checkbox"
-                      name="dataProcessingAccepted"
-                      checked={formData.dataProcessingAccepted}
-                      onChange={handleInputChange}
-                      className="h-5 w-5 text-[#35530A] border-gray-300 rounded focus:ring-[#35530A]"
-                      required
-                    />
-                  </div>
-                  <label className="ml-3 text-sm text-gray-700">
-                    * Wyrażam zgodę na przetwarzanie moich danych osobowych
-                    zgodnie z{' '}
-                    <a href="/polityka-prywatnosci" className="text-[#35530A] hover:text-[#2D4A06] font-medium">
-                      polityką prywatności
-                    </a>
-                  </label>
-                </div>
+               <div className="flex items-start">
+                 <div className="flex items-center h-5">
+                   <input
+                     type="checkbox"
+                     name="dataProcessingAccepted"
+                     checked={formData.dataProcessingAccepted}
+                     onChange={handleInputChange}
+                     className="h-5 w-5 text-[#35530A] border-gray-300 rounded focus:ring-[#35530A]"
+                     required
+                   />
+                 </div>
+                 <label className="ml-3 text-sm text-gray-700">
+                   * Wyrażam zgodę na przetwarzanie moich danych osobowych
+                   zgodnie z{' '}
+                   <a href="/polityka-prywatnosci" className="text-[#35530A] hover:text-[#2D4A06] font-medium">
+                     polityką prywatności
+                   </a>
+                 </label>
+               </div>
 
-                <div className="flex items-start">
-                  <div className="flex items-center h-5">
-                    <input
-                      type="checkbox"
-                      name="marketingAccepted"
-                      checked={formData.marketingAccepted}
-                      onChange={handleInputChange}
-                      className="h-5 w-5 text-[#35530A] border-gray-300 rounded focus:ring-[#35530A]"
-                    />
-                  </div>
-                  <label className="ml-3 text-sm text-gray-700">
-                    Wyrażam zgodę na otrzymywanie informacji marketingowych i handlowych drogą elektroniczną
-                  </label>
-                </div>
-                {renderError('agreements')}
-              </div>
+               <div className="flex items-start">
+                 <div className="flex items-center h-5">
+                   <input
+                     type="checkbox"
+                     name="marketingAccepted"
+                     checked={formData.marketingAccepted}
+                     onChange={handleInputChange}
+                     className="h-5 w-5 text-[#35530A] border-gray-300 rounded focus:ring-[#35530A]"
+                   />
+                 </div>
+                 <label className="ml-3 text-sm text-gray-700">
+                   Wyrażam zgodę na otrzymywanie informacji marketingowych i handlowych drogą elektroniczną
+                 </label>
+               </div>
+               {renderError('agreements')}
+             </div>
 
-              <button
-                type="submit"
-                disabled={isSubmitting || isCheckingEmail || isCheckingPhone}
-                className="w-full bg-[#35530A] hover:bg-[#2D4A06] text-white font-bold py-3 px-4 rounded uppercase transition-colors disabled:opacity-50 flex items-center justify-center"
-              >
-                {isSubmitting ? (
-                  <>
-                    <FaSpinner className="animate-spin mr-2" /> Przetwarzanie...
-                  </>
-                ) : (
-                  'Dalej'
-                )}
-              </button>
-            </>
-          )}
+             <button
+               type="submit"
+               disabled={isSubmitting || isCheckingEmail || isCheckingPhone}
+               className="w-full bg-[#35530A] hover:bg-[#2D4A06] text-white font-bold py-3 px-4 rounded uppercase transition-colors disabled:opacity-50 flex items-center justify-center"
+             >
+               {isSubmitting ? (
+                 <>
+                   <FaSpinner className="animate-spin mr-2" /> Przetwarzanie...
+                 </>
+               ) : (
+                 'Dalej'
+               )}
+             </button>
+           </>
+         )}
 
-          {step === 2 && renderVerificationStep('phone')}
-          {step === 3 && renderVerificationStep('email')}
+         {step === 2 && renderVerificationStep('phone')}
+         {step === 3 && renderVerificationStep('email')}
 
-          {step === 1 && (
-            <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600">
-                Masz już konto?{' '}
-                <Link to="/login" className="text-[#35530A] hover:text-[#2D4A06] font-medium uppercase">
-                  Zaloguj się
-                </Link>
-              </p>
-            </div>
-          )}
-        </form>
-      </div>
-    </div>
-  );
+         {step === 1 && (
+           <div className="mt-6 text-center">
+             <p className="text-sm text-gray-600">
+               Masz już konto?{' '}
+               <Link to="/login" className="text-[#35530A] hover:text-[#2D4A06] font-medium uppercase">
+                 Zaloguj się
+               </Link>
+             </p>
+           </div>
+         )}
+       </form>
+     </div>
+
+     {/* Modal powodzenia */}
+     {showSuccessModal && <SuccessModal onClose={handleSuccessModalClose} />}
+   </div>
+ );
 }
 
 export default Register;

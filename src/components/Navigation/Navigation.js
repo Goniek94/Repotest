@@ -10,36 +10,23 @@ import UserMenu from './UserMenu';
 import AddListingButton from './AddListingButton';
 
 const Navigation = () => {
-  const { user, logout, isAuthenticated } = useAuth();  // Dodaj isAuthenticated
+  const { user, logout, isAuthenticated } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const location = useLocation();
 
-  // Debugging - logowanie stanu autentykacji
-  useEffect(() => {
-    console.log('Navigation - stan autentykacji:', { user, isAuthenticated });
-  }, [user, isAuthenticated]);
-
-  // Zamykanie menu mobilnego po zmianie strony
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
 
-  // Blokowanie przewijania strony gdy menu mobilne jest otwarte
   useEffect(() => {
-    if (isMobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'auto';
-    }
-    
+    document.body.style.overflow = isMobileMenuOpen ? 'hidden' : 'auto';
     return () => {
       document.body.style.overflow = 'auto';
     };
   }, [isMobileMenuOpen]);
 
-  // Zamykanie menu użytkownika po kliknięciu poza nim
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (isUserMenuOpen && !event.target.closest('.user-menu')) {
@@ -63,7 +50,6 @@ const Navigation = () => {
     setIsMobileMenuOpen(false);
   };
 
-  // Dane powiadomień użytkownika
   const notifications = {
     messages: 1,
     alerts: 1,
@@ -71,20 +57,16 @@ const Navigation = () => {
 
   return (
     <header className="bg-white text-gray-800 sticky top-0 z-50 shadow-md">
-      <div className="w-full flex items-center justify-between px-4 lg:px-8 py-4">
-        {/* Logo */}
+      {/* 👇 TU JEST KLUCZ! H-12 zamiast PY-2 */}
+      <div className="w-full h-16 flex items-center justify-between px-4 lg:px-8">
         <Logo />
 
-        {/* Desktop Navigation */}
         <div className="hidden md:flex items-center space-x-6">
           <DesktopNav user={user} />
-          
-          {/* Przycisk Dodaj Ogłoszenie */}
           <AddListingButton user={user} setIsLoginModalOpen={setIsLoginModalOpen} />
-          
-          {/* Przyciski logowania/wylogowania */}
-          {isAuthenticated && user ? (  // Zmień warunek na isAuthenticated && user
-            <UserMenu 
+
+          {isAuthenticated && user ? (
+            <UserMenu
               notifications={notifications}
               handleLogout={handleLogout}
               isUserMenuOpen={isUserMenuOpen}
@@ -100,7 +82,6 @@ const Navigation = () => {
           )}
         </div>
 
-        {/* Mobile menu button */}
         <div className="md:hidden flex items-center">
           <button
             onClick={() => setIsMobileMenuOpen(true)}
@@ -112,20 +93,18 @@ const Navigation = () => {
         </div>
       </div>
 
-      {/* Mobile menu */}
-      <MobileMenu 
-        isOpen={isMobileMenuOpen} 
-        user={user} 
-        notifications={notifications} 
+      <MobileMenu
+        isOpen={isMobileMenuOpen}
+        user={user}
+        notifications={notifications}
         handleOpenLogin={handleOpenLogin}
         handleLogout={handleLogout}
         setIsMobileMenuOpen={setIsMobileMenuOpen}
       />
 
-      {/* Modal logowania */}
       {isLoginModalOpen && (
-        <LoginModal 
-          isOpen={isLoginModalOpen} 
+        <LoginModal
+          isOpen={isLoginModalOpen}
           onClose={() => setIsLoginModalOpen(false)}
         />
       )}

@@ -1,95 +1,200 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
-import authService from '../services/auth.service';
+import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
+import AuthService from '../services/auth';
 
+// Tworzenie kontekstu autoryzacji
 const AuthContext = createContext();
 
+// Hook ułatwiający dostęp do kontekstu
+export const useAuth = () => useContext(AuthContext);
+
+// Provider kontekstu autoryzacji
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Konfiguracja automatycznego wylogowania - zwiększony czas
+  const INACTIVITY_TIMEOUT = 60 * 60 * 1000; // 60 minut w milisekundach
+  const activityTimerRef = useRef(null);
+  const lastActivityRef = useRef(Date.now());
 
-  // Sprawdź token przy ładowaniu
-  useEffect(() => {
-    console.log('AuthContext Init - sprawdzam sesję');
-    const checkAuthStatus = () => {
-      const token = localStorage.getItem('token');
-      const userData = localStorage.getItem('user');
-      console.log('Stan autoryzacji przy starcie:', { token: !!token, user: !!userData });
-      
-      if (token && userData) {
-        try {
-          const parsedUser = JSON.parse(userData);
-          setUser(parsedUser);
-          console.log('Sesja użytkownika odtworzona z localStorage:', parsedUser);
-        } catch (error) {
-          console.error('Błąd parsowania danych użytkownika:', error);
-          authService.logout();
-          setUser(null);
+  // Funkcja resetująca timer nieaktywności
+  const resetInactivityTimer = () => {
+    if (activityTimerRef.current) {
+      clearTimeout(activityTimerRef.current);
+    }
+    
+    lastActivityRef.current = Date.now();
+    
+    // Tylko ustawiaj timer jeśli użytkownik jest zalogowany
+    if (isAuthenticated) {
+      activityTimerRef.current = setTimeout(() => {
+        // Sprawdź czy minęło wystarczająco dużo czasu od ostatniej aktywności
+        const timeSinceLastActivity = Date.now() - lastActivityRef.current;
+        if (timeSinceLastActivity >= INACTIVITY_TIMEOUT) {
+          console.log('Automatyczne wylogowanie po okresie nieaktywności');
+          logout('/login?session_expired=true');
         }
-      } else {
-        console.log('Brak danych sesji w localStorage');
-      }
-      setLoading(false);
+      }, INACTIVITY_TIMEOUT);
+    }
+  };
+  
+  // Śledzenie aktywności użytkownika
+  useEffect(() => {
+    // Zdarzenia, które resetują timer nieaktywności
+    const activityEvents = [
+      'mousedown', 'mousemove', 'keypress', 
+      'scroll', 'touchstart', 'click'
+    ];
+    
+    const handleUserActivity = () => {
+      lastActivityRef.current = Date.now();
+      resetInactivityTimer();
     };
     
-    checkAuthStatus();
+    // Dodanie nasłuchiwania na zdarzenia
+    activityEvents.forEach(event => {
+      window.addEventListener(event, handleUserActivity);
+    });
+    
+    // Czyszczenie przy odmontowaniu
+    return () => {
+      if (activityTimerRef.current) {
+        clearTimeout(activityTimerRef.current);
+      }
+      
+      activityEvents.forEach(event => {
+        window.removeEventListener(event, handleUserActivity);
+      });
+    };
+  }, [isAuthenticated]);
+
+  // Inicjalizacja stanu autoryzacji przy montowaniu komponentu
+  useEffect(() => {
+    // Sprawdzenie czy użytkownik jest zalogowany
+    const initAuth = () => {
+      setIsLoading(true);
+      try {
+        const currentUser = AuthService.getCurrentUser();
+        const authenticated = AuthService.isAuthenticated();
+
+        console.log('Inicjalizacja auth:', { 
+          user: !!currentUser, 
+          isAuthenticated: authenticated,
+          token: localStorage.getItem('token') ? 'Istnieje' : 'Brak'
+        });
+
+        setUser(currentUser);
+        setIsAuthenticated(authenticated);
+        
+        // Zainicjuj timer nieaktywności jeśli użytkownik jest zalogowany
+        if (authenticated) {
+          resetInactivityTimer();
+        }
+      } catch (error) {
+        console.error('Błąd inicjalizacji autoryzacji:', error);
+        // Czyszczenie danych w przypadku błędu
+        AuthService.logout();
+        setUser(null);
+        setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initAuth();
   }, []);
 
+  // Funkcja logowania
   const login = async (email, password) => {
+    setIsLoading(true);
     try {
-      console.log('Próba logowania użytkownika:', email);
-      const response = await authService.login(email, password);
-      console.log('Logowanie udane, dane użytkownika:', response.user);
-      setUser(response.user);
-      return response;
+      const data = await AuthService.login(email, password);
+      setUser(data.user);
+      setIsAuthenticated(true);
+      resetInactivityTimer(); // Reset timera po zalogowaniu
+      return data;
     } catch (error) {
       console.error('Błąd logowania:', error);
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  // Funkcja rejestracji
   const register = async (userData) => {
+    setIsLoading(true);
     try {
-      console.log('Próba rejestracji użytkownika:', userData);
-      const response = await authService.register(userData);
-      console.log('Rejestracja udana, dane użytkownika:', response.user);
-      // Opcjonalnie: automatycznie zaloguj użytkownika po rejestracji
-      if (response.token) {
-        setUser(response.user);
-      }
-      return response;
+      const data = await AuthService.register(userData);
+      setUser(data.user);
+      setIsAuthenticated(true);
+      resetInactivityTimer(); // Reset timera po rejestracji
+      return data;
     } catch (error) {
       console.error('Błąd rejestracji:', error);
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const logout = () => {
-    console.log('Wylogowywanie użytkownika');
-    authService.logout();
-    setUser(null);
-    
-    // Przekierowanie na stronę główną po wylogowaniu
-    window.location.href = '/';
+  // Funkcja wylogowania
+  const logout = async (redirectTo = '/') => {
+    setIsLoading(true);
+    try {
+      await AuthService.logout();
+      
+      // Dodajemy informację o wylogowaniu do localStorage
+      // Będzie ona odczytana na stronie głównej
+      localStorage.setItem('justLoggedOut', 'true');
+      
+      // Przekierowanie na stronę główną
+      window.location.href = redirectTo;
+    } catch (error) {
+      console.error('Błąd wylogowania:', error);
+      
+      // Nawet w przypadku błędu, czyścimy dane użytkownika lokalnie
+      setUser(null);
+      setIsAuthenticated(false);
+      setIsLoading(false);
+      
+      // Przekierowanie na stronę główną
+      window.location.href = redirectTo;
+    }
   };
 
-  // Nowa funkcja do aktualizacji danych użytkownika
-  const updateUser = (userData) => {
-    console.log('Aktualizacja danych użytkownika:', userData);
-    setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
+  // Funkcja odświeżania danych użytkownika
+  const refreshUser = async () => {
+    setIsLoading(true);
+    try {
+      const updatedUser = await AuthService.refreshUserData();
+      setUser(updatedUser);
+      resetInactivityTimer(); // Reset timera po odświeżeniu danych
+      return updatedUser;
+    } catch (error) {
+      console.error('Błąd odświeżania danych użytkownika:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Sprawdź czy token istnieje i czy mamy dane użytkownika
-  const isAuthenticated = !!user && !!localStorage.getItem('token');
+  // Funkcja sprawdzająca czy użytkownik jest adminem
+  const isAdmin = () => {
+    return AuthService.isAdmin();
+  };
 
+  // Wartość kontekstu
   const contextValue = {
     user,
-    loading,
+    isAuthenticated,
+    isLoading,
     login,
-    register, // Dodana funkcja rejestracji
+    register,
     logout,
-    updateUser,
-    isAuthenticated
+    refreshUser,
+    isAdmin
   };
 
   return (
@@ -99,10 +204,4 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth musi być używany wewnątrz AuthProvider');
-  }
-  return context;
-};
+export default AuthContext;

@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+// src/components/ListingsView/ListingsPage.js
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import CompactSearch from './search/CompactSearch';
 import ListingControls from './controls/ListingControls';
 import ListingListView from './display/list/ListingListView';
 import ListingCard from './display/grid/ListingCard';
-import listingsService from '../../services/listings.service';
+// ZAMIANA: importujemy AdsService zamiast mongoAdsService
+import AdsService from '../../services/ads';
 
 function ListingsPage() {
   const location = useLocation();
@@ -50,7 +52,7 @@ function ListingsPage() {
       }
     });
     
-    // Ustaw filtry na podstawie parametrów URL, jeśli są jakieś parametry
+    // Ustaw filtry na podstawie parametrów URL, jeśli są jakieś
     if (Object.keys(urlFilters).length > 0) {
       setFilters(urlFilters);
     }
@@ -69,8 +71,8 @@ function ListingsPage() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Dane przykładowe dla różnych marek
-  const getDefaultDataByMake = (make) => {
+  // Dane domyślne dla przypadku braku niektórych pól
+  const getDefaultDataByMake = useCallback((make) => {
     const defaultData = {
       'Audi': { 
         fuel: 'Benzyna', 
@@ -106,6 +108,13 @@ function ListingsPage() {
         engineCapacity: '1800 cm³', 
         drive: 'Przedni',
         city: 'Łódź'
+      },
+      'Volkswagen': {
+        fuel: 'Benzyna',
+        power: '140 KM',
+        engineCapacity: '1400 cm³',
+        drive: 'Przedni',
+        city: 'Wrocław'
       }
     };
     
@@ -116,10 +125,10 @@ function ListingsPage() {
       drive: 'Przedni',
       city: 'Warszawa'
     };
-  };
+  }, []);
 
-  // Funkcja do pobierania danych z API
-  const fetchListings = async () => {
+  // Funkcja do pobierania danych z MongoDB (poprzez AdsService)
+  const fetchListings = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -152,7 +161,9 @@ function ListingsPage() {
           sortBy = 'mileage'; 
           order = 'desc'; 
           break;
-        default: break;
+        default:
+          // Domyślnie 'createdAt', 'desc'
+          break;
       }
       
       // Dodajemy offerType do filtrów
@@ -160,103 +171,154 @@ function ListingsPage() {
       if (offerType !== 'all') {
         requestFilters.condition = offerType;
       }
-      
       if (onlyFeatured) {
-        requestFilters.featured = true;
+        requestFilters.listingType = 'wyróżnione';
       }
       
-      // Wywołanie API
-      const response = await listingsService.getListings(
-        requestFilters,
-        currentPage,
-        itemsPerPage,
+      console.log('Pobieranie danych z MongoDB z filtrami:', requestFilters);
+
+      // Wywołujemy AdsService (ważne, by backend przyjmował takie parametry)
+      const result = await AdsService.getAll({
+        ...requestFilters,
+        page: currentPage,
+        limit: itemsPerPage,
         sortBy,
         order
-      );
-      
-      console.log("Dane z API:", response.ads);
-      
-      // Mapowanie danych z API do formatu oczekiwanego przez komponenty
+      });
+
+      const response = result.data; 
+      console.log('Odpowiedź z backendu (AdsService):', response);
+
+      // Załóżmy, że backend zwraca obiekt: { ads: [...], totalPages: number }
       const mappedListings = (response.ads || []).map(ad => {
-        // Pobieramy przykładowe dane dla danej marki
         const defaultData = getDefaultDataByMake(ad.make);
         
-        // Ustawiamy specjalny przebieg dla demonstracji
-        const mileageValue = ad.make === 'Audi' ? 45000 : (ad.make === 'Ford' ? 75000 : (ad.mileage || 20000));
-
         return {
           id: ad._id,
-          title: `${ad.make} ${ad.model}`,
-          subtitle: ad.description ? ad.description.substring(0, 50) + '...' : `${ad.year}, ${mileageValue} km`,
+          title: `${ad.make || ''} ${ad.model || ''}`.trim() || 'Ogłoszenie',
+          subtitle: ad.description
+            ? ad.description.substring(0, 50) + '...'
+            : `${ad.year}, ${ad.mileage || 0} km`,
           price: ad.price || 0,
           year: ad.year || 0,
-          
-          // Używamy danych z API, jeśli istnieją, lub domyślnych z funkcji getDefaultDataByMake
           fuel: ad.fuelType || defaultData.fuel,
-          engineCapacity: defaultData.engineCapacity,
-          power: defaultData.power,
-          mileage: mileageValue,
-          drive: defaultData.drive,
+          engineCapacity: ad.capacity
+            ? `${ad.capacity} cm³`
+            : defaultData.engineCapacity,
+          power: ad.power || defaultData.power,
+          mileage: ad.mileage || 0,
+          drive: ad.drive || defaultData.drive,
           location: 'Polska',
-          city: defaultData.city,
+          city: ad.city || defaultData.city,
           gearbox: ad.transmission || 'Automatyczna',
-          sellerType: 'Prywatny',
-          image: '/images/auto-788747_1280.jpg',
-          featured: ad.listingType === 'wyróżnione' || false,
-          condition: 'Używany'
+          sellerType: ad.sellerType || (ad.owner ? 'Prywatny' : 'Firma'),
+          image:
+            ad.images && ad.images.length > 0
+              ? ad.images[0]
+              : '/images/auto-788747_1280.jpg',
+          featured: ad.listingType === 'wyróżnione',
+          condition: ad.condition || 'Używany'
         };
       });
 
-      setListings(mappedListings);
+      // Sortowanie wyróżnionych na górze, potem według sortBy
+      const sortedListings = [...mappedListings].sort((a, b) => {
+        // Najpierw wyróżnione
+        if (a.featured && !b.featured) return -1;
+        if (!a.featured && b.featured) return 1;
+        
+        // Potem wybrane kryterium
+        if (sortBy === 'price') {
+          return order === 'asc' ? a.price - b.price : b.price - a.price;
+        }
+        if (sortBy === 'year') {
+          return order === 'asc' ? a.year - b.year : b.year - a.year;
+        }
+        if (sortBy === 'mileage') {
+          return order === 'asc'
+            ? a.mileage - b.mileage
+            : b.mileage - a.mileage;
+        }
+        // Domyślnie: newest (desc)
+        return order === 'asc' ? 1 : -1;
+      });
+
+      setListings(sortedListings);
       setTotalPages(response.totalPages || 1);
       setError(null);
     } catch (err) {
-      console.error("Błąd pobierania ogłoszeń:", err);
-      setError("Wystąpił błąd podczas ładowania ogłoszeń. Spróbuj odświeżyć stronę.");
+      console.error('Błąd pobierania ogłoszeń:', err);
+      setError(
+        'Wystąpił błąd podczas ładowania ogłoszeń. Spróbuj odświeżyć stronę.'
+      );
     } finally {
       setLoading(false);
     }
-  };
+  }, [
+    sortType,
+    offerType,
+    onlyFeatured,
+    currentPage,
+    filters,
+    getDefaultDataByMake,
+    itemsPerPage
+  ]);
 
   // Pobieranie danych przy pierwszym renderowaniu i zmianach parametrów
   useEffect(() => {
     fetchListings();
-  }, [sortType, offerType, onlyFeatured, currentPage, filters]);
+  }, [fetchListings]);
 
   // Obsługa filtrów z CompactSearch
-  const handleFilterChange = (newFilters) => {
+  const handleFilterChange = useCallback((newFilters) => {
     setFilters(newFilters);
-    setCurrentPage(1); // Resetuj stronę przy zmianie filtrów
-  };
+    setCurrentPage(1); // resetujemy stronę przy zmianie filtrów
+  }, []);
 
   // Obsługa dodawania/usuwania z ulubionych
-  const toggleFavorite = async (id) => {
+  const toggleFavorite = useCallback(async (id) => {
     try {
-      // Możesz tu dodać wywołanie API jeśli jest zaimplementowane
-      // await listingsService.toggleFavorite(id);
-      
       const isFav = favorites.includes(id);
+      
+      if (isFav) {
+        await AdsService.removeFromFavorites(id);
+      } else {
+        await AdsService.addToFavorites(id);
+      }
+      
       const msg = isFav ? 'Usunięto z ulubionych' : 'Dodano do ulubionych';
       
-      setFavorites(prev => isFav ? prev.filter(x => x !== id) : [...prev, id]);
-      setFavMessages(prev => ({ ...prev, [id]: msg }));
+      setFavorites((prev) =>
+        isFav ? prev.filter((x) => x !== id) : [...prev, id]
+      );
+      setFavMessages((prev) => ({ ...prev, [id]: msg }));
       
       setTimeout(() => {
-        setFavMessages(prev => ({ ...prev, [id]: null }));
+        setFavMessages((prev) => ({ ...prev, [id]: null }));
       }, 2000);
     } catch (err) {
-      console.error("Błąd dodawania do ulubionych:", err);
+      console.error('Błąd dodawania do ulubionych:', err);
     }
-  };
+  }, [favorites]);
 
   // Obsługa przycisku "Pokaż więcej"
-  const handleShowMore = () => {
-    setCurrentPage(prev => prev + 1);
-  };
+  const handleShowMore = useCallback(() => {
+    setCurrentPage((prev) => prev + 1);
+  }, []);
   
-  const navigateToListing = (id) => navigate(`/listing/${id}`);
+  // Przejście do szczegółów ogłoszenia
+  const navigateToListing = useCallback(
+    (id) => {
+      navigate(`/listing/${id}`);
+    },
+    [navigate]
+  );
 
-  const finalViewMode = isMobile ? 'list' : viewMode;
+  // Ostateczny tryb widoku (na mobile zawsze lista)
+  const finalViewMode = useMemo(
+    () => (isMobile ? 'list' : viewMode),
+    [isMobile, viewMode]
+  );
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -273,9 +335,9 @@ function ListingsPage() {
 
         {/* Komponent wyszukiwania */}
         {searchOpen && (
-          <CompactSearch 
-            initialFilters={filters} 
-            onFilterChange={handleFilterChange} 
+          <CompactSearch
+            initialFilters={filters}
+            onFilterChange={handleFilterChange}
           />
         )}
 
@@ -292,6 +354,11 @@ function ListingsPage() {
           isMobile={isMobile}
         />
 
+        {/* Wyświetlanie informacji o źródle danych */}
+        <div className="bg-yellow-50 border-l-4 border-yellow-500 p-3 my-4 text-yellow-700">
+          <p>Źródło danych: MongoDB (prawdziwe dane)</p>
+        </div>
+
         {/* Wyświetlanie stanu ładowania */}
         {loading && currentPage === 1 ? (
           <div className="flex justify-center items-center py-16">
@@ -307,15 +374,19 @@ function ListingsPage() {
             {listings.length === 0 ? (
               <div className="bg-white shadow-md rounded-md p-8 text-center mt-4">
                 <h3 className="text-xl font-semibold">Nie znaleziono ogłoszeń</h3>
-                <p className="mt-2 text-gray-600">Spróbuj zmienić kryteria wyszukiwania.</p>
+                <p className="mt-2 text-gray-600">
+                  Spróbuj zmienić kryteria wyszukiwania.
+                </p>
               </div>
             ) : (
-              <div className={
-                finalViewMode === 'grid'
-                  ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6'
-                  : 'space-y-4 mt-6'
-              }>
-                {listings.map(listing => (
+              <div
+                className={
+                  finalViewMode === 'grid'
+                    ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6'
+                    : 'space-y-4 mt-6'
+                }
+              >
+                {listings.map((listing) =>
                   finalViewMode === 'grid' ? (
                     <ListingCard
                       key={listing.id}
@@ -335,11 +406,11 @@ function ListingsPage() {
                       favMessages={favMessages}
                     />
                   )
-                ))}
+                )}
               </div>
             )}
 
-            {/* Przycisk "Pokaż więcej" lub indykator ładowania{/* Przycisk "Pokaż więcej" lub indykator ładowania dla kolejnych stron */}
+            {/* Przycisk "Pokaż więcej" lub indykator ładowania dla kolejnych stron */}
             {currentPage < totalPages && (
               <div className="text-center mt-8">
                 {loading ? (
@@ -361,4 +432,4 @@ function ListingsPage() {
   );
 }
 
-export default ListingsPage;
+export default React.memo(ListingsPage);

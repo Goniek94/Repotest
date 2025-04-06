@@ -1,440 +1,820 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-// Przykładowe marki i modele
 const carData = {
-  Audi: ['A1','A3','A4','A5','A6','A7','A8','Q3','Q5','Q7','Q8','TT','R8'],
+  Audi: ['A1', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'Q3', 'Q5', 'Q7', 'Q8', 'TT', 'R8'],
   BMW: [
-    'Seria 1','Seria 2','Seria 3','Seria 4','Seria 5','Seria 6',
-    'Seria 7','Seria 8','X1','X2','X3','X4','X5','X6','X7'
+    'Seria 1', 'Seria 2', 'Seria 3', 'Seria 4', 'Seria 5', 'Seria 6', 'Seria 7', 'Seria 8',
+    'X1', 'X2', 'X3', 'X4', 'X5', 'X6', 'X7'
   ],
   Mercedes: [
-    'Klasa A','Klasa B','Klasa C','Klasa E','Klasa S','CLA','CLS','GLA',
-    'GLB','GLC','GLE','GLS'
+    'Klasa A', 'Klasa B', 'Klasa C', 'Klasa E', 'Klasa S', 'CLA', 'CLS', 'GLA', 'GLB',
+    'GLC', 'GLE', 'GLS'
   ],
   Volkswagen: [
-    'Golf','Polo','Passat','Arteon','T-Roc','T-Cross','Tiguan','Touareg',
-    'ID.3','ID.4'
+    'Golf', 'Polo', 'Passat', 'Arteon', 'T-Roc', 'T-Cross', 'Tiguan', 'Touareg',
+    'ID.3', 'ID.4'
   ],
   Toyota: [
-    'Yaris','Corolla','Camry','RAV4','C-HR','Highlander','Land Cruiser','Supra','Prius'
+    'Yaris', 'Corolla', 'Camry', 'RAV4', 'C-HR', 'Highlander', 'Land Cruiser', 'Supra', 'Prius'
   ],
-  Ford: ['Fiesta','Focus','Mondeo','Kuga','Puma','Edge','Mustang','Explorer'],
-  Opel: ['Corsa','Astra','Insignia','Crossland','Grandland','Mokka'],
-  Hyundai: ['i20','i30','i40','Kona','Tucson','Santa Fe','IONIQ','NEXO'],
-  Kia: ['Picanto','Rio','Ceed','Proceed','Stinger','XCeed','Sportage','Sorento'],
-  Škoda: ['Fabia','Scala','Octavia','Superb','Kamiq','Karoq','Kodiaq','Enyaq'],
+  Ford: ['Fiesta', 'Focus', 'Mondeo', 'Kuga', 'Puma', 'Edge', 'Mustang', 'Explorer'],
+  Opel: ['Corsa', 'Astra', 'Insignia', 'Crossland', 'Grandland', 'Mokka'],
+  Hyundai: ['i20', 'i30', 'i40', 'Kona', 'Tucson', 'Santa Fe', 'IONIQ', 'NEXO'],
+  Kia: ['Picanto', 'Rio', 'Ceed', 'Proceed', 'Stinger', 'XCeed', 'Sportage', 'Sorento'],
+  Škoda: ['Fabia', 'Scala', 'Octavia', 'Superb', 'Kamiq', 'Karoq', 'Kodiaq', 'Enyaq'],
 };
 
-// Funkcja generująca listę lat (np. 1990 -> aktualny)
-const generateYearOptions = () => {
-  const currentYear = new Date().getFullYear();
-  const years = [];
-  for (let y = currentYear; y >= 1990; y--) {
-    years.push(y);
-  }
-  return years;
+const bodyTypes = [
+  'Sedan', 'Hatchback', 'SUV', 'Kombi', 'Coupé', 'Cabrio', 'VAN', 'Pickup'
+];
+
+const advancedOptions = {
+  damageStatus: ['Brak uszkodzeń', 'Lekko uszkodzony', 'Poważnie uszkodzony', 'Uszkodzony', 'Bezwypadkowy'],
+  country: ['Polska', 'Niemcy', 'Francja', 'Włochy', 'Inne państwa europejskie'],
+  fuelType: ['Benzyna', 'Diesel', 'Elektryczny', 'Hybrydowy', 'LPG', 'CNG'],
+  driveType: ['Przedni', 'Tylny', '4x4', 'Na przód'],
+  transmission: ['Automatyczna', 'Manualna'],
+  color: ['Biały', 'Czarny', 'Srebrny', 'Czerwony', 'Niebieski', 'Zielony', 'Żółty', 'Inny'],
+  doorCount: ['2/3', '4/5'],
+  tuning: ['Tak', 'Nie'],
+  vehicleCondition: ['Używany', 'Nowy', 'Powypadkowy'],
+  sellingForm: ['Sprzedaż', 'Zamiana', 'Wynajem', 'Leasing'],
+  sellerType: ['Prywatny', 'Firma'],
+  vehicleStatus: ['Uszkodzony', 'Bezwypadkowy', 'Kierownica po prawej', 'Przystosowany dla niepełnosprawnych'],
 };
 
-export default function CompactSearch({ initialFilters = {}, onFilterChange }) {
+const regions = [
+  'Dolnośląskie', 'Kujawsko-pomorskie', 'Lubelskie', 'Lubuskie', 'Łódzkie', 
+  'Małopolskie', 'Mazowieckie', 'Opolskie', 'Podkarpackie', 'Podlaskie',
+  'Pomorskie', 'Śląskie', 'Świętokrzyskie', 'Warmińsko-mazurskie', 'Wielkopolskie', 'Zachodniopomorskie'
+];
+
+export default function SearchForm({ initialValues = {} }) {
   const navigate = useNavigate();
 
-  // Stan formularza
-  const [formData, setFormData] = useState({
-    // ----- PODSTAWOWE -----
-    brand: initialFilters.brand || '',
-    model: initialFilters.model || '',
-    yearFrom: initialFilters.yearFrom || '',
-    yearTo: initialFilters.yearTo || '',
-    priceFrom: initialFilters.priceFrom || '',
-    priceTo: initialFilters.priceTo || '',
-    mileageFrom: initialFilters.mileageFrom || '',
-    mileageTo: initialFilters.mileageTo || '',
+  // Dane formularza
+  const [formData, setFormData] = useState(() => ({
+    make: '',
+    model: '',
+    priceFrom: '',
+    priceTo: '',
+    yearFrom: '',
+    yearTo: '',
+    bodyType: '',
+    damageStatus: '',
+    country: '',
+    region: '',
+    fuelType: '',
+    driveType: '',
+    mileageFrom: '',
+    mileageTo: '',
+    location: '',
+    transmission: '',
+    enginePowerFrom: '',
+    enginePowerTo: '',
+    engineCapacityFrom: '',
+    engineCapacityTo: '',
+    color: '',
+    doorCount: '',
+    tuning: '',
+    vehicleCondition: '',
+    sellingForm: '',
+    sellerType: '',
+    vat: false,
+    invoiceOptions: false,
+    ...initialValues
+  }));
 
-    // ----- ZAAWANSOWANE -----
-    condition: initialFilters.condition || '',
-    accidentStatus: initialFilters.accidentStatus || '',
-    damageStatus: initialFilters.damageStatus || '',
-    tuning: initialFilters.tuning || '',
-    imported: initialFilters.imported || '',
-    registeredInPL: initialFilters.registeredInPL || '',
-    firstOwner: initialFilters.firstOwner || '',
-    disabledAdapted: initialFilters.disabledAdapted || '',
-
-    generation: initialFilters.generation || '',
-    version: initialFilters.version || '',
-    bodyType: initialFilters.bodyType || '',
-    color: initialFilters.color || '',
-    fuelType: initialFilters.fuelType || '',
-    power: initialFilters.power || '',
-    engineSize: initialFilters.engineSize || '',
-    transmission: initialFilters.transmission || '',
-    drive: initialFilters.drive || '',
-    doors: initialFilters.doors || '',
-    weight: initialFilters.weight || '',
-    countryOfOrigin: initialFilters.countryOfOrigin || '',
-    voivodeship: initialFilters.voivodeship || '',
-    city: initialFilters.city || ''
-  });
-
-  // Modele dostępne w zależności od brand
+  // Lista dostępnych modeli dla wybranej marki
   const [availableModels, setAvailableModels] = useState([]);
 
-  // Czy widok mobilny
-  const [isMobile, setIsMobile] = useState(
-    typeof window !== 'undefined' ? window.innerWidth < 640 : false
-  );
-
-  useEffect(() => {
-    function handleResize() {
-      setIsMobile(window.innerWidth < 640);
-    }
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  // Czy pokazać sekcję zaawansowaną (desktop)
+  // Czy pokazywać zaawansowane filtry
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const shouldShowAdvanced = isMobile ? true : showAdvanced;
 
-  // Sztuczna liczba pasujących wyników
-  const [matchingResults, setMatchingResults] = useState(2500);
+  // Sztuczna liczba pasujących ogłoszeń
+  const [matchingResults, setMatchingResults] = useState(1834);
 
-  // Sposób liczenia wyniku (prosty, „na oko"):
-  const calculateMatchingResults = (data) => {
-    let base = 2500;
-    if (data.brand) base *= 0.9;
-    if (data.model) base *= 0.8;
-    if (data.yearFrom) base *= 0.95;
-    if (data.yearTo) base *= 0.95;
-    if (data.priceFrom || data.priceTo) base *= 0.9;
-    if (data.mileageFrom || data.mileageTo) base *= 0.9;
-    if (data.condition) base *= 0.9;
-    if (data.damageStatus) base *= 0.9;
-    if (data.fuelType) base *= 0.8;
-    // ...
-    return Math.floor(base);
+  // Funkcja obliczająca „liczbę pasujących" ogłoszeń (przykładowe założenie)
+  const calculateMatchingResults = (currentFormData) => {
+    let baseCount = 1834;
+    Object.keys(currentFormData).forEach(key => {
+      if (currentFormData[key] && typeof currentFormData[key] !== 'boolean') {
+        baseCount = Math.floor(baseCount * 0.9);
+      } else if (currentFormData[key] === true) {
+        baseCount = Math.floor(baseCount * 0.95);
+      }
+    });
+    return Math.max(baseCount, 10); // Minimum 10 ogłoszeń
   };
 
-  // Aktualizacja dostępnych modeli gdy zmienia się marka
+  // Aktualizuj dostępne modele na podstawie wybranej marki
   useEffect(() => {
-    if (formData.brand) {
-      setAvailableModels(carData[formData.brand] || []);
+    if (formData.make && carData[formData.make]) {
+      setAvailableModels(carData[formData.make]);
+    } else {
+      setAvailableModels([]);
     }
-  }, [formData.brand]);
+  }, [formData.make]);
 
+  // Przeliczaj „wynik" przy każdej zmianie formData
   useEffect(() => {
-    setMatchingResults(calculateMatchingResults(formData));
+    const newCount = calculateMatchingResults(formData);
+    setMatchingResults(newCount);
   }, [formData]);
 
+  // Generuj listę roczników wstecz (np. od 1990)
+  const generateYearOptions = () => {
+    const currentYear = new Date().getFullYear();
+    return Array.from({ length: currentYear - 1989 }, (_, i) => currentYear - i);
+  };
+
+  // Obsługa zmian w polach formularza
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-
-    if (name === 'brand') {
-      setAvailableModels(carData[value] || []);
-      // Reset modelu
-      setFormData((prev2) => ({ ...prev2, model: '' }));
-    }
-  };
-
-  const handleSearch = () => {
-    // Przekazanie filtrów do komponentu nadrzędnego
-    if (onFilterChange) {
-      onFilterChange(formData);
-    }
+    const { name, value, type, checked } = e.target;
     
-    // Przekierowanie do listy ogłoszeń jeśli nie jesteśmy na stronie /listings
-    if (window.location.pathname !== '/listings') {
-      navigate('/listings');
+    if (type === 'checkbox') {
+      setFormData((prev) => ({ ...prev, [name]: checked }));
+    } else {
+      // Nie pozwalamy na wartości ujemne w polach numerycznych
+      let finalValue = value;
+      if (['priceFrom', 'priceTo', 'mileageFrom', 'mileageTo', 'enginePowerFrom', 'enginePowerTo', 'engineCapacityFrom', 'engineCapacityTo'].includes(name)) {
+        if (Number(value) < 0) finalValue = 0;
+      }
+      
+      setFormData((prev) => ({ ...prev, [name]: finalValue }));
     }
   };
 
-  // Podstawowa sekcja – 4 kolumny
-  const BasicSection = () => (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-      {/* Marka */}
-      <div>
-        <label className="block text-sm font-semibold text-[#35530A] mb-1">
-          Marka
-        </label>
-        <select
-          name="brand"
-          value={formData.brand}
-          onChange={handleInputChange}
-          className="w-full h-10 text-sm px-3 border border-[#35530A] rounded-[2px]"
-        >
-          <option value="">---</option>
-          {Object.keys(carData).map((make) => (
-            <option key={make} value={make}>
-              {make}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Model */}
-      <div>
-        <label className="block text-sm font-semibold text-[#35530A] mb-1">
-          Model
-        </label>
-        <select
-          name="model"
-          value={formData.model}
-          disabled={!formData.brand}
-          onChange={handleInputChange}
-          className="w-full h-10 text-sm px-3 border border-[#35530A] rounded-[2px] disabled:bg-gray-100"
-        >
-          <option value="">---</option>
-          {availableModels.map((m) => (
-            <option key={m} value={m}>
-              {m}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Rok od */}
-      <div>
-        <label className="block text-sm font-semibold text-[#35530A] mb-1">
-          Rok od
-        </label>
-        <select
-          name="yearFrom"
-          value={formData.yearFrom}
-          onChange={handleInputChange}
-          className="w-full h-10 text-sm px-3 border border-[#35530A] rounded-[2px]"
-        >
-          <option value="">---</option>
-          {generateYearOptions().map((yr) => (
-            <option key={yr} value={yr}>{yr}</option>
-          ))}
-        </select>
-      </div>
-
-      {/* Rok do */}
-      <div>
-        <label className="block text-sm font-semibold text-[#35530A] mb-1">
-          Rok do
-        </label>
-        <select
-          name="yearTo"
-          value={formData.yearTo}
-          onChange={handleInputChange}
-          className="w-full h-10 text-sm px-3 border border-[#35530A] rounded-[2px]"
-        >
-          <option value="">---</option>
-          {generateYearOptions().map((yr) => (
-            <option key={yr} value={yr}>{yr}</option>
-          ))}
-        </select>
-      </div>
-
-      {/* Cena od */}
-      <div>
-        <label className="block text-sm font-semibold text-[#35530A] mb-1">
-          Cena od
-        </label>
-        <input
-          type="number"
-          name="priceFrom"
-          min="0"
-          value={formData.priceFrom}
-          onChange={handleInputChange}
-          className="w-full h-10 text-sm px-3 border border-[#35530A] rounded-[2px]"
-        />
-      </div>
-
-      {/* Cena do */}
-      <div>
-        <label className="block text-sm font-semibold text-[#35530A] mb-1">
-          Cena do
-        </label>
-        <input
-          type="number"
-          name="priceTo"
-          min="0"
-          value={formData.priceTo}
-          onChange={handleInputChange}
-          className="w-full h-10 text-sm px-3 border border-[#35530A] rounded-[2px]"
-        />
-      </div>
-
-      {/* Przebieg od */}
-      <div>
-        <label className="block text-sm font-semibold text-[#35530A] mb-1">
-          Przebieg od
-        </label>
-        <input
-          type="number"
-          name="mileageFrom"
-          min="0"
-          value={formData.mileageFrom}
-          onChange={handleInputChange}
-          className="w-full h-10 text-sm px-3 border border-[#35530A] rounded-[2px]"
-        />
-      </div>
-
-      {/* Przebieg do */}
-      <div>
-        <label className="block text-sm font-semibold text-[#35530A] mb-1">
-          Przebieg do
-        </label>
-        <input
-          type="number"
-          name="mileageTo"
-          min="0"
-          value={formData.mileageTo}
-          onChange={handleInputChange}
-          className="w-full h-10 text-sm px-3 border border-[#35530A] rounded-[2px]"
-        />
-      </div>
-    </div>
-  );
-
-  // Zaawansowana sekcja – 4 kolumny, sporo pól
-  const AdvancedSection = () => (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-      {/* Condition */}
-      <div>
-        <label className="block text-sm font-semibold text-[#35530A] mb-1">
-          Stan pojazdu
-        </label>
-        <select
-          name="condition"
-          value={formData.condition}
-          onChange={handleInputChange}
-          className="w-full h-10 text-sm px-3 border border-[#35530A] rounded-[2px]"
-        >
-          <option value="">---</option>
-          <option value="Nowy">Nowy</option>
-          <option value="Używany">Używany</option>
-        </select>
-      </div>
-
-      {/* pozostałe pola z zaawansowanej sekcji */}
-      {/* ... */}
-      
-      {/* Wypadkowość */}
-      <div>
-        <label className="block text-sm font-semibold text-[#35530A] mb-1">
-          Wypadkowość
-        </label>
-        <select
-          name="accidentStatus"
-          value={formData.accidentStatus}
-          onChange={handleInputChange}
-          className="w-full h-10 text-sm px-3 border border-[#35530A] rounded-[2px]"
-        >
-          <option value="">---</option>
-          <option value="Bezwypadkowy">Bezwypadkowy</option>
-          <option value="Powypadkowy">Powypadkowy</option>
-        </select>
-      </div>
-
-      {/* Paliwo */}
-      <div>
-        <label className="block text-sm font-semibold text-[#35530A] mb-1">
-          Paliwo
-        </label>
-        <select
-          name="fuelType"
-          value={formData.fuelType}
-          onChange={handleInputChange}
-          className="w-full h-10 text-sm px-3 border border-[#35530A] rounded-[2px]"
-        >
-          <option value="">---</option>
-          <option value="Benzyna">Benzyna</option>
-          <option value="Diesel">Diesel</option>
-          <option value="Benzyna+LPG">Benzyna + LPG</option>
-          <option value="Elektryczny">Elektryczny</option>
-          <option value="Hybryda">Hybryda</option>
-        </select>
-      </div>
-
-      {/* Skrzynia biegów */}
-      <div>
-        <label className="block text-sm font-semibold text-[#35530A] mb-1">
-          Skrzynia
-        </label>
-        <select
-          name="transmission"
-          value={formData.transmission}
-          onChange={handleInputChange}
-          className="w-full h-10 text-sm px-3 border border-[#35530A] rounded-[2px]"
-        >
-          <option value="">---</option>
-          <option value="Manualna">Manualna</option>
-          <option value="Automatyczna">Automatyczna</option>
-          <option value="Półautomatyczna">Półautomatyczna</option>
-        </select>
-      </div>
-    </div>
-  );
+  // Obsługa przycisku "Pokaż ogłoszenia"
+  const handleSearch = () => {
+    // Budowanie parametrów URL z formularza
+    const searchParams = new URLSearchParams();
+    
+    // Dodaj tylko niepuste wartości do parametrów URL
+    Object.entries(formData).forEach(([key, value]) => {
+      if (value !== '' && value !== null && value !== undefined) {
+        // Konwertuj wartości boolowskie na stringi
+        if (typeof value === 'boolean') {
+          searchParams.append(key, value.toString());
+        } else {
+          searchParams.append(key, value);
+        }
+      }
+    });
+    
+    // Przekieruj na stronę wyników z parametrami
+    navigate(`/listings?${searchParams.toString()}`);
+  };
 
   return (
-    <section className="py-8 px-4">
+    <section className="bg-[#F5F7F9] py-6 px-3 sm:px-4">
       <div className="max-w-7xl mx-auto">
-        <div className="border border-[#35530A] rounded-[2px] p-8 shadow-md">
-          {/* Sekcja podstawowa */}
-          <BasicSection />
+        <h2 className="text-2xl md:text-3xl font-bold text-[#35530A] text-center mb-5 uppercase">
+          Wyszukaj pojazd
+        </h2>
 
-          {/* Sekcja zaawansowana */}
-          {shouldShowAdvanced && <AdvancedSection />}
-
-          <div className="relative mt-6 flex items-center w-full">
-            {/* Przycisk Zaawansowane – na desktop */}
-            {!isMobile && (
-              <button
-                type="button"
-                onClick={() => setShowAdvanced(!showAdvanced)}
-                className="
-                  border border-[#35530A]
-                  rounded-[2px]
-                  px-4
-                  py-2
-                  text-sm
-                  text-[#35530A]
-                  font-semibold
-                  uppercase
-                  bg-white
-                  hover:bg-[#2D4A06]
-                  hover:text-white
-                  transition-colors
-                  absolute
-                  left-1/2
-                  -translate-x-1/2
-                "
+        {/* PODSTAWOWE FILTRY */}
+        <div className="bg-white p-5 shadow-md rounded-[2px] mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-3">
+            {/* RZĄD 1 */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                Nadwozie
+              </label>
+              <select
+                name="bodyType"
+                value={formData.bodyType}
+                onChange={handleInputChange}
+                className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
               >
-                {showAdvanced
-                  ? 'Ukryj zaawansowane'
-                  : 'Zaawansowane wyszukiwanie'}
-              </button>
-            )}
+                <option value="">Wybierz typ nadwozia</option>
+                {bodyTypes.map((body) => (
+                  <option key={body} value={body}>
+                    {body}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-            {/* Przycisk Pokaż ogłoszenia */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                Marka
+              </label>
+              <select
+                name="make"
+                value={formData.make}
+                onChange={handleInputChange}
+                className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
+              >
+                <option value="">Wybierz markę</option>
+                {Object.keys(carData).map((make) => (
+                  <option key={make} value={make}>
+                    {make}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                Model
+              </label>
+              <select
+                name="model"
+                value={formData.model}
+                disabled={!formData.make}
+                onChange={handleInputChange}
+                className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A] disabled:bg-gray-100"
+              >
+                <option value="">Wybierz model</option>
+                {availableModels.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                Generacja (rocznik)
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <select
+                  name="yearFrom"
+                  value={formData.yearFrom}
+                  onChange={handleInputChange}
+                  className="w-full h-10 text-sm px-2 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
+                >
+                  <option value="">Od</option>
+                  {generateYearOptions().map((yr) => (
+                    <option key={yr} value={yr}>
+                      {yr}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  name="yearTo"
+                  value={formData.yearTo}
+                  onChange={handleInputChange}
+                  className="w-full h-10 text-sm px-2 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
+                >
+                  <option value="">Do</option>
+                  {generateYearOptions().map((yr) => (
+                    <option key={yr} value={yr}>
+                      {yr}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* RZĄD 2 */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                Cena
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="number"
+                  name="priceFrom"
+                  placeholder="Od"
+                  min="0"
+                  value={formData.priceFrom}
+                  onChange={handleInputChange}
+                  className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
+                />
+                <input
+                  type="number"
+                  name="priceTo"
+                  placeholder="Do"
+                  min="0"
+                  value={formData.priceTo}
+                  onChange={handleInputChange}
+                  className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                Rocznik
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="number"
+                  name="yearFrom"
+                  placeholder="Od"
+                  min="1900"
+                  max={new Date().getFullYear()}
+                  value={formData.yearFrom}
+                  onChange={handleInputChange}
+                  className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
+                />
+                <input
+                  type="number"
+                  name="yearTo"
+                  placeholder="Do"
+                  min="1900"
+                  max={new Date().getFullYear()}
+                  value={formData.yearTo}
+                  onChange={handleInputChange}
+                  className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                Przebieg
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="number"
+                  name="mileageFrom"
+                  placeholder="Od"
+                  min="0"
+                  value={formData.mileageFrom}
+                  onChange={handleInputChange}
+                  className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
+                />
+                <input
+                  type="number"
+                  name="mileageTo"
+                  placeholder="Do"
+                  min="0"
+                  value={formData.mileageTo}
+                  onChange={handleInputChange}
+                  className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                Rodzaj paliwa
+              </label>
+              <select
+                name="fuelType"
+                value={formData.fuelType}
+                onChange={handleInputChange}
+                className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
+              >
+                <option value="">Wybierz rodzaj paliwa</option>
+                {advancedOptions.fuelType.map((fuel) => (
+                  <option key={fuel} value={fuel}>
+                    {fuel}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* ZAAWANSOWANE FILTRY */}
+          {showAdvanced && (
+            <>
+              <div className="mt-6 pt-4 border-t border-gray-200">
+                <h3 className="font-semibold text-gray-700 mb-3">Silnik i napęd</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-3">
+                  {/* Moc */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      Moc
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <input
+                        type="number"
+                        name="enginePowerFrom"
+                        placeholder="Od"
+                        min="0"
+                        value={formData.enginePowerFrom}
+                        onChange={handleInputChange}
+                        className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
+                      />
+                      <input
+                        type="number"
+                        name="enginePowerTo"
+                        placeholder="Do"
+                        min="0"
+                        value={formData.enginePowerTo}
+                        onChange={handleInputChange}
+                        className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Pojemność */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      Pojemność
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <input
+                        type="number"
+                        name="engineCapacityFrom"
+                        placeholder="Od"
+                        min="0"
+                        value={formData.engineCapacityFrom}
+                        onChange={handleInputChange}
+                        className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
+                      />
+                      <input
+                        type="number"
+                        name="engineCapacityTo"
+                        placeholder="Do"
+                        min="0"
+                        value={formData.engineCapacityTo}
+                        onChange={handleInputChange}
+                        className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Skrzynia */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      Skrzynia
+                    </label>
+                    <div className="grid grid-cols-2 gap-1">
+                      {advancedOptions.transmission.map((type) => (
+                        <div key={type} className="flex items-center">
+                          <input
+                            type="radio"
+                            id={`transmission-${type}`}
+                            name="transmission"
+                            value={type}
+                            checked={formData.transmission === type}
+                            onChange={handleInputChange}
+                            className="mr-2"
+                          />
+                          <label htmlFor={`transmission-${type}`} className="text-sm">
+                            {type}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Napęd */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      Napęd
+                    </label>
+                    <div className="grid grid-cols-3 gap-1">
+                      {advancedOptions.driveType.slice(0, 3).map((type) => (
+                        <div key={type} className="flex items-center">
+                          <input
+                            type="radio"
+                            id={`drive-${type}`}
+                            name="driveType"
+                            value={type}
+                            checked={formData.driveType === type}
+                            onChange={handleInputChange}
+                            className="mr-1"
+                          />
+                          <label htmlFor={`drive-${type}`} className="text-xs">
+                            {type}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <h3 className="font-semibold text-gray-700 mt-5 mb-3">Forma sprzedaży i lokalizacja</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-3">
+                  {/* Kraj pochodzenia */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      Kraj pochodzenia
+                    </label>
+                    <select
+                      name="country"
+                      value={formData.country}
+                      onChange={handleInputChange}
+                      className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
+                    >
+                      <option value="">Wybierz kraj</option>
+                      {advancedOptions.country.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Województwo */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      Województwo
+                    </label>
+                    <select
+                      name="region"
+                      value={formData.region}
+                      onChange={handleInputChange}
+                      className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
+                    >
+                      <option value="">Wybierz województwo</option>
+                      {regions.map((r) => (
+                        <option key={r} value={r}>
+                          {r}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Forma sprzedaży */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      Forma sprzedaży
+                    </label>
+                    <select
+                      name="sellingForm"
+                      value={formData.sellingForm}
+                      onChange={handleInputChange}
+                      className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
+                    >
+                      <option value="">Wybierz formę</option>
+                      {advancedOptions.sellingForm.map((form) => (
+                        <option key={form} value={form}>
+                          {form}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Sprzedawca */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      Sprzedawca
+                    </label>
+                    <div className="grid grid-cols-2 gap-1">
+                      {advancedOptions.sellerType.map((type) => (
+                        <div key={type} className="flex items-center">
+                          <input
+                            type="radio"
+                            id={`seller-${type}`}
+                            name="sellerType"
+                            value={type}
+                            checked={formData.sellerType === type}
+                            onChange={handleInputChange}
+                            className="mr-2"
+                          />
+                          <label htmlFor={`seller-${type}`} className="text-sm">
+                            {type}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 p-3 mt-4 rounded-[2px]">
+                  <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="vat"
+                        name="vat"
+                        checked={formData.vat}
+                        onChange={handleInputChange}
+                        className="mr-2"
+                      />
+                      <label htmlFor="vat" className="text-sm font-medium">FV 23%</label>
+                    </div>
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="invoiceOptions"
+                        name="invoiceOptions"
+                        checked={formData.invoiceOptions}
+                        onChange={handleInputChange}
+                        className="mr-2"
+                      />
+                      <label htmlFor="invoiceOptions" className="text-sm font-medium">Możliwość faktura/paragon</label>
+                    </div>
+                  </div>
+                </div>
+
+                <h3 className="font-semibold text-gray-700 mt-5 mb-3">Nadwozie</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-3">
+                  {/* Stan uszkodzeń */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      Stan uszkodzeń
+                    </label>
+                    <select
+                      name="damageStatus"
+                      value={formData.damageStatus}
+                      onChange={handleInputChange}
+                      className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
+                    >
+                      <option value="">Wybierz stan</option>
+                      {advancedOptions.damageStatus.map((d) => (
+                        <option key={d} value={d}>
+                          {d}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Bezwypadkowy */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      Bezwypadkowy
+                    </label>
+                    <div className="grid grid-cols-2 gap-1 mt-2">
+                      <div className="flex items-center">
+                        <input
+                          type="radio"
+                          id="accident-yes"
+                          name="vehicleStatus"
+                          value="Bezwypadkowy"
+                          checked={formData.vehicleStatus === "Bezwypadkowy"}
+                          onChange={handleInputChange}
+                          className="mr-2"
+                        />
+                        <label htmlFor="accident-yes" className="text-sm">Tak</label>
+                      </div>
+                      <div className="flex items-center">
+                        <input
+                          type="radio"
+                          id="accident-no"
+                          name="vehicleStatus"
+                          value="Uszkodzony"
+                          checked={formData.vehicleStatus === "Uszkodzony"}
+                          onChange={handleInputChange}
+                          className="mr-2"
+                        />
+                        <label htmlFor="accident-no" className="text-sm">Nie</label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Kierownica po prawej */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      Kierownica po prawej
+                    </label>
+                    <div className="grid grid-cols-2 gap-1 mt-2">
+                      <div className="flex items-center">
+                        <input
+                          type="radio"
+                          id="rightSteering-yes"
+                          name="vehicleStatus"
+                          value="Kierownica po prawej"
+                          checked={formData.vehicleStatus === "Kierownica po prawej"}
+                          onChange={handleInputChange}
+                          className="mr-2"
+                        />
+                        <label htmlFor="rightSteering-yes" className="text-sm">Tak</label>
+                      </div>
+                      <div className="flex items-center"><input
+                          type="radio"
+                          id="rightSteering-no"
+                          name="vehicleStatus"
+                          value=""
+                          checked={!formData.vehicleStatus || (formData.vehicleStatus !== "Kierownica po prawej")}
+                          onChange={handleInputChange}
+                          className="mr-2"
+                        />
+                        <label htmlFor="rightSteering-no" className="text-sm">Nie</label>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Dla niepełnosprawnych */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      Przystosowany dla niepełnosprawnych
+                    </label>
+                    <div className="grid grid-cols-2 gap-1 mt-2">
+                      <div className="flex items-center">
+                        <input
+                          type="radio"
+                          id="disabled-yes"
+                          name="vehicleStatus"
+                          value="Przystosowany dla niepełnosprawnych"
+                          checked={formData.vehicleStatus === "Przystosowany dla niepełnosprawnych"}
+                          onChange={handleInputChange}
+                          className="mr-2"
+                        />
+                        <label htmlFor="disabled-yes" className="text-sm">Tak</label>
+                      </div>
+                      <div className="flex items-center">
+                        <input
+                          type="radio"
+                          id="disabled-no"
+                          name="vehicleStatus"
+                          value=""
+                          checked={!formData.vehicleStatus || (formData.vehicleStatus !== "Przystosowany dla niepełnosprawnych")}
+                          onChange={handleInputChange}
+                          className="mr-2"
+                        />
+                        <label htmlFor="disabled-no" className="text-sm">Nie</label>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Kolor */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      Kolor
+                    </label>
+                    <select
+                      name="color"
+                      value={formData.color}
+                      onChange={handleInputChange}
+                      className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
+                    >
+                      <option value="">Wybierz kolor</option>
+                      {advancedOptions.color.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Liczba drzwi */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      Liczba drzwi
+                    </label>
+                    <div className="grid grid-cols-2 gap-1 mt-2">
+                      {advancedOptions.doorCount.map((count) => (
+                        <div key={count} className="flex items-center">
+                          <input
+                            type="radio"
+                            id={`doors-${count}`}
+                            name="doorCount"
+                            value={count}
+                            checked={formData.doorCount === count}
+                            onChange={handleInputChange}
+                            className="mr-2"
+                          />
+                          <label htmlFor={`doors-${count}`} className="text-sm">
+                            {count}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* Tuning */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      Tuning
+                    </label>
+                    <div className="grid grid-cols-2 gap-1 mt-2">
+                      {advancedOptions.tuning.map((option) => (
+                        <div key={option} className="flex items-center">
+                          <input
+                            type="radio"
+                            id={`tuning-${option}`}
+                            name="tuning"
+                            value={option}
+                            checked={formData.tuning === option}
+                            onChange={handleInputChange}
+                            className="mr-2"
+                          />
+                          <label htmlFor={`tuning-${option}`} className="text-sm">
+                            {option}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* DOLNA SEKCJA PRZYCISKÓW */}
+          <div className="mt-6 flex flex-col sm:flex-row justify-end items-center gap-4">
+            {/* Przycisk / link „Zaawansowane" */}
+            <button
+              type="button"
+              className="text-[#35530A] text-sm uppercase font-semibold
+                         border border-transparent hover:border-[#35530A]
+                         hover:bg-white hover:underline
+                         px-2 py-1 transition-colors rounded-[2px]"
+              onClick={() => setShowAdvanced(!showAdvanced)}
+            >
+              {showAdvanced ? 'Ukryj zaawansowane' : 'Zaawansowane ▼'}
+            </button>
+
+            {/* Główny przycisk – Pokaż ogłoszenia */}
             <button
               type="button"
               onClick={handleSearch}
-              className="
-                bg-[#35530A]
-                text-white
-                rounded-[2px]
-                px-6
-                py-2
-                text-sm
-                font-bold
-                uppercase
-                hover:bg-[#2D4A06]
-                transition-colors
-                flex
-                items-center
-                gap-2
-                ml-auto
-              "
+              className="bg-[#35530A] text-white rounded-[2px] px-6 py-2
+                         text-sm font-bold uppercase hover:bg-[#2D4A06]
+                         transition-colors"
             >
-              <span>Pokaż ogłoszenia</span>
-              <span className="text-xs bg-[#35530A] text-white px-2 py-0.5 rounded">
+              Pokaż ogłoszenia
+              <span className="ml-2 text-xs bg-white/20 px-2 py-0.5 rounded-[2px]">
                 ({matchingResults})
               </span>
             </button>

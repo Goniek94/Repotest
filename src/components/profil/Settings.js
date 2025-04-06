@@ -5,7 +5,7 @@ import {
   FaExclamationTriangle, FaCheckCircle, FaEnvelope, FaMapMarkedAlt, 
   FaInfoCircle, FaCheck, FaTimes, FaEye, FaEyeSlash 
 } from 'react-icons/fa';
-import api from '../../services/axios';
+import api from '../../services/api';
 
 const Settings = () => {
   const { user, updateUser } = useAuth();

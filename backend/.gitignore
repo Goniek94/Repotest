@@ -1,5 +1,0 @@
-# Ignorowanie folderu node_modules
-node_modules/
-
-# Ignorowanie pliku .env
-.env

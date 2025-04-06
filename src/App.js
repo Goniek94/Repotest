@@ -1,14 +1,14 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { ListingFormProvider } from './contexts/ListingFormContext';
 import Navigation from './components/Navigation/Navigation';
 import Footer from './components/Footer';
 import SearchForm from './components/SearchForm';
 import FeaturedListings from './components/FeaturedListings/FeaturedListings';
 import ListingsPage from './components/ListingsView/ListingsPage';
-import CreateListing from './components/ListingsView/createlisting/CreateListing';
-import AddListingView from './components/ListingsView/createlisting/AddListingView';
-import ListingDetails from './components/ListingsView/createlisting/ListingDetails';
+import CreateListingForm from './components/ListingForm/CreateListingForm';
+import AddListingView from './components/ListingForm/AddListingView';
 import Register from './components/auth/Register';
 import LoginModal from './components/auth/LoginModal';
 import Contact from './components/Contact';
@@ -18,6 +18,7 @@ import AboutCompany from './components/Aboutcompany';
 import FAQ from './components/FAQ';
 import { FavoritesProvider } from './FavoritesContext';
 import ScrollToTop from './ScrollToTop';
+import ListingDetails from './components/listings/details/ListingDetails';
 
 // Komponenty admina
 import AdminLayout from './components/admin/AdminLayout';
@@ -87,6 +88,20 @@ const LoginPage = () => {
   return <LoginModal isOpen={true} />;
 };
 
+// Komponent opakowania dla formularza ogłoszenia
+const CreateListingWithProvider = () => (
+  <ListingFormProvider>
+    <CreateListingForm />
+  </ListingFormProvider>
+);
+
+// Komponent opakowania dla podglądu ogłoszenia
+const AddListingViewWithProvider = () => (
+  <ListingFormProvider>
+    <AddListingView />
+  </ListingFormProvider>
+);
+
 const App = () => {
   return (
     <AuthProvider>
@@ -105,23 +120,36 @@ const App = () => {
 
                 {/* Ogłoszenia */}
                 <Route path="/listings" element={<ListingsPage />} />
-                <Route path="/listing/:id" element={<ListingDetails />} />
                 <Route
-                  path="/createlisting"
+                  path="/create-listing"
                   element={
                     <ProtectedRoute>
-                      <CreateListing />
+                      <CreateListingWithProvider />
                     </ProtectedRoute>
                   }
+                />
+                {/* Poprawiona ścieżka i komponent opakowania dla AddListingView */}
+                <Route
+                  path="/add-listing-view"
+                  element={
+                    <ProtectedRoute>
+                      <AddListingViewWithProvider />
+                    </ProtectedRoute>
+                  }
+                />
+                
+                {/* Zachowanie starej ścieżki dla kompatybilności */}
+                <Route
+                  path="/createlisting"
+                  element={<Navigate to="/create-listing" replace />}
                 />
                 <Route
                   path="/addlistingview"
-                  element={
-                    <ProtectedRoute>
-                      <AddListingView />
-                    </ProtectedRoute>
-                  }
+                  element={<Navigate to="/add-listing-view" replace />}
                 />
+                
+                {/* Szczegóły ogłoszenia */}
+                <Route path="/listing/:id" element={<ListingDetails />} />
 
                 {/* Konto użytkownika */}
                 <Route path="/register" element={<Register />} />
@@ -155,7 +183,7 @@ const App = () => {
                   <Route path="discounts" element={<AdminDiscounts />} />
                 </Route>
 
-                {/* Panel użytkownika - zmieniona ścieżka z "/user" na "/profil" */}
+                {/* Panel użytkownika */}
                 <Route
                   path="/profil"
                   element={

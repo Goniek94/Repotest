@@ -1,37 +1,117 @@
 // FeaturedListings.js
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom'; // używam Link z react-router-dom
+import { Link } from 'react-router-dom';
+import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 import api from '../../services/api';
 import MainFeatureListing from './MainFeatureListing';
 import SmallListingCard from './SmallListingCard';
 
 const FeaturedListings = () => {
   const [featuredListings, setFeaturedListings] = useState([]);
+  const [hotListings, setHotListings] = useState([]);
   const [normalListings, setNormalListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showLogoutMessage, setShowLogoutMessage] = useState(false);
+
+  // Funkcja do losowego mieszania tablicy (algorytm Fisher-Yates)
+  const shuffleArray = (array) => {
+    const newArray = [...array];
+    for (let i = newArray.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+    }
+    return newArray;
+  };
+
+  // Sprawdzenie, czy użytkownik właśnie został wylogowany
+  useEffect(() => {
+    const justLoggedOut = localStorage.getItem('justLoggedOut');
+    if (justLoggedOut === 'true') {
+      setShowLogoutMessage(true);
+      localStorage.removeItem('justLoggedOut');
+      
+      // Ukryj powiadomienie po 5 sekundach
+      const timer = setTimeout(() => {
+        setShowLogoutMessage(false);
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   useEffect(() => {
     const fetchListings = async () => {
       try {
         setLoading(true);
-        const response = await api.getListings();
         
-        // Pobieramy 2 ogłoszenia wyróżnione dla głównych kart
-        const mainFeatured = response.filter(ad => ad.featured).slice(0, 2);
+        // Dodaj parametr czasowy, aby uniknąć cachowania przeglądarki
+        const response = await fetch(`http://localhost:5000/api/ads?limit=30&t=${Date.now()}`);
+        const data = await response.json();
         
-        // Pobieramy 4 ogłoszenia dla mniejszych kart
-        const secondaryFeatured = response.filter(ad => ad.featured).slice(2, 6);
+        if (!data || !data.ads) {
+          throw new Error('Nieprawidłowa odpowiedź API');
+        }
         
-        // Pobieramy 6 normalnych ogłoszeń
-        const normalOnes = response.filter(ad => !ad.featured).slice(0, 6);
-
-        setFeaturedListings([...mainFeatured, ...secondaryFeatured]);
-        setNormalListings(normalOnes);
+        console.log('Pobrano dane z API:', data);
+        
+        // Filtrowanie ogłoszeń
+        const allListings = data.ads || [];
+        // Tasujemy (losowe mieszanie) array z wyróżnionymi ogłoszeniami
+        const featured = shuffleArray(allListings.filter(ad => ad.listingType === 'wyróżnione'));
+        // Tasujemy array z normalnymi ogłoszeniami  
+        const normal = shuffleArray(allListings.filter(ad => ad.listingType !== 'wyróżnione'));
+        
+        console.log(`Znaleziono ${featured.length} wyróżnionych i ${normal.length} standardowych ogłoszeń`);
+        
+        // Podział ogłoszeń na wyróżnione główne, gorące oferty i standardowe
+        // Jeśli nie ma wystarczająco wyróżnionych, używamy standardowych
+        let mainFeatured, hotOffers;
+        
+        if (featured.length >= 6) {
+          // Mamy wystarczająco wyróżnionych
+          mainFeatured = featured.slice(0, 2);
+          hotOffers = featured.slice(2, 6);
+        } else if (featured.length >= 2) {
+          // Mamy tylko na główne wyróżnione
+          mainFeatured = featured.slice(0, 2);
+          // Uzupełnij "gorące oferty" normalnymi
+          hotOffers = normal.slice(0, 4);
+        } else {
+          // Za mało nawet na główne wyróżnione
+          mainFeatured = [...featured, ...normal.slice(0, 2 - featured.length)];
+          hotOffers = normal.slice(2 - featured.length, 6 - featured.length);
+        }
+        
+        // Reszta normalnych ogłoszeń (upewnij się, że nie używasz tych samych co w hotOffers)
+        const usedIds = [...mainFeatured, ...hotOffers].map(ad => ad._id);
+        const remainingNormal = normal.filter(ad => !usedIds.includes(ad._id)).slice(0, 6);
+        
+        // Aktualizacja stanu
+        setFeaturedListings(mainFeatured);
+        setHotListings(hotOffers);
+        setNormalListings(remainingNormal);
         setError(null);
       } catch (err) {
+        console.error('Błąd pobierania danych:', err);
         setError('Nie udało się załadować ogłoszeń');
-        console.error(err);
+        
+        // Fallback do mockowanych danych w przypadku błędu
+        try {
+          const mockedData = await api.getListings();
+          
+          // Tasujemy mockowane dane
+          const allMocked = shuffleArray(mockedData);
+          const mainFeatured = allMocked.filter(ad => ad.featured).slice(0, 2);
+          const hotOffers = allMocked.filter(ad => ad.featured).slice(2, 6);
+          const normalOnes = allMocked.filter(ad => !ad.featured).slice(0, 6);
+
+          setFeaturedListings(mainFeatured);
+          setHotListings(hotOffers);
+          setNormalListings(normalOnes);
+        } catch (fallbackErr) {
+          console.error('Również błąd z danymi zapasowymi:', fallbackErr);
+        }
       } finally {
         setLoading(false);
       }
@@ -58,6 +138,20 @@ const FeaturedListings = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen">
+      {/* Komunikat o wylogowaniu */}
+      {showLogoutMessage && (
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 bg-green-100 border border-green-400 text-green-700 px-6 py-3 rounded shadow-lg flex items-center">
+          <FaCheckCircle className="text-green-500 mr-2" />
+          <span>Zostałeś pomyślnie wylogowany</span>
+          <button 
+            onClick={() => setShowLogoutMessage(false)}
+            className="ml-4 text-green-800 hover:text-green-900 focus:outline-none"
+          >
+            <FaTimesCircle />
+          </button>
+        </div>
+      )}
+      
       <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-8">
         <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-gray-800 mb-4 sm:mb-6 md:mb-8">
           OGŁOSZENIA
@@ -66,14 +160,14 @@ const FeaturedListings = () => {
 
         {/* 2 duże ogłoszenia */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          {featuredListings.slice(0, 2).map((listing) => (
+          {featuredListings.map((listing) => (
             <MainFeatureListing key={listing._id} listing={listing} />
           ))}
         </div>
         
-        {/* 4 mniejsze ogłoszenia */}
+        {/* 4 mniejsze ogłoszenia - "gorące oferty" */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          {featuredListings.slice(2, 6).map((listing) => (
+          {hotListings.map((listing) => (
             <SmallListingCard 
               key={listing._id} 
               listing={listing} 
@@ -87,14 +181,14 @@ const FeaturedListings = () => {
           <span className="text-xl text-gray-400">Miejsce na reklamę</span>
         </div>
         
-        {/* 6 małych ogłoszeń */}
+        {/* 6 małych ogłoszeń - standardowe */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
           {normalListings.map((listing) => (
             <SmallListingCard key={listing._id} listing={listing} />
           ))}
         </div>
 
-        {/* Nowy przycisk na dole sekcji */}
+        {/* Przycisk na dole sekcji */}
         <div className="flex justify-center mt-8">
           <Link
             to="/listings"

@@ -40,22 +40,19 @@ const LoginModal = ({ isOpen, onClose }) => {
         return;
       }
 
-      console.log('LoginModal - próba logowania');
-      // Prawdziwe logowanie
+      // Logowanie
       await login(email, password);
-      console.log('Logowanie udane');
 
       // Przekierowanie po zalogowaniu
       if (window.location.pathname === '/login') {
         const returnPath = location.state?.from || '/';
-        console.log('Przekierowuję do:', returnPath);
         navigate(returnPath, { replace: true });
       }
 
       if (onClose) onClose();
     } catch (err) {
-      console.error("Błąd logowania:", err);
-      setError(typeof err === 'string' ? err : 'Wystąpił błąd podczas logowania. Spróbuj ponownie.');
+      // Użyj ustandaryzowanego komunikatu błędu
+      setError(err.message || 'Wystąpił błąd podczas logowania. Spróbuj ponownie.');
     } finally {
       setLoading(false);
     }
@@ -101,7 +98,8 @@ const LoginModal = ({ isOpen, onClose }) => {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-[2px] focus:outline-none focus:border-[#35530A] focus:ring-1 focus:ring-[#35530A]"
+              className="w-full p-2 border border-gray-300 rounded-[2px] focus:outline-none
+focus:border-[#35530A] focus:ring-1 focus:ring-[#35530A]"
               placeholder="Podaj swój email"
             />
           </div>
@@ -109,8 +107,8 @@ const LoginModal = ({ isOpen, onClose }) => {
           <div>
             <label className="block text-sm font-medium mb-1 uppercase text-gray-700">
               Hasło
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={toggleInfoBox}
                 className="ml-1 text-gray-500 hover:text-[#35530A] focus:outline-none"
                 aria-label="Informacje o haśle"
@@ -121,7 +119,8 @@ const LoginModal = ({ isOpen, onClose }) => {
 
             {showInfo && (
               <div className="mb-2 p-2 bg-blue-50 text-sm rounded text-blue-800 border border-blue-200">
-                <p>Hasło musi zawierać co najmniej 8 znaków, w tym jedną wielką literę, jedną cyfrę i jeden znak specjalny.</p>
+                <p>Hasło musi zawierać co najmniej 8 znaków, w tym jedną wielką literę, jedną cyfrę i jeden znak
+specjalny.</p>
               </div>
             )}
 
@@ -130,13 +129,15 @@ const LoginModal = ({ isOpen, onClose }) => {
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-[2px] focus:outline-none focus:border-[#35530A] focus:ring-1 focus:ring-[#35530A]"
+                className="w-full p-2 border border-gray-300 rounded-[2px] focus:outline-none
+focus:border-[#35530A] focus:ring-1 focus:ring-[#35530A]"
                 placeholder="Podaj hasło"
               />
               <button
                 type="button"
                 onClick={togglePasswordVisibility}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-[#35530A] focus:outline-none"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-[#35530A]
+ focus:outline-none"
               >
                 {showPassword ? <FaEyeSlash /> : <FaEye />}
               </button>
@@ -159,7 +160,8 @@ const LoginModal = ({ isOpen, onClose }) => {
           <button
             type="submit"
             disabled={loading}
-            className={`w-full bg-[#35530A] text-white py-3 rounded-[2px] uppercase text-base font-semibold hover:bg-[#2D4A06] transition-colors ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+            className={`w-full bg-[#35530A] text-white py-3 rounded-[2px] uppercase text-base font-semibold
+hover:bg-[#2D4A06] transition-colors ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
           >
             {loading ? 'Logowanie...' : 'Zaloguj się'}
           </button>
@@ -175,7 +177,8 @@ const LoginModal = ({ isOpen, onClose }) => {
 
           <button
             type="button"
-            className="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 py-3 rounded-[2px] uppercase text-base font-semibold hover:bg-gray-50 transition-colors"
+            className="w-full flex items-center justify-center gap-2 bg-white border border-gray-300
+text-gray-700 py-3 rounded-[2px] uppercase text-base font-semibold hover:bg-gray-50 transition-colors"
           >
             <FaGoogle className="text-red-600" />
             Zaloguj przez Google

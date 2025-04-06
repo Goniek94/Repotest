@@ -1,235 +1,459 @@
-const mockListings = [
-  {
-    _id: '1',
-    title: 'BMW M5 Competition',
-    description: 'Samochód w idealnym stanie technicznym, pierwszy właściciel',
-    price: 450000,
-    year: 2021,
-    mileage: 25000,
-    fuelType: 'Benzyna',
-    power: '625 KM',
-    transmission: 'Automatyczna',
-    capacity: 4400,
-    featured: true,
-    images: ['/images/auto-788747_1280.jpg']
-  },
-  {
-    _id: '2',
-    title: 'Audi RS6 Avant',
-    description: 'Bezwypadkowy, serwisowany w ASO, gwarancja',
-    price: 520000,
-    year: 2022,
-    mileage: 15000,
-    fuelType: 'Benzyna',
-    power: '600 KM',
-    transmission: 'Automatyczna',
-    capacity: 4000,
-    featured: true,
-    images: ['/images/car-1880381_640.jpg']
-  },
-  {
-    _id: '3',
-    title: 'Mercedes AMG GT',
-    description: 'Pierwszy właściciel, książka serwisowa, idealny stan',
-    price: 650000,
-    year: 2023,
-    mileage: 5000,
-    fuelType: 'Benzyna',
-    power: '585 KM',
-    transmission: 'Automatyczna',
-    capacity: 4000,
-    featured: true,
-    images: ['/images/car-932455_1920.jpg']
-  },
-  {
-    _id: '4',
-    title: 'Porsche 911 Carrera',
-    description: 'Udokumentowana historia, pakiet Sport Chrono, ceramiczne hamulce',
-    price: 720000,
-    year: 2022,
-    mileage: 12000,
-    fuelType: 'Benzyna',
-    power: '450 KM',
-    transmission: 'PDK',
-    capacity: 3000,
-    featured: true,
-    images: ['/images/car-2616096_640.jpg']
-  },
-  {
-    _id: '5',
-    title: 'Ferrari 488 GTB',
-    description: 'Pełna historia serwisowa, pakiet wyścigowy, stan kolekcjonerski',
-    price: 1250000,
-    year: 2020,
-    mileage: 8500,
-    fuelType: 'Benzyna',
-    power: '670 KM',
-    transmission: 'Automatyczna',
-    capacity: 3900,
-    featured: true,
-    images: ['/images/automobile-1834278_640.jpg']
-  },
-  {
-    _id: '6',
-    title: 'Lamborghini Huracan',
-    description: 'Edycja limitowana, oryginalne wyposażenie, jeden właściciel',
-    price: 1450000,
-    year: 2021,
-    mileage: 5500,
-    fuelType: 'Benzyna',
-    power: '640 KM',
-    transmission: 'Automatyczna',
-    capacity: 5200,
-    featured: true,
-    images: ['/images/road-6745746_1920.jpg']
-  },
-  {
-    _id: '7',
-    title: 'Dodge Challenger SRT Hellcat',
-    description: 'Stan idealny, sprowadzony z USA, pełna dokumentacja',
-    price: 350000,
-    year: 2022,
-    mileage: 20000,
-    fuelType: 'Benzyna',
-    power: '717 KM',
-    transmission: 'Automatyczna',
-    capacity: 6200,
-    featured: false,
-    images: ['/images/challenger-5880009_1920.jpg']
-  },
-  {
-    _id: '8',
-    title: 'Ford Mustang GT',
-    description: 'V8, manualna skrzynia, bezwypadkowy',
-    price: 280000,
-    year: 2021,
-    mileage: 35000,
-    fuelType: 'Benzyna',
-    power: '450 KM',
-    transmission: 'Manualna',
-    capacity: 5000,
-    featured: false,
-    images: ['/images/dodge-challenger-8214392_1280.jpg']
-  },
-  {
-    _id: '9',
-    title: 'Toyota GR Yaris',
-    description: 'Limitowana edycja, stan salonowy',
-    price: 180000,
-    year: 2022,
-    mileage: 12000,
-    fuelType: 'Benzyna',
-    power: '261 KM',
-    transmission: 'Manualna',
-    capacity: 1600,
-    featured: false,
-    images: ['/images/toyota-gr-yaris-6751752_640.jpg']
-  },
-  {
-    _id: '10',
-    title: 'BMW M4 Competition',
-    description: 'M Performance Parts, ceramic brakes',
-    price: 520000,
-    year: 2022,
-    mileage: 18000,
-    fuelType: 'Benzyna',
-    power: '510 KM',
-    transmission: 'Automatyczna',
-    capacity: 3000,
-    featured: false,
-    images: ['/images/auto-788747_1280.jpg']
-  },
-  {
-    _id: '11',
-    title: 'Audi RS e-tron GT',
-    description: 'W pełni elektryczny, najwyższa wersja',
-    price: 650000,
-    year: 2023,
-    mileage: 8000,
-    fuelType: 'Elektryczny',
-    power: '646 KM',
-    transmission: 'Automatyczna',
-    capacity: 0,
-    featured: false,
-    images: ['/images/automobile-1834278_640.jpg']
-  },
-  {
-    _id: '12',
-    title: 'Mercedes C63 AMG',
-    description: 'AMG Performance Package, ceramika',
-    price: 420000,
-    year: 2022,
-    mileage: 25000,
-    fuelType: 'Benzyna',
-    power: '510 KM',
-    transmission: 'Automatyczna',
-    capacity: 4000,
-    featured: false,
-    images: ['/images/mercedes-benz-841465_1920.jpg']
-  },
-  {
-    _id: '13',
-    title: 'BMW M8 Competition',
-    description: 'Individual, pełne wyposażenie',
-    price: 750000,
-    year: 2023,
-    mileage: 10000,
-    fuelType: 'Benzyna',
-    power: '625 KM',
-    transmission: 'Automatyczna',
-    capacity: 4400,
-    featured: false,
-    images: ['/images/road-6745746_1920.jpg']
-  },
-  {
-    _id: '14',
-    title: 'Porsche Cayman GT4 RS',
-    description: 'Kolekcjonerski egzemplarz, bez przebiegu',
-    price: 850000,
-    year: 2023,
-    mileage: 1000,
-    fuelType: 'Benzyna',
-    power: '500 KM',
-    transmission: 'PDK',
-    capacity: 4000,
-    featured: false,
-    images: ['/images/challenger-5880009_1920.jpg']
-  },
-  {
-    _id: '15',
-    title: 'Nissan GT-R Nismo',
-    description: 'Limitowana wersja Nismo, unikatowy egzemplarz',
-    price: 680000,
-    year: 2021,
-    mileage: 15000,
-    fuelType: 'Benzyna',
-    power: '600 KM',
-    transmission: 'Automatyczna',
-    capacity: 3800,
-    featured: false,
-    images: ['/images/car-1880381_640.jpg']
-  },
-  {
-    _id: '16',
-    title: 'Tesla Model S Plaid',
-    description: 'Najszybsza wersja, pełna autonomia',
-    price: 560000,
-    year: 2023,
-    mileage: 5000,
-    fuelType: 'Elektryczny',
-    power: '1020 KM',
-    transmission: 'Automatyczna',
-    capacity: 0,
-    featured: false,
-    images: ['/images/car-2616096_640.jpg']
+// src/services/api.js
+import axios from 'axios';
+
+// Konfiguracja podstawowa axios
+const axiosInstance = axios.create({
+  baseURL: 'http://localhost:5000/api', // Zmieniony adres na port 5000
+  timeout: 30000, // 30 sekund
+  headers: {
+    'Content-Type': 'application/json'
   }
-];
+});
+
+// Interceptor do obsługi tokena autoryzacji
+axiosInstance.interceptors.request.use(config => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  
+  // Jeśli przesyłamy FormData, nie ustawiaj Content-Type, axios zrobi to automatycznie z boundary
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type'];
+  }
+  
+  return config;
+}, error => {
+  return Promise.reject(error);
+});
 
 const api = {
-  getListings: async () => {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return mockListings;
-  }
+  /**
+   * Pobieranie ogłoszeń
+   * @param {Object} params - Parametry zapytania (filtry, strona, limit)
+   * @returns {Promise<Object>} - Lista ogłoszeń z metadanymi
+   */
+  getListings: async (params = {}) => {
+    try {
+      const response = await axiosInstance.get('/ads', { params });
+      return response.data;
+    } catch (error) {
+      console.error('Błąd podczas pobierania ogłoszeń:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Wyszukiwanie ogłoszeń z zaawansowanymi filtrami
+   * @param {Object} params - Parametry wyszukiwania
+   * @returns {Promise<Object>} - Wyniki wyszukiwania z metadanymi
+   */
+  searchListings: async (params = {}) => {
+    try {
+      const response = await axiosInstance.get('/ads/search', { params });
+      return response.data;
+    } catch (error) {
+      console.error('Błąd podczas wyszukiwania ogłoszeń:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Dodawanie nowego ogłoszenia
+   * @param {FormData} formData - Dane formularza z ogłoszeniem i zdjęciami
+   * @returns {Promise<Object>} - Dodane ogłoszenie
+   */
+  addListing: async (formData) => {
+    try {
+      console.log('API: Wysyłanie formData do endpointu /ads/add');
+      
+      // Sprawdź czy to jest obiekt FormData
+      if (!(formData instanceof FormData)) {
+        throw new Error('Nieprawidłowy format danych - wymagany FormData');
+      }
+      
+      // Debugowanie - pokaż ilość plików
+      let fileCount = 0;
+      for (let [key, value] of formData.entries()) {
+        if (key === 'images') {
+          fileCount++;
+          console.log(`FormData zawiera plik: ${value.name || 'bez nazwy'}`);
+        }
+      }
+      console.log(`Łączna liczba plików w FormData: ${fileCount}`);
+      
+      const response = await axiosInstance.post('/ads/add', formData);
+      return response.data;
+    } catch (error) {
+      console.error('Błąd podczas dodawania ogłoszenia:', error);
+      
+      // Szczegółowa obsługa błędów
+      if (error.response) {
+        console.error('Status odpowiedzi:', error.response.status);
+       console.error('Dane odpowiedzi:', error.response.data);
+     } else if (error.request) {
+       console.error('Brak odpowiedzi od serwera:', error.request);
+     }
+     
+     throw error;
+   }
+ },
+
+ /**
+  * Pobieranie szczegółów ogłoszenia
+  * @param {string} id - ID ogłoszenia
+  * @returns {Promise<Object>} - Szczegóły ogłoszenia
+  */
+ getListing: async (id) => {
+   try {
+     const response = await axiosInstance.get(`/ads/${id}`);
+     return response.data;
+   } catch (error) {
+     console.error('Błąd podczas pobierania szczegółów ogłoszenia:', error);
+     throw error;
+   }
+ },
+
+ /**
+  * Aktualizacja statusu ogłoszenia
+  * @param {string} adId - ID ogłoszenia
+  * @param {string} status - Nowy status
+  * @returns {Promise<Object>} - Zaktualizowane ogłoszenie
+  */
+ updateAdStatus: async (adId, status) => {
+   try {
+     const response = await axiosInstance.put(`/ads/${adId}/status`, { status });
+     return response.data;
+   } catch (error) {
+     console.error('Błąd podczas aktualizacji statusu ogłoszenia:', error);
+     throw error;
+   }
+ },
+
+ /**
+  * Pobieranie rotowanych ogłoszeń dla strony głównej
+  * @returns {Promise<Object>} - Ogłoszenia podzielone na kategorie
+  */
+ getRotatedListings: async () => {
+   try {
+     const response = await axiosInstance.get('/ads/rotated');
+     return response.data;
+   } catch (error) {
+     console.error('Błąd podczas pobierania rotowanych ogłoszeń:', error);
+     throw error;
+   }
+ },
+
+ /**
+  * Pobieranie dostępnych marek pojazdów
+  * @returns {Promise<Array>} - Lista marek
+  */
+ getBrands: async () => {
+   try {
+     const response = await axiosInstance.get('/ads/brands');
+     return response.data;
+   } catch (error) {
+     console.error('Błąd podczas pobierania marek:', error);
+     throw error;
+   }
+ },
+
+ /**
+  * Pobieranie modeli dla wybranej marki
+  * @param {string} brand - Nazwa marki
+  * @returns {Promise<Array>} - Lista modeli
+  */
+ getModels: async (brand) => {
+   try {
+     const response = await axiosInstance.get('/ads/models', { params: { brand } });
+     return response.data;
+   } catch (error) {
+     console.error('Błąd podczas pobierania modeli:', error);
+     throw error;
+   }
+ },
+
+ /**
+  * Dodanie ogłoszenia do ulubionych
+  * @param {string} adId - ID ogłoszenia
+  * @returns {Promise<Object>} - Informacja o dodaniu do ulubionych
+  */
+ addToFavorites: async (adId) => {
+   try {
+     const response = await axiosInstance.post(`/favorites/add/${adId}`);
+     return response.data;
+   } catch (error) {
+     console.error('Błąd podczas dodawania do ulubionych:', error);
+     throw error;
+   }
+ },
+
+ /**
+  * Usunięcie ogłoszenia z ulubionych
+  * @param {string} adId - ID ogłoszenia
+  * @returns {Promise<Object>} - Informacja o usunięciu z ulubionych
+  */
+ removeFromFavorites: async (adId) => {
+   try {
+     const response = await axiosInstance.delete(`/favorites/remove/${adId}`);
+     return response.data;
+   } catch (error) {
+     console.error('Błąd podczas usuwania z ulubionych:', error);
+     throw error;
+   }
+ },
+
+ /**
+  * Przełączanie statusu ulubionego ogłoszenia
+  * @param {string} adId - ID ogłoszenia
+  * @returns {Promise<Object>} - Informacja o zmianie statusu
+  */
+ toggleFavorite: async (adId) => {
+   try {
+     const response = await axiosInstance.post(`/favorites/toggle/${adId}`);
+     return response.data;
+   } catch (error) {
+     console.error('Błąd podczas przełączania ulubionego:', error);
+     throw error;
+   }
+ },
+
+ /**
+  * Pobieranie danych pojazdu po numerze VIN
+  * @param {string} vin - Numer VIN pojazdu
+  * @returns {Promise<Object>} - Dane pojazdu
+  */
+ getVehicleDataByVin: async (vin) => {
+   try {
+     // W trybie rozwojowym, zwracamy mockowe dane
+     if (process.env.NODE_ENV === 'development') {
+       console.log('Symulacja pobierania danych VIN w trybie development');
+       
+       // Opóźnienie dla symulacji rzeczywistego zapytania
+       await new Promise(resolve => setTimeout(resolve, 1500));
+       
+       // Przykładowe dane dla testów
+       return {
+         brand: 'Volkswagen',
+         model: 'Golf',
+         generation: 'VII',
+         version: '1.4 TSI',
+         condition: 'Używany',
+         productionYear: 2018,
+         engineSize: 1395,
+         power: 125,
+         fuelType: 'Benzyna',
+         transmission: 'Manualna',
+         drive: 'Przedni',
+         mileage: 78500,
+         accidentStatus: 'Bezwypadkowy',
+         damageStatus: 'Nieuszkodzony',
+         countryOfOrigin: 'Niemcy'
+       };
+     }
+     
+     // W produkcji, wykonujemy rzeczywiste zapytanie
+     const response = await axiosInstance.get(`/vehicle/vin/${vin}`);
+     return response.data;
+   } catch (error) {
+     console.error('Błąd podczas pobierania danych VIN:', error);
+     throw error;
+   }
+ },
+
+ /**
+  * Walidacja płatności (integracja z systemem płatności)
+  * @param {Object} paymentData - Dane płatności
+  * @returns {Promise<Object>} - Status płatności
+  */
+ processPayment: async (paymentData) => {
+   try {
+     const response = await axiosInstance.post('/payments/process', paymentData);
+     return response.data;
+   } catch (error) {
+     console.error('Błąd podczas przetwarzania płatności:', error);
+     throw error;
+   }
+ },
+
+ /**
+  * Weryfikacja statusu płatności
+  * @param {string} paymentId - ID płatności
+  * @returns {Promise<Object>} - Status płatności
+  */
+ checkPaymentStatus: async (paymentId) => {
+   try {
+     const response = await axiosInstance.get(`/payments/status/${paymentId}`);
+     return response.data;
+   } catch (error) {
+     console.error('Błąd podczas sprawdzania statusu płatności:', error);
+     throw error;
+   }
+ },
+ 
+ /**
+  * Odświeżanie rotacji ogłoszeń (tylko dla zalogowanych użytkowników)
+  * @returns {Promise<Object>} - Nowe rotowane ogłoszenia
+  */
+ refreshRotatedListings: async () => {
+   try {
+     const response = await axiosInstance.post('/ads/rotated/refresh');
+     return response.data;
+   } catch (error) {
+     console.error('Błąd podczas odświeżania rotacji ogłoszeń:', error);
+     throw error;
+   }
+ },
+
+ /**
+  * Pobieranie ogłoszeń użytkownika
+  * @returns {Promise<Array>} - Lista ogłoszeń użytkownika
+  */
+ getUserListings: async () => {
+   try {
+     // Zmieniona ścieżka z /api/auth/my-listings na /api/users/my-listings
+     const response = await axiosInstance.get('/api/users/my-listings');
+     return response.data;
+   } catch (error) {
+     const errorMessage = error.response?.data?.message || 'Błąd podczas pobierania ogłoszeń użytkownika';
+     throw new Error(errorMessage);
+   }
+ },
+ 
+ /**
+  * Pobieranie ulubionych ogłoszeń użytkownika
+  * @returns {Promise<Array>} - Lista ulubionych ogłoszeń
+  */
+ getUserFavorites: async () => {
+   try {
+     // Zmieniona ścieżka z /api/auth/favorites na /api/users/favorites
+     const response = await axiosInstance.get('/api/users/favorites');
+     return response.data;
+   } catch (error) {
+     const errorMessage = error.response?.data?.message || 'Błąd podczas pobierania ulubionych ogłoszeń';
+     throw new Error(errorMessage);
+   }
+ },
+
+ /**
+  * Rejestracja nowego użytkownika
+  * @param {Object} userData - Dane nowego użytkownika
+  * @returns {Promise<Object>} - Dane utworzonego użytkownika i token
+  */
+ register: async (userData) => {
+   try {
+     // Zmieniona ścieżka z /api/auth/register na /api/users/register
+     const response = await axiosInstance.post('/api/users/register', userData);
+     
+     // Zapisz dane użytkownika do localStorage
+     // Token przechowywany jest w HttpOnly cookie
+     if (response.data.user) {
+       localStorage.setItem('user', JSON.stringify(response.data.user));
+     }
+     
+     return response.data;
+   } catch (error) {
+     const errorMessage = error.response?.data?.message || 'Błąd podczas rejestracji';
+     throw new Error(errorMessage);
+   }
+ },
+
+ /**
+  * Logowanie użytkownika
+  * @param {Object} credentials - Dane logowania (email, hasło)
+  * @returns {Promise<Object>} - Dane użytkownika i token
+  */
+ login: async (credentials) => {
+   try {
+     // Zmieniona ścieżka z /api/auth/login na /api/users/login
+     const response = await axiosInstance.post('/api/users/login', credentials);
+     
+     // Zapisz dane użytkownika do localStorage
+     // Token przechowywany jest w HttpOnly cookie
+     if (response.data.user) {
+       localStorage.setItem('user', JSON.stringify(response.data.user));
+     }
+     
+     return response.data;
+   } catch (error) {
+     // Ustandaryzowany obiekt błędu z czytelnym komunikatem
+     const errorMessage = error.response?.data?.message || 'Błąd podczas logowania';
+     throw new Error(errorMessage);
+   }
+ },
+
+ /**
+  * Wylogowanie użytkownika
+  * @returns {Promise<void>}
+  */
+ logout: async () => {
+   try {
+     // Wywołanie endpointu logout, który usunie HttpOnly cookie
+     // Zmieniona ścieżka z /api/auth/logout na /api/users/logout
+     await axiosInstance.post('/api/users/logout');
+   } catch (error) {
+     // Ignorujemy ewentualne błędy podczas wylogowywania
+   } finally {
+     // Czyścimy lokalnie przechowywane dane
+     localStorage.removeItem('user');
+     return Promise.resolve();
+   }
+ },
+
+ /**
+  * Sprawdzenie czy użytkownik jest zalogowany
+  * @returns {boolean} - Status zalogowania
+  */
+ isLoggedIn: () => {
+   return !!localStorage.getItem('token');
+ },
+
+ /**
+  * Pobranie danych zalogowanego użytkownika
+  * @returns {Object|null} - Dane użytkownika lub null
+  */
+ getCurrentUser: () => {
+   const userStr = localStorage.getItem('user');
+   return userStr ? JSON.parse(userStr) : null;
+ },
+
+ /**
+  * Aktualizacja danych użytkownika
+  * @param {Object} userData - Nowe dane użytkownika
+  * @returns {Promise<Object>} - Zaktualizowane dane
+  */
+ updateUserProfile: async (userData) => {
+   try {
+     // Zmieniona ścieżka z /api/auth/profile na /api/users/profile
+     const response = await axiosInstance.put('/api/users/profile', userData);
+     
+     // Aktualizuj dane użytkownika w localStorage
+     if (response.data.user) {
+       localStorage.setItem('user', JSON.stringify(response.data.user));
+     }
+     
+     return response.data;
+   } catch (error) {
+     const errorMessage = error.response?.data?.message || 'Błąd podczas aktualizacji profilu';
+     throw new Error(errorMessage);
+   }
+ },
+
+ /**
+  * Zmiana hasła użytkownika
+  * @param {Object} passwordData - Stare i nowe hasło
+  * @returns {Promise<Object>} - Informacja o zmianie hasła
+  */
+ changePassword: async (passwordData) => {
+   try {
+     // Zmieniona ścieżka z /api/auth/change-password na /api/users/change-password
+     const response = await axiosInstance.put('/api/users/change-password', passwordData);
+     return response.data;
+   } catch (error) {
+     const errorMessage = error.response?.data?.message || 'Błąd podczas zmiany hasła';
+     throw new Error(errorMessage);
+   }
+ }
 };
 
 export default api;

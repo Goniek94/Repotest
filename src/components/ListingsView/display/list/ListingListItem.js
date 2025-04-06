@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { 
   MapPin, 
   Heart,
@@ -13,19 +13,22 @@ import {
   Medal
 } from 'lucide-react';
 
-const ListItem = ({ 
+const ListItem = memo(({ 
   listing, 
   onNavigate, 
   onFavorite, 
   isFavorite, 
   message 
 }) => {
+  // Sprawdzamy, czy ogłoszenie jest wyróżnione
+  const isFeatured = listing.featured || listing.listingType === 'wyróżnione';
+  
   return (
     <div
       onClick={() => onNavigate(listing.id)}
       className={`bg-white rounded-[2px] shadow-md overflow-hidden cursor-pointer 
                   hover:shadow-xl transition-all duration-300 relative group
-                  ${listing.featured ? 'border-l-4 border-[#35530A]' : 'border border-gray-200'}`}
+                  ${isFeatured ? 'border-l-4 border-[#35530A]' : 'border border-gray-200'}`}
     >
       <div className="flex flex-col sm:flex-row h-full">
         {/* Zdjęcie */}
@@ -35,6 +38,10 @@ const ListItem = ({
             alt={listing.title}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             loading="lazy"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = '/images/auto-788747_1280.jpg';
+            }}
           />
           {/* Serduszko na zdjęciu */}
           <button
@@ -49,7 +56,7 @@ const ListItem = ({
               className={`w-6 h-6 ${isFavorite ? 'fill-red-500 stroke-red-500' : 'stroke-gray-400'}`}
             />
           </button>
-          {listing.featured && (
+          {isFeatured && (
             <div className="absolute top-3 left-3 bg-[#35530A] text-white px-3 py-1.5 text-sm rounded-[2px] font-medium flex items-center gap-1.5 shadow-lg">
               <Medal className="w-4 h-4" />
               WYRÓŻNIONE
@@ -163,6 +170,6 @@ const ListItem = ({
       )}
     </div>
   );
-};
+});
 
 export default ListItem;
