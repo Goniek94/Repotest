@@ -29,28 +29,50 @@ import AdminComments from './components/comments/admin/AdminComments';
 import AdminDiscounts from './components/discounts/admin/AdminDiscounts';
 
 // Komponenty profilu użytkownika
-import UserDashboard from './components/profil/UserDashboard';
-import Messages from './components/profil/Messages';
-import Notifications from './components/profil/Notifications';
-import Transactions from './components/profil/Transactions';
-import Stats from './components/profil/Stats';
-import UserListings from './components/profil/UserListings';
-import UserFavorites from './components/profil/Favorites';
-import Settings from './components/profil/Settings';
+import UserPanel from './components/UserPanel';
+import Messages from './components/profil/messages/Messages';
+import UserListings from './components/profil/listings/UserListings';
+import UserSettings from './components/profil/settings/UserSettings';
+import EditListing from './components/profil/listings/EditListing';
+import TransactionHistory from './components/profil/TransactionHistory';
+import Notifications from './components/profil/notifications/Notifications';
 import { useAuth } from './contexts/AuthContext';
 
-// Ulepszony komponent dla tras chronionych
+// Ulepszony komponent dla tras chronionych z ograniczeniem zapętlenia
 const ProtectedRoute = ({ children, requireAdmin = false }) => {
   const { user, isAuthenticated, loading } = useAuth();
   const location = useLocation();
   
-  // Logowanie dla debugowania
-  console.log('ProtectedRoute sprawdzanie:', { 
-    isAuthenticated, 
-    user: !!user,
-    path: location.pathname,
-    token: localStorage.getItem('token') ? 'Istnieje' : 'Brak'
+  // Używamy useRef zamiast stanu, aby przechować informację o ostatnim sprawdzeniu
+  // bez powodowania ponownego renderowania
+  const lastCheckRef = React.useRef({
+    isAuthenticated: null,
+    userId: null,
+    path: null
   });
+  
+  // Sprawdzamy, czy status uwierzytelnienia się zmienił
+  const hasAuthChanged = 
+    lastCheckRef.current.isAuthenticated !== isAuthenticated ||
+    lastCheckRef.current.userId !== (user?.userId || null) ||
+    lastCheckRef.current.path !== location.pathname;
+  
+  // Aktualizujemy referencję tylko gdy autentykacja się zmieniła
+  if (hasAuthChanged) {
+    lastCheckRef.current = {
+      isAuthenticated,
+      userId: user?.userId || null,
+      path: location.pathname
+    };
+    
+    // Logowanie tylko gdy faktycznie zmieniła się autentykacja lub ścieżka
+    console.log('ProtectedRoute sprawdzanie:', { 
+      isAuthenticated, 
+      user: !!user,
+      path: location.pathname,
+      token: localStorage.getItem('token') ? 'Istnieje' : 'Brak'
+    });
+  }
 
   if (loading) {
     return (
@@ -103,6 +125,11 @@ const AddListingViewWithProvider = () => (
 );
 
 const App = () => {
+  React.useEffect(() => {
+    // Automatyczne wylogowanie przy wejściu na stronę (czyści cookie)
+    fetch('/api/users/logout', { method: 'POST', credentials: 'include' });
+  }, []);
+
   return (
     <AuthProvider>
       <FavoritesProvider>
@@ -188,7 +215,7 @@ const App = () => {
                   path="/profil"
                   element={
                     <ProtectedRoute>
-                      <UserDashboard />
+                      <UserPanel />
                     </ProtectedRoute>
                   }
                 />
@@ -209,18 +236,18 @@ const App = () => {
                   }
                 />
                 <Route
-                  path="/profil/transactions"
+                  path="/profil/messages"
                   element={
                     <ProtectedRoute>
-                      <Transactions />
+                      <Messages />
                     </ProtectedRoute>
                   }
                 />
                 <Route
-                  path="/profil/stats"
+                  path="/profil/transactions"
                   element={
                     <ProtectedRoute>
-                      <Stats />
+                      <TransactionHistory />
                     </ProtectedRoute>
                   }
                 />
@@ -232,19 +259,19 @@ const App = () => {
                     </ProtectedRoute>
                   }
                 />
+<Route
+  path="/profil/settings"
+  element={
+    <ProtectedRoute>
+      <UserSettings />
+    </ProtectedRoute>
+  }
+/>
                 <Route
-                  path="/profil/favorites"
+                  path="/edytuj-ogloszenie/:id"
                   element={
                     <ProtectedRoute>
-                      <UserFavorites />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/profil/settings"
-                  element={
-                    <ProtectedRoute>
-                      <Settings />
+                      <EditListing />
                     </ProtectedRoute>
                   }
                 />

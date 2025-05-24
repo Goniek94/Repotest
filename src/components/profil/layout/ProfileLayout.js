@@ -1,5 +1,5 @@
 import React from 'react';
-import UserNavigation from './UserNavigation';
+import UserNavigation from '../layout/UserNavigation';
 
 /**
  * Layout profilu użytkownika z nawigacją górną.

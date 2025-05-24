@@ -45,52 +45,17 @@ const FeaturedListings = () => {
       try {
         setLoading(true);
         
-        // Dodaj parametr czasowy, aby uniknąć cachowania przeglądarki
-        const response = await fetch(`http://localhost:5000/api/ads?limit=30&t=${Date.now()}`);
+        // Pobieranie ogłoszeń z dedykowanego endpointu rotacji
+        const response = await fetch(`http://localhost:5000/api/ads/rotated?t=${Date.now()}`);
         const data = await response.json();
-        
-        if (!data || !data.ads) {
+
+        if (!data || !data.featured || !data.hot || !data.regular) {
           throw new Error('Nieprawidłowa odpowiedź API');
         }
-        
-        console.log('Pobrano dane z API:', data);
-        
-        // Filtrowanie ogłoszeń
-        const allListings = data.ads || [];
-        // Tasujemy (losowe mieszanie) array z wyróżnionymi ogłoszeniami
-        const featured = shuffleArray(allListings.filter(ad => ad.listingType === 'wyróżnione'));
-        // Tasujemy array z normalnymi ogłoszeniami  
-        const normal = shuffleArray(allListings.filter(ad => ad.listingType !== 'wyróżnione'));
-        
-        console.log(`Znaleziono ${featured.length} wyróżnionych i ${normal.length} standardowych ogłoszeń`);
-        
-        // Podział ogłoszeń na wyróżnione główne, gorące oferty i standardowe
-        // Jeśli nie ma wystarczająco wyróżnionych, używamy standardowych
-        let mainFeatured, hotOffers;
-        
-        if (featured.length >= 6) {
-          // Mamy wystarczająco wyróżnionych
-          mainFeatured = featured.slice(0, 2);
-          hotOffers = featured.slice(2, 6);
-        } else if (featured.length >= 2) {
-          // Mamy tylko na główne wyróżnione
-          mainFeatured = featured.slice(0, 2);
-          // Uzupełnij "gorące oferty" normalnymi
-          hotOffers = normal.slice(0, 4);
-        } else {
-          // Za mało nawet na główne wyróżnione
-          mainFeatured = [...featured, ...normal.slice(0, 2 - featured.length)];
-          hotOffers = normal.slice(2 - featured.length, 6 - featured.length);
-        }
-        
-        // Reszta normalnych ogłoszeń (upewnij się, że nie używasz tych samych co w hotOffers)
-        const usedIds = [...mainFeatured, ...hotOffers].map(ad => ad._id);
-        const remainingNormal = normal.filter(ad => !usedIds.includes(ad._id)).slice(0, 6);
-        
-        // Aktualizacja stanu
-        setFeaturedListings(mainFeatured);
-        setHotListings(hotOffers);
-        setNormalListings(remainingNormal);
+
+        setFeaturedListings(data.featured);
+        setHotListings(data.hot);
+        setNormalListings(data.regular);
         setError(null);
       } catch (err) {
         console.error('Błąd pobierania danych:', err);

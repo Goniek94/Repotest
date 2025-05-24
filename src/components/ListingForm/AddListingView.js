@@ -1,6 +1,7 @@
 // src/components/listings/AddListingView.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+
 import { MapPin, X, ChevronLeft, ChevronRight, Medal } from 'lucide-react';
 import api from '../../services/api';
 import AdsService from '../../services/ads'; // Dodaj import AdsService
@@ -10,6 +11,19 @@ const AddListingView = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { listingData } = location.state || {};
+
+  // Sprawdzenie, czy użytkownik jest zalogowany (cookie-based)
+  useEffect(() => {
+    fetch('/api/users/check-auth', { method: 'GET', credentials: 'include' })
+      .then(res => {
+        if (!res.ok) {
+          navigate('/login', { state: { returnUrl: '/create-listing' } });
+        }
+      })
+      .catch(() => {
+        navigate('/login', { state: { returnUrl: '/create-listing' } });
+      });
+  }, [navigate]);
 
   // Jeśli nie ma danych, wróć do formularza
   useEffect(() => {

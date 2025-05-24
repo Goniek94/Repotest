@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import getImageUrl from '../../../utils/responsive/getImageUrl';
 
 const ImageGallery = ({ images = [] }) => {
   const [selectedImage, setSelectedImage] = useState(0);
@@ -40,7 +41,7 @@ const ImageGallery = ({ images = [] }) => {
     <div className="bg-white p-4 shadow-md rounded-sm">
       <div className="relative aspect-video mb-4">
         <img
-          src={displayImages[selectedImage]}
+          src={getImageUrl(displayImages[selectedImage])}
           alt={`Zdjęcie ${selectedImage + 1}`}
           className="w-full h-full object-cover rounded-sm cursor-pointer"
           onClick={() => openPhotoModal(selectedImage)}
@@ -82,7 +83,7 @@ const ImageGallery = ({ images = [] }) => {
             }`}
           >
             <img
-              src={img}
+              src={getImageUrl(img)}
               alt={`Miniatura ${index + 1}`}
               className="w-full h-full object-cover hover:opacity-90 transition-opacity"
             />
@@ -114,7 +115,7 @@ const ImageGallery = ({ images = [] }) => {
                 <ChevronLeft className="w-8 h-8" />
               </button>
               <img
-                src={displayImages[photoIndex]}
+                src={getImageUrl(displayImages[photoIndex])}
                 alt={`Zdjęcie powiększone ${photoIndex + 1}`}
                 className="max-h-[85vh] w-auto mx-4 rounded-sm"
               />

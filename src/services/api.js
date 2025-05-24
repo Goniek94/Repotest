@@ -1,459 +1,349 @@
 // src/services/api.js
-import axios from 'axios';
+import apiClient from './client';
 
-// Konfiguracja podstawowa axios
-const axiosInstance = axios.create({
-  baseURL: 'http://localhost:5000/api', // Zmieniony adres na port 5000
-  timeout: 30000, // 30 sekund
-  headers: {
-    'Content-Type': 'application/json'
-  }
-});
+// Import modułów API
+import { 
+  ListingsService, 
+  FavoritesService, 
+  MessagesService, 
+  NotificationsService, 
+  TransactionsService 
+} from './api/';
 
-// Interceptor do obsługi tokena autoryzacji
-axiosInstance.interceptors.request.use(config => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  
-  // Jeśli przesyłamy FormData, nie ustawiaj Content-Type, axios zrobi to automatycznie z boundary
-  if (config.data instanceof FormData) {
-    delete config.headers['Content-Type'];
-  }
-  
-  return config;
-}, error => {
-  return Promise.reject(error);
-});
-
-const api = {
-  /**
-   * Pobieranie ogłoszeń
-   * @param {Object} params - Parametry zapytania (filtry, strona, limit)
-   * @returns {Promise<Object>} - Lista ogłoszeń z metadanymi
-   */
-  getListings: async (params = {}) => {
-    try {
-      const response = await axiosInstance.get('/ads', { params });
-      return response.data;
-    } catch (error) {
-      console.error('Błąd podczas pobierania ogłoszeń:', error);
-      throw error;
-    }
-  },
-
-  /**
-   * Wyszukiwanie ogłoszeń z zaawansowanymi filtrami
-   * @param {Object} params - Parametry wyszukiwania
-   * @returns {Promise<Object>} - Wyniki wyszukiwania z metadanymi
-   */
-  searchListings: async (params = {}) => {
-    try {
-      const response = await axiosInstance.get('/ads/search', { params });
-      return response.data;
-    } catch (error) {
-      console.error('Błąd podczas wyszukiwania ogłoszeń:', error);
-      throw error;
-    }
-  },
-
-  /**
-   * Dodawanie nowego ogłoszenia
-   * @param {FormData} formData - Dane formularza z ogłoszeniem i zdjęciami
-   * @returns {Promise<Object>} - Dodane ogłoszenie
-   */
-  addListing: async (formData) => {
-    try {
-      console.log('API: Wysyłanie formData do endpointu /ads/add');
-      
-      // Sprawdź czy to jest obiekt FormData
-      if (!(formData instanceof FormData)) {
-        throw new Error('Nieprawidłowy format danych - wymagany FormData');
-      }
-      
-      // Debugowanie - pokaż ilość plików
-      let fileCount = 0;
-      for (let [key, value] of formData.entries()) {
-        if (key === 'images') {
-          fileCount++;
-          console.log(`FormData zawiera plik: ${value.name || 'bez nazwy'}`);
-        }
-      }
-      console.log(`Łączna liczba plików w FormData: ${fileCount}`);
-      
-      const response = await axiosInstance.post('/ads/add', formData);
-      return response.data;
-    } catch (error) {
-      console.error('Błąd podczas dodawania ogłoszenia:', error);
-      
-      // Szczegółowa obsługa błędów
-      if (error.response) {
-        console.error('Status odpowiedzi:', error.response.status);
-       console.error('Dane odpowiedzi:', error.response.data);
-     } else if (error.request) {
-       console.error('Brak odpowiedzi od serwera:', error.request);
-     }
-     
-     throw error;
-   }
- },
-
- /**
-  * Pobieranie szczegółów ogłoszenia
-  * @param {string} id - ID ogłoszenia
-  * @returns {Promise<Object>} - Szczegóły ogłoszenia
-  */
- getListing: async (id) => {
-   try {
-     const response = await axiosInstance.get(`/ads/${id}`);
-     return response.data;
-   } catch (error) {
-     console.error('Błąd podczas pobierania szczegółów ogłoszenia:', error);
-     throw error;
-   }
- },
-
- /**
-  * Aktualizacja statusu ogłoszenia
-  * @param {string} adId - ID ogłoszenia
-  * @param {string} status - Nowy status
-  * @returns {Promise<Object>} - Zaktualizowane ogłoszenie
-  */
- updateAdStatus: async (adId, status) => {
-   try {
-     const response = await axiosInstance.put(`/ads/${adId}/status`, { status });
-     return response.data;
-   } catch (error) {
-     console.error('Błąd podczas aktualizacji statusu ogłoszenia:', error);
-     throw error;
-   }
- },
-
- /**
-  * Pobieranie rotowanych ogłoszeń dla strony głównej
-  * @returns {Promise<Object>} - Ogłoszenia podzielone na kategorie
-  */
- getRotatedListings: async () => {
-   try {
-     const response = await axiosInstance.get('/ads/rotated');
-     return response.data;
-   } catch (error) {
-     console.error('Błąd podczas pobierania rotowanych ogłoszeń:', error);
-     throw error;
-   }
- },
-
- /**
-  * Pobieranie dostępnych marek pojazdów
-  * @returns {Promise<Array>} - Lista marek
-  */
- getBrands: async () => {
-   try {
-     const response = await axiosInstance.get('/ads/brands');
-     return response.data;
-   } catch (error) {
-     console.error('Błąd podczas pobierania marek:', error);
-     throw error;
-   }
- },
-
- /**
-  * Pobieranie modeli dla wybranej marki
-  * @param {string} brand - Nazwa marki
-  * @returns {Promise<Array>} - Lista modeli
-  */
- getModels: async (brand) => {
-   try {
-     const response = await axiosInstance.get('/ads/models', { params: { brand } });
-     return response.data;
-   } catch (error) {
-     console.error('Błąd podczas pobierania modeli:', error);
-     throw error;
-   }
- },
-
- /**
-  * Dodanie ogłoszenia do ulubionych
-  * @param {string} adId - ID ogłoszenia
-  * @returns {Promise<Object>} - Informacja o dodaniu do ulubionych
-  */
- addToFavorites: async (adId) => {
-   try {
-     const response = await axiosInstance.post(`/favorites/add/${adId}`);
-     return response.data;
-   } catch (error) {
-     console.error('Błąd podczas dodawania do ulubionych:', error);
-     throw error;
-   }
- },
-
- /**
-  * Usunięcie ogłoszenia z ulubionych
-  * @param {string} adId - ID ogłoszenia
-  * @returns {Promise<Object>} - Informacja o usunięciu z ulubionych
-  */
- removeFromFavorites: async (adId) => {
-   try {
-     const response = await axiosInstance.delete(`/favorites/remove/${adId}`);
-     return response.data;
-   } catch (error) {
-     console.error('Błąd podczas usuwania z ulubionych:', error);
-     throw error;
-   }
- },
-
- /**
-  * Przełączanie statusu ulubionego ogłoszenia
-  * @param {string} adId - ID ogłoszenia
-  * @returns {Promise<Object>} - Informacja o zmianie statusu
-  */
- toggleFavorite: async (adId) => {
-   try {
-     const response = await axiosInstance.post(`/favorites/toggle/${adId}`);
-     return response.data;
-   } catch (error) {
-     console.error('Błąd podczas przełączania ulubionego:', error);
-     throw error;
-   }
- },
-
- /**
-  * Pobieranie danych pojazdu po numerze VIN
-  * @param {string} vin - Numer VIN pojazdu
-  * @returns {Promise<Object>} - Dane pojazdu
-  */
- getVehicleDataByVin: async (vin) => {
-   try {
-     // W trybie rozwojowym, zwracamy mockowe dane
-     if (process.env.NODE_ENV === 'development') {
-       console.log('Symulacja pobierania danych VIN w trybie development');
-       
-       // Opóźnienie dla symulacji rzeczywistego zapytania
-       await new Promise(resolve => setTimeout(resolve, 1500));
-       
-       // Przykładowe dane dla testów
-       return {
-         brand: 'Volkswagen',
-         model: 'Golf',
-         generation: 'VII',
-         version: '1.4 TSI',
-         condition: 'Używany',
-         productionYear: 2018,
-         engineSize: 1395,
-         power: 125,
-         fuelType: 'Benzyna',
-         transmission: 'Manualna',
-         drive: 'Przedni',
-         mileage: 78500,
-         accidentStatus: 'Bezwypadkowy',
-         damageStatus: 'Nieuszkodzony',
-         countryOfOrigin: 'Niemcy'
-       };
-     }
-     
-     // W produkcji, wykonujemy rzeczywiste zapytanie
-     const response = await axiosInstance.get(`/vehicle/vin/${vin}`);
-     return response.data;
-   } catch (error) {
-     console.error('Błąd podczas pobierania danych VIN:', error);
-     throw error;
-   }
- },
-
- /**
-  * Walidacja płatności (integracja z systemem płatności)
-  * @param {Object} paymentData - Dane płatności
-  * @returns {Promise<Object>} - Status płatności
-  */
- processPayment: async (paymentData) => {
-   try {
-     const response = await axiosInstance.post('/payments/process', paymentData);
-     return response.data;
-   } catch (error) {
-     console.error('Błąd podczas przetwarzania płatności:', error);
-     throw error;
-   }
- },
-
- /**
-  * Weryfikacja statusu płatności
-  * @param {string} paymentId - ID płatności
-  * @returns {Promise<Object>} - Status płatności
-  */
- checkPaymentStatus: async (paymentId) => {
-   try {
-     const response = await axiosInstance.get(`/payments/status/${paymentId}`);
-     return response.data;
-   } catch (error) {
-     console.error('Błąd podczas sprawdzania statusu płatności:', error);
-     throw error;
-   }
- },
- 
- /**
-  * Odświeżanie rotacji ogłoszeń (tylko dla zalogowanych użytkowników)
-  * @returns {Promise<Object>} - Nowe rotowane ogłoszenia
-  */
- refreshRotatedListings: async () => {
-   try {
-     const response = await axiosInstance.post('/ads/rotated/refresh');
-     return response.data;
-   } catch (error) {
-     console.error('Błąd podczas odświeżania rotacji ogłoszeń:', error);
-     throw error;
-   }
- },
-
- /**
-  * Pobieranie ogłoszeń użytkownika
-  * @returns {Promise<Array>} - Lista ogłoszeń użytkownika
-  */
- getUserListings: async () => {
-   try {
-     // Zmieniona ścieżka z /api/auth/my-listings na /api/users/my-listings
-     const response = await axiosInstance.get('/api/users/my-listings');
-     return response.data;
-   } catch (error) {
-     const errorMessage = error.response?.data?.message || 'Błąd podczas pobierania ogłoszeń użytkownika';
-     throw new Error(errorMessage);
-   }
- },
- 
- /**
-  * Pobieranie ulubionych ogłoszeń użytkownika
-  * @returns {Promise<Array>} - Lista ulubionych ogłoszeń
-  */
- getUserFavorites: async () => {
-   try {
-     // Zmieniona ścieżka z /api/auth/favorites na /api/users/favorites
-     const response = await axiosInstance.get('/api/users/favorites');
-     return response.data;
-   } catch (error) {
-     const errorMessage = error.response?.data?.message || 'Błąd podczas pobierania ulubionych ogłoszeń';
-     throw new Error(errorMessage);
-   }
- },
-
- /**
-  * Rejestracja nowego użytkownika
-  * @param {Object} userData - Dane nowego użytkownika
-  * @returns {Promise<Object>} - Dane utworzonego użytkownika i token
-  */
- register: async (userData) => {
-   try {
-     // Zmieniona ścieżka z /api/auth/register na /api/users/register
-     const response = await axiosInstance.post('/api/users/register', userData);
-     
-     // Zapisz dane użytkownika do localStorage
-     // Token przechowywany jest w HttpOnly cookie
-     if (response.data.user) {
-       localStorage.setItem('user', JSON.stringify(response.data.user));
-     }
-     
-     return response.data;
-   } catch (error) {
-     const errorMessage = error.response?.data?.message || 'Błąd podczas rejestracji';
-     throw new Error(errorMessage);
-   }
- },
-
- /**
-  * Logowanie użytkownika
-  * @param {Object} credentials - Dane logowania (email, hasło)
-  * @returns {Promise<Object>} - Dane użytkownika i token
-  */
- login: async (credentials) => {
-   try {
-     // Zmieniona ścieżka z /api/auth/login na /api/users/login
-     const response = await axiosInstance.post('/api/users/login', credentials);
-     
-     // Zapisz dane użytkownika do localStorage
-     // Token przechowywany jest w HttpOnly cookie
-     if (response.data.user) {
-       localStorage.setItem('user', JSON.stringify(response.data.user));
-     }
-     
-     return response.data;
-   } catch (error) {
-     // Ustandaryzowany obiekt błędu z czytelnym komunikatem
-     const errorMessage = error.response?.data?.message || 'Błąd podczas logowania';
-     throw new Error(errorMessage);
-   }
- },
-
- /**
-  * Wylogowanie użytkownika
-  * @returns {Promise<void>}
-  */
- logout: async () => {
-   try {
-     // Wywołanie endpointu logout, który usunie HttpOnly cookie
-     // Zmieniona ścieżka z /api/auth/logout na /api/users/logout
-     await axiosInstance.post('/api/users/logout');
-   } catch (error) {
-     // Ignorujemy ewentualne błędy podczas wylogowywania
-   } finally {
-     // Czyścimy lokalnie przechowywane dane
-     localStorage.removeItem('user');
-     return Promise.resolve();
-   }
- },
-
- /**
-  * Sprawdzenie czy użytkownik jest zalogowany
-  * @returns {boolean} - Status zalogowania
-  */
- isLoggedIn: () => {
-   return !!localStorage.getItem('token');
- },
-
- /**
-  * Pobranie danych zalogowanego użytkownika
-  * @returns {Object|null} - Dane użytkownika lub null
-  */
- getCurrentUser: () => {
-   const userStr = localStorage.getItem('user');
-   return userStr ? JSON.parse(userStr) : null;
- },
-
- /**
-  * Aktualizacja danych użytkownika
-  * @param {Object} userData - Nowe dane użytkownika
-  * @returns {Promise<Object>} - Zaktualizowane dane
-  */
- updateUserProfile: async (userData) => {
-   try {
-     // Zmieniona ścieżka z /api/auth/profile na /api/users/profile
-     const response = await axiosInstance.put('/api/users/profile', userData);
-     
-     // Aktualizuj dane użytkownika w localStorage
-     if (response.data.user) {
-       localStorage.setItem('user', JSON.stringify(response.data.user));
-     }
-     
-     return response.data;
-   } catch (error) {
-     const errorMessage = error.response?.data?.message || 'Błąd podczas aktualizacji profilu';
-     throw new Error(errorMessage);
-   }
- },
-
- /**
-  * Zmiana hasła użytkownika
-  * @param {Object} passwordData - Stare i nowe hasło
-  * @returns {Promise<Object>} - Informacja o zmianie hasła
-  */
- changePassword: async (passwordData) => {
-   try {
-     // Zmieniona ścieżka z /api/auth/change-password na /api/users/change-password
-     const response = await axiosInstance.put('/api/users/change-password', passwordData);
-     return response.data;
-   } catch (error) {
-     const errorMessage = error.response?.data?.message || 'Błąd podczas zmiany hasła';
-     throw new Error(errorMessage);
-   }
- }
+// Re-eksport modułów dla komponentów
+export { 
+  ListingsService, 
+  FavoritesService, 
+  MessagesService, 
+  NotificationsService, 
+  TransactionsService 
 };
 
-export default api;
+// --------------------------------
+// Ogłoszenia / Listings
+// --------------------------------
+
+// Pobieranie wszystkich ogłoszeń (z paginacją i filtrami)
+export const getListings = async (params = {}) => {
+  const response = await apiClient.get('/ads', { params });
+  return response.data;
+};
+
+// Pobieranie ogłoszenia po ID
+export const getListing = async (id) => {
+  const response = await apiClient.get(`/ads/${id}`);
+  return response.data;
+};
+
+// Dodawanie nowego ogłoszenia (wymaga autoryzacji)
+export const addListing = async (formData) => {
+  const response = await apiClient.post('/ads/add', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+};
+
+// Pobieranie ogłoszeń użytkownika (wymaga autoryzacji)
+export const getUserListings = async (params = {}) => {
+  const response = await apiClient.get('/ads/user/listings', { params });
+  return response.data;
+};
+
+// Edycja ogłoszenia
+export const updateListing = async (id, formData) => {
+  const response = await apiClient.put(`/ads/${id}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+};
+
+// Usuwanie ogłoszenia
+export const deleteListing = async (id) => {
+  const response = await apiClient.delete(`/ads/${id}`);
+  return response.data;
+};
+
+// --------------------------------
+// Autentykacja / Authentication
+// --------------------------------
+
+// Logowanie użytkownika
+export const login = async (credentials) => {
+  const response = await apiClient.post('/users/login', credentials);
+  return response.data;
+};
+
+// Wylogowanie użytkownika
+export const logout = async () => {
+  await apiClient.post('/users/logout');
+};
+
+// Rejestracja użytkownika
+export const register = async (userData) => {
+  const response = await apiClient.post('/users/register', userData);
+  return response.data;
+};
+
+// Pobieranie profilu użytkownika (wymaga autoryzacji)
+export const getCurrentUser = async () => {
+  const response = await apiClient.get('/users/profile');
+  return response.data;
+};
+
+// Aktualizacja profilu użytkownika
+export const updateUserProfile = async (userData) => {
+  const response = await apiClient.put('/users/profile', userData);
+  return response.data;
+};
+
+// Zmiana hasła
+export const changePassword = async (passwordData) => {
+  const response = await apiClient.put('/users/change-password', passwordData);
+  return response.data;
+};
+
+// --------------------------------
+// Wyszukiwanie / Search
+// --------------------------------
+
+// Pobieranie wyróżnionych ogłoszeń (rotacja)
+export const getRotatedListings = async () => {
+  const response = await apiClient.get('/ads/rotated');
+  return response.data;
+};
+
+// Pobieranie marek
+export const getBrands = async () => {
+  const response = await apiClient.get('/ads/brands');
+  return response.data;
+};
+
+// Pobieranie modeli dla danej marki
+export const getModels = async (brand) => {
+  const response = await apiClient.get('/ads/models', { params: { brand } });
+  return response.data;
+};
+
+// Wyszukiwanie ogłoszeń
+export const searchListings = async (params = {}) => {
+  const response = await apiClient.get('/ads/search', { params });
+  return response.data;
+};
+
+// --------------------------------
+// Ulubione / Favorites
+// --------------------------------
+
+// Pobieranie ulubionych ogłoszeń
+export const getFavoriteListings = async () => {
+  const response = await apiClient.get('/favorites');
+  return response.data;
+};
+
+// Dodawanie ogłoszenia do ulubionych
+export const addToFavorites = async (id) => {
+  const response = await apiClient.post(`/favorites/add/${id}`);
+  return response.data;
+};
+
+// Usuwanie ogłoszenia z ulubionych
+export const removeFromFavorites = async (id) => {
+  const response = await apiClient.delete(`/favorites/remove/${id}`);
+  return response.data;
+};
+
+// Sprawdzanie czy ogłoszenie jest w ulubionych
+export const checkIfFavorite = async (id) => {
+  const response = await apiClient.get(`/favorites/check/${id}`);
+  return response.data;
+};
+
+// --------------------------------
+// Wiadomości / Messages
+// --------------------------------
+
+// Pobieranie wszystkich wiadomości (inbox, wysłane, itp.)
+export const getMessages = async (folder = 'odebrane') => {
+  const response = await apiClient.get(`/messages/${folder}`);
+  return response.data;
+};
+
+// Pobieranie pojedynczej wiadomości
+export const getMessage = async (id) => {
+  const response = await apiClient.get(`/messages/message/${id}`);
+  return response.data;
+};
+
+// Wysyłanie nowej wiadomości
+export const sendMessage = async (messageData) => {
+  const response = await apiClient.post('/messages/send', messageData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+};
+
+// Wysyłanie wiadomości do właściciela ogłoszenia
+export const sendMessageToAd = async (adId, messageData) => {
+  const response = await apiClient.post(`/messages/send-to-ad/${adId}`, messageData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+};
+
+// Wysyłanie wiadomości do użytkownika
+export const sendMessageToUser = async (userId, messageData) => {
+  const response = await apiClient.post(`/messages/send-to-user/${userId}`, messageData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+};
+
+// Odpowiadanie na wiadomość
+export const replyToMessage = async (messageId, messageData) => {
+  const response = await apiClient.post(`/messages/reply/${messageId}`, messageData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+};
+
+// Oznaczanie wiadomości jako przeczytanej
+export const markMessageAsRead = async (id) => {
+  const response = await apiClient.patch(`/messages/read/${id}`);
+  return response.data;
+};
+
+// Oznaczanie wiadomości gwiazdką
+export const toggleMessageStar = async (id) => {
+  const response = await apiClient.patch(`/messages/star/${id}`);
+  return response.data;
+};
+
+// Usuwanie wiadomości
+export const deleteMessage = async (id) => {
+  const response = await apiClient.delete(`/messages/${id}`);
+  return response.data;
+};
+
+// Pobieranie listy konwersacji
+export const getConversationsList = async () => {
+  const response = await apiClient.get('/messages/conversations');
+  return response.data;
+};
+
+// Pobieranie konwersacji z konkretnym użytkownikiem
+export const getConversation = async (userId) => {
+  const response = await apiClient.get(`/messages/conversation/${userId}`);
+  return response.data;
+};
+
+// --------------------------------
+// Powiadomienia / Notifications
+// --------------------------------
+
+// Pobieranie wszystkich powiadomień
+export const getNotifications = async (params = {}) => {
+  const response = await apiClient.get('/notifications', { params });
+  return response.data;
+};
+
+// Pobieranie nieprzeczytanych powiadomień
+export const getUnreadNotifications = async (limit = 10) => {
+  const response = await apiClient.get('/notifications/unread', { params: { limit } });
+  return response.data;
+};
+
+// Pobieranie liczby nieprzeczytanych powiadomień
+export const getUnreadNotificationsCount = async () => {
+  const response = await apiClient.get('/notifications/unread/count');
+  return response.data;
+};
+
+// Oznaczanie powiadomienia jako przeczytane
+export const markNotificationAsRead = async (id) => {
+  const response = await apiClient.put(`/notifications/${id}/read`);
+  return response.data;
+};
+
+// Oznaczanie wszystkich powiadomień jako przeczytane
+export const markAllNotificationsAsRead = async () => {
+  const response = await apiClient.put('/notifications/read-all');
+  return response.data;
+};
+
+// Usuwanie powiadomienia
+export const deleteNotification = async (id) => {
+  const response = await apiClient.delete(`/notifications/${id}`);
+  return response.data;
+};
+
+// --------------------------------
+// Transakcje / Transactions
+// --------------------------------
+
+// Pobieranie historii płatności/transakcji
+export const getTransactionHistory = async () => {
+  const response = await apiClient.get('/payments/history');
+  return response.data;
+};
+
+// Przetwarzanie płatności za ogłoszenie
+export const processPayment = async (paymentData) => {
+  const response = await apiClient.post('/payments/process', paymentData);
+  return response.data;
+};
+
+// Eksport domyślny dla kompatybilności ze starymi importami
+export default {
+  // Ogłoszenia
+  getListings,
+  getListing,
+  addListing,
+  updateListing,
+  deleteListing,
+  getUserListings,
+  
+  // Autentykacja
+  login,
+  logout,
+  register,
+  getCurrentUser,
+  updateUserProfile,
+  changePassword,
+  
+  // Wyszukiwanie
+  getRotatedListings,
+  getBrands,
+  getModels,
+  searchListings,
+  
+  // Ulubione
+  getFavoriteListings,
+  addToFavorites,
+  removeFromFavorites,
+  checkIfFavorite,
+  
+  // Wiadomości
+  getMessages,
+  getMessage,
+  sendMessage,
+  sendMessageToAd,
+  sendMessageToUser,
+  replyToMessage,
+  markMessageAsRead,
+  toggleMessageStar,
+  deleteMessage,
+  getConversationsList,
+  getConversation,
+  
+  // Powiadomienia
+  getNotifications,
+  getUnreadNotifications,
+  getUnreadNotificationsCount,
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
+  deleteNotification,
+  
+  // Transakcje
+  getTransactionHistory,
+  processPayment
+};

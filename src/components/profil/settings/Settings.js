@@ -1,29 +1,32 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
+import React, { useState, useEffect, useRef } from 'react';
+import { useAuth } from '../../../contexts/AuthContext';
 import { 
   FaUser, FaLock, FaPhone, FaBell, FaShieldAlt, FaTrash, 
   FaExclamationTriangle, FaCheckCircle, FaEnvelope, FaMapMarkedAlt, 
   FaInfoCircle, FaCheck, FaTimes, FaEye, FaEyeSlash 
 } from 'react-icons/fa';
-import api from '../../services/api';
+import { fetchUserSettings, updateUserSettings } from '../../../services/api/userSettingsApi';
 
 const Settings = () => {
-  const { user, updateUser } = useAuth();
+  const { user, refreshUser } = useAuth();
   
-  // Inicjalizacja formData z danymi użytkownika
+  // Użyj useRef zamiast useState dla flagi, aby nie powodować ponownego renderowania
+  const dataFetchedRef = useRef(false);
+  
+  // Inicjalizacja formData - tym razem bez zależności od user
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
-    phonePrefix: '+48', // Dodane pole prefiksu telefonu
+    phonePrefix: '+48', // Domyślny prefiks telefonu
     phoneNumber: '',
     dob: '',
     street: '',
     city: '',
     postalCode: '',
-    country: '',
-    isEmailVerified: true,
-    isPhoneVerified: true,
+    country: 'Polska',
+    isEmailVerified: false,
+    isPhoneVerified: false,
   });
   
   const [isProfileComplete, setIsProfileComplete] = useState(true);
@@ -102,45 +105,77 @@ const Settings = () => {
     return age >= 16 && age <= 100;
   };
   
-  // Aktualizacja danych formularza po załadowaniu danych użytkownika
+  // Pobierz dane użytkownika z backendu tylko raz - bez zależności od user
   useEffect(() => {
-    if (user) {
-      console.log('Settings - dane użytkownika:', user);
-      
-      // Wypełnij formularz dostępnymi danymi
-      const fullPhone = user.phoneNumber || user.phone || '';
-      let phonePrefix = '+48';
-      let phoneNumber = fullPhone;
-      
-      // Sprawdź czy numer telefonu zawiera prefiks
-      if (fullPhone.startsWith('+')) {
-        // Wytnij prefiks (pierwsze 2-3 znaki z plusem)
-        const prefixMatch = fullPhone.match(/^(\+\d{1,3})/);
-        if (prefixMatch) {
-          phonePrefix = prefixMatch[0];
-          phoneNumber = fullPhone.substring(prefixMatch[0].length);
-        }
+    // Funkcja do pobierania danych użytkownika
+    const fetchUserProfile = async () => {
+      // Jeśli dane zostały już pobrane, nie pobieraj ich ponownie
+      if (dataFetchedRef.current) {
+        console.log("Dane już pobrane, pomijam zapytanie do API");
+        return;
       }
       
-      setFormData({
-        firstName: user.firstName || user.name || '',
-        lastName: user.lastName || '',
-        email: user.email || '',
-        phonePrefix: phonePrefix,
-        phoneNumber: phoneNumber,
-        dob: formatDate(user.dob) || '',
-        street: user.street || '',
-        city: user.city || '',
-        postalCode: user.postalCode || '',
-        country: user.country || 'Polska',
-        isEmailVerified: true,
-        isPhoneVerified: true,
-      });
-      
-      // Sprawdź czy profil jest kompletny
-      checkProfileCompleteness(user);
-    }
-  }, [user]);
+      try {
+        console.log("Pobieranie danych użytkownika z API...");
+        
+        // Użyj userSettingsApi
+        const backendUser = await fetchUserSettings();
+        console.log("Otrzymane dane użytkownika z API:", backendUser);
+
+        if (!backendUser) {
+          throw new Error("Brak danych użytkownika");
+        }
+
+        // Wypełnij formularz danymi z backendu
+        const fullPhone = backendUser.phoneNumber || backendUser.phone || '';
+        let phonePrefix = '+48';
+        let phoneNumber = fullPhone;
+        
+        // Wyodrębnij prefiks z numeru telefonu, jeśli istnieje
+        if (fullPhone.startsWith('+')) {
+          const prefixMatch = fullPhone.match(/^(\+\d{1,3})/);
+          if (prefixMatch) {
+            phonePrefix = prefixMatch[0];
+            phoneNumber = fullPhone.substring(prefixMatch[0].length);
+          }
+        }
+        
+        setFormData({
+          firstName: backendUser.name || '',
+          lastName: backendUser.lastName || '',
+          email: backendUser.email || '',
+          phonePrefix: phonePrefix,
+          phoneNumber: phoneNumber,
+          dob: formatDate(backendUser.dob) || '',
+          street: backendUser.street || backendUser.address?.street || '',
+          city: backendUser.city || backendUser.address?.city || '',
+          postalCode: backendUser.postalCode || backendUser.address?.postalCode || '',
+          country: backendUser.country || backendUser.address?.country || 'Polska',
+          isEmailVerified: backendUser.isEmailVerified ?? true,
+          isPhoneVerified: backendUser.isPhoneVerified ?? true,
+        });
+
+        // Sprawdź kompletność profilu
+        checkProfileCompleteness(backendUser);
+        
+        // Oznacz dane jako pobrane, aby uniknąć ponownego pobierania
+        dataFetchedRef.current = true;
+      } catch (error) {
+        console.error('Błąd pobierania danych użytkownika:', error);
+        
+        // Wyświetl alert o błędzie
+        showAlert('Nie udało się pobrać danych użytkownika z serwera', 'error');
+        
+        // Mimo błędu, oznaczamy dane jako pobrane, aby uniknąć zapętlenia
+        dataFetchedRef.current = true;
+      }
+    };
+    
+    // Wywołaj funkcję pobierającą dane tylko raz po montażu komponentu
+    fetchUserProfile();
+    
+    // Pusta tablica zależności oznacza, że efekt wykona się tylko raz po montażu
+  }, []);
   
   // Funkcja formatująca datę
   const formatDate = (dateString) => {
@@ -210,32 +245,27 @@ const Settings = () => {
     setIsSaving(true);
     
     try {
-      // Przygotuj dane do wysłania - łącząc prefiks z numerem telefonu
+      console.log("Zapisywanie zmian w ustawieniach użytkownika...");
+      
+      // Przygotuj dane do wysłania
       const submitData = {
-        ...formData,
-        phoneNumber: `${formData.phonePrefix}${formData.phoneNumber}` // Połączony prefiks z numerem
+        // Dane adresowe
+        street: formData.street,
+        city: formData.city,
+        postalCode: formData.postalCode,
+        country: formData.country,
+        // Ustawienia powiadomień i prywatności
+        notificationPreferences: notifications,
+        privacySettings: privacy
       };
       
-      // W rzeczywistej aplikacji - wysłanie danych do API
-      console.log('Zapisuję dane użytkownika:', submitData);
-      // const response = await api.put('/user/profile', submitData);
+      console.log("Dane do zapisania:", submitData);
       
-      // Symulacja zapisywania danych
-      await simulateAPI();
+      // Użyj userSettingsApi
+      const updatedData = await updateUserSettings(submitData);
+      console.log("Dane zostały zaktualizowane:", updatedData);
       
-      // Aktualizacja danych użytkownika w kontekście
-      if (typeof updateUser === 'function') {
-        updateUser({
-          ...user,
-          phoneNumber: submitData.phoneNumber, // Zaktualizowany pełny numer z prefiksem
-          street: formData.street,
-          city: formData.city,
-          postalCode: formData.postalCode,
-          country: formData.country,
-          profileCompleted: true
-        });
-      }
-      
+      // Wyświetl komunikat o sukcesie
       showAlert('Dane zostały zaktualizowane', 'success');
     } catch (error) {
       console.error('Błąd zapisywania danych:', error);
@@ -273,6 +303,9 @@ const Settings = () => {
     });
   };
 
+  // Funkcja symulująca opóźnienie API - do zastąpienia rzeczywistymi wywołaniami API
+  const simulateAPI = () => new Promise(resolve => setTimeout(resolve, 1000));
+
   const handleVerification = async () => {
     if (verificationData.step === 1) {
       // Symulacja wysyłki kodów
@@ -283,17 +316,17 @@ const Settings = () => {
       await simulateAPI();
       if (verificationData.type === 'email') {
         setFormData({ ...formData, isEmailVerified: true });
-        if (typeof updateUser === 'function') {
-          updateUser({ ...user, isEmailVerified: true });
-        }
+        // Aktualizacja danych użytkownika w kontekście
+        await refreshUser();
       }
       if (verificationData.type === 'phone') {
         setFormData({ ...formData, isPhoneVerified: true });
-        if (typeof updateUser === 'function') {
-          updateUser({ ...user, isPhoneVerified: true });
-        }
+        // Aktualizacja danych użytkownika w kontekście
+        await refreshUser();
       }
       if (verificationData.type === 'password') {
+        // Tutaj w rzeczywistej implementacji można byłoby użyć API do zmiany hasła
+        // np. await changePassword(passwordForm.oldPassword, passwordForm.newPassword);
         showAlert('Hasło zostało zmienione', 'success');
         setPasswordForm({ oldPassword: '', newPassword: '', confirmPassword: '' });
       }
@@ -316,7 +349,6 @@ const Settings = () => {
     setAlert({ show: true, message, type });
   };
 
-  const simulateAPI = () => new Promise(resolve => setTimeout(resolve, 1000));
 
   const isStrongPassword = (password) => {
     const regex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{8,}$/;
