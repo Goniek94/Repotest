@@ -1,45 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { useListingForm } from '../../../contexts/ListingFormContext';
+import React from 'react';
 import { FaCloudUploadAlt, FaStar, FaTrash } from 'react-icons/fa';
 import FileUploader from '../components/FileUploader';
-import { uploadToCloudinary } from '../utils/cloudinary';
+import usePhotoUpload from '../hooks/usePhotoUpload';
 
 const PhotoUploadSection = ({ formData, setFormData, errors, showToast }) => {
-  // Stan lokalny
-  const [previewUrls, setPreviewUrls] = useState([]);
-  
-  // Maksymalna liczba zdjęć
   const maxPhotos = 20;
-  
-  // Aktualizacja podglądu zdjęć
-  useEffect(() => {
-    // Czyszczenie poprzednich URL-i podglądu
-    previewUrls.forEach(url => {
-      if (url.startsWith('blob:')) {
-        URL.revokeObjectURL(url);
-      }
-    });
-    
-    // Tworzenie nowych URL-i podglądu
-    const urls = formData.photos.map(photo => {
-      if (photo instanceof File) {
-        return URL.createObjectURL(photo);
-      }
-      return photo;
-    });
-    
-    setPreviewUrls(urls);
-    
-    // Czyszczenie URL-i podglądu przy odmontowywaniu komponentu
-    return () => {
-      urls.forEach(url => {
-        if (url.startsWith('blob:')) {
-          URL.revokeObjectURL(url);
-        }
-      });
-    };
-  }, [formData.photos]);
-  
+  const { previewUrls } = usePhotoUpload(formData.photos, maxPhotos);
+
   // Obsługa uploadu zdjęć
   const handlePhotoUpload = (e) => {
     const files = Array.from(e.target.files);
@@ -47,36 +14,29 @@ const PhotoUploadSection = ({ formData, setFormData, errors, showToast }) => {
       showToast(`Maksymalna liczba zdjęć to ${maxPhotos}`, 'error');
       return;
     }
-    
-    // Dodanie nowych zdjęć do formData
     setFormData(prev => ({
       ...prev,
       photos: [...prev.photos, ...files]
     }));
   };
-  
+
   // Usuwanie zdjęcia
   const removePhoto = (index) => {
-    // Aktualizacja zdjęć
     const newPhotos = [...formData.photos];
     newPhotos.splice(index, 1);
-    
-    // Aktualizacja głównego zdjęcia jeśli potrzeba
     let mainIndex = formData.mainPhotoIndex;
     if (index === mainIndex) {
       mainIndex = 0;
     } else if (index < mainIndex) {
       mainIndex--;
     }
-    
-    // Aktualizacja stanu formularza
     setFormData(prev => ({
       ...prev,
       photos: newPhotos,
       mainPhotoIndex: mainIndex
     }));
   };
-  
+
   // Ustawienie głównego zdjęcia
   const setMainPhoto = (index) => {
     setFormData(prev => ({
@@ -84,7 +44,7 @@ const PhotoUploadSection = ({ formData, setFormData, errors, showToast }) => {
       mainPhotoIndex: index
     }));
   };
-  
+
   // Usunięcie wszystkich zdjęć
   const removeAllPhotos = () => {
     setFormData(prev => ({
@@ -93,17 +53,13 @@ const PhotoUploadSection = ({ formData, setFormData, errors, showToast }) => {
       mainPhotoIndex: 0
     }));
   };
-  
+
   return (
     <div className="bg-white p-6 rounded-[2px] shadow-md">
-      <h2 className="text-2xl font-bold mb-6">Zdjęcia ogłoszenia</h2>
-      
       <div>
         <h3 className="text-white p-2 rounded-[2px] mb-4 bg-[#35530A]">
           Dodaj zdjęcia ogłoszenia (max {maxPhotos} zdjęć)
         </h3>
-        
-        {/* Wskazówki dla zdjęć */}
         <div className="bg-[#F5FAF5] border-l-4 border-[#35530A] text-[#35530A] p-4 rounded-[2px] mb-6">
           <p className="text-sm font-medium mb-2">
             Wyższa jakość zdjęć = więcej zainteresowanych kupujących!
@@ -130,8 +86,6 @@ const PhotoUploadSection = ({ formData, setFormData, errors, showToast }) => {
             </div>
           </div>
         </div>
-        
-        {/* Obszar dodawania zdjęć */}
         <div className="border-2 border-dashed border-gray-300 rounded-[2px] p-8 text-center mb-6 hover:border-[#35530A] transition-colors">
           <input
             type="file"
@@ -157,15 +111,11 @@ const PhotoUploadSection = ({ formData, setFormData, errors, showToast }) => {
             Maksymalny rozmiar: 5MB, formaty: JPG, PNG, WEBP
           </div>
         </div>
-        
-        {/* Błąd zdjęć */}
         {errors.photos && (
           <div className="p-3 bg-red-50 border-l-4 border-red-500 text-red-700 mb-4">
             <p>{errors.photos}</p>
           </div>
         )}
-        
-        {/* Wybieranie głównego zdjęcia */}
         {previewUrls.length > 0 && (
           <div className="mb-4">
             <h4 className="font-medium text-gray-700 mb-2">Wybierz zdjęcie główne (oznaczone gwiazdką)</h4>
@@ -174,8 +124,6 @@ const PhotoUploadSection = ({ formData, setFormData, errors, showToast }) => {
             </p>
           </div>
         )}
-        
-        {/* Podgląd zdjęć */}
         {previewUrls.length > 0 && (
           <div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
@@ -198,7 +146,6 @@ const PhotoUploadSection = ({ formData, setFormData, errors, showToast }) => {
                     >
                       <FaTrash size={14} />
                     </button>
-                    
                     <button
                       onClick={() => setMainPhoto(index)}
                       className={`absolute bottom-2 left-2 p-1.5 rounded-[2px] transition-opacity
@@ -211,7 +158,6 @@ const PhotoUploadSection = ({ formData, setFormData, errors, showToast }) => {
                       <FaStar size={14} className={index === formData.mainPhotoIndex ? 'text-yellow-400' : ''} />
                     </button>
                   </div>
-                  
                   {index === formData.mainPhotoIndex && (
                     <div className="absolute top-2 left-2 bg-[#35530A] text-white text-xs px-2 py-1 rounded-[2px]">
                       Główne
@@ -220,14 +166,10 @@ const PhotoUploadSection = ({ formData, setFormData, errors, showToast }) => {
                 </div>
               ))}
             </div>
-            
             <div className="flex items-center justify-between mt-4">
-              {/* Licznik zdjęć */}
               <div className="text-sm text-gray-600">
                 Dodanych zdjęć: <span className="font-medium">{formData.photos.length}</span> z {maxPhotos}
               </div>
-              
-              {/* Usunięcie wszystkich zdjęć */}
               <button
                 onClick={removeAllPhotos}
                 className="text-red-500 hover:text-red-600 text-sm flex items-center gap-1"

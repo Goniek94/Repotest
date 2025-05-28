@@ -1,5 +1,4 @@
 import React from 'react';
-import { useListingForm } from '../../../contexts/ListingFormContext';
 import FormField from '../components/FormField';
 const BodyInfoSection = ({ formData, handleChange, errors }) => {
   // Opcje dla typu nadwozia
@@ -14,59 +13,131 @@ const BodyInfoSection = ({ formData, handleChange, errors }) => {
     'Zielony', 'Żółty', 'Brązowy', 'Złoty', 'Szary', 'Inny'
   ];
   
+  // Opcje dla liczby drzwi
+  const doorOptions = [
+    { value: '2', label: '2 drzwi' },
+    { value: '3', label: '3 drzwi' },
+    { value: '4', label: '4 drzwi' },
+    { value: '5', label: '5 drzwi' },
+    { value: '6', label: '6 drzwi' }
+  ];
+  
+  // Opcje dla wykończenia
+  const finishOptions = [
+    { value: 'Metalik', label: 'Metalik' },
+    { value: 'Matowy', label: 'Matowy' },
+    { value: 'Perłowy', label: 'Perłowy' },
+    { value: 'Standardowy', label: 'Standardowy' }
+  ];
+  
   return (
     <div className="bg-white p-6 rounded-[2px] shadow-md">
-      <h2 className="text-2xl font-bold mb-6">Nadwozie</h2>
-      
+      {/* Nagłówek główny przeniesiony do komponentu CreateListingForm */}
       <div className="mb-6">
-        <h3 className="text-white p-2 rounded-[2px] mb-2 bg-[#35530A]">
-          Nadwozie
-        </h3>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Typ nadwozia */}
-          <div>
-            <label className="block mb-1 font-bold">Typ nadwozia</label>
-            <div className="grid grid-cols-3 gap-2">
-              {bodyTypes.map((type) => (
-                <label key={type} className="flex items-center gap-1">
-                  <input
-                    type="radio"
-                    name="bodyType"
-                    value={type}
-                    checked={formData.bodyType === type}
-                    onChange={(e) => handleChange('bodyType', e.target.value)}
-                    style={{ accentColor: '#35530A' }}
-                  />
-                  <span>{type}</span>
-                </label>
-              ))}
-            </div>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          {/* Typ nadwozia jako dropdown zamiast radio buttons */}
+          <FormField
+            type="select"
+            label="Typ nadwozia*"
+            name="bodyType"
+            value={formData.bodyType}
+            onChange={(e) => handleChange('bodyType', e.target.value)}
+            error={errors.bodyType}
+            options={bodyTypes.map(type => ({ value: type, label: type }))}
+            placeholder="Wybierz typ nadwozia"
+          />
           
           {/* Kolor */}
           <FormField
             type="select"
-            label="Kolor"
+            label="Kolor*"
             name="color"
             value={formData.color}
             onChange={(e) => handleChange('color', e.target.value)}
+            error={errors.color}
             options={colors.map(color => ({ value: color, label: color }))}
             placeholder="Wybierz kolor"
           />
           
-          {/* Liczba drzwi */}
+          {/* Liczba drzwi jako dropdown */}
           <FormField
-            type="number"
-            label="Liczba drzwi"
+            type="select"
+            label="Liczba drzwi*"
             name="doors"
             value={formData.doors}
             onChange={(e) => handleChange('doors', e.target.value)}
-            min="2"
-            max="6"
-            placeholder="np. 5"
+            error={errors.doors}
+            options={doorOptions}
+            placeholder="Wybierz ilość drzwi"
+          />
+          
+          {/* Rodzaj wykończenia */}
+          <FormField
+            type="select"
+            label="Wykończenie"
+            name="finish"
+            value={formData.finish || ''}
+            onChange={(e) => handleChange('finish', e.target.value)}
+            error={errors.finish}
+            options={finishOptions}
+            placeholder="Wybierz wykończenie"
           />
         </div>
+        
+        {/* Dodatkowe cechy nadwozia jako checkboxy */}
+        <div className="mt-6">
+          <h4 className="font-semibold mb-3">Dodatkowe cechy nadwozia:</h4>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={formData.hasSunroof === 'Tak'}
+                onChange={(e) => handleChange('hasSunroof', e.target.checked ? 'Tak' : 'Nie')}
+                style={{ accentColor: '#35530A' }}
+              />
+              <span>Szyberdach</span>
+            </label>
+            
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={formData.hasAlloyWheels === 'Tak'}
+                onChange={(e) => handleChange('hasAlloyWheels', e.target.checked ? 'Tak' : 'Nie')}
+                style={{ accentColor: '#35530A' }}
+              />
+              <span>Alufelgi</span>
+            </label>
+            
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={formData.hasRoofRails === 'Tak'}
+                onChange={(e) => handleChange('hasRoofRails', e.target.checked ? 'Tak' : 'Nie')}
+                style={{ accentColor: '#35530A' }}
+              />
+              <span>Relingi dachowe</span>
+            </label>
+            
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={formData.hasParkingSensors === 'Tak'}
+                onChange={(e) => handleChange('hasParkingSensors', e.target.checked ? 'Tak' : 'Nie')}
+                style={{ accentColor: '#35530A' }}
+              />
+              <span>Czujniki parkowania</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      
+      {/* Informacje pomocnicze */}
+      <div className="bg-[#F5FAF5] border-l-4 border-[#35530A] p-4 rounded-[2px] mt-4">
+        <p className="text-[#35530A] text-sm font-medium">
+          Dokładne dane dotyczące nadwozia i koloru pomagają potencjalnym kupującym 
+          lepiej ocenić pojazd. Wybierz wszystkie parametry, które najlepiej opisują Twój samochód.
+        </p>
       </div>
     </div>
   );

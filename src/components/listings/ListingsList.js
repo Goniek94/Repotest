@@ -42,6 +42,12 @@ const ListingsList = () => {
     // Logika usuwania ogłoszenia
   };
 
+  // Tymczasowe logowanie pierwszego ogłoszenia do debugowania
+  if (listings && listings.length > 0) {
+    // eslint-disable-next-line no-console
+    console.log('DEBUG: pierwszy listing w liście:', listings[0]);
+  }
+
   return (
     <div className="bg-white p-6 rounded-sm shadow-sm">
       {/* Nagłówek z tytułem i przyciskiem */}
@@ -96,73 +102,15 @@ const ListingsList = () => {
           <div className="text-gray-500">Brak ogłoszeń do wyświetlenia.</div>
         )}
         {listings.map(listing => (
-          <div key={listing._id || listing.id} className="border border-gray-200 rounded-sm overflow-hidden">
-            <div className="flex flex-col md:flex-row">
-              {/* Zdjęcie z etykietą */}
-              <div className="relative md:w-64 h-48 bg-gray-100">
-                {/* Placeholder lub zdjęcie */}
-                {listing.images && listing.images.length > 0 ? (
-                  <img
-                    src={listing.images[listing.mainImageIndex || 0]}
-                    alt={listing.headline || listing.title}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                    <span className="text-gray-400">Zdjęcie pojazdu</span>
-                  </div>
-                )}
-
-                {listing.listingType === 'wyróżnione' && (
-                  <div className="absolute top-2 left-0 bg-yellow-500 text-white px-2 py-1 text-xs flex items-center">
-                    <span className="mr-1">★</span> Wyróżnione
-                  </div>
-                )}
-              </div>
-
-              {/* Informacje o ogłoszeniu */}
-              <div className="flex-grow p-4">
-                <div className="flex flex-col md:flex-row justify-between">
-                  <div>
-                    <h2 className="text-lg font-bold mb-2">{listing.headline || listing.title}</h2>
-                    <div className="inline-block bg-[#35530A] text-white px-2 py-1 mb-3 font-bold">
-                      {listing.price} PLN
-                    </div>
-
-                    <div className="text-sm text-gray-600">
-                      {listing.year} • {listing.mileage} km • {listing.fuelType} • {listing.power} KM
-                    </div>
-                  </div>
-
-                  <div className="mt-4 md:mt-0">
-                    <span className="inline-block bg-green-100 text-green-800 rounded-full px-3 py-1 text-xs">
-                      {listing.status || 'Aktywne'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Statystyki i akcje */}
-                <div className="flex justify-between items-center mt-6">
-                  <div className="flex items-center text-xs text-gray-500">
-                    <Eye className="w-4 h-4 mr-1" /> {listing.views || 0} wyświetleń
-                    <span className="mx-2">•</span>
-                    {listing.createdAt ? `Dodano: ${new Date(listing.createdAt).toLocaleDateString()}` : null}
-                  </div>
-
-                  <div className="flex space-x-3">
-                    <button onClick={() => toggleFavorite(listing._id || listing.id)} className="text-yellow-500">
-                      <Heart className="w-5 h-5" />
-                    </button>
-                    <button onClick={() => handleEdit(listing._id || listing.id)} className="text-blue-500">
-                      <Edit className="w-5 h-5" />
-                    </button>
-                    <button onClick={() => handleDelete(listing._id || listing.id)} className="text-red-500">
-                      <Trash className="w-5 h-5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div key={listing._id || listing.id}>
+            {/* Przekazujemy cały obiekt listing do ListingCard.js, który renderuje zdjęcie i dane */}
+            <ListingCard
+              listing={listing}
+              onFavorite={toggleFavorite}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              calculateDaysRemaining={() => 7} // lub inna logika
+            />
           </div>
         ))}
       </div>

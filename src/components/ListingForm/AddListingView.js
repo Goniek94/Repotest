@@ -120,20 +120,26 @@ const AddListingView = () => {
       const formData = new FormData();
       
       // Mapowanie paliwa na właściwe wartości (normalizacja)
-      let fuelType = 'benzyna';
-      if (listingData.fuelType === 'Benzyna') fuelType = 'benzyna';
-      else if (listingData.fuelType === 'Diesel') fuelType = 'diesel';
-      else if (listingData.fuelType === 'Benzyna+LPG') fuelType = 'benzyna+LPG';
-      else if (listingData.fuelType === 'Elektryczny') fuelType = 'elektryczny';
-      else if (listingData.fuelType === 'Hybryda') fuelType = 'hybryda';
-      else fuelType = 'inne';
+      let normalizedFuelType = 'benzyna';
+      if (listingData.fuelType === 'Benzyna') normalizedFuelType = 'benzyna';
+      else if (listingData.fuelType === 'Diesel') normalizedFuelType = 'diesel';
+      else if (listingData.fuelType === 'Benzyna+LPG' || listingData.fuelType === 'benzyna+LPG') normalizedFuelType = 'benzyna+LPG';
+      else if (listingData.fuelType === 'Elektryczny') normalizedFuelType = 'elektryczny';
+      else if (listingData.fuelType === 'Hybryda') normalizedFuelType = 'hybryda';
+      else normalizedFuelType = 'inne';
       
       // Mapowanie skrzyni biegów na właściwe wartości (normalizacja)
-      let transmission = 'manualna';
-      if (listingData.transmission === 'Manualna') transmission = 'manualna';
-      else if (listingData.transmission === 'Automatyczna') transmission = 'automatyczna';
-      else if (listingData.transmission === 'Półautomatyczna') transmission = 'półautomatyczna';
-      else transmission = 'manualna';
+      let normalizedTransmission = 'manualna';
+      if (listingData.transmission === 'Manualna') normalizedTransmission = 'manualna';
+      else if (listingData.transmission === 'Automatyczna') normalizedTransmission = 'automatyczna';
+      else if (listingData.transmission === 'Półautomatyczna') normalizedTransmission = 'półautomatyczna';
+      else normalizedTransmission = 'manualna';
+      
+      // Mapowanie condition (stanu) na właściwe wartości
+      let normalizedCondition = '';
+      if (listingData.condition === 'Nowy') normalizedCondition = 'Nowy';
+      else if (listingData.condition === 'Używany') normalizedCondition = 'Używany';
+      else normalizedCondition = listingData.condition;
       
       // Walidacja ceny przed wysłaniem (zapobieganie błędom)
       const price = parseFloat(listingData.price);
@@ -153,6 +159,15 @@ const AddListingView = () => {
         return;
       }
       
+      // Walidacja roku produkcji przed wysłaniem
+      const year = parseInt(listingData.productionYear);
+      if (isNaN(year) || year < 1900 || year > new Date().getFullYear() + 1) {
+        setError('Nieprawidłowy rok produkcji pojazdu. Podaj poprawną wartość.');
+        setIsSubmitting(false);
+        setUploadProgress(0);
+        return;
+      }
+      
       // Sprawdzenie, czy są zdjęcia
       if (!listingData.photos || listingData.photos.length === 0) {
         setError('Dodaj przynajmniej jedno zdjęcie pojazdu.');
@@ -164,22 +179,37 @@ const AddListingView = () => {
       // Podstawowe pola (wymagane)
       formData.append('brand', listingData.brand || '');
       formData.append('model', listingData.model || '');
-      formData.append('year', listingData.productionYear || '');
-      formData.append('price', listingData.price || '');
-      formData.append('mileage', listingData.mileage || '0');
+      formData.append('year', year.toString()); // Mapowanie productionYear na year
+      formData.append('price', price.toString());
+      formData.append('mileage', mileage.toString());
       formData.append('description', listingData.description || '');
-      formData.append('fuelType', fuelType);
-      formData.append('transmission', transmission);
-      formData.append('purchaseOption', 'umowa kupna-sprzedaży'); // ZMIANA z purchaseOptions na purchaseOption
+      formData.append('fuelType', normalizedFuelType);
+      formData.append('transmission', normalizedTransmission);
+      formData.append('purchaseOptions', listingData.purchaseOption === 'sprzedaz' ? 'umowa kupna-sprzedaży' : listingData.purchaseOption || 'umowa kupna-sprzedaży');
       formData.append('listingType', listingType);
       formData.append('status', 'w toku');
+      
+      // Nowe pola
+      formData.append('headline', listingData.headline || '');
+      
+      // Dodanie pola sellerType z walidacją poprawnych wartości
+      if (listingData.sellerType) {
+        // Upewnij się, że wartość jest zgodna z oczekiwaniami backendu
+        let normalizedSellerType = 'prywatny'; // domyślna wartość
+        if (listingData.sellerType === 'Prywatny' || listingData.sellerType === 'prywatny') {
+          normalizedSellerType = 'prywatny';
+        } else if (listingData.sellerType === 'Firma' || listingData.sellerType === 'firma') {
+          normalizedSellerType = 'firma';
+        }
+        formData.append('sellerType', normalizedSellerType);
+      }
       
       // Opcjonalne pola (dodaj tylko jeśli są wypełnione)
       if (listingData.generation) formData.append('generation', listingData.generation);
       if (listingData.version) formData.append('version', listingData.version);
       if (listingData.vin) formData.append('vin', listingData.vin);
       if (listingData.registrationNumber) formData.append('registrationNumber', listingData.registrationNumber);
-      if (listingData.condition) formData.append('condition', listingData.condition);
+      if (normalizedCondition) formData.append('condition', normalizedCondition);
       if (listingData.accidentStatus) formData.append('accidentStatus', listingData.accidentStatus);
       if (listingData.damageStatus) formData.append('damageStatus', listingData.damageStatus);
       if (listingData.tuning) formData.append('tuning', listingData.tuning);
@@ -189,14 +219,53 @@ const AddListingView = () => {
       if (listingData.disabledAdapted) formData.append('disabledAdapted', listingData.disabledAdapted);
       if (listingData.bodyType) formData.append('bodyType', listingData.bodyType);
       if (listingData.color) formData.append('color', listingData.color);
-      if (listingData.lastOfficialMileage) formData.append('lastOfficialMileage', listingData.lastOfficialMileage);
-      if (listingData.power) formData.append('power', listingData.power);
-      if (listingData.engineSize) formData.append('engineSize', listingData.engineSize);
+      
+      // Konwersja danych liczbowych
+      if (listingData.lastOfficialMileage) {
+        const lastOfficialMileage = parseInt(listingData.lastOfficialMileage);
+        if (!isNaN(lastOfficialMileage)) {
+          formData.append('lastOfficialMileage', lastOfficialMileage.toString());
+        }
+      }
+      
+      if (listingData.power) {
+        const power = parseInt(listingData.power);
+        if (!isNaN(power)) {
+          formData.append('power', power.toString());
+        }
+      }
+      
+      if (listingData.engineSize) {
+        const engineSize = parseInt(listingData.engineSize);
+        if (!isNaN(engineSize)) {
+          formData.append('engineSize', engineSize.toString());
+        }
+      }
+      
       if (listingData.drive) formData.append('drive', listingData.drive);
-      if (listingData.doors) formData.append('doors', listingData.doors);
-      if (listingData.weight) formData.append('weight', listingData.weight);
+      
+      if (listingData.doors) {
+        const doors = parseInt(listingData.doors);
+        if (!isNaN(doors)) {
+          formData.append('doors', doors.toString());
+        }
+      }
+      
+      if (listingData.weight) {
+        const weight = parseInt(listingData.weight);
+        if (!isNaN(weight)) {
+          formData.append('weight', weight.toString());
+        }
+      }
+      
       if (listingData.voivodeship) formData.append('voivodeship', listingData.voivodeship);
       if (listingData.city) formData.append('city', listingData.city);
+      
+      // Dodatkowe cechy nadwozia
+      if (listingData.hasSunroof === 'Tak') formData.append('hasSunroof', 'Tak');
+      if (listingData.hasAlloyWheels === 'Tak') formData.append('hasAlloyWheels', 'Tak');
+      if (listingData.hasRoofRails === 'Tak') formData.append('hasRoofRails', 'Tak');
+      if (listingData.hasParkingSensors === 'Tak') formData.append('hasParkingSensors', 'Tak');
       
       // Przygotowanie zdjęć
       setUploadProgress(20);
@@ -475,7 +544,8 @@ const AddListingView = () => {
                   <InfoRow label="Napęd" value={listingData.drive} />
                   <InfoRow label="Typ nadwozia" value={listingData.bodyType} />
                   <InfoRow label="Kolor" value={listingData.color} />
-                  <InfoRow label="Liczba drzwi" value={listingData.doors} /><InfoRow label="Waga" value={listingData.weight ? `${listingData.weight} kg` : 'Nie podano'} />
+                  <InfoRow label="Liczba drzwi" value={listingData.doors} />
+                  <InfoRow label="Waga" value={listingData.weight ? `${listingData.weight} kg` : 'Nie podano'} />
                   <InfoRow label="Pierwszy właściciel" value={listingData.firstOwner} />
                   <InfoRow label="Zarejestrowany w PL" value={listingData.registeredInPL} />
                   <InfoRow label="Importowany" value={listingData.imported} />
@@ -484,6 +554,20 @@ const AddListingView = () => {
                   <InfoRow label="Kraj pochodzenia" value={listingData.countryOfOrigin} />
                   {listingData.vin && (
                     <InfoRow label="VIN" value={listingData.vin} />
+                  )}
+                  
+                  {/* Dodatkowe cechy nadwozia */}
+                  {listingData.hasSunroof === 'Tak' && (
+                    <InfoRow label="Szyberdach" value="Tak" />
+                  )}
+                  {listingData.hasAlloyWheels === 'Tak' && (
+                    <InfoRow label="Alufelgi" value="Tak" />
+                  )}
+                  {listingData.hasRoofRails === 'Tak' && (
+                    <InfoRow label="Relingi dachowe" value="Tak" />
+                  )}
+                  {listingData.hasParkingSensors === 'Tak' && (
+                    <InfoRow label="Czujniki parkowania" value="Tak" />
                   )}
                 </div>
               </div>

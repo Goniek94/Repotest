@@ -4,6 +4,15 @@ const AdsService = {
   // Pobieranie wszystkich ogłoszeń z opcjonalną filtracją
   getAll: (params = {}) => apiClient.get('/ads', { params }),
 
+  // Pobieranie liczby ogłoszeń pasujących do filtrów
+  getCount: (params = {}) => apiClient.get('/ads/count', { params }),
+
+  // Pobieranie wszystkich dostępnych marek samochodów
+  getBrands: () => apiClient.get('/ads/brands'),
+
+  // Pobieranie modeli dla wybranej marki
+  getModels: (brand) => apiClient.get('/ads/models', { params: { brand } }),
+
   // Pobieranie pojedynczego ogłoszenia
   getById: (id) => apiClient.get(`/ads/${id}`),
 
@@ -23,8 +32,8 @@ const AdsService = {
   // Usuwanie ogłoszenia
   delete: (id) => apiClient.delete(`/ads/${id}`),
 
-  // Przeszukiwanie ogłoszeń
-  search: (query) => apiClient.get('/ads/search', { params: { query } }),
+  // Przeszukiwanie ogłoszeń (przekazuje wszystkie filtry jako params)
+  search: (params = {}) => apiClient.get('/ads/search', { params }),
 
   // Pobieranie ogłoszeń użytkownika
   getUserAds: () => apiClient.get('/ads/user'),

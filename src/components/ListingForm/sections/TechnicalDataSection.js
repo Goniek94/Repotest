@@ -1,5 +1,4 @@
 import React from 'react';
-import { useListingForm } from '../../../contexts/ListingFormContext';
 import FormField from '../components/FormField';
 
 const TechnicalDataSection = ({ formData, handleChange, errors }) => {
@@ -11,7 +10,7 @@ const TechnicalDataSection = ({ formData, handleChange, errors }) => {
 
   return (
     <div className="bg-white p-6 rounded-[2px] shadow-md">
-      <h2 className="text-2xl font-bold mb-6">Dane techniczne</h2>
+      {/* Nagłówek główny przeniesiony do komponentu CreateListingForm */}
       
       {/* Przebieg i podstawowe parametry */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">

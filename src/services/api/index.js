@@ -41,6 +41,9 @@ export default {
   login: AuthService.login,
   logout: AuthService.logout,
   register: AuthService.register,
+  verifyCode: AuthService.verifyCode,
+  checkEmailExists: (email) => apiClient.post('/users/check-email', { email }).then(r => r.data),
+  checkPhoneExists: (phone) => apiClient.post('/users/check-phone', { phone }).then(r => r.data),
   getCurrentUser: AuthService.getCurrentUser,
   updateUserProfile: AuthService.refreshUserData,
   changePassword: (data) => apiClient.put('/users/change-password', data).then(r => r.data),
@@ -74,5 +77,8 @@ export default {
   
   // Transakcje
   getTransactionHistory: TransactionsService.getHistory,
-  processPayment: TransactionsService.processPayment
+  processPayment: TransactionsService.processPayment,
+  
+  // CEPiK - pobieranie danych pojazdu
+  getVehicleDataByVin: (vin) => apiClient.post('/api/cepik/checkVehicle', { vin }).then(r => r.data.vehicle)
 };

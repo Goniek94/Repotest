@@ -1,19 +1,34 @@
-import React, { useState, useEffect } from 'react';
-import { Bell, Mail, Car } from 'lucide-react';
+import React, { useState } from 'react';
+import { Bell, Mail, Car, User, MessageSquare, ShoppingBag, BellRing, History, Phone } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import UserNavigation, { TABS } from '../layout/UserNavigation';
 import Messages from '../messages/Messages';
 import UserListings from '../listings/UserListings';
-import TransactionHistory from '../transactions/TransactionHistory';
 import RecentListingItem from '../components/RecentListingItem';
 import ActivityItem from '../components/ActivityItem';
-import { ListingsService, TransactionsService, NotificationsService } from '../../../services/api';
 
 // Główny kolor
 const PRIMARY_COLOR = '#35530A';
 const PRIMARY_DARK = '#2A4208'; 
 const PRIMARY_LIGHT = '#EAF2DE';
+
+// Definicje zakładek
+const TABS = {
+  PANEL: 'panel',
+  MESSAGES: 'messages',
+  LISTINGS: 'listings',
+  NOTIFICATIONS: 'notifications',
+  TRANSACTIONS: 'transactions',
+  CONTACT: 'contact'
+};
+
+// Stub dla TransactionHistory, który obecnie nie istnieje lub jest w nieprawidłowej lokalizacji
+const TransactionHistory = () => (
+  <div className="bg-white p-6 rounded-sm shadow-sm">
+    <h2 className="text-xl font-bold mb-4">Historia transakcji</h2>
+    <p>Tutaj będzie wyświetlana historia transakcji.</p>
+  </div>
+);
 
 // Placeholder components for tabs that don't have implementations yet
 const Notifications = () => (
@@ -32,137 +47,82 @@ const Contact = () => (
 
 const UserPanel = () => {
   const [activeTab, setActiveTab] = useState(TABS.PANEL);
-  const { user, refreshUser, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   
-  // Stany dla danych użytkownika
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [stats, setStats] = useState({
-    activeListings: 0,
-    completedTransactions: 0,
-    sellerRating: 0
-  });
-  const [recentListings, setRecentListings] = useState([]);
-  const [activities, setActivities] = useState([]);
+  // Statyczne dane użytkownika
+  const stats = {
+    activeListings: 5,
+    completedTransactions: 12,
+    sellerRating: 4.8
+  };
+  
+  const recentListings = [
+    {
+      title: "BMW 520d 2019",
+      description: "Sedan, 190 KM, 80 000 km",
+      price: "95 000 zł",
+      href: "#",
+    },
+    {
+      title: "Audi A4 2020",
+      description: "Kombi, 150 KM, 45 000 km",
+      price: "112 000 zł",
+      href: "#",
+    },
+    {
+      title: "Volkswagen Passat 2021",
+      description: "Sedan, 170 KM, 35 000 km",
+      price: "129 000 zł",
+      href: "#",
+    }
+  ];
+  
+  const activities = [
+    {
+      icon: <Mail className="w-4 h-4 text-gray-600" />,
+      title: "Nowa wiadomość od użytkownika",
+      description: "Odpowiedz, aby kontynuować rozmowę",
+      time: "dziś, 10:17",
+      href: "#",
+      actionLabel: "Odpowiedz",
+    },
+    {
+      icon: <Car className="w-4 h-4 text-gray-600" />,
+      title: "Dodano nowe ogłoszenie",
+      description: "Sprawdź szczegóły swojego ogłoszenia",
+      time: "wczoraj, 12:17",
+      href: "#",
+      actionLabel: "Zobacz",
+    },
+    {
+      icon: <Bell className="w-4 h-4 text-gray-600" />,
+      title: "Nowe powiadomienie systemowe",
+      description: "Ważna aktualizacja regulaminu serwisu",
+      time: "14.05.2025",
+      href: "#",
+      actionLabel: "Zobacz",
+    }
+  ];
 
-  // Pobieranie danych użytkownika przy montowaniu komponentu
-  useEffect(() => {
-    const fetchUserData = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        // Pobierz aktualne dane użytkownika z backendu
-        await refreshUser();
-        
-        // Pobierz statystyki (aktywne ogłoszenia, transakcje, oceny)
-        const [listingsData, transactionsData] = await Promise.all([
-          ListingsService.getUserListings(), 
-          TransactionsService.getHistory()
-        ]);
-        
-        // Liczba aktywnych ogłoszeń
-        const activeListings = listingsData.filter(listing => listing.status === 'active').length;
-        
-        // Liczba zakończonych transakcji
-        const completedTransactions = transactionsData.length;
-        
-        // Oblicz średnią ocenę (jeśli dostępna w API)
-        const sellerRating = user.rating || 4.8; // Tymczasowo używamy wartości domyślnej jeśli brak w API
-        
-        setStats({
-          activeListings,
-          completedTransactions,
-          sellerRating
-        });
-        
-        // Pobierz ostatnio przeglądane ogłoszenia (jeśli dostępne w API)
-        // Tymczasowo używamy przykładowych danych
-        setRecentListings([
-          {
-            title: "BMW 520d 2019",
-            description: "Sedan, 190 KM, 80 000 km",
-            price: "95 000 zł",
-            href: "#",
-          },
-          {
-            title: "Audi A4 2020",
-            description: "Kombi, 150 KM, 45 000 km",
-            price: "112 000 zł",
-            href: "#",
-          },
-          {
-            title: "Volkswagen Passat 2021",
-            description: "Sedan, 170 KM, 35 000 km",
-            price: "129 000 zł",
-            href: "#",
-          }
-        ]);
-        
-        // Pobierz ostatnie aktywności (wiadomości, ogłoszenia, powiadomienia)
-        // Tymczasowo używamy przykładowych danych
-        setActivities([
-          {
-            icon: <Mail className="w-4 h-4 text-gray-600" />,
-            title: "Nowa wiadomość od użytkownika",
-            description: "Odpowiedz, aby kontynuować rozmowę",
-            time: "dziś, 10:17",
-            href: "#",
-            actionLabel: "Odpowiedz",
-          },
-          {
-            icon: <Car className="w-4 h-4 text-gray-600" />,
-            title: "Dodano nowe ogłoszenie",
-            description: "Sprawdź szczegóły swojego ogłoszenia",
-            time: "wczoraj, 12:17",
-            href: "#",
-            actionLabel: "Zobacz",
-          },
-          {
-            icon: <Bell className="w-4 h-4 text-gray-600" />,
-            title: "Nowe powiadomienie systemowe",
-            description: "Ważna aktualizacja regulaminu serwisu",
-            time: "14.05.2025",
-            href: "#",
-            actionLabel: "Zobacz",
-          }
-        ]);
-        
-        setIsLoading(false);
-      } catch (err) {
-        console.error("Błąd podczas pobierania danych użytkownika:", err);
-        setError("Nie udało się pobrać danych użytkownika. Spróbuj odświeżyć stronę.");
-        setIsLoading(false);
-      }
-    };
-
-    fetchUserData();
-  }, [refreshUser]);
+  // Konfiguracja zakładek głównej nawigacji
+  const navigationTabs = [
+    { id: TABS.PANEL, label: 'Panel', icon: <User size={18} /> },
+    { id: TABS.MESSAGES, label: 'Wiadomości', icon: <MessageSquare size={18} /> },
+    { id: TABS.LISTINGS, label: 'Moje ogłoszenia', icon: <ShoppingBag size={18} /> },
+    { id: TABS.NOTIFICATIONS, label: 'Powiadomienia', icon: <BellRing size={18} /> },
+    { id: TABS.TRANSACTIONS, label: 'Historia transakcji', icon: <History size={18} /> },
+    { id: TABS.CONTACT, label: 'Kontakt', icon: <Phone size={18} /> }
+  ];
 
   // Renderowanie zawartości panelu głównego
   const renderPanelContent = () => {
     // Wyświetlanie stanu ładowania
-    if (isLoading || authLoading) {
+    if (authLoading) {
       return (
         <div className="text-center py-16">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: PRIMARY_COLOR }}></div>
           <p className="mt-4 text-gray-600">Ładowanie danych użytkownika...</p>
-        </div>
-      );
-    }
-    
-    // Wyświetlanie błędu
-    if (error) {
-      return (
-        <div className="text-center py-16 text-red-500">
-          <p>{error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="mt-4 px-4 py-2 text-white rounded-sm hover:opacity-90 transition-opacity"
-            style={{ backgroundColor: PRIMARY_COLOR }}
-          >
-            Odśwież stronę
-          </button>
         </div>
       );
     }
@@ -204,7 +164,7 @@ const UserPanel = () => {
             <div className="flex gap-2">
               <button 
                 className="flex items-center bg-opacity-20 bg-white hover:bg-opacity-30 px-3 py-1.5 rounded text-sm"
-                onClick={() => navigate('/profil/ustawienia')}
+                onClick={() => navigate('/profil/settings')}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
@@ -246,10 +206,10 @@ const UserPanel = () => {
         </div>
 
         {/* Sekcje Ostatnio przeglądane oraz Ostatnia aktywność obok siebie */}
-        <div className="flex flex-row w-full gap-6 md:gap-8">
+        <div className="flex flex-row w-full gap-4 md:gap-6">
           {/* Ostatnio przeglądane */}
-          <div className="bg-gray-50 p-4 shadow-md w-1/2" style={{ borderRadius: '2px' }}>
-            <h3 className="text-lg font-bold text-gray-700 mb-4">Ostatnio przeglądane</h3>
+          <div className="bg-white p-5 w-1/2 border border-gray-200 shadow-lg" style={{ borderRadius: '8px' }}>
+            <h3 className="text-lg font-bold text-gray-700 mb-4 pb-2 border-b border-gray-100">Ostatnio przeglądane</h3>
             
             <div className="space-y-4">
               {recentListings.length === 0 ? (
@@ -271,7 +231,7 @@ const UserPanel = () => {
           </div>
           
           {/* Ostatnia aktywność */}
-          <div className="bg-gray-50 p-4 shadow-md w-1/2" style={{ borderRadius: '2px' }}>
+          <div className="bg-white p-5 w-1/2 border border-gray-200 shadow-lg" style={{ borderRadius: '8px' }}>
             <h3 className="text-lg font-bold text-gray-700 mb-4">Ostatnia aktywność</h3>
             
             <div className="space-y-4">
@@ -319,14 +279,31 @@ const UserPanel = () => {
   };
 
   return (
-    <div className="bg-gray-100 min-h-screen w-full">
+    <div className="bg-white min-h-screen w-full">
       {/* Główny kontener */}
       <div className="w-full max-w-6xl mx-auto p-4 md:p-6">
-        {/* Nawigacja */}
-        <UserNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+        {/* Górna nawigacja z podkreśleniem aktywnej zakładki */}
+        <div className="flex mb-8 border-b-2 border-gray-100 shadow-sm pb-0.5 bg-white">
+          {navigationTabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center mr-8 py-4 px-3 transition-all duration-200 ${
+                activeTab === tab.id
+                  ? `text-[${PRIMARY_COLOR}] border-b-3 border-[${PRIMARY_COLOR}] font-medium -mb-[2px]`
+                  : `text-gray-500 border-b-2 border-transparent hover:text-[${PRIMARY_COLOR}] hover:border-gray-200`
+              }`}
+            >
+              <span className="mr-2">{tab.icon}</span>
+              {tab.label}
+            </button>
+          ))}
+        </div>
         
         {/* Zawartość aktywnej zakładki */}
-        {renderContent()}
+        <div className="mt-4">
+          {renderContent()}
+        </div>
       </div>
     </div>
   );

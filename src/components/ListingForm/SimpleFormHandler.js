@@ -35,8 +35,8 @@ export const submitSimpleForm = async (listingData, onSuccess, onError) => {
       }
     }
     
-    // Bezpośrednie wysłanie na endpoint /ads/add
-    const response = await axiosSimple.post('/ads/add', formData);
+    // Dodawanie ogłoszenia przez ListingsService (z tokenem użytkownika)
+    const response = await import('../../services/api/listingsApi').then(mod => mod.default.add(formData));
     
     if (onSuccess) onSuccess(response.data);
     return response.data;

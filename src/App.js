@@ -2,9 +2,11 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ListingFormProvider } from './contexts/ListingFormContext';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import Navigation from './components/Navigation/Navigation';
 import Footer from './components/Footer';
-import SearchForm from './components/SearchForm';
+import SearchForm from './components/search/SearchForm';
 import FeaturedListings from './components/FeaturedListings/FeaturedListings';
 import ListingsPage from './components/ListingsView/ListingsPage';
 import CreateListingForm from './components/ListingForm/CreateListingForm';
@@ -19,6 +21,7 @@ import FAQ from './components/FAQ';
 import { FavoritesProvider } from './FavoritesContext';
 import ScrollToTop from './ScrollToTop';
 import ListingDetails from './components/listings/details/ListingDetails';
+import { clearAuthData } from './services/api/config';
 
 // Komponenty admina
 import AdminLayout from './components/admin/AdminLayout';
@@ -29,13 +32,7 @@ import AdminComments from './components/comments/admin/AdminComments';
 import AdminDiscounts from './components/discounts/admin/AdminDiscounts';
 
 // Komponenty profilu użytkownika
-import UserPanel from './components/UserPanel';
-import Messages from './components/profil/messages/Messages';
-import UserListings from './components/profil/listings/UserListings';
-import UserSettings from './components/profil/settings/UserSettings';
-import EditListing from './components/profil/listings/EditListing';
-import TransactionHistory from './components/profil/TransactionHistory';
-import Notifications from './components/profil/notifications/Notifications';
+import UserProfileRoutes from './components/profil/UserProfileRoutes';
 import { useAuth } from './contexts/AuthContext';
 
 // Ulepszony komponent dla tras chronionych z ograniczeniem zapętlenia
@@ -100,7 +97,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
 // Zawartość strony głównej
 const HomePageContent = () => (
   <>
-    <SearchForm />
+    <SearchForm compact={true} />
     <FeaturedListings />
   </>
 );
@@ -125,16 +122,30 @@ const AddListingViewWithProvider = () => (
 );
 
 const App = () => {
-  React.useEffect(() => {
-    // Automatyczne wylogowanie przy wejściu na stronę (czyści cookie)
-    fetch('/api/users/logout', { method: 'POST', credentials: 'include' });
-  }, []);
+  // Usunięto automatyczne wylogowanie przy wejściu na stronę
+  // Jeśli chcesz przywrócić produkcyjne zachowanie, odkomentuj poniższe linie:
+  // React.useEffect(() => {
+  //   clearAuthData();
+  //   fetch('/api/users/logout', { method: 'POST', credentials: 'include' });
+  // }, []);
 
   return (
     <AuthProvider>
       <FavoritesProvider>
         <Router>
           <ScrollToTop />
+          <ToastContainer
+            position="top-right"
+            autoClose={5000}
+            hideProgressBar={false}
+            newestOnTop
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="light"
+          />
           <div className="flex flex-col min-h-screen">
             <Navigation />
             <main className="flex-grow">
@@ -210,68 +221,12 @@ const App = () => {
                   <Route path="discounts" element={<AdminDiscounts />} />
                 </Route>
 
-                {/* Panel użytkownika */}
+                {/* Panel użytkownika i wszystkie jego podstrony */}
                 <Route
-                  path="/profil"
+                  path="/profil/*"
                   element={
                     <ProtectedRoute>
-                      <UserPanel />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/profil/messages"
-                  element={
-                    <ProtectedRoute>
-                      <Messages />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/profil/notifications"
-                  element={
-                    <ProtectedRoute>
-                      <Notifications />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/profil/messages"
-                  element={
-                    <ProtectedRoute>
-                      <Messages />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/profil/transactions"
-                  element={
-                    <ProtectedRoute>
-                      <TransactionHistory />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/profil/listings"
-                  element={
-                    <ProtectedRoute>
-                      <UserListings />
-                    </ProtectedRoute>
-                  }
-                />
-<Route
-  path="/profil/settings"
-  element={
-    <ProtectedRoute>
-      <UserSettings />
-    </ProtectedRoute>
-  }
-/>
-                <Route
-                  path="/edytuj-ogloszenie/:id"
-                  element={
-                    <ProtectedRoute>
-                      <EditListing />
+                      <UserProfileRoutes />
                     </ProtectedRoute>
                   }
                 />

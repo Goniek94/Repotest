@@ -140,6 +140,23 @@ const AuthService = {
   },
 
   /**
+   * Weryfikacja kodu podczas rejestracji
+   * @param {string} email - Email użytkownika
+   * @param {string} code - Kod weryfikacyjny
+   * @param {string} type - Typ weryfikacji (np. 'email')
+   * @returns {Promise} - Promise rozwiązywane danymi odpowiedzi
+   */
+  verifyCode: async (email, code, type = 'email') => {
+    try {
+      const response = await apiClient.post('/users/verify-code', { email, code, type });
+      return response.data;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || 'Błąd podczas weryfikacji kodu';
+      throw new Error(errorMessage);
+    }
+  },
+
+  /**
    * Resetowanie hasła
    * @param {string} email - Email użytkownika
    * @returns {Promise} - Promise rozwiązywane danymi odpowiedzi

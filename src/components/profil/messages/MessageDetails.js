@@ -1,7 +1,10 @@
 import React from 'react';
-import { MoreHorizontal, Paperclip } from 'lucide-react';
 
 const MessageDetails = ({ message, onGoToChat }) => {
+  if (!message) {
+    return <div className="text-gray-400">Nie wybrano wiadomości.</div>;
+  }
+
   return (
     <div className="w-2/3 p-6 overflow-auto" style={{ height: '600px' }}>
       <div className="flex justify-between items-start mb-6">
@@ -30,9 +33,6 @@ const MessageDetails = ({ message, onGoToChat }) => {
           >
             Przejdź do czatu
           </button>
-          <button className="text-gray-400 hover:text-gray-600">
-            <MoreHorizontal className="w-5 h-5" />
-          </button>
         </div>
       </div>
       
@@ -40,28 +40,6 @@ const MessageDetails = ({ message, onGoToChat }) => {
         <p className="text-gray-800 whitespace-pre-line">
           {message.content}
         </p>
-      </div>
-      
-      <div className="mt-6">
-        <textarea 
-          placeholder="Napisz odpowiedź..."
-          className="w-full border border-gray-300 rounded-sm p-4 min-h-[120px] focus:outline-none focus:ring-2 focus:ring-[#35530A] focus:border-transparent"
-          style={{ borderRadius: '2px' }}
-        ></textarea>
-        
-        <div className="flex justify-between mt-4">
-          <div className="flex space-x-2">
-            <button className="text-gray-500 hover:text-gray-700">
-              <Paperclip className="w-5 h-5" />
-            </button>
-          </div>
-          <button 
-            className="bg-[#35530A] text-white px-6 py-2 rounded-sm font-medium hover:bg-[#2A4208]"
-            style={{ borderRadius: '2px' }}
-          >
-            Odpowiedz
-          </button>
-        </div>
       </div>
     </div>
   );

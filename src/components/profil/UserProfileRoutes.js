@@ -1,0 +1,37 @@
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import ProfileLayout from './layout/ProfileLayout';
+import UserPanel from './dashboard/UserPanel';
+import Messages from './messages/Messages';
+import UserListings from './listings/UserListings';
+import Notifications from './notifications/Notifications';
+import TransactionHistory from './TransactionHistory';
+import UserSettings from './settings/UserSettings';
+
+/**
+ * Komponent obsługujący routing w panelu użytkownika
+ * Zawiera wszystkie podstrony dostępne w profilu użytkownika
+ */
+const UserProfileRoutes = () => {
+  return (
+    <Routes>
+      <Route element={<ProfileLayout />}>
+        {/* Domyślna podstrona - dashboard */}
+        <Route index element={<UserPanel />} />
+        
+        {/* Podstrony panelu użytkownika */}
+        <Route path="dashboard" element={<UserPanel />} />
+        <Route path="messages/*" element={<Messages />} />
+        <Route path="listings/*" element={<UserListings />} />
+        <Route path="notifications" element={<Notifications />} />
+        <Route path="transactions" element={<TransactionHistory />} />
+        <Route path="settings/*" element={<UserSettings />} />
+        
+        {/* Przekierowanie nieznanych ścieżek do dashboardu */}
+        <Route path="*" element={<Navigate to="/profil" replace />} />
+      </Route>
+    </Routes>
+  );
+};
+
+export default UserProfileRoutes;

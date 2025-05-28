@@ -6,7 +6,7 @@ import LoginModal from '../auth/LoginModal';
 import Logo from './Logo';
 import DesktopNav from './DesktopNav';
 import MobileMenu from './MobileMenu';
-import UserMenu from './UserMenu';
+import ProfileNavigation from '../profil/navigation/ProfileNavigation';
 import AddListingButton from './AddListingButton';
 
 const Navigation = () => {
@@ -66,11 +66,12 @@ const Navigation = () => {
           <AddListingButton user={user} setIsLoginModalOpen={setIsLoginModalOpen} />
 
           {isAuthenticated && user ? (
-            <UserMenu
+            <ProfileNavigation
               notifications={notifications}
               handleLogout={handleLogout}
-              isUserMenuOpen={isUserMenuOpen}
-              setIsUserMenuOpen={setIsUserMenuOpen}
+              isDropdown={true}
+              isOpen={isUserMenuOpen}
+              setIsOpen={setIsUserMenuOpen}
             />
           ) : (
             <button

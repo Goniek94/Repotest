@@ -312,16 +312,22 @@ function Register() {
     }
   };
 
-  // Weryfikacja kodu (SYMULACJA)
+  // Weryfikacja kodu (poprzez API)
   const handleVerifyCode = async (type) => {
     try {
-      console.log(`Symulacja weryfikacji kodu ${type}: ${formData[`${type}Code`]}`);
+      console.log(`Weryfikacja kodu ${type}: ${formData[`${type}Code`]}`);
+      setIsSubmitting(true);
       
-      // Symulacja opóźnienia sieciowego
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Wywołanie API zamiast symulacji
+      const response = await api.verifyCode(
+        formData.email,
+        formData[`${type}Code`],
+        type
+      );
       
-      // Sprawdź czy kod to 123456 (kod testowy)
-      if (formData[`${type}Code`] === '123456') {
+      console.log('Odpowiedź z weryfikacji kodu:', response);
+      
+      if (response.verified) {
         if (type === 'email') {
           // Sukces -> finalny submit
           await handleFinalSubmit();
@@ -331,7 +337,7 @@ function Register() {
           await handleSendVerificationCode('email');
         }
       } else {
-        throw new Error(`Nieprawidłowy kod ${type}`);
+        throw new Error(response.message || `Nieprawidłowy kod ${type}`);
       }
     } catch (error) {
       console.error(`Błąd weryfikacji ${type}:`, error);
@@ -339,6 +345,8 @@ function Register() {
         ...prev,
         [`${type}Code`]: error.message || 'Nieprawidłowy kod'
       }));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

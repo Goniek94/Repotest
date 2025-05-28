@@ -6,9 +6,13 @@
 const getImageUrl = (image) => {
   if (!image) return "/images/placeholder.jpg";
   if (image.startsWith("http://") || image.startsWith("https://")) return image;
-  if (image.startsWith("/uploads/")) return image;
-  if (image.startsWith("uploads/")) return "/" + image;
-  return "/uploads/" + image.replace(/^\/?/, "");
+
+  // Pobierz host backendu z env
+  const apiUrl = process.env.REACT_APP_API_URL || "";
+
+  if (image.startsWith("/uploads/")) return apiUrl + image;
+  if (image.startsWith("uploads/")) return apiUrl + "/" + image;
+  return apiUrl + "/uploads/" + image.replace(/^\/?/, "");
 };
 
 export default getImageUrl;

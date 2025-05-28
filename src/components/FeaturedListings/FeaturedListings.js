@@ -124,14 +124,14 @@ const FeaturedListings = () => {
         </h1>
 
         {/* 2 duże ogłoszenia */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
           {featuredListings.map((listing) => (
             <MainFeatureListing key={listing._id} listing={listing} />
           ))}
         </div>
         
         {/* 4 mniejsze ogłoszenia - "gorące oferty" */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6 lg:mb-8">
           {hotListings.map((listing) => (
             <SmallListingCard 
               key={listing._id} 
@@ -142,12 +142,12 @@ const FeaturedListings = () => {
         </div>
         
         {/* Pasek reklamowy */}
-        <div className="bg-white shadow-md rounded-[2px] h-48 mb-6 flex items-center justify-center">
-          <span className="text-xl text-gray-400">Miejsce na reklamę</span>
+        <div className="bg-white shadow-md rounded-[2px] h-32 sm:h-40 lg:h-48 mb-4 sm:mb-6 lg:mb-8 flex items-center justify-center">
+          <span className="text-lg sm:text-xl text-gray-400">Miejsce na reklamę</span>
         </div>
         
         {/* 6 małych ogłoszeń - standardowe */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-4 sm:mb-6">
           {normalListings.map((listing) => (
             <SmallListingCard key={listing._id} listing={listing} />
           ))}

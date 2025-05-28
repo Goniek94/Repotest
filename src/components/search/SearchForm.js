@@ -1,74 +1,145 @@
-import React, { lazy, Suspense, useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
-
-// Hook zawierający logikę formularza
-import useSearchForm from './hooks/useSearchForm';
-
-// Komponenty podstawowe (zawsze ładowane)
-import BasicFilters from './BasicFilters';
-import SearchFormButtons from './SearchFormButtons';
-
-// Komponenty zaawansowane (ładowane leniwie)
-const EngineFilters = lazy(() => import(/* webpackChunkName: "engine-filters" */ './EngineFilters'));
-const SaleFilters = lazy(() => import(/* webpackChunkName: "sale-filters" */ './SaleFilters'));
-const BodyFilters = lazy(() => import(/* webpackChunkName: "body-filters" */ './BodyFilters'));
-
-// Preload zaawansowanych filtrów po załadowaniu strony
-const preloadAdvancedFilters = () => {
-  // Użyj requestIdleCallback do załadowania komponentów w czasie bezczynności
-  if (typeof window !== 'undefined') {
-    if (window.requestIdleCallback) {
-      window.requestIdleCallback(() => {
-        import(/* webpackChunkName: "engine-filters" */ './EngineFilters');
-        import(/* webpackChunkName: "sale-filters" */ './SaleFilters');
-        import(/* webpackChunkName: "body-filters" */ './BodyFilters');
-      });
-    } else {
-      // Fallback dla przeglądarek bez requestIdleCallback
-      setTimeout(() => {
-        import(/* webpackChunkName: "engine-filters" */ './EngineFilters');
-        import(/* webpackChunkName: "sale-filters" */ './SaleFilters');
-        import(/* webpackChunkName: "body-filters" */ './BodyFilters');
-      }, 1000);
-    }
-  }
-};
+// SearchForm.js
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import BasicFilters from "./BasicFilters";
+import AdvancedFilters from "./AdvancedFilters";
+import SearchFormButtons from "./SearchFormButtons";
+import { carData, bodyTypes, advancedOptions, regions } from "./SearchFormConstants";
+import AdsService from "../../services/ads";
 
 /**
- * Główny komponent formularza wyszukiwania pojazdów
- * @param {Object} props - Właściwości komponentu
- * @param {Object} props.initialValues - Początkowe wartości formularza
- * @returns {JSX.Element} - Komponent formularza wyszukiwania
+ * SearchForm component
+ * @param {object} props
+ * @param {object} props.initialValues - initial form values
+ * @param {function} [props.onFilterChange] - callback to pass filters to parent
  */
-const SearchForm = ({ initialValues = {} }) => {
-  // Użyj hooka z logiką formularza
-  const {
-    formData,
-    availableBrands,
-    availableModels,
-    loadingBrands,
-    showAdvanced,
-    setShowAdvanced,
-    matchingResults,
-    handleInputChange,
-    handleSearch
-  } = useSearchForm(initialValues);
-  
-  // Preload zaawansowanych filtrów po załadowaniu komponentu
-  useEffect(() => {
-    preloadAdvancedFilters();
-  }, []);
+export default function SearchForm({ initialValues = {}, onFilterChange }) {
+  const navigate = useNavigate();
 
-  // Komponent ładujący dla Suspense
-  const LoadingFallback = () => (
-    <div className="py-4 text-center text-gray-500">
-      <svg className="animate-spin h-5 w-5 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-      </svg>
-      Ładowanie filtrów...
-    </div>
-  );
+  // Form state
+  const [formData, setFormData] = useState(() => ({
+    make: '',
+    model: '',
+    priceFrom: '',
+    priceTo: '',
+    yearFrom: '',
+    yearTo: '',
+    bodyType: '',
+    damageStatus: '',
+    country: '',
+    region: '',
+    fuelType: '',
+    driveType: '',
+    mileageFrom: '',
+    mileageTo: '',
+    location: '',
+    transmission: '',
+    enginePowerFrom: '',
+    enginePowerTo: '',
+    engineCapacityFrom: '',
+    engineCapacityTo: '',
+    color: '',
+    doorCount: '',
+    tuning: '',
+    vehicleCondition: '',
+    sellingForm: '',
+    sellerType: '',
+    vat: false,
+    invoiceOptions: false,
+    ...initialValues
+  }));
+
+  // Available models for selected make
+  const [availableModels, setAvailableModels] = useState([]);
+
+  // Show advanced filters
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
+  // Real matching results from backend
+  const [matchingResults, setMatchingResults] = useState(0);
+
+  // Update available models when make changes
+  useEffect(() => {
+    if (formData.make && carData[formData.make]) {
+      setAvailableModels(carData[formData.make]);
+    } else {
+      setAvailableModels([]);
+    }
+  }, [formData.make]);
+
+  // Fetch real count from backend on filter change
+  useEffect(() => {
+    let ignore = false;
+    const fetchCount = async () => {
+      try {
+        const params = { ...formData };
+        // Remove empty values
+        Object.keys(params).forEach(
+          (key) =>
+            (params[key] === '' || params[key] === null || params[key] === undefined) &&
+            delete params[key]
+        );
+        const res = await AdsService.getCount(params);
+        if (!ignore) setMatchingResults(res.data.count || 0);
+      } catch (e) {
+        if (!ignore) setMatchingResults(0);
+      }
+    };
+    fetchCount();
+    return () => {
+      ignore = true;
+    };
+  }, [formData]);
+
+  // Handle input change
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    if (type === 'checkbox') {
+      setFormData((prev) => ({ ...prev, [name]: checked }));
+    } else {
+      let finalValue = value;
+      if (
+        [
+          'priceFrom',
+          'priceTo',
+          'mileageFrom',
+          'mileageTo',
+          'enginePowerFrom',
+          'enginePowerTo',
+          'engineCapacityFrom',
+          'engineCapacityTo'
+        ].includes(name)
+      ) {
+        if (Number(value) < 0) finalValue = 0;
+      }
+      setFormData((prev) => ({ ...prev, [name]: finalValue }));
+    }
+  };
+
+  // Handle search button
+  const handleSearch = () => {
+    if (onFilterChange) {
+      onFilterChange(formData);
+    } else {
+      const searchParams = new URLSearchParams();
+      Object.entries(formData).forEach(([key, value]) => {
+        if (value !== '' && value !== null && value !== undefined) {
+          if (typeof value === 'boolean') {
+            searchParams.append(key, value.toString());
+          } else {
+            searchParams.append(key, value);
+          }
+        }
+      });
+      navigate(`/listings?${searchParams.toString()}`);
+    }
+  };
+
+  // Generate year options
+  const generateYearOptions = () => {
+    const currentYear = new Date().getFullYear();
+    return Array.from({ length: currentYear - 1989 }, (_, i) => currentYear - i);
+  };
 
   return (
     <section className="bg-[#F5F7F9] py-6 px-3 sm:px-4">
@@ -76,45 +147,26 @@ const SearchForm = ({ initialValues = {} }) => {
         <h2 className="text-2xl md:text-3xl font-bold text-[#35530A] text-center mb-5 uppercase">
           Wyszukaj pojazd
         </h2>
-
-        {/* FORMULARZ WYSZUKIWANIA */}
         <div className="bg-white p-5 shadow-md rounded-[2px] mb-4">
-          {/* PODSTAWOWE FILTRY */}
-          <BasicFilters 
+          <BasicFilters
             formData={formData}
             handleInputChange={handleInputChange}
-            availableBrands={availableBrands}
+            carData={carData}
+            bodyTypes={bodyTypes}
             availableModels={availableModels}
-            loadingBrands={loadingBrands}
+            generateYearOptions={generateYearOptions}
+            advancedOptions={advancedOptions}
+            regions={regions}
           />
-
-          {/* ZAAWANSOWANE FILTRY - ładowane leniwie */}
           {showAdvanced && (
-            <div className="mt-6 pt-4 border-t border-gray-200">
-              <Suspense fallback={<LoadingFallback />}>
-                {/* Silnik i napęd */}
-                <EngineFilters 
-                  formData={formData}
-                  handleInputChange={handleInputChange}
-                />
-
-                {/* Forma sprzedaży i lokalizacja */}
-                <SaleFilters 
-                  formData={formData}
-                  handleInputChange={handleInputChange}
-                />
-
-                {/* Nadwozie */}
-                <BodyFilters 
-                  formData={formData}
-                  handleInputChange={handleInputChange}
-                />
-              </Suspense>
-            </div>
+            <AdvancedFilters
+              formData={formData}
+              handleInputChange={handleInputChange}
+              advancedOptions={advancedOptions}
+              regions={regions}
+            />
           )}
-
-          {/* PRZYCISKI FORMULARZA */}
-          <SearchFormButtons 
+          <SearchFormButtons
             showAdvanced={showAdvanced}
             setShowAdvanced={setShowAdvanced}
             handleSearch={handleSearch}
@@ -124,10 +176,4 @@ const SearchForm = ({ initialValues = {} }) => {
       </div>
     </section>
   );
-};
-
-SearchForm.propTypes = {
-  initialValues: PropTypes.object
-};
-
-export default SearchForm;
+}

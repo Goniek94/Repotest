@@ -16,13 +16,13 @@ import AboutCompany from '../Aboutcompany';
 import FAQ from '../FAQ';
 
 // Komponenty profilu użytkownika
-import UserDashboard from '../profil/UserDashboard';
-import Messages from '../profil/Messages';
-import Notifications from '../profil/Notifications';
-import Transactions from '../profil/Transactions';
-import Stats from '../profil/Stats';
-import UserListings from '../profil/UserListings';
-import Settings from '../profil/Settings';
+import UserDashboard from '../profil/dashboard/UserDashboard';
+import Messages from '../profil/messages/Messages';
+import Notifications from '../profil/notifications/Notifications';
+import Transactions from '../profil/transactions/TransactionTable';
+import UserListings from '../profil/listings/UserListings';
+
+import ProfileLayout from '../profil/layout/ProfileLayout';
 
 // Komponenty admina
 import AdminLayout from '../admin/AdminLayout';
@@ -120,69 +120,22 @@ const AppRoutes = () => {
         <Route path="discounts" element={<AdminDiscounts />} />
       </Route>
 
-      {/* Panel użytkownika */}
+      {/* Panel użytkownika - jeden layout dla wszystkich sekcji profilu */}
       <Route
-        path="/profil"
+        path="/profil/*"
         element={
           <ProtectedRoute>
-            <UserDashboard />
+            <ProfileLayout />
           </ProtectedRoute>
         }
-      />
-      <Route
-        path="/profil/messages"
-        element={
-          <ProtectedRoute>
-            <Messages />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/profil/notifications"
-        element={
-          <ProtectedRoute>
-            <Notifications />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/profil/transactions"
-        element={
-          <ProtectedRoute>
-            <Transactions />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/profil/stats"
-        element={
-          <ProtectedRoute>
-            <Stats />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/profil/listings"
-        element={
-          <ProtectedRoute>
-            <UserListings />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/profil/favorites"
-        element={
-          <Navigate to="/profil/listings?view=favorites" replace />
-        }
-      />
-      <Route
-        path="/profil/settings"
-        element={
-          <ProtectedRoute>
-            <Settings />
-          </ProtectedRoute>
-        }
-      />
+      >
+        <Route index element={<UserDashboard />} />
+        <Route path="messages" element={<Messages />} />
+        <Route path="listings" element={<UserListings />} />
+        <Route path="notifications" element={<Notifications />} />
+        <Route path="transactions" element={<Transactions />} />
+        <Route path="contact" element={<Contact />} />
+      </Route>
 
       {/* Stara ścieżka "/profile" przekierowuje do "/profil" */}
       <Route 

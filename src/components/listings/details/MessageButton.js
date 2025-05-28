@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Mail } from "lucide-react";
-import MessagesService from "../../../services/api/messagesApi";
+import MessagesService from "../../../services/api/messages";
 
 /**
  * MessageButton component allows sending a message to the listing owner.

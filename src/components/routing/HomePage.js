@@ -1,5 +1,5 @@
 import React from 'react';
-import SearchForm from '../SearchForm';
+import SearchForm from '../search/SearchForm';
 import FeaturedListings from '../FeaturedListings/FeaturedListings';
 
 /**
