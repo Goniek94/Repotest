@@ -10,7 +10,7 @@ import MessageForm from './MessageForm';
 import { useNotifications } from '../../../contexts/NotificationContext';
 import useConversations from './hooks/useConversations';
 import { useAuth } from '../../../contexts/AuthContext';
-import { getAuthToken } from '../../../services/api/config';
+import { getAuthToken, API_URL } from '../../../services/api/config';
 
 /**
  * Główny komponent wiadomości
@@ -26,7 +26,7 @@ const Messages = () => {
   const { isAuthenticated, user } = useAuth();
   
   console.log('Stan autoryzacji:', isAuthenticated ? 'zalogowany' : 'niezalogowany');
-  console.log('ID użytkownika:', user?._id);
+  console.log('ID użytkownika:', user?._id || user?.id);
   console.log('Token JWT:', getAuthToken() ? 'dostępny' : 'brak');
   
   // Stan lokalny komponentu
@@ -78,7 +78,7 @@ const Messages = () => {
   useEffect(() => {
     console.log('===== KOMPONENT MESSAGES ZAMONTOWANY =====');
     console.log('Sprawdzenie stanu autoryzacji:', isAuthenticated ? 'zalogowany' : 'niezalogowany');
-    console.log('ID użytkownika:', user?._id);
+    console.log('ID użytkownika:', user?._id || user?.id);
     console.log('Token JWT:', getAuthToken() ? 'dostępny' : 'brak');
     
     // Test API - sprawdzenie, czy endpoint jest dostępny
@@ -92,7 +92,7 @@ const Messages = () => {
           headers['Authorization'] = `Bearer ${token}`;
         }
         
-        const response = await fetch('http://localhost:5000/messages/conversations', {
+        const response = await fetch(`${API_URL}/messages/conversations`, {
           headers,
           credentials: 'include'
         });
