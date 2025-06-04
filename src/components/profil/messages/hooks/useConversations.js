@@ -26,15 +26,6 @@ const useConversations = (activeTab) => {
   const { user } = useAuth();
   const currentUserId = user?._id || user?.id;
 
-  /**
-   * Mapowanie folderów między UI a API
-   */
-  // Mapowanie folderów pomiędzy UI a backendem zdefiniowane w stałej.
-  // useMemo zwraca tu tę samą referencję, ale główną wartością jest
-  // spójne użycie jednego źródła prawdy w całej aplikacji.
-  const folderMap = useMemo(() => FOLDER_MAP, []);
-
-  /**
    * Ujednolicona funkcja wyświetlająca powiadomienia
    */
   const showNotification = useCallback((message, type = 'info') => {
