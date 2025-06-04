@@ -1,7 +1,7 @@
 // src/components/ListingsView/ListingsPage.js
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import SearchForm from '../../components/search/SearchForm';
+import SearchForm from '../../components/search/SearchFormUpdated';
 import ListingControls from './controls/ListingControls';
 import ListingListView from './display/list/ListingListView';
 // Import prawidłowego komponentu GridListingCard
@@ -160,6 +160,10 @@ function ListingsPage() {
           matchLabel: getMatchLabel(ad)
         };
       });
+
+      // Sortuj ogłoszenia według wyniku dopasowania malejąco, tak aby najlepiej
+      // pasujące pojawiały się na górze
+      mappedListings.sort((a, b) => (b.match_score || 0) - (a.match_score || 0));
 
       setListings(mappedListings);
       setTotalPages(response.totalPages || 1);
