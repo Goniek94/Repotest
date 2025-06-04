@@ -54,20 +54,58 @@ const useConversations = (activeTab) => {
       console.log(`Pobieranie konwersacji z folderu: ${backendFolder}`);
       
       // Bezpośrednie wywołanie API - zapewnia pobieranie rzeczywistych danych
-      const response = await MessagesService.getConversationsList(backendFolder);
-      
+      let response = await MessagesService.getConversationsList(backendFolder);
+
       console.log('Otrzymana odpowiedź z API:', response);
-      
+
       // Sprawdź czy odpowiedź jest poprawna
       if (!response || (!Array.isArray(response) && !Array.isArray(response.data))) {
         console.error('Nieprawidłowa odpowiedź z API:', response);
         throw new Error('Nieprawidłowa odpowiedź z API');
       }
-      
+
       // Normalizacja odpowiedzi - może być bezpośrednio tablica lub w property data
-      const data = Array.isArray(response) ? response : (Array.isArray(response.data) ? response.data : []);
-      
+      let data = Array.isArray(response) ? response : (Array.isArray(response.data) ? response.data : []);
+
       console.log('Znormalizowane dane:', data);
+
+      // Jeśli API konwersacji zwróci pustą tablicę, próbujemy fallbacku do zwykłych wiadomości
+      if (Array.isArray(data) && data.length === 0) {
+        console.log('Brak konwersacji z API, próba pobrania wiadomości z folderu.');
+        const messagesFallback = await MessagesService.getByFolder(backendFolder);
+
+        if (Array.isArray(messagesFallback) && messagesFallback.length > 0) {
+          const convMap = {};
+          messagesFallback.forEach(msg => {
+            const otherUser = (msg.sender?._id || msg.sender) === currentUserId ? msg.recipient : msg.sender;
+            const userId = otherUser?._id || otherUser?.id;
+            if (!userId) return;
+
+            if (!convMap[userId]) {
+              convMap[userId] = {
+                _id: userId,
+                user: otherUser,
+                lastMessage: msg,
+                unreadCount: msg.read ? 0 : 1,
+                starred: msg.starred || false,
+                folder: msg.folder || backendFolder,
+              };
+            } else {
+              const existing = convMap[userId];
+              const msgDate = new Date(msg.createdAt);
+              const lastDate = new Date(existing.lastMessage.createdAt);
+              if (msgDate > lastDate) {
+                existing.lastMessage = msg;
+              }
+              if (!msg.read) {
+                existing.unreadCount += 1;
+              }
+            }
+          });
+          data = Object.values(convMap);
+          console.log('Dane z fallbacku:', data);
+        }
+      }
       
       // Formatowanie konwersacji do jednolitego formatu
       const formattedConversations = data.map(conversation => ({
