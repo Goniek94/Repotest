@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 const Logo = () => {
   return (
-    <Link to="/" className="flex items-center h-12">
+    <Link to="/" className="flex items-center h-12 -ml-5">
       <img
         src="/images/autosell12.svg"
         alt="AUTOSELL"

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { FaBars } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNotifications } from '../../contexts/NotificationContext';
 import LoginModal from '../auth/LoginModal';
 import Logo from './Logo';
 import DesktopNav from './DesktopNav';
@@ -11,6 +12,7 @@ import AddListingButton from './AddListingButton';
 
 const Navigation = () => {
   const { user, logout, isAuthenticated } = useAuth();
+  const { unreadCount } = useNotifications();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -50,15 +52,16 @@ const Navigation = () => {
     setIsMobileMenuOpen(false);
   };
 
+  // Używamy rzeczywistych danych o nieprzeczytanych powiadomieniach
   const notifications = {
-    messages: 1,
-    alerts: 1,
+    messages: unreadCount?.messages || 0,
+    alerts: unreadCount?.notifications || 0,
   };
 
   return (
     <header className="bg-white text-gray-800 sticky top-0 z-50 shadow-md">
-      {/* 👇 TU JEST KLUCZ! H-12 zamiast PY-2 */}
-      <div className="w-full h-16 flex items-center justify-between px-4 lg:px-8">
+      {/* Logo przy samej lewej krawędzi */}
+      <div className="w-full h-16 flex items-center justify-between pl-0 pr-4 lg:pl-0 lg:pr-8">
         <Logo />
 
         <div className="hidden md:flex items-center space-x-6">

@@ -9,6 +9,7 @@ import CommentSection from "./CommentSection";
 import SimilarListings from "./SimilarListings";
 import ListingHeader from "./ListingHeader";
 import AuthService from "../../../services/api/authApi";
+import ViewHistoryService from "../../../services/viewHistoryService";
 
 const ListingDetails = () => {
   const { id } = useParams();
@@ -35,6 +36,9 @@ const ListingDetails = () => {
         if (!response.ok) throw new Error("Nie znaleziono ogłoszenia");
         const data = await response.json();
         setListing(data);
+        
+        // Dodaj oglądane ogłoszenie do historii przeglądania
+        ViewHistoryService.addToViewHistory(data);
 
         // Pobierz komentarze
         const res = await fetch(`http://localhost:5000/api/comments/${id}`, {

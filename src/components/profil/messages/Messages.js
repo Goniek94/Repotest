@@ -1,617 +1,201 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Search, PlusCircle, Paperclip, Send } from 'lucide-react';
-import MessagesService from '../../../services/api/messages';
+import React, { useState, useRef, useEffect } from 'react';
+import { Paperclip, Send } from 'lucide-react';
+import MessagesHeader from './MessagesHeader';
+import MessagesTabs from './MessagesTabs';
 import MessageList from './MessageList';
 import MessageChat from './MessageChat';
-import MessageForm from './MessageForm';
-import MessagesTabs from './MessagesTabs';
 import EmptyChat from './EmptyChat';
 import ChatHeader from './ChatHeader';
-import MessagesHeader from './MessagesHeader';
-import { toast } from 'react-toastify';
+import MessageForm from './MessageForm';
+import { useNotifications } from '../../../contexts/NotificationContext';
+import useConversations from './hooks/useConversations';
+import { useAuth } from '../../../contexts/AuthContext';
+import { getAuthToken } from '../../../services/api/config';
 
 /**
- * Główny komponent wiadomości z pełną integracją z bazą danych
- * Obsługuje pobieranie, wysyłanie, przenoszenie i zarządzanie konwersacjami
+ * Główny komponent wiadomości
+ * 
+ * Integruje wszystkie komponenty związane z wiadomościami
+ * i zapewnia spójny interfejs użytkownika.
  */
 const Messages = () => {
-  // Stan komponentu
+  console.log('=== Renderowanie komponentu Messages ===');
+  
+  // Kontekst powiadomień i autoryzacji
+  const { unreadCount } = useNotifications();
+  const { isAuthenticated, user } = useAuth();
+  
+  console.log('Stan autoryzacji:', isAuthenticated ? 'zalogowany' : 'niezalogowany');
+  console.log('ID użytkownika:', user?._id);
+  console.log('Token JWT:', getAuthToken() ? 'dostępny' : 'brak');
+  
+  // Stan lokalny komponentu
   const [activeTab, setActiveTab] = useState('odebrane');
-  const [selectedConversation, setSelectedConversation] = useState(null);
-  const [conversations, setConversations] = useState([]);
-  const [chatMessages, setChatMessages] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
   const [showNewMessage, setShowNewMessage] = useState(false);
   const [replyContent, setReplyContent] = useState('');
   const [attachments, setAttachments] = useState([]);
   const [sendingReply, setSendingReply] = useState(false);
-  const [currentBackendFolder, setCurrentBackendFolder] = useState('inbox'); // Dodana zmienna w stanie
+  
+  // Referencje
   const chatEndRef = useRef(null);
   const fileInputRef = useRef(null);
-  
-  // Mapowanie folderów
-  const folderMap = {
-    'odebrane': 'inbox',
-    'wyslane': 'sent',
-    'robocze': 'drafts',
-    'archiwum': 'archived',
-    'wazne': 'starred'
-  };
 
-  // Pobieranie konwersacji przy zmianie folderu i aktualizacja currentBackendFolder
-  useEffect(() => {
-    const backendFolder = folderMap[activeTab] || 'inbox';
-    setCurrentBackendFolder(backendFolder);
-    fetchConversations();
-  }, [activeTab]);
+  // Hook useConversations zarządzający stanem i operacjami na konwersacjach
+  const { 
+    conversations,
+    selectedConversation,
+    chatMessages,
+    loading,
+    error,
+    searchTerm,
+    setSearchTerm,
+    handleSearch: searchConversations,
+    selectConversation,
+    toggleStar,
+    deleteConversation,
+    moveToFolder,
+    sendReply,
+    showNotification
+  } = useConversations(activeTab);
   
-  // Pobieranie wiadomości przy wyborze konwersacji
-  useEffect(() => {
-    if (selectedConversation) {
-      fetchConversationMessages();
-    }
-  }, [selectedConversation]);
-  
+  console.log('Hook useConversations - dane:', {
+    'Ilość konwersacji': conversations?.length || 0,
+    'Wybrana konwersacja': selectedConversation?.id || 'brak',
+    'Ilość wiadomości w czacie': chatMessages?.length || 0,
+    'Stan ładowania': loading ? 'ładowanie' : 'zakończone',
+    'Błędy': error || 'brak',
+    'Aktywna zakładka': activeTab
+  });
+
   // Przewijanie czatu do najnowszej wiadomości
   useEffect(() => {
     if (chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [chatMessages]);
-
-  /**
-   * Funkcja pobierająca konwersacje z wybranego folderu
-   */
-  const fetchConversations = async () => {
-    try {
-      setLoading(true);
-      // Używamy zmiennej ze stanu zamiast lokalnej definicji
-      
-      // Używamy dedykowanej metody API do pobierania konwersacji
-      const response = await MessagesService.getConversationsList();
-      
-      let formattedConversations = [];
-      const data = response?.conversations || [];
-      
-      if (Array.isArray(data)) {
-        // Filtrowanie konwersacji według aktywnego folderu
-        formattedConversations = data
-          .filter(conversation => conversation.folder === currentBackendFolder)
-          .map(conversation => ({
-            id: conversation._id,
-            userId: conversation.user?._id,
-            sender: {
-              id: conversation.user?._id,
-              name: conversation.user?.name || 'Nieznany użytkownik'
-            },
-            title: conversation.lastMessage?.subject || 'Bez tematu',
-            content: conversation.lastMessage?.content || '',
-            date: new Date(conversation.lastMessage?.createdAt || Date.now()),
-            isRead: conversation.read,
-            isStarred: conversation.starred,
-            folder: conversation.folder || currentBackendFolder,
-            unreadCount: conversation.unreadCount || 0,
-            attachments: conversation.lastMessage?.attachments || []
-          }));
-      } else {
-        // Jeśli API konwersacji nie jest dostępne, używamy starej metody grupowania
-        const messagesResponse = await MessagesService.getByFolder(currentBackendFolder);
-        const messages = Array.isArray(messagesResponse) ? messagesResponse : messagesResponse.data;
-        
-        if (Array.isArray(messages)) {
-          // Grupowanie wiadomości według użytkownika
-          const conversationsByUser = {};
-          
-          messages.forEach(message => {
-            // Określenie drugiego użytkownika w konwersacji
-            const otherUser = message.sender ? message.sender : message.recipient;
-            const otherUserId = otherUser?._id;
-            
-            if (otherUserId) {
-              if (!conversationsByUser[otherUserId]) {
-                conversationsByUser[otherUserId] = {
-                  id: message._id,
-                  userId: otherUserId,
-                  sender: {
-                    id: otherUser._id,
-                    name: otherUser.name || 'Nieznany użytkownik'
-                  },
-                  title: message.subject || 'Bez tematu',
-                  content: message.content,
-                  date: new Date(message.createdAt),
-                  isRead: message.read,
-                  isStarred: message.starred,
-                  folder: currentBackendFolder,
-                  unreadCount: message.read ? 0 : 1,
-                  attachments: message.attachments || []
-                };
-              } else {
-                // Aktualizuj datę i treść, jeśli ta wiadomość jest nowsza
-                const messageDate = new Date(message.createdAt);
-                if (messageDate > conversationsByUser[otherUserId].date) {
-                  conversationsByUser[otherUserId].date = messageDate;
-                  conversationsByUser[otherUserId].content = message.content;
-                  conversationsByUser[otherUserId].id = message._id;
-                  conversationsByUser[otherUserId].isRead = message.read;
-                }
-                
-                // Zwiększ licznik nieprzeczytanych
-                if (!message.read) {
-                  conversationsByUser[otherUserId].unreadCount += 1;
-                }
-              }
-            }
-          });
-          
-          // Konwersja obiektu na tablicę
-          formattedConversations = Object.values(conversationsByUser);
-        }
-      }
-
-      setConversations(formattedConversations);
-      setLoading(false);
-    } catch (err) {
-      console.error('Błąd pobierania konwersacji:', err);
-      showNotification('Nie udało się pobrać konwersacji', 'error');
-      setLoading(false);
-    }
-  };
   
-  /**
-   * Funkcja pobierająca wiadomości z wybranej konwersacji
-   */
-  const fetchConversationMessages = async () => {
-    if (!selectedConversation) return;
+  // Efekt diagnostyczny dla testowania API
+  useEffect(() => {
+    console.log('===== KOMPONENT MESSAGES ZAMONTOWANY =====');
+    console.log('Sprawdzenie stanu autoryzacji:', isAuthenticated ? 'zalogowany' : 'niezalogowany');
+    console.log('ID użytkownika:', user?._id);
+    console.log('Token JWT:', getAuthToken() ? 'dostępny' : 'brak');
     
-    try {
-      setLoading(true);
-      
-      // Używamy dedykowanej metody API do pobierania wiadomości z konwersacji
-      const response = await MessagesService.getConversationMessages(selectedConversation.userId);
-      
-      if (response?.messages && Array.isArray(response.messages)) {
-        // Formatowanie wiadomości dla wyświetlenia
-        const formattedMessages = response.messages.map(msg => ({
-          id: msg._id,
-          sender: msg.sender?._id,
-          senderName: msg.sender?.name || 'Nieznany użytkownik',
-          content: msg.content,
-          timestamp: new Date(msg.createdAt),
-          isRead: msg.read,
-          isDelivered: true,
-          isDelivering: false,
-          attachments: (msg.attachments || []).map(att => ({
-            id: att._id,
-            name: att.name || att.originalname,
-            url: att.path,
-            type: att.mimetype?.startsWith('image/') ? 'image' : 'file'
-          }))
-        }));
-        
-        // Sortowanie wiadomości według czasu
-        formattedMessages.sort((a, b) => a.timestamp - b.timestamp);
-        
-        setChatMessages(formattedMessages);
-      } else {
-        // Jeśli API konwersacji nie jest dostępne, używamy starej metody
-        const fallbackResponse = await MessagesService.getById(selectedConversation.id);
-        
-        // Jeśli mamy jedną wiadomość, wyświetlamy ją jako czat
-        setChatMessages([{
-          id: selectedConversation.id,
-          sender: selectedConversation.sender.id,
-          senderName: selectedConversation.sender.name,
-          content: selectedConversation.content,
-          timestamp: selectedConversation.date,
-          isRead: selectedConversation.isRead,
-          isDelivered: true,
-          isDelivering: false,
-          attachments: (selectedConversation.attachments || []).map(att => ({
-            id: att._id,
-            name: att.originalname || att.name,
-            url: att.path,
-            type: att.mimetype?.startsWith('image/') ? 'image' : 'file'
-          }))
-        }]);
-      }
-      
-      setLoading(false);
-    } catch (err) {
-      console.error('Błąd pobierania wiadomości konwersacji:', err);
-      showNotification('Nie udało się pobrać wiadomości', 'error');
-      setLoading(false);
-    }
-  };
-  
-  /**
-   * Obsługa kliknięcia na konwersację w liście
-   */
-  const handleConversationClick = async (conversationId) => {
-    const conversation = conversations.find(c => c.id === conversationId);
-    if (!conversation) return;
-    
-    setSelectedConversation(conversation);
-    
-    // Oznaczenie konwersacji jako przeczytanej
-    if (conversation.unreadCount > 0) {
+    // Test API - sprawdzenie, czy endpoint jest dostępny
+    const testApi = async () => {
       try {
-        // Używamy dedykowanej metody API do oznaczania konwersacji jako przeczytanej
-        await MessagesService.markConversationAsRead(conversation.userId);
+        console.log('Testowanie połączenia z API wiadomości...');
         
-        // Aktualizacja stanu po oznaczeniu jako przeczytane
-        setConversations(conversations.map(conv => 
-          conv.id === conversationId ? { ...conv, isRead: true, unreadCount: 0 } : conv
-        ));
-        
-        setSelectedConversation(prev => ({ ...prev, isRead: true, unreadCount: 0 }));
-      } catch (err) {
-        console.error('Błąd oznaczania konwersacji jako przeczytanej:', err);
-        // Próba oznaczenia pojedynczych wiadomości jako przeczytane (fallback)
-        try {
-          await MessagesService.markAsRead(conversation.id);
-        } catch (fallbackErr) {
-          console.error('Błąd fallback oznaczania wiadomości jako przeczytanej:', fallbackErr);
+        const headers = {};
+        const token = getAuthToken();
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
         }
-      }
-    }
-  };
-  
-  /**
-   * Funkcja przełączająca gwiazdkę (oznaczenie jako ważne)
-   */
-  const toggleStar = async (conversationId) => {
-    try {
-      const conversation = conversations.find(c => c.id === conversationId);
-      if (!conversation) return;
-      
-      // Używamy dedykowanej metody API do oznaczania konwersacji gwiazdką
-      await MessagesService.toggleConversationStar(conversation.userId);
-      
-      // Aktualizacja stanu konwersacji
-      setConversations(conversations.map(conv => 
-        conv.id === conversationId ? { ...conv, isStarred: !conv.isStarred } : conv
-      ));
-      
-      if (selectedConversation && selectedConversation.id === conversationId) {
-        setSelectedConversation({
-          ...selectedConversation,
-          isStarred: !selectedConversation.isStarred
+        
+        const response = await fetch('http://localhost:5000/messages/conversations', {
+          headers,
+          credentials: 'include'
         });
-      }
-      
-      const isStarred = conversations.find(c => c.id === conversationId)?.isStarred;
-      showNotification(
-        `Konwersacja ${isStarred ? 'usunięta z' : 'dodana do'} ważnych`, 
-        'success'
-      );
-    } catch (err) {
-      console.error('Błąd przełączania gwiazdki:', err);
-      
-      // Fallback do starszego API
-      try {
-        await MessagesService.toggleStar(conversationId);
-        // Aktualizacja stanu
-        setConversations(conversations.map(conv => 
-          conv.id === conversationId ? { ...conv, isStarred: !conv.isStarred } : conv
-        ));
         
-        if (selectedConversation && selectedConversation.id === conversationId) {
-          setSelectedConversation({
-            ...selectedConversation,
-            isStarred: !selectedConversation.isStarred
-          });
-        }
+        console.log('Test API - status odpowiedzi:', response.status);
         
-        showNotification('Status konwersacji zaktualizowany', 'success');
-      } catch (fallbackErr) {
-        console.error('Błąd fallback przełączania gwiazdki:', fallbackErr);
-        showNotification('Nie udało się zaktualizować statusu konwersacji', 'error');
-      }
-    }
-  };
-  
-  /**
-   * Funkcja usuwająca konwersację
-   */
-  const deleteConversation = async (conversationId) => {
-    try {
-      const conversation = conversations.find(c => c.id === conversationId);
-      if (!conversation) return;
-      
-      // Używamy dedykowanej metody API do usuwania konwersacji
-      await MessagesService.deleteConversation(conversation.userId);
-      
-      // Aktualizacja stanu
-      setConversations(conversations.filter(conv => conv.id !== conversationId));
-      
-      if (selectedConversation && selectedConversation.id === conversationId) {
-        setSelectedConversation(null);
-        setChatMessages([]);
-      }
-      
-      showNotification('Konwersacja została usunięta', 'success');
-    } catch (err) {
-      console.error('Błąd usuwania konwersacji:', err);
-      
-      // Fallback do starszego API
-      try {
-        await MessagesService.delete(conversationId);
-        // Aktualizacja stanu
-        setConversations(conversations.filter(conv => conv.id !== conversationId));
-        
-        if (selectedConversation && selectedConversation.id === conversationId) {
-          setSelectedConversation(null);
-          setChatMessages([]);
-        }
-        
-        showNotification('Konwersacja została usunięta', 'success');
-      } catch (fallbackErr) {
-        console.error('Błąd fallback usuwania konwersacji:', fallbackErr);
-        showNotification('Nie udało się usunąć konwersacji', 'error');
-      }
-    }
-  };
-  
-  /**
-   * Funkcja przenosząca konwersację do innego folderu
-   */
-  const moveToFolder = async (conversationId, targetFolder) => {
-    // Definiujemy zmienną na poziomie funkcji, aby była dostępna we wszystkich blokach
-    const targetBackendFolder = folderMap[targetFolder];
-    if (!targetBackendFolder) return;
-    
-    const conversation = conversations.find(c => c.id === conversationId);
-    if (!conversation) return;
-    
-    try {
-      // Używamy dedykowanej metody API do przenoszenia konwersacji
-      if (targetBackendFolder === 'archived') {
-        await MessagesService.archiveConversation(conversation.userId);
-      } else if (targetBackendFolder === 'trash') {
-        await MessagesService.moveConversationToTrash(conversation.userId);
-      } else {
-        await MessagesService.moveConversationToFolder(conversation.userId, targetBackendFolder);
-      }
-      
-      // Aktualizacja listy konwersacji
-      if (activeTab !== targetFolder) {
-        setConversations(conversations.filter(conv => conv.id !== conversationId));
-      } else {
-        fetchConversations(); // Odświeżenie listy w aktualnym folderze
-      }
-      
-      // Aktualizacja wybranej konwersacji
-      if (selectedConversation && selectedConversation.id === conversationId) {
-        if (activeTab !== targetFolder) {
-          setSelectedConversation(null);
-          setChatMessages([]);
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Test API - Otrzymano dane:', data);
+          console.log('Test API - Ilość konwersacji:', Array.isArray(data) ? data.length : 'brak danych');
         } else {
-          setSelectedConversation(prev => ({ ...prev, folder: targetBackendFolder }));
-        }
-      }
-      
-      showNotification(`Konwersacja przeniesiona do ${targetFolder}`, 'success');
-    } catch (err) {
-      console.error(`Błąd przenoszenia konwersacji do ${targetFolder}:`, err);
-      
-      // Fallback do starszego API
-      try {
-        if (targetBackendFolder === 'archived') {
-          await MessagesService.archive(conversationId);
-        } else if (targetBackendFolder === 'trash') {
-          await MessagesService.moveToTrash(conversationId);
-        } else if (targetBackendFolder === 'starred') {
-          await MessagesService.toggleStar(conversationId);
-        } else {
-          await MessagesService.moveToFolder(conversationId, targetBackendFolder);
-        }
-        
-        // Aktualizacja listy konwersacji
-        if (activeTab !== targetFolder) {
-          setConversations(conversations.filter(conv => conv.id !== conversationId));
-        } else {
-          fetchConversations();
-        }
-        
-        // Aktualizacja wybranej konwersacji
-        if (selectedConversation && selectedConversation.id === conversationId) {
-          if (activeTab !== targetFolder) {
-            setSelectedConversation(null);
-            setChatMessages([]);
-          } else {
-            setSelectedConversation(prev => ({ ...prev, folder: targetBackendFolder }));
+          console.error('Test API - Błąd odpowiedzi:', response.statusText);
+          try {
+            const errorData = await response.json();
+            console.error('Test API - Szczegóły błędu:', errorData);
+          } catch (e) {
+            console.error('Test API - Nie można sparsować błędu JSON');
           }
         }
-        
-        showNotification(`Konwersacja przeniesiona do ${targetFolder}`, 'success');
-      } catch (fallbackErr) {
-        console.error(`Błąd fallback przenoszenia konwersacji do ${targetFolder}:`, fallbackErr);
-        showNotification(`Nie udało się przenieść konwersacji do ${targetFolder}`, 'error');
+      } catch (error) {
+        console.error('Test API - Wyjątek podczas wykonywania zapytania:', error);
       }
+    };
+    
+    if (isAuthenticated) {
+      testApi();
+    } else {
+      console.log('Test API pominięty - użytkownik niezalogowany');
     }
-  };
+    
+    return () => {
+      console.log('===== KOMPONENT MESSAGES ODMONTOWANY =====');
+    };
+  }, [isAuthenticated, user]);
   
-  /**
-   * Funkcja wysyłająca odpowiedź w konwersacji
-   */
+  // Logowanie przy zmianie konwersacji
+  useEffect(() => {
+    if (conversations.length > 0) {
+      console.log('Pobrane konwersacje:', conversations);
+    }
+  }, [conversations]);
+  
+  useEffect(() => {
+    if (selectedConversation) {
+      console.log('Wybrana konwersacja:', selectedConversation);
+    }
+  }, [selectedConversation]);
+  
+  useEffect(() => {
+    if (chatMessages.length > 0) {
+      console.log('Wiadomości w konwersacji:', chatMessages);
+    }
+  }, [chatMessages]);
+
+  // Obsługa wyszukiwania
+  const handleSearch = (e) => {
+    const query = e.target.value;
+    console.log('Wyszukiwanie konwersacji:', query);
+    setSearchTerm(query);
+    searchConversations(query);
+  };
+
+  // Obsługa wysyłania odpowiedzi
   const handleSendReply = async () => {
     if ((!replyContent.trim() && attachments.length === 0) || !selectedConversation) return;
-    setSendingReply(true);
     
+    console.log('Wysyłanie odpowiedzi:', {
+      do: selectedConversation.id,
+      treść: replyContent,
+      załączniki: attachments.length
+    });
+    
+    setSendingReply(true);
     try {
-      const formData = new FormData();
-      formData.append('content', replyContent);
-      
-      // Dodanie załączników do formularza
-      attachments.forEach(file => {
-        formData.append('attachments', file);
-      });
-      
-      // Używamy dedykowanej metody API do odpowiadania w konwersacji
-      const response = await MessagesService.replyToConversation(selectedConversation.userId, formData);
-      
-      // Optymistyczna aktualizacja UI - dodanie nowej wiadomości do czatu
-      const newMessage = {
-        id: response?._id || `temp-${Date.now()}`,
-        sender: 'currentUser', // ID aktualnego użytkownika
-        senderName: 'Ja',
-        content: replyContent,
-        timestamp: new Date(),
-        isRead: true,
-        isDelivered: true,
-        isDelivering: false,
-        attachments: attachments.map(file => ({
-          id: `temp-${file.name}`,
-          name: file.name,
-          url: URL.createObjectURL(file),
-          type: file.type.startsWith('image/') ? 'image' : 'file'
-        }))
-      };
-      
-      setChatMessages([...chatMessages, newMessage]);
-      
-      // Czyszczenie pola odpowiedzi i listy załączników
+      await sendReply(replyContent, attachments);
+      console.log('Odpowiedź wysłana pomyślnie');
       setReplyContent('');
       setAttachments([]);
-      
-      showNotification('Wiadomość wysłana', 'success');
-    } catch (err) {
-      console.error('Błąd wysyłania odpowiedzi:', err);
-      
-      // Fallback do starszego API
-      try {
-        const formData = new FormData();
-        formData.append('content', replyContent);
-        
-        attachments.forEach(file => {
-          formData.append('attachments', file);
-        });
-        
-        const response = await MessagesService.replyToMessage(selectedConversation.id, formData);
-        
-        // Optymistyczna aktualizacja UI
-        const newMessage = {
-          id: response?.data?._id || `temp-${Date.now()}`,
-          sender: 'currentUser',
-          senderName: 'Ja',
-          content: replyContent,
-          timestamp: new Date(),
-          isRead: true,
-          isDelivered: true,
-          isDelivering: false,
-          attachments: attachments.map(file => ({
-            id: `temp-${file.name}`,
-            name: file.name,
-            url: URL.createObjectURL(file),
-            type: file.type.startsWith('image/') ? 'image' : 'file'
-          }))
-        };
-        
-        setChatMessages([...chatMessages, newMessage]);
-        setReplyContent('');
-        setAttachments([]);
-        
-        showNotification('Wiadomość wysłana', 'success');
-      } catch (fallbackErr) {
-        console.error('Błąd fallback wysyłania odpowiedzi:', fallbackErr);
-        showNotification('Nie udało się wysłać wiadomości', 'error');
-      }
+    } catch (error) {
+      console.error('Błąd podczas wysyłania wiadomości:', error);
+      console.error('Szczegóły błędu:', error.response?.data || error.message);
+      showNotification('Nie udało się wysłać wiadomości', 'error');
     } finally {
       setSendingReply(false);
     }
   };
-  
-  /**
-   * Obsługa wyszukiwania
-   */
-  const handleSearch = async (e) => {
-    const query = e.target.value;
-    setSearchTerm(query);
-    
-    if (query.trim().length < 3) {
-      // Jeśli zapytanie jest krótkie, pokaż standardową listę konwersacji
-      fetchConversations();
-      return;
-    }
-    
-    try {
-      setLoading(true);
-      // Używamy zmiennej ze stanu zamiast lokalnej definicji
-      
-      // Używamy dedykowanej metody API do wyszukiwania konwersacji
-      const response = await MessagesService.searchConversations(query, currentBackendFolder);
-      
-      let searchResults = [];
-      const data = Array.isArray(response) ? response : response.data;
-      
-      if (Array.isArray(data)) {
-        searchResults = data.map(conversation => ({
-          id: conversation._id,
-          userId: conversation.user?._id,
-          sender: {
-            id: conversation.user?._id,
-            name: conversation.user?.name || 'Nieznany użytkownik'
-          },
-          title: conversation.lastMessage?.subject || 'Bez tematu',
-          content: conversation.lastMessage?.content || '',
-          date: new Date(conversation.lastMessage?.createdAt || Date.now()),
-          isRead: conversation.read,
-          isStarred: conversation.starred,
-          folder: conversation.folder || currentBackendFolder,
-          unreadCount: conversation.unreadCount || 0,
-          attachments: conversation.lastMessage?.attachments || []
-        }));
-      } else {
-        // Fallback do starszego API
-        const fallbackResponse = await MessagesService.search(query, currentBackendFolder);
-        const fallbackData = Array.isArray(fallbackResponse) ? fallbackResponse : fallbackResponse.data;
-        
-        if (Array.isArray(fallbackData)) {
-          searchResults = fallbackData.map(message => ({
-            id: message._id,
-            userId: message.sender?._id,
-            sender: {
-              id: message.sender?._id,
-              name: message.sender?.name || 'Nieznany użytkownik'
-            },
-            title: message.subject || 'Bez tematu',
-            content: message.content,
-            date: new Date(message.createdAt),
-            isRead: message.read,
-            isStarred: message.starred,
-            folder: currentBackendFolder,
-            attachments: message.attachments || []
-          }));
-        }
-      }
-      
-      setConversations(searchResults);
-      setLoading(false);
-    } catch (err) {
-      console.error('Błąd wyszukiwania konwersacji:', err);
-      showNotification('Błąd podczas wyszukiwania', 'error');
-      setLoading(false);
-    }
-  };
-  
-  /**
-   * Obsługa dodawania załączników
-   */
+
+  // Obsługa dodawania załączników
   const handleAttachmentClick = () => {
+    console.log('Kliknięcie przycisku załączników');
     fileInputRef.current?.click();
   };
-  
-  /**
-   * Obsługa wyboru plików
-   */
+
+  // Obsługa wyboru plików
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
+    console.log('Wybrano pliki:', files.length);
+    
     if (files.length === 0) return;
     
     // Ograniczenie liczby załączników
     if (attachments.length + files.length > 5) {
+      console.log('Za dużo załączników');
       showNotification('Możesz dodać maksymalnie 5 załączników', 'warning');
       return;
     }
@@ -619,74 +203,97 @@ const Messages = () => {
     // Ograniczenie rozmiaru plików (10MB)
     const oversizedFiles = files.filter(file => file.size > 10 * 1024 * 1024);
     if (oversizedFiles.length > 0) {
+      console.log('Pliki za duże:', oversizedFiles.map(f => f.name));
       showNotification('Niektóre pliki są zbyt duże (maksymalny rozmiar to 10MB)', 'warning');
       return;
     }
     
-    setAttachments([...attachments, ...files]);
+    const newAttachments = files.map(file => ({
+      file,
+      name: file.name,
+      size: file.size,
+      type: file.type
+    }));
+    
+    console.log('Dodano załączniki:', newAttachments);
+    setAttachments(prev => [...prev, ...newAttachments]);
     e.target.value = ''; // Reset input
   };
-  
-  /**
-   * Usuwanie załącznika
-   */
+
+  // Usuwanie załącznika
   const removeAttachment = (index) => {
     setAttachments(attachments.filter((_, i) => i !== index));
   };
-  
-  /**
-   * Funkcja wyświetlająca powiadomienia
-   */
-  const showNotification = (message, type = 'info') => {
-    // Jeśli dostępny jest toast, użyj go
-    if (typeof toast === 'function') {
-      toast[type]?.(message) || toast(message);
-    } else {
-      // Fallback do konsoli
-      console.log(`[${type.toUpperCase()}] ${message}`);
-    }
+
+  // Funkcja do przekierowania na stronę logowania
+  const handleLoginRedirect = () => {
+    console.log('Przekierowanie do strony logowania');
+    localStorage.setItem('redirectAfterLogin', window.location.pathname);
+    window.location.href = '/login';
   };
 
-  // Filtrowanie konwersacji na podstawie wyszukiwania (jeśli nie wykonano pełnego wyszukiwania)
-  const filteredConversations = searchTerm.trim().length < 3 
-    ? conversations.filter(conversation =>
-        conversation.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        conversation.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        conversation.sender?.name?.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : conversations;
-
+  // Rendering komponentu
   return (
     <div className="bg-gray-50 min-h-screen pb-6">
       <div className="max-w-7xl mx-auto p-4">
         <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-100 h-[80vh] flex flex-col">
-          {/* Nagłówek */}
+          {/* Nagłówek - widoczny tylko na desktopie */}
           <MessagesHeader 
             searchTerm={searchTerm}
             onSearch={handleSearch}
             onNewMessage={() => setShowNewMessage(true)}
+            unreadCount={unreadCount.messages}
           />
           
-          {/* Zakładki folderów */}
+          {/* Zakładki folderów - dostosowane do urządzeń */}
           <MessagesTabs 
             activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            messages={conversations}
+            onTabChange={setActiveTab}
+            unreadCount={{
+              odebrane: unreadCount.messages || 0,
+              wyslane: 0,
+              wazne: 0,
+              archiwum: 0
+            }}
           />
           
           {/* Główna zawartość */}
           <div className="flex flex-1 overflow-hidden">
             {/* Lista konwersacji (lewa kolumna) */}
             <div className="w-full md:w-2/5 border-r border-gray-200 flex flex-col overflow-hidden">
-              {loading && conversations.length === 0 ? (
+              {/* Komunikat o błędzie autoryzacji */}
+              {!isAuthenticated ? (
+                <div className="flex flex-col justify-center items-center h-64 p-4">
+                  <div className="text-red-500 mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m0 0v2m0-2h2m-2 0H9m3-4V8m0 0V6m0 2h2m-2 0H9" />
+                    </svg>
+                    <p className="text-center font-medium text-lg">Twoja sesja wygasła. Zaloguj się ponownie, aby kontynuować.</p>
+                  </div>
+                  <button 
+                    className="px-4 py-2 bg-[#35530A] text-white rounded-md hover:bg-[#2A4208] transition-colors"
+                    onClick={handleLoginRedirect}
+                  >
+                    Zaloguj się
+                  </button>
+                </div>
+              ) : error ? (
+                <div className="flex justify-center items-center h-64 p-4 text-center text-red-500">
+                  <p>{error}</p>
+                </div>
+              ) : loading && conversations.length === 0 ? (
                 <div className="flex justify-center items-center h-64">
                   <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#35530A]"></div>
                 </div>
+              ) : conversations.length === 0 ? (
+                <div className="flex justify-center items-center h-64 p-4 text-center text-gray-500">
+                  <p>Nie znaleziono wiadomości w tym folderze.</p>
+                </div>
               ) : (
                 <MessageList
-                  messages={filteredConversations}
+                  messages={conversations}
                   activeConversation={selectedConversation?.id}
-                  onSelectConversation={handleConversationClick}
+                  onSelectConversation={selectConversation}
                   onStar={toggleStar}
                   onDelete={deleteConversation}
                   onMove={moveToFolder}
@@ -704,13 +311,13 @@ const Messages = () => {
                     onStar={() => toggleStar(selectedConversation.id)} 
                     onDelete={() => deleteConversation(selectedConversation.id)}
                     onArchive={() => moveToFolder(selectedConversation.id, 'archiwum')}
-                    onBack={() => setSelectedConversation(null)}
+                    onBack={() => selectConversation(null)}
                   />
                   
                   {/* Wiadomości w konwersacji */}
                   <MessageChat
                     messages={chatMessages}
-                    currentUser={{ id: 'currentUser' }} // użytkownik aktualnie zalogowany
+                    currentUser={user}
                     loading={loading}
                   />
                   
@@ -759,9 +366,9 @@ const Messages = () => {
                         
                         {/* Przycisk wysyłania */}
                         <button
-                          className="p-3 rounded-lg bg-[#35530A] text-white hover:bg-[#2A4208] transition-colors"
+                          className="p-3 rounded-lg bg-[#35530A] text-white hover:bg-[#2A4208] transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
                           onClick={handleSendReply}
-                          disabled={sendingReply || (!replyContent.trim() && attachments.length === 0)}
+                          disabled={sendingReply || (!replyContent.trim() && attachments.length === 0) || !selectedConversation}
                           title="Wyślij wiadomość"
                         >
                           {sendingReply ? (
@@ -798,7 +405,10 @@ const Messages = () => {
           onClose={() => setShowNewMessage(false)}
           onSend={() => {
             setShowNewMessage(false);
-            fetchConversations();
+            // Odświeżenie listy konwersacji po wysłaniu nowej wiadomości
+            if (activeTab === 'wyslane') {
+              searchConversations('');
+            }
           }}
         />
       )}

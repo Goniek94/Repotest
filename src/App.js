@@ -1,8 +1,10 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import { ListingFormProvider } from './contexts/ListingFormContext';
 import { ToastContainer } from 'react-toastify';
+import ToastNotification from './components/notifications/ToastNotification';
 import 'react-toastify/dist/ReactToastify.css';
 import Navigation from './components/Navigation/Navigation';
 import Footer from './components/Footer';
@@ -131,22 +133,12 @@ const App = () => {
 
   return (
     <AuthProvider>
-      <FavoritesProvider>
-        <Router>
-          <ScrollToTop />
-          <ToastContainer
-            position="top-right"
-            autoClose={5000}
-            hideProgressBar={false}
-            newestOnTop
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-            theme="light"
-          />
-          <div className="flex flex-col min-h-screen">
+      <NotificationProvider>
+        <FavoritesProvider>
+          <Router>
+            <ScrollToTop />
+            <ToastNotification />
+            <div className="flex flex-col min-h-screen">
             <Navigation />
             <main className="flex-grow">
               <Routes>
@@ -251,7 +243,8 @@ const App = () => {
             <Footer />
           </div>
         </Router>
-      </FavoritesProvider>
+        </FavoritesProvider>
+      </NotificationProvider>
     </AuthProvider>
   );
 };

@@ -1,43 +1,80 @@
 import React from 'react';
-import { Inbox, Send, Star, Archive, File } from 'lucide-react';
+import { Inbox, Send, Star, Archive } from 'lucide-react';
+import useBreakpoint from '../../../utils/responsive/useBreakpoint';
 
 /**
- * Komponent wyświetlający poziome zakładki folderów wiadomości
+ * Komponent zakładek wiadomości
+ * 
+ * Na urządzeniach mobilnych wyświetla 4 zakładki: Odebrane, Wysłane, Ważne, Archiwum
+ * Na desktopach wyświetla tylko 2 zakładki: Odebrane, Wysłane
+ * 
+ * @param {string} activeTab - aktywna zakładka
+ * @param {Function} onTabChange - funkcja wywoływana przy zmianie zakładki
+ * @param {Object} unreadCount - liczba nieprzeczytanych wiadomości w poszczególnych folderach
  */
-const MessagesTabs = ({ activeTab, setActiveTab, messages }) => {
-  // Definicja folderów z ikonami i etykietami
-  const folders = [
-    { id: 'odebrane', label: 'Odebrane', icon: <Inbox className="w-4 h-4" />, badge: messages.filter(m => !m.isRead && m.folder === 'odebrane').length },
-    { id: 'wyslane', label: 'Wysłane', icon: <Send className="w-4 h-4" /> },
-    { id: 'wazne', label: 'Ważne', icon: <Star className="w-4 h-4" /> },
-    { id: 'archiwum', label: 'Archiwum', icon: <Archive className="w-4 h-4" /> },
-    { id: 'robocze', label: 'Robocze', icon: <File className="w-4 h-4" /> },
-    // Usunięto zakładkę "Kosz"
+const MessagesTabs = ({ activeTab, onTabChange, unreadCount = {} }) => {
+  const breakpoint = useBreakpoint();
+  const isMobile = breakpoint === 'mobile';
+  
+  // Podstawowe foldery (dostępne zawsze)
+  const baseFolders = [
+    { 
+      id: 'odebrane', 
+      label: 'Odebrane', 
+      icon: <Inbox className="w-5 h-5" />, 
+      count: unreadCount.odebrane || 0 
+    },
+    { 
+      id: 'wyslane', 
+      label: 'Wysłane', 
+      icon: <Send className="w-5 h-5" />, 
+      count: unreadCount.wyslane || 0 
+    }
   ];
+  
+  // Dodatkowe foldery (tylko na mobile)
+  const mobileFolders = [
+    { 
+      id: 'wazne', 
+      label: 'Ważne', 
+      icon: <Star className="w-5 h-5" />, 
+      count: unreadCount.wazne || 0 
+    },
+    { 
+      id: 'archiwum', 
+      label: 'Archiwum', 
+      icon: <Archive className="w-5 h-5" />, 
+      count: unreadCount.archiwum || 0 
+    }
+  ];
+  
+  // Wybór folderów w zależności od urządzenia
+  const folders = isMobile ? [...baseFolders, ...mobileFolders] : baseFolders;
 
   return (
-    <div className="border-b border-gray-200 bg-white">
-      <div className="flex flex-nowrap overflow-x-auto px-2 py-2 no-scrollbar">
-        {folders.map(folder => (
+    <div className="bg-white border-b border-gray-200">
+      <nav className={`flex ${isMobile ? 'flex-wrap' : ''}`}>
+        {folders.map((folder) => (
           <button
             key={folder.id}
-            onClick={() => setActiveTab(folder.id)}
-            className={`flex items-center px-4 py-2 text-sm font-medium rounded-md mr-2 whitespace-nowrap
-                      ${activeTab === folder.id
-                ? 'bg-[#35530A] bg-opacity-10 text-[#35530A]'
-                : 'text-gray-600 hover:bg-gray-100 hover:text-[#35530A]'
-              }`}
+            onClick={() => onTabChange(folder.id)}
+            className={`
+              flex items-center px-4 py-3 text-sm font-medium ${isMobile ? 'flex-1 justify-center' : ''}
+              ${activeTab === folder.id 
+                ? 'text-[#35530A] border-b-2 border-[#35530A]' 
+                : 'text-gray-500 hover:text-[#35530A] hover:border-b-2 hover:border-gray-300'}
+            `}
           >
             <span className="mr-2">{folder.icon}</span>
-            <span>{folder.label}</span>
-            {folder.badge > 0 && (
-              <span className="ml-2 px-2 py-0.5 text-xs font-medium rounded-full bg-red-500 text-white">
-                {folder.badge}
+            {!isMobile && folder.label}
+            {folder.count > 0 && (
+              <span className="ml-1.5 px-2 py-0.5 text-xs rounded-full bg-[#35530A] text-white">
+                {folder.count}
               </span>
             )}
           </button>
         ))}
-      </div>
+      </nav>
     </div>
   );
 };

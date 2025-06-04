@@ -23,13 +23,13 @@ const ActivityItem = ({
   color = "#35530A",
 }) => (
   <div
-    className="bg-white shadow-sm border border-gray-100 p-3 relative hover:shadow-md transition-shadow duration-300"
+    className="bg-white shadow-sm border border-gray-100 p-2 sm:p-3 relative hover:shadow-md transition-shadow duration-300"
     style={{ borderRadius: "2px" }}
   >
     {onRemove && (
-      <div className="absolute top-2 right-2">
+      <div className="absolute top-1 sm:top-2 right-1 sm:right-2">
         <button
-          className="text-red-500 hover:text-red-700 bg-white rounded-full w-5 h-5 flex items-center justify-center shadow-sm"
+          className="text-red-500 hover:text-red-700 bg-white rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center shadow-sm"
           onClick={onRemove}
         >
           ×
@@ -37,19 +37,19 @@ const ActivityItem = ({
       </div>
     )}
     <div className="flex items-start">
-      <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3 shrink-0">
+      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-200 rounded-full flex items-center justify-center mr-2 sm:mr-3 shrink-0">
         {icon}
       </div>
       <div className="min-w-0 flex-grow">
         <div className="flex justify-between items-start">
-          <h4 className="font-bold text-gray-800 truncate">{title}</h4>
+          <h4 className="font-bold text-gray-800 truncate text-sm sm:text-base">{title}</h4>
         </div>
-        <p className="text-xs text-gray-600 mt-1 mb-2 truncate">{description}</p>
+        <p className="text-xs text-gray-600 mt-0.5 sm:mt-1 mb-1 sm:mb-2 truncate">{description}</p>
       </div>
     </div>
     <div className="flex justify-between mt-1">
       <span className="text-xs text-gray-500">{time}</span>
-      <a href={href} className="text-sm font-medium flex items-center" style={{ color }}>
+      <a href={href} className="text-xs sm:text-sm font-medium flex items-center" style={{ color }}>
         {actionLabel} <span className="ml-1">→</span>
       </a>
     </div>

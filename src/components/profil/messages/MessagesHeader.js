@@ -1,41 +1,41 @@
 import React from 'react';
-import { Search, PlusCircle, MessageSquare } from 'lucide-react';
+import { Search, MessageSquare } from 'lucide-react';
+import useBreakpoint from '../../../utils/responsive/useBreakpoint';
 
 /**
- * Komponent nagłówka wiadomości
- * Zawiera tytuł i wyszukiwarkę
+ * Nagłówek sekcji wiadomości
+ * Responsywny - dostosowany do urządzeń mobilnych i desktopowych
  */
-const MessagesHeader = ({ searchTerm, onSearch, onNewMessage }) => {
+const MessagesHeader = ({ searchTerm, onSearch, onNewMessage, unreadCount = 0 }) => {
+  const breakpoint = useBreakpoint();
+  const isMobile = breakpoint === 'mobile';
+  
+  const handleSearchChange = (e) => {
+    onSearch && onSearch(e.target.value);
+  };
+
   return (
-    <div className="border-b border-gray-200 p-4 flex justify-between items-center bg-white sticky top-0 z-10">
-      <div className="flex items-center">
-        <h2 className="text-xl font-bold text-gray-800 flex items-center">
-          <MessageSquare className="w-6 h-6 text-[#35530A] mr-2" />
-          Wiadomości
-        </h2>
-      </div>
-      
-      <div className="flex items-center space-x-3">
-        {/* Wyszukiwanie */}
-        <div className="relative">
+    <div className="bg-white p-4 border-b border-gray-200">
+      <div className={`flex ${isMobile ? 'flex-col space-y-3' : 'items-center justify-between'}`}>
+        {/* Nagłówek */}
+        <div className="flex items-center">
+          <MessageSquare className="w-5 h-5 text-[#35530A] mr-2" />
+          <h1 className="text-xl font-bold text-gray-800">Wiadomości</h1>
+        </div>
+        
+        {/* Wyszukiwarka */}
+        <div className={`relative ${isMobile ? 'w-full' : 'w-64'}`}>
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-4 w-4 text-gray-400" />
+          </div>
           <input
             type="text"
             placeholder="Szukaj..."
-            className="pl-9 pr-4 py-2 border border-gray-300 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-[#35530A] focus:border-transparent transition"
+            className="pl-10 pr-4 py-2 w-full text-sm bg-gray-50 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#35530A] focus:border-[#35530A]"
             value={searchTerm}
-            onChange={onSearch}
+            onChange={handleSearchChange}
           />
-          <Search className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
         </div>
-        
-        {/* Nowa wiadomość */}
-        <button
-          className="bg-[#35530A] text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-[#2A4208] transition flex items-center"
-          onClick={onNewMessage}
-        >
-          <PlusCircle className="w-4 h-4 mr-1" />
-          Nowa wiadomość
-        </button>
       </div>
     </div>
   );

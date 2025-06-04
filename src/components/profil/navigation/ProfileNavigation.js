@@ -136,7 +136,7 @@ export default function ProfileNavigation({
   // Horizontal tab navigation (for profile dashboard)
   return (
     <div className="w-full border-b border-gray-200 mb-6 bg-white relative">
-      <div className="flex overflow-x-auto no-scrollbar">
+      <div className="flex justify-between flex-wrap">
         {NAV_ITEMS.map((item) => (
           <button
             key={item.id}

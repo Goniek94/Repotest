@@ -1,5 +1,6 @@
 // src/services/api.js
 import apiClient from './client';
+import vinService from './vinService';
 
 // Import modułów API
 import { 
@@ -81,6 +82,14 @@ export const logout = async () => {
 // Rejestracja użytkownika
 export const register = async (userData) => {
   const response = await apiClient.post('/users/register', userData);
+  return response.data;
+};
+
+/**
+ * Pobieranie dashboardu użytkownika (statystyki, ostatnio przeglądane, itp.)
+ */
+export const getUserDashboard = async () => {
+  const response = await apiClient.get('/users/dashboard');
   return response.data;
 };
 
@@ -286,6 +295,22 @@ export const getTransactionHistory = async () => {
   return response.data;
 };
 
+// Pobieranie danych pojazdu na podstawie numeru VIN
+export const getVehicleDataByVin = async (vin) => {
+  try {
+    // W rzeczywistej aplikacji, to byłoby zapytanie do API:
+    // const response = await apiClient.get(`/vehicles/vin/${vin}`);
+    // return response.data;
+    
+    // Symulacja: używamy lokalnego serwisu do symulacji odpowiedzi
+    const vehicleData = await vinService.lookupVin(vin);
+    return vehicleData;
+  } catch (error) {
+    console.error('Error fetching VIN data:', error);
+    throw error;
+  }
+};
+
 // Przetwarzanie płatności za ogłoszenie
 export const processPayment = async (paymentData) => {
   const response = await apiClient.post('/payments/process', paymentData);
@@ -345,5 +370,6 @@ export default {
   
   // Transakcje
   getTransactionHistory,
-  processPayment
+  processPayment,
+  getVehicleDataByVin
 };

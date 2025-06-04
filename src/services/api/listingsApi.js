@@ -95,6 +95,15 @@ const ListingsService = {
    */
   search: (params = {}) => 
     apiClient.get('/ads/search', { params })
+      .then(response => response.data),
+      
+  /**
+   * Przedłużenie ogłoszenia o kolejne 30 dni
+   * @param {string} id - ID ogłoszenia
+   * @returns {Promise} - Promise rozwiązywane danymi odpowiedzi
+   */
+  extendListing: (id) => 
+    apiClient.post(`/ads/${id}/extend`)
       .then(response => response.data)
 };
 

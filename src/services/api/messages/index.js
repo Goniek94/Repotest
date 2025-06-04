@@ -1,65 +1,104 @@
-// src/services/api/messages/index.js
+/**
+ * Ujednolicony serwis wiadomości
+ * 
+ * Ten plik agreguje wszystkie funkcje API związane z wiadomościami i konwersacjami.
+ * Został zrefaktoryzowany, aby skupić się na modelu konwersacji, który jest nowszym
+ * i bardziej efektywnym podejściem do obsługi wiadomości.
+ */
 
-// Importujemy wszystkie funkcje z poszczególnych modułów
+// Importujemy funkcje z poszczególnych modułów
 import * as ConversationsAPI from './conversationsApi';
-import * as MessagesAPI from './messagesApi';
 import * as SearchAPI from './searchApi';
 import * as SendAPI from './sendApi';
 
-// Tworzymy obiekt MessagesService, który będzie zawierał wszystkie funkcje
+// Importujemy bezpośrednio funkcje z messagesApi.js, aby uniknąć cyklicznego importu
+import { 
+  getByFolder, 
+  getById, 
+  markAsRead, 
+  markMultipleAsRead, 
+  toggleStar, 
+  deleteMessage,
+  moveToFolder, 
+  moveMultipleToFolder, 
+  reportMessage, 
+  getStats, 
+  saveDraft 
+} from './messagesApi';
+
+// Grupujemy funkcje z messagesApi.js dla zachowania struktury
+const MessagesAPI = {
+  getByFolder,
+  getById,
+  markAsRead,
+  markMultipleAsRead,
+  toggleStar,
+  deleteMessage,
+  moveToFolder,
+  moveMultipleToFolder,
+  reportMessage,
+  getStats,
+  saveDraft
+};
+
+/**
+ * Główny serwis wiadomości wykorzystujący model konwersacji
+ */
 const MessagesService = {
-  // Funkcje z conversationsApi.js
+  // === KONWERSACJE (rekomendowany sposób pracy z wiadomościami) ===
+  
+  // Pobieranie konwersacji
   getConversationsList: ConversationsAPI.getConversationsList,
   getConversation: ConversationsAPI.getConversation,
   getConversationMessages: ConversationsAPI.getConversationMessages,
+  
+  // Działania na konwersacjach
   markConversationAsRead: ConversationsAPI.markConversationAsRead,
   toggleConversationStar: ConversationsAPI.toggleConversationStar,
   deleteConversation: ConversationsAPI.deleteConversation,
+  
+  // Zarządzanie folderami konwersacji
   archiveConversation: ConversationsAPI.archiveConversation,
   unarchiveConversation: ConversationsAPI.unarchiveConversation,
   moveConversationToTrash: ConversationsAPI.moveConversationToTrash,
   moveConversationToFolder: ConversationsAPI.moveConversationToFolder,
-  replyToConversation: ConversationsAPI.replyToConversation,
   
-  // Funkcje z messagesApi.js
+  // Wysyłanie i odpowiadanie
+  replyToConversation: ConversationsAPI.replyToConversation,
+  sendToUser: SendAPI.sendToUser,
+  sendToAd: SendAPI.sendToAd,
+  
+  // Wyszukiwanie
+  searchConversations: SearchAPI.searchConversations,
+  getUserSuggestions: SearchAPI.getUserSuggestions,
+  searchUsers: SearchAPI.searchUsers,
+  
+  // === KOMPATYBILNOŚĆ WSTECZNA (funkcje do usunięcia w przyszłości) ===
+  
+  // Te funkcje są zachowane dla kompatybilności, ale zalecane jest używanie
+  // odpowiedników z modelu konwersacji
   getByFolder: MessagesAPI.getByFolder,
   getById: MessagesAPI.getById,
   markAsRead: MessagesAPI.markAsRead,
   markMultipleAsRead: MessagesAPI.markMultipleAsRead,
   toggleStar: MessagesAPI.toggleStar,
-  delete: MessagesAPI.deleteMessage, // Zmiana nazwy z deleteMessage na delete dla zachowania kompatybilności
+  delete: MessagesAPI.deleteMessage,
   moveToFolder: MessagesAPI.moveToFolder,
   moveMultipleToFolder: MessagesAPI.moveMultipleToFolder,
   reportMessage: MessagesAPI.reportMessage,
   getStats: MessagesAPI.getStats,
   saveDraft: MessagesAPI.saveDraft,
-  
-  // Funkcje z searchApi.js
   search: SearchAPI.search,
-  getUserSuggestions: SearchAPI.getUserSuggestions,
-  searchUsers: SearchAPI.searchUsers,
-  searchConversations: SearchAPI.searchConversations,
-  
-  // Funkcje z sendApi.js
   send: SendAPI.send,
-  sendToUser: SendAPI.sendToUser,
-  sendToAd: SendAPI.sendToAd,
   replyToMessage: SendAPI.replyToMessage
 };
 
-// Eksportujemy zarówno całe API jako domyślny eksport, jak i poszczególne funkcje
 export default MessagesService;
 
-// Eksport poszczególnych modułów do selektywnego importu
+// Eksportujemy poszczególne API dla selektywnego importu
 export {
   ConversationsAPI,
   MessagesAPI,
   SearchAPI,
   SendAPI
 };
-
-// Reeksport wszystkich funkcji dla wygody
-export * from './conversationsApi';
-export * from './messagesApi';
-export * from './searchApi';
-export * from './sendApi';

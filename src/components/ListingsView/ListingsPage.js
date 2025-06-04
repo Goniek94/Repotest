@@ -22,7 +22,7 @@ function ListingsPage() {
   const [filters, setFilters] = useState({});
 
   // Stany UI
-  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(true); // Domyślnie otwarta wyszukiwarka
   const [sortType, setSortType] = useState('none');
   const [offerType, setOfferType] = useState('all');
   const [onlyFeatured, setOnlyFeatured] = useState(false);
@@ -63,17 +63,7 @@ function ListingsPage() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const getDefaultDataByMake = useCallback((make) => {
-    const defaultData = {
-      'Audi': { fuel: 'Benzyna', power: '190 KM', engineCapacity: '2000 cm³', drive: 'Przedni', city: 'Warszawa' },
-      'Ford': { fuel: 'Diesel', power: '150 KM', engineCapacity: '1800 cm³', drive: 'Przedni', city: 'Kraków' },
-      'BMW': { fuel: 'Benzyna', power: '245 KM', engineCapacity: '3000 cm³', drive: 'Tylny', city: 'Poznań' },
-      'Mercedes': { fuel: 'Diesel', power: '220 KM', engineCapacity: '2200 cm³', drive: 'Tylny', city: 'Gdańsk' },
-      'Toyota': { fuel: 'Hybryda', power: '180 KM', engineCapacity: '1800 cm³', drive: 'Przedni', city: 'Łódź' },
-      'Volkswagen': { fuel: 'Benzyna', power: '140 KM', engineCapacity: '1400 cm³', drive: 'Przedni', city: 'Wrocław' }
-    };
-    return defaultData[make] || { fuel: 'Benzyna', power: '150 KM', engineCapacity: '1800 cm³', drive: 'Przedni', city: 'Warszawa' };
-  }, []);
+  // Usunięto funkcję getDefaultDataByMake - będziemy używać rzeczywistych danych z API
 
   const fetchListings = useCallback(async () => {
     try {
@@ -100,7 +90,7 @@ function ListingsPage() {
         requestFilters.listingType = 'wyróżnione';
       }
 
-      // Użyj nowego endpointu z systemem punktowym
+      // Użyj endpointu z systemem punktowym
       const result = await AdsService.search({
         ...requestFilters,
         page: currentPage,
@@ -108,7 +98,6 @@ function ListingsPage() {
       });
 
       const response = result.data;
-      // Debugowanie danych z API
       console.log('DEBUG: First ad from API:', response.ads && response.ads.length > 0 ? response.ads[0] : 'No ads');
 
       // Funkcja do generowania oznaczenia dopasowania
@@ -121,47 +110,48 @@ function ListingsPage() {
       }
 
       const mappedListings = (response.ads || []).map(ad => {
-        const defaultData = getDefaultDataByMake(ad.brand || ad.make);
-        const carBrand = ad.brand || ad.make || '';
+        // Ujednolicenie nazewnictwa i używanie tylko rzeczywistych danych
+        const brand = ad.brand || ad.make || '';
+        
+        // Przygotowanie wartości z domyślnymi fallbackami gdy dane są niepełne
         return {
           _id: ad._id,
           id: String(ad._id),
-          brand: carBrand,
-          make: carBrand,
+          brand: brand,
+          make: brand,
           model: ad.model || '',
           headline: ad.headline || (ad.description ? ad.description.substring(0, 50) + '...' : `${ad.year}, ${ad.mileage || 0} km`),
           shortDescription: ad.shortDescription || (ad.description ? ad.description.substring(0, 50) + '...' : `${ad.year}, ${ad.mileage || 0} km`),
-          title: `${carBrand} ${ad.model || ''}`.trim() || 'Ogłoszenie',
-          subtitle: ad.description
-            ? ad.description.substring(0, 50) + '...'
+          title: `${brand} ${ad.model || ''}`.trim() || 'Ogłoszenie',
+          subtitle: ad.shortDescription || ad.description
+            ? (ad.description || '').substring(0, 50) + '...'
             : `${ad.year}, ${ad.mileage || 0} km`,
           price: ad.price || 0,
           year: ad.year || 0,
-          fuelType: ad.fuelType || defaultData.fuel,
-          fuel: ad.fuelType || defaultData.fuel,
-          engineCapacity: ad.capacity
-            ? `${ad.capacity} cm³`
-            : defaultData.engineCapacity,
-          power: ad.power || defaultData.power,
+          fuelType: ad.fuelType || 'Nie podano',
+          fuel: ad.fuelType || 'Nie podano',
+          engineCapacity: ad.engineSize 
+            ? `${ad.engineSize} cm³` 
+            : (ad.capacity ? `${ad.capacity} cm³` : 'Nie podano'),
+          power: ad.power ? `${ad.power} KM` : 'Nie podano',
           mileage: ad.mileage || 0,
-          drive: ad.drive || defaultData.drive,
-          location: 'Polska',
-          city: ad.city || defaultData.city,
-          transmission: ad.transmission || 'Automatyczna',
-          gearbox: ad.transmission || 'Automatyczna',
+          drive: ad.drive || 'Nie podano',
+          location: ad.voivodeship || 'Polska',
+          city: ad.city || 'Nie podano',
+          transmission: ad.transmission || 'Nie podano',
+          gearbox: ad.transmission || 'Nie podano',
           sellerType: ad.sellerType || (ad.owner ? 'Prywatny' : 'Firma'),
-          images: ad.images,
+          images: ad.images || [],
           mainImageIndex: ad.mainImageIndex,
-          image:
-            ad.images && ad.images.length > 0
-              ? getImageUrl(
-                  typeof ad.mainImageIndex === 'number' &&
-                  ad.mainImageIndex >= 0 &&
-                  ad.mainImageIndex < ad.images.length
-                    ? ad.images[ad.mainImageIndex]
-                    : ad.images[0]
-                )
-              : '/images/auto-788747_1280.jpg',
+          image: ad.images && ad.images.length > 0
+            ? getImageUrl(
+                typeof ad.mainImageIndex === 'number' &&
+                ad.mainImageIndex >= 0 &&
+                ad.mainImageIndex < ad.images.length
+                  ? ad.images[ad.mainImageIndex]
+                  : ad.images[0]
+              )
+            : '/images/auto-788747_1280.jpg',
           featured: ad.listingType === 'wyróżnione',
           listingType: ad.listingType,
           condition: ad.condition || 'Używany',
@@ -185,7 +175,6 @@ function ListingsPage() {
     onlyFeatured,
     currentPage,
     filters,
-    getDefaultDataByMake,
     itemsPerPage
   ]);
 

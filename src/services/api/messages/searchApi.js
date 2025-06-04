@@ -1,123 +1,203 @@
 // src/services/api/messages/searchApi.js
 
 import apiClient from '../client';
+import { getAuthToken } from '../config';
 
-// Funkcje związane z wyszukiwaniem wiadomości i użytkowników
+// Maksymalna liczba prób ponownego wykonania zapytania
+const MAX_RETRIES = 3;
 
-// Wyszukiwanie wiadomości
-const search = (query, folder) => {
-  console.log(`Wyszukiwanie wiadomości z zapytaniem "${query}" w folderze ${folder}`);
-  return apiClient.get('/api/messages/search', {
-    params: { query, folder }
-  })
-  .then(response => {
-    console.log(`Odpowiedź po wyszukiwaniu wiadomości z zapytaniem "${query}" w folderze ${folder}:`, response.data);
-    return response.data;
-  })
-  .catch(error => {
-    console.error(`Błąd podczas wyszukiwania wiadomości z zapytaniem "${query}" w folderze ${folder}:`, error);
+/**
+ * Wykonuje zapytanie z możliwością ponownych prób w przypadku błędów autoryzacji
+ * @param {Function} requestFn - Funkcja wykonująca zapytanie
+ * @param {number} retries - Liczba pozostałych prób
+ * @returns {Promise} - Promise z wynikiem zapytania
+ */
+const executeWithRetry = async (requestFn, retries = MAX_RETRIES) => {
+  try {
+    return await requestFn();
+  } catch (error) {
+    console.error('Błąd zapytania API:', error);
+    
+    // Jeśli błąd 401 i mamy token oraz są jeszcze próby
+    if (error.response?.status === 401 && getAuthToken() && retries > 0) {
+      console.log(`Ponowna próba po błędzie 401 (pozostało prób: ${retries})`);
+      // Odczekaj chwilę przed ponowną próbą
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      return executeWithRetry(requestFn, retries - 1);
+    }
+    
     throw error;
-  });
+  }
 };
 
-// Pobieranie sugestii użytkowników do wysyłki wiadomości
-const getUserSuggestions = (query) => {
-  console.log(`Pobieranie sugestii użytkowników z zapytaniem "${query}"`);
-  return apiClient.get('/api/messages/users/suggestions', {
-    params: { query }
-  })
-  .then(response => {
-    console.log(`Odpowiedź po pobraniu sugestii użytkowników z zapytaniem "${query}":`, response.data);
-    return response.data;
-  })
-  .catch(error => {
-    console.error(`Błąd podczas pobierania sugestii użytkowników z zapytaniem "${query}":`, error);
-    throw error;
-  });
-};
-
-// Wyszukiwanie użytkowników
-const searchUsers = (query) => {
-  console.log(`Wyszukiwanie użytkowników z zapytaniem "${query}"`);
-  return apiClient.get('/api/users/search', {
-    params: { query }
-  })
-  .then(response => {
-    console.log(`Odpowiedź po wyszukiwaniu użytkowników z zapytaniem "${query}":`, response.data);
-    return response.data;
-  })
-  .catch(error => {
-    console.error(`Błąd podczas wyszukiwania użytkowników z zapytaniem "${query}":`, error);
-    throw error;
-  });
-};
-
-// Wyszukiwanie konwersacji
-const searchConversations = (query, folder) => {
-  console.log(`Wyszukiwanie konwersacji z zapytaniem "${query}" w folderze ${folder}`);
+/**
+ * Wyszukiwanie wiadomości w danym folderze
+ * @param {string} query - Fraza do wyszukania
+ * @param {string} folder - Folder, w którym szukamy (inbox, sent, archived, etc.)
+ * @returns {Promise} - Promise z wynikami wyszukiwania
+ */
+const search = (query, folder = 'inbox') => {
+  if (!query || query.trim().length === 0) {
+    console.error('search: Brak parametru query');
+    return Promise.reject(new Error('Brak frazy do wyszukania'));
+  }
   
-  // Używamy endpointu wyszukiwania wiadomości
-  return apiClient.get('/api/messages/search', {
-    params: { query, folder }
-  })
-  .then(response => {
-    console.log(`Odpowiedź po wyszukiwaniu wiadomości z zapytaniem "${query}" w folderze ${folder}:`, response.data);
-    
-    // Konwertujemy wyniki wyszukiwania na format konwersacji
-    const messages = response.data || [];
-    
-    // Grupujemy wiadomości według nadawcy/odbiorcy
-    const conversationsByUser = {};
-    
-    messages.forEach(message => {
-      // Określamy ID drugiego użytkownika (nie bieżącego użytkownika)
-      const otherUser = message.sender._id !== message.recipient._id ? 
-        (message.folder === 'sent' ? message.recipient : message.sender) : 
-        message.recipient; // w przypadku wiadomości do siebie
+  console.log(`Wyszukiwanie wiadomości zawierających "${query}" w folderze ${folder}`);
+  return executeWithRetry(() => 
+    apiClient.get('/messages/search', { 
+      params: { query, folder } 
+    })
+    .then(response => {
+      console.log(`Odpowiedź z wyszukiwania wiadomości:`, response.data);
+      return response.data;
+    })
+  );
+};
+
+/**
+ * Pobieranie sugestii użytkowników do wysyłania wiadomości
+ * @param {string} query - Fraza do wyszukania
+ * @returns {Promise} - Promise z sugestiami użytkowników
+ */
+const getUserSuggestions = (query) => {
+  if (!query || query.trim().length === 0) {
+    console.error('getUserSuggestions: Brak parametru query');
+    return Promise.resolve([]); // Zwracamy pustą tablicę zamiast błędu, bo to bardziej user-friendly
+  }
+  
+  // Nie wyszukujemy dla bardzo krótkich zapytań (mniej niż 2 znaki)
+  if (query.trim().length < 2) {
+    return Promise.resolve([]);
+  }
+  
+  console.log(`Pobieranie sugestii użytkowników dla frazy "${query}"`);
+  return executeWithRetry(() => 
+    apiClient.get('/messages/users/suggestions', { 
+      params: { query } 
+    })
+    .then(response => {
+      console.log(`Odpowiedź z sugestiami użytkowników:`, response.data);
+      return response.data;
+    })
+  );
+};
+
+/**
+ * Wyszukiwanie użytkowników po nazwie, emailu, itp.
+ * @param {string} query - Fraza do wyszukania
+ * @returns {Promise} - Promise z wynikami wyszukiwania użytkowników
+ */
+const searchUsers = (query) => {
+  if (!query || query.trim().length === 0) {
+    console.error('searchUsers: Brak parametru query');
+    return Promise.resolve([]); // Zwracamy pustą tablicę zamiast błędu, bo to bardziej user-friendly
+  }
+  
+  // Nie wyszukujemy dla bardzo krótkich zapytań (mniej niż 2 znaki)
+  if (query.trim().length < 2) {
+    return Promise.resolve([]);
+  }
+  
+  console.log(`Wyszukiwanie użytkowników dla frazy "${query}"`);
+  return executeWithRetry(() => 
+    apiClient.get('/messages/users/search', { 
+      params: { query } 
+    })
+    .then(response => {
+      console.log(`Odpowiedź z wyszukiwania użytkowników:`, response.data);
       
-      const otherUserId = otherUser._id;
-      
-      if (!conversationsByUser[otherUserId]) {
-        conversationsByUser[otherUserId] = {
-          _id: message._id,
-          user: {
-            _id: otherUser._id,
-            name: otherUser.name || 'Nieznany użytkownik',
-            email: otherUser.email || ''
-          },
-          lastMessage: message,
-          unreadCount: message.folder !== 'sent' && !message.read ? 1 : 0,
-          starred: message.starred,
-          folder: folder
-        };
-      } else {
-        // Aktualizuj datę i treść, jeśli ta wiadomość jest nowsza
-        const messageDate = new Date(message.createdAt);
-        const currentLastMessageDate = new Date(conversationsByUser[otherUserId].lastMessage.createdAt);
-        
-        if (messageDate > currentLastMessageDate) {
-          conversationsByUser[otherUserId].lastMessage = message;
-        }
-        
-        // Zwiększ licznik nieprzeczytanych
-        if (message.folder !== 'sent' && !message.read) {
-          conversationsByUser[otherUserId].unreadCount += 1;
-        }
-        
-        // Aktualizuj status oznaczenia gwiazdką
-        if (message.starred) {
-          conversationsByUser[otherUserId].starred = true;
-        }
+      // Jeśli odpowiedź nie jest tablicą, zwracamy pustą tablicę
+      if (!Array.isArray(response.data)) {
+        console.warn('Odpowiedź z wyszukiwania użytkowników nie jest tablicą');
+        return [];
       }
-    });
-    
-    // Konwertuj obiekt na tablicę
-    return Object.values(conversationsByUser);
-  })
-  .catch(error => {
-    console.error(`Błąd podczas wyszukiwania konwersacji z zapytaniem "${query}" w folderze ${folder}:`, error);
-    throw error;
-  });
+      
+      return response.data;
+    })
+  );
+};
+
+/**
+ * Wyszukiwanie konwersacji (grupowanie wiadomości po użytkownikach)
+ * @param {string} query - Fraza do wyszukania
+ * @param {string} folder - Folder, w którym szukamy (inbox, sent, archived, etc.)
+ * @returns {Promise} - Promise z wynikami wyszukiwania konwersacji
+ */
+const searchConversations = (query, folder = 'inbox') => {
+  if (!query || query.trim().length === 0) {
+    console.error('searchConversations: Brak parametru query');
+    return Promise.reject(new Error('Brak frazy do wyszukania'));
+  }
+  
+  // Nie wyszukujemy dla bardzo krótkich zapytań (mniej niż 2 znaki)
+  if (query.trim().length < 2) {
+    console.log(`Zapytanie "${query}" jest zbyt krótkie do wyszukiwania konwersacji`);
+    return Promise.resolve([]);
+  }
+  
+  console.log(`Wyszukiwanie konwersacji zawierających "${query}" w folderze ${folder}`);
+  return executeWithRetry(() => 
+    apiClient.get('/messages/conversations/search', { 
+      params: { query, folder } 
+    })
+    .then(response => {
+      console.log(`Odpowiedź z wyszukiwania konwersacji:`, response.data);
+      
+      // Jeśli API konwersacji nie jest dostępne, używamy zwykłego wyszukiwania i grupujemy wyniki
+      if (!response.data || !Array.isArray(response.data)) {
+        console.log('Odpowiedź z API konwersacji nieprawidłowa, próba fallbacku...');
+        return search(query, folder)
+          .then(messages => {
+            if (!Array.isArray(messages)) {
+              return [];
+            }
+            
+            // Grupowanie wiadomości według użytkownika
+            const conversationsByUser = {};
+            
+            messages.forEach(message => {
+              const otherUser = message.sender ? message.sender : message.recipient;
+              const otherUserId = otherUser?._id;
+              
+              if (otherUserId) {
+                if (!conversationsByUser[otherUserId]) {
+                  conversationsByUser[otherUserId] = {
+                    _id: message._id,
+                    user: otherUser,
+                    lastMessage: message,
+                    unreadCount: message.read ? 0 : 1,
+                    starred: message.starred,
+                    folder: message.folder || folder,
+                    messages: [message]
+                  };
+                } else {
+                  conversationsByUser[otherUserId].messages.push(message);
+                  
+                  // Aktualizuj datę i treść, jeśli ta wiadomość jest nowsza
+                  const messageDate = new Date(message.createdAt);
+                  const lastMessageDate = new Date(conversationsByUser[otherUserId].lastMessage.createdAt);
+                  if (messageDate > lastMessageDate) {
+                    conversationsByUser[otherUserId].lastMessage = message;
+                  }
+                  
+                  // Zwiększ licznik nieprzeczytanych
+                  if (!message.read) {
+                    conversationsByUser[otherUserId].unreadCount += 1;
+                  }
+                }
+              }
+            });
+            
+            // Konwersja obiektu na tablicę i sortowanie według daty ostatniej wiadomości
+            return Object.values(conversationsByUser).sort((a, b) => 
+              new Date(b.lastMessage.createdAt) - new Date(a.lastMessage.createdAt)
+            );
+          });
+      }
+      
+      return response.data;
+    })
+  );
 };
 
 export {

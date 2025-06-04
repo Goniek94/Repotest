@@ -23,8 +23,8 @@ export const NotificationProvider = ({ children }) => {
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Pobieranie powiadomień z API
-  const fetchNotifications = async () => {
+  // Pobieranie powiadomień z API - użycie useCallback dla uniknięcia nieskończonej pętli
+  const fetchNotifications = React.useCallback(async () => {
     if (!isAuthenticated || !user) return;
 
     setIsLoading(true);
@@ -36,14 +36,31 @@ export const NotificationProvider = ({ children }) => {
         }
       });
 
-      setNotifications(response.data.notifications || []);
-      updateUnreadCount(response.data.notifications || []);
+      const notificationsData = response.data.notifications || [];
+      setNotifications(notificationsData);
+      
+      // Obliczenie licznika nieprzeczytanych
+      const unread = notificationsData.reduce(
+        (acc, notification) => {
+          if (notification.isRead) return acc;
+
+          if (notification.type === 'new_message') {
+            acc.messages += 1;
+          } else {
+            acc.alerts += 1;
+          }
+          return acc;
+        },
+        { messages: 0, alerts: 0 }
+      );
+      
+      setUnreadCount(unread);
     } catch (error) {
       console.error('Błąd podczas pobierania powiadomień:', error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isAuthenticated, user]);
 
   // Aktualizacja licznika nieprzeczytanych powiadomień
   const updateUnreadCount = (notificationsList = notifications) => {
@@ -147,29 +164,59 @@ export const NotificationProvider = ({ children }) => {
       // Pobierz powiadomienia z API
       fetchNotifications();
 
-      // TYMCZASOWO WYŁĄCZONE - problemy z połączeniem WebSocket
-      console.log('Połączenie z serwerem powiadomień tymczasowo wyłączone');
-      setIsConnected(false);
+      // Inicjalizacja połączenia WebSocket
+      console.log('Inicjalizacja połączenia z serwerem powiadomień');
       
-      // Inicjalizacja połączenia WebSocket - WYŁĄCZONE
-      /*
       notificationService.connect(user.token)
         .then(() => {
           console.log('Połączono z serwerem powiadomień');
           setIsConnected(true);
+          // Po poprawnym połączeniu odświeżamy listę powiadomień
+          fetchNotifications();
         })
         .catch(error => {
           console.error('Błąd połączenia z serwerem powiadomień:', error);
           setIsConnected(false);
+          
+          // Sprawdzamy, czy błąd dotyczy autoryzacji (401)
+          if (error.message && (error.message.includes('401') || error.message.includes('unauthorized'))) {
+            console.warn('Problem z autoryzacją Socket.io - wymagane ponowne logowanie');
+            // Zapisujemy aktualny URL, aby móc wrócić po zalogowaniu
+            localStorage.setItem('redirectAfterLogin', window.location.pathname);
+            
+            // Przekierowanie do strony logowania można dodać tutaj, ale pozostawiamy
+            // to do decyzji aplikacji (można również wyświetlić modal z komunikatem)
+          }
+          
+          // Mimo błędu, nadal używamy REST API do powiadomień
+          fetchNotifications();
         });
-      */
 
-      // TYMCZASOWO WYŁĄCZONE - nasłuchiwanie na zdarzenia WebSocket
-      /*
       // Nasłuchiwanie na nowe powiadomienia
       const handleNewNotification = (notification) => {
-        setNotifications(prev => [notification, ...prev]);
-        updateUnreadCount([notification, ...notifications]);
+        setNotifications(prev => {
+          // Dodaj nowe powiadomienie na początek listy
+          return [notification, ...prev];
+        });
+        
+        // Aktualizacja licznika nieprzeczytanych
+        setUnreadCount(prev => {
+          const newCount = { ...prev };
+          if (notification.type === 'new_message') {
+            newCount.messages = (newCount.messages || 0) + 1;
+          } else {
+            newCount.alerts = (newCount.alerts || 0) + 1;
+          }
+          return newCount;
+        });
+        
+        // Odtwarzanie dźwięku dla nowych powiadomień
+        try {
+          const audio = new Audio('/notification-sound.mp3');
+          audio.play().catch(e => console.log('Nie można odtworzyć dźwięku powiadomienia:', e));
+        } catch (error) {
+          console.error('Błąd podczas odtwarzania dźwięku:', error);
+        }
       };
 
       // Nasłuchiwanie na aktualizacje powiadomień
@@ -196,11 +243,13 @@ export const NotificationProvider = ({ children }) => {
       // Nasłuchiwanie na usunięcie powiadomienia
       const handleNotificationDeleted = (data) => {
         const { notificationId } = data;
-        const updatedNotifications = notifications.filter(
-          notification => notification.id !== notificationId
-        );
-        setNotifications(updatedNotifications);
-        updateUnreadCount(updatedNotifications);
+        setNotifications(prev => {
+          const updatedNotifications = prev.filter(
+            notification => notification.id !== notificationId
+          );
+          updateUnreadCount(updatedNotifications);
+          return updatedNotifications;
+        });
       };
 
       // Nasłuchiwanie na zmianę statusu połączenia
@@ -226,12 +275,6 @@ export const NotificationProvider = ({ children }) => {
         notificationService.off('disconnect', () => handleConnectionChange(false));
         notificationService.disconnect();
       };
-      */
-      
-      // Pusty return dla useEffect
-      return () => {
-        console.log('Czyszczenie efektu NotificationContext');
-      };
     } else {
       // Rozłączenie WebSocket po wylogowaniu
       notificationService.disconnect();
@@ -239,7 +282,7 @@ export const NotificationProvider = ({ children }) => {
       setNotifications([]);
       setUnreadCount({ messages: 0, alerts: 0 });
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, fetchNotifications]); // fetchNotifications jest teraz zapamiętywane przez useCallback
 
   // Wartość kontekstu
   const value = {

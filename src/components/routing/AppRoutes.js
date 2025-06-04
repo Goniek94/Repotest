@@ -3,7 +3,8 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './ProtectedRoute';
 import HomePage from './HomePage';
 import LoginPage from './LoginPage';
-import { CreateListingWithProvider, AddListingViewWithProvider, EditListingViewWithProvider } from './ListingRoutes';
+import { CreateListingWithProvider, AddListingViewWithProvider } from './ListingRoutes';
+import EditListing from '../profil/listings/EditListing';
 
 // Komponenty stron
 import ListingsPage from '../ListingsView/ListingsPage';
@@ -87,6 +88,7 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+      {/* Przeniesiono do zagnieżdżonej ścieżki w /profil/* */}
 
       {/* Konto użytkownika */}
       <Route path="/register" element={<Register />} />
@@ -135,6 +137,7 @@ const AppRoutes = () => {
         <Route path="notifications" element={<Notifications />} />
         <Route path="transactions" element={<Transactions />} />
         <Route path="contact" element={<Contact />} />
+        <Route path="edytuj-ogloszenie/:id" element={<EditListing />} />
       </Route>
 
       {/* Stara ścieżka "/profile" przekierowuje do "/profil" */}

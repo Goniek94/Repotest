@@ -1,12 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import carDatabase from '../../../data/carDatabase';
 import FormField from '../components/FormField';
 import api from '../../../services/api';
+import useCarData from '../../../components/search/hooks/useCarData';
+import { carData as staticCarData } from '../../../components/search/SearchFormConstants';
 
 const BasicInfoSection = ({ formData, handleChange, errors, showToast }) => {
+  // Używamy hooka useCarData do pobierania rzeczywistych danych z API
+  const { carData, brands, getModelsForBrand, loading: loadingCarData } = useCarData();
+  
   const [availableModels, setAvailableModels] = useState([]);
   const [availableGenerations, setAvailableGenerations] = useState([]);
   const [isLoadingVin, setIsLoadingVin] = useState(false);
+  const [isLoadingModels, setIsLoadingModels] = useState(false);
+  // Tablica pól, które zostały wypełnione przez dane z VIN i są zablokowane do edycji
+  const [lockedFields, setLockedFields] = useState([]);
   
   // Lata produkcji - dynamicznie generowane
   const currentYear = new Date().getFullYear();
@@ -15,23 +22,66 @@ const BasicInfoSection = ({ formData, handleChange, errors, showToast }) => {
     years.push({ value: i.toString(), label: i.toString() });
   }
   
-  // Aktualizacja dostępnych modeli na podstawie wybranej marki
+  // Aktualizacja dostępnych modeli na podstawie wybranej marki - pobieramy z API
   useEffect(() => {
-    if (formData.brand && carDatabase[formData.brand]) {
-      setAvailableModels(Object.keys(carDatabase[formData.brand]));
-    } else {
-      setAvailableModels([]);
-    }
-  }, [formData.brand]);
+    const fetchModels = async () => {
+      if (!formData.brand) {
+        setAvailableModels([]);
+        return;
+      }
+      
+      setIsLoadingModels(true);
+      try {
+        // Pobieramy modele dla wybranej marki z API
+        const models = await getModelsForBrand(formData.brand);
+        setAvailableModels(models || []);
+      } catch (error) {
+        console.error('Błąd podczas pobierania modeli:', error);
+        // Fallback do statycznych danych w przypadku błędu
+        setAvailableModels(staticCarData[formData.brand] || []);
+        showToast('Wystąpił problem z pobieraniem modeli. Używam danych lokalnych.', 'warning');
+      } finally {
+        setIsLoadingModels(false);
+      }
+    };
+    
+    fetchModels();
+  }, [formData.brand, getModelsForBrand, showToast]);
   
   // Aktualizacja dostępnych generacji na podstawie wybranego modelu
   useEffect(() => {
-    if (formData.brand && formData.model && carDatabase[formData.brand] && carDatabase[formData.brand][formData.model]) {
-      setAvailableGenerations(carDatabase[formData.brand][formData.model]);
-    } else {
-      setAvailableGenerations([]);
-    }
+    // Generacje zostały usunięte z nowej struktury danych
+    // W przyszłości można dodać generacje jako osobny serwis
+    setAvailableGenerations([]);
   }, [formData.brand, formData.model]);
+  
+  // Funkcja pomocnicza do sprawdzania czy pole jest zablokowane
+  const isFieldLocked = (fieldName) => {
+    return lockedFields.includes(fieldName);
+  };
+  
+  // Niestandardowa funkcja obsługi zmiany dla pól zablokowanych
+  const handleFieldChange = (fieldName, value) => {
+    // Jeśli pole jest zablokowane, nie pozwalamy na zmianę
+    if (isFieldLocked(fieldName)) {
+      showToast(`Pole "${fieldName}" jest zablokowane - dane pochodzą z CEPiK`, 'warning');
+      return;
+    }
+    
+    // W przeciwnym razie pozwalamy na zmianę
+    handleChange(fieldName, value);
+  };
+  
+  // Funkcja resetowania zablokowanych pól
+  const resetLockedFields = () => {
+    if (lockedFields.length === 0) {
+      showToast('Brak zablokowanych pól do odblokowania', 'info');
+      return;
+    }
+    
+    setLockedFields([]);
+    showToast('Wszystkie pola zostały odblokowane', 'success');
+  };
   
   // Funkcja pobierania danych VIN
   const fetchVinData = async () => {
@@ -47,31 +97,36 @@ const BasicInfoSection = ({ formData, handleChange, errors, showToast }) => {
       const vinData = await api.getVehicleDataByVin(formData.vin);
       
       if (vinData) {
-        // Aktualizacja wielu pól jednocześnie
-        const updatedFields = {
-          brand: vinData.brand || formData.brand,
-          model: vinData.model || formData.model,
-          generation: vinData.generation || formData.generation,
-          version: vinData.version || formData.version,
-          productionYear: vinData.productionYear || formData.productionYear,
-          fuelType: vinData.fuelType || formData.fuelType,
-          engineSize: vinData.engineSize || formData.engineSize,
-          power: vinData.power || formData.power,
-          transmission: vinData.transmission || formData.transmission,
-          drive: vinData.drive || formData.drive,
-          mileage: vinData.mileage || formData.mileage,
-          condition: vinData.condition || formData.condition,
-          accidentStatus: vinData.accidentStatus || formData.accidentStatus,
-          damageStatus: vinData.damageStatus || formData.damageStatus,
-          countryOfOrigin: vinData.countryOfOrigin || formData.countryOfOrigin
-        };
+        // Lista pól, które zostaną zablokowane po pobraniu danych z VIN
+        const fieldsToLock = [];
         
-        // Aktualizacja formData z wykorzystaniem destrukturyzacji
+        // Aktualizacja wielu pól jednocześnie
+        const updatedFields = {};
+        
+        // Dla każdego pola z danych VIN, sprawdzamy czy istnieje i dodajemy do aktualizacji
+        const vinFields = [
+          'brand', 'model', 'generation', 'version', 'productionYear', 
+          'fuelType', 'engineSize', 'power', 'transmission', 'drive', 
+          'mileage', 'condition', 'accidentStatus', 'damageStatus', 'countryOfOrigin',
+          'registrationNumber'
+        ];
+        
+        vinFields.forEach(field => {
+          if (vinData[field]) {
+            updatedFields[field] = vinData[field];
+            fieldsToLock.push(field); // Dodajemy do listy pól do zablokowania
+          }
+        });
+        
+        // Aktualizacja formData
         Object.keys(updatedFields).forEach(key => {
           handleChange(key, updatedFields[key]);
         });
         
-        showToast('Dane pojazdu zostały pobrane z CEPiK', 'success');
+        // Blokowanie pól, które zostały zaktualizowane
+        setLockedFields(fieldsToLock);
+        
+        showToast('Dane pojazdu zostały pobrane z CEPiK. Pola wypełnione danymi z CEPiK zostały zablokowane.', 'success');
       } else {
         showToast('Nie znaleziono danych dla podanego numeru VIN', 'warning');
       }
@@ -81,6 +136,22 @@ const BasicInfoSection = ({ formData, handleChange, errors, showToast }) => {
     } finally {
       setIsLoadingVin(false);
     }
+  };
+  
+  // Pomocnicza funkcja do renderowania etykiety pola z ikoną blokady
+  const renderFieldLabel = (label, fieldName, required = false) => {
+    return (
+      <div className="flex items-center gap-1">
+        {label}{required && '*'}
+        {isFieldLocked(fieldName) && (
+          <span title="Pole zablokowane - dane z CEPiK" className="text-yellow-600 ml-1">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </span>
+        )}
+      </div>
+    );
   };
   
   return (
@@ -97,11 +168,12 @@ const BasicInfoSection = ({ formData, handleChange, errors, showToast }) => {
           name="headline"
           value={formData.headline || ''}
           onChange={(e) => {
-            if (e.target.value.length <= 120) handleChange('headline', e.target.value);
+            if (e.target.value.length <= 120) handleFieldChange('headline', e.target.value);
           }}
           error={errors.headline}
           placeholder="Wpisz krótki nagłówek ogłoszenia (max 120 znaków)"
           maxLength={120}
+          disabled={isFieldLocked('headline')}
         />
         <div className="text-xs text-gray-500 mt-1">
           {formData.headline ? formData.headline.length : 0}/120 znaków
@@ -122,8 +194,9 @@ const BasicInfoSection = ({ formData, handleChange, errors, showToast }) => {
               name="sellerType"
               value="prywatny"
               checked={formData.sellerType === 'prywatny'}
-              onChange={(e) => handleChange('sellerType', e.target.value)}
+              onChange={(e) => handleFieldChange('sellerType', e.target.value)}
               className="sr-only" // Ukrycie domyślnego radiobuttona
+              disabled={isFieldLocked('sellerType')}
             />
             <svg xmlns="http://www.w3.org/2000/svg" className={`w-10 h-10 ${formData.sellerType === 'prywatny' ? 'text-[#35530A]' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -141,8 +214,9 @@ const BasicInfoSection = ({ formData, handleChange, errors, showToast }) => {
               name="sellerType"
               value="firma"
               checked={formData.sellerType === 'firma'}
-              onChange={(e) => handleChange('sellerType', e.target.value)}
+              onChange={(e) => handleFieldChange('sellerType', e.target.value)}
               className="sr-only" // Ukrycie domyślnego radiobuttona
+              disabled={isFieldLocked('sellerType')}
             />
             <svg xmlns="http://www.w3.org/2000/svg" className={`w-10 h-10 ${formData.sellerType === 'firma' ? 'text-[#35530A]' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -165,7 +239,7 @@ const BasicInfoSection = ({ formData, handleChange, errors, showToast }) => {
             type="text"
             name="vin"
             value={formData.vin}
-            onChange={(e) => handleChange('vin', e.target.value.toUpperCase())}
+            onChange={(e) => handleFieldChange('vin', e.target.value.toUpperCase())}
             placeholder="Wprowadź numer VIN (17 znaków)"
             maxLength={17}
             error={errors.vin}
@@ -183,6 +257,25 @@ const BasicInfoSection = ({ formData, handleChange, errors, showToast }) => {
         <div className="text-sm text-gray-600 mt-1">
           Wprowadź 17-znakowy numer VIN, aby automatycznie pobrać dane pojazdu z bazy CEPiK.
         </div>
+        
+        {/* Przycisk do odblokowania pól */}
+        {lockedFields.length > 0 && (
+          <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-[2px]">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-yellow-800">
+                <span className="font-medium">Pola zablokowane:</span> {lockedFields.length} 
+                <p className="mt-1">Pola pobrane z CEPiK są automatycznie zablokowane do edycji.</p>
+              </div>
+              <button
+                type="button"
+                onClick={resetLockedFields}
+                className="bg-yellow-600 text-white px-3 py-1 rounded-[2px] text-sm hover:bg-yellow-700 transition-colors"
+              >
+                Odblokuj wszystkie pola
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Marka, model, generacja, wersja */}
@@ -192,35 +285,45 @@ const BasicInfoSection = ({ formData, handleChange, errors, showToast }) => {
         </h3>
         
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          {/* Komunikat o ładowaniu danych */}
+          {loadingCarData && (
+            <div className="md:col-span-4 p-2 bg-blue-50 rounded-[2px] text-blue-700 text-sm mb-3">
+              Ładowanie danych o markach i modelach...
+            </div>
+          )}
+          
           <FormField
             type="select"
-            label="Marka*"
+            label={renderFieldLabel('Marka', 'brand', true)}
             name="brand"
             value={formData.brand}
-            onChange={(e) => handleChange('brand', e.target.value)}
+            onChange={(e) => handleFieldChange('brand', e.target.value)}
             error={errors.brand}
-            options={Object.keys(carDatabase).sort().map(brand => ({ value: brand, label: brand }))}
+            options={brands.map(brand => ({ value: brand, label: brand }))}
             placeholder="Wybierz markę"
+            disabled={isFieldLocked('brand') || loadingCarData}
+            className={isFieldLocked('brand') ? 'bg-gray-100' : ''}
           />
           
           <FormField
             type="select"
-            label="Model*"
+            label={renderFieldLabel('Model', 'model', true)}
             name="model"
             value={formData.model}
-            onChange={(e) => handleChange('model', e.target.value)}
+            onChange={(e) => handleFieldChange('model', e.target.value)}
             error={errors.model}
             options={availableModels.map(model => ({ value: model, label: model }))}
-            placeholder="Wybierz model"
-            disabled={!formData.brand}
+            placeholder={isLoadingModels ? "Ładowanie modeli..." : "Wybierz model"}
+            disabled={!formData.brand || isFieldLocked('model') || isLoadingModels}
+            className={isFieldLocked('model') ? 'bg-gray-100' : ''}
           />
           
           <FormField
             type="select"
-            label="Generacja"
+            label={renderFieldLabel('Generacja', 'generation')}
             name="generation"
             value={formData.generation}
-            onChange={(e) => handleChange('generation', e.target.value)}
+            onChange={(e) => handleFieldChange('generation', e.target.value)}
             options={availableGenerations.map(gen => {
               // Zamiana (2017-obecnie) na 2017+
               const match = typeof gen === 'string' && gen.match(/(\d{4})-obecnie/);
@@ -231,16 +334,19 @@ const BasicInfoSection = ({ formData, handleChange, errors, showToast }) => {
               return { value: gen, label };
             })}
             placeholder="Wybierz generację"
-            disabled={!formData.model}
+            disabled={!formData.model || isFieldLocked('generation')}
+            className={isFieldLocked('generation') ? 'bg-gray-100' : ''}
           />
           
           <FormField
             type="text"
-            label="Wersja silnika"
+            label={renderFieldLabel('Wersja silnika', 'version')}
             name="version"
             value={formData.version}
-            onChange={(e) => handleChange('version', e.target.value)}
+            onChange={(e) => handleFieldChange('version', e.target.value)}
             placeholder="np. 1.4 TSI"
+            disabled={isFieldLocked('version')}
+            className={isFieldLocked('version') ? 'bg-gray-100' : ''}
           />
         </div>
       </div>
@@ -250,24 +356,28 @@ const BasicInfoSection = ({ formData, handleChange, errors, showToast }) => {
         {/* Rok produkcji jako dropdown */}
         <FormField
           type="select"
-          label="Rok produkcji*"
+          label={renderFieldLabel('Rok produkcji', 'productionYear', true)}
           name="productionYear"
           value={formData.productionYear}
-          onChange={(e) => handleChange('productionYear', e.target.value)}
+          onChange={(e) => handleFieldChange('productionYear', e.target.value)}
           error={errors.productionYear}
           options={years}
           placeholder="Wybierz rok"
+          disabled={isFieldLocked('productionYear')}
+          className={isFieldLocked('productionYear') ? 'bg-gray-100' : ''}
         />
         
         <FormField
           type="text"
-          label="Numer rejestracyjny"
+          label={renderFieldLabel('Numer rejestracyjny', 'registrationNumber')}
           name="registrationNumber"
           value={formData.registrationNumber}
-          onChange={(e) => handleChange('registrationNumber', e.target.value.toUpperCase())}
+          onChange={(e) => handleFieldChange('registrationNumber', e.target.value.toUpperCase())}
           placeholder="np. WA12345"
           maxLength={10}
           info="Wprowadź bez spacji, np. WA12345"
+          disabled={isFieldLocked('registrationNumber')}
+          className={isFieldLocked('registrationNumber') ? 'bg-gray-100' : ''}
         />
         
         {/* Pusty blok dla zachowania układu */}

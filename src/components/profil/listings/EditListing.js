@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft, Plus, Loader } from 'lucide-react';
+import { toast } from 'react-toastify';
+import ListingsService from '../../../services/api/listingsApi';
 
 // Główny kolor
 const PRIMARY_COLOR = '#35530A';
@@ -32,33 +34,97 @@ const EditListing = () => {
   
   // Pobieranie danych ogłoszenia na podstawie ID
   useEffect(() => {
-    // W rzeczywistej aplikacji tutaj byłoby zapytanie do API
-    // Przykład: api.getListing(id).then(data => setFormData(data))
+    const fetchListingData = async () => {
+      try {
+        // Pobieranie danych ogłoszenia z API za pomocą serwisu
+        const data = await ListingsService.getById(id);
+        console.log('Pobrane dane ogłoszenia:', data);
+        
+        // Aktualizacja stanu formularza danymi z API
+        setFormData({
+          price: data.price?.toString() || '',
+          city: data.city || '',
+          region: data.voivodeship || '',
+          color: data.color || '',
+          make: data.brand || '',
+          model: data.model || '',
+          year: data.year?.toString() || '',
+          mileage: data.mileage?.toString() || '',
+          fuel: data.fuelType || '',
+          power: data.power?.toString() || '',
+          description: data.description || ''
+        });
+        
+        // Ustawienie głównego zdjęcia
+        if (data.images && data.images.length > 0) {
+          const mainImageIndex = data.mainImageIndex || 0;
+          setMainPhoto(data.images[mainImageIndex]);
+        }
+        
+        setLoading(false);
+      } catch (error) {
+        console.error('Błąd podczas pobierania danych:', error);
+        toast.error('Nie udało się pobrać danych ogłoszenia');
+        setLoading(false);
+      }
+    };
     
-    // Symulacja pobierania danych
-    console.log(`Pobieranie danych ogłoszenia o ID: ${id}`);
-    
-    // Symulacja opóźnienia ładowania
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 500);
-    
-    return () => clearTimeout(timer);
+    fetchListingData();
   }, [id]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Logika zapisywania zmian
-    console.log('Zapisywanie zmian dla ogłoszenia ID:', id);
-    // Po zapisaniu przekieruj do listy ogłoszeń
-    // navigate('/profil/listings');
+    
+    try {
+      // Przygotowanie danych do wysłania
+      const formDataToSend = new FormData();
+      formDataToSend.append('price', parseFloat(formData.price));
+      formDataToSend.append('city', formData.city);
+      formDataToSend.append('voivodeship', formData.region);
+      formDataToSend.append('color', formData.color);
+      formDataToSend.append('brand', formData.make);
+      formDataToSend.append('model', formData.model);
+      formDataToSend.append('year', parseInt(formData.year, 10));
+      
+      // Usunięcie spacji z przebiegu
+      const mileageValue = formData.mileage.replace(/\s+/g, '');
+      formDataToSend.append('mileage', parseInt(mileageValue, 10));
+      
+      formDataToSend.append('fuelType', formData.fuel);
+      formDataToSend.append('power', formData.power);
+      formDataToSend.append('description', formData.description);
+      
+      // Wysłanie danych do API za pomocą serwisu
+      await ListingsService.update(id, formDataToSend);
+      
+      // Wyświetlenie komunikatu o sukcesie
+      toast.success('Ogłoszenie zostało zaktualizowane!');
+      
+      // Przekierowanie do listy ogłoszeń
+      navigate('/profil/listings');
+    } catch (error) {
+      console.error('Błąd podczas aktualizacji ogłoszenia:', error);
+      toast.error('Wystąpił błąd podczas aktualizacji ogłoszenia. Spróbuj ponownie.');
+    }
   };
   
-  const handleDelete = () => {
-    // Logika usuwania ogłoszenia
-    console.log('Usuwanie ogłoszenia ID:', id);
-    // Po usunięciu przekieruj do listy ogłoszeń
-    // navigate('/profil/listings');
+  const handleDelete = async () => {
+    // Potwierdzenie usunięcia
+    if (window.confirm('Czy na pewno chcesz usunąć to ogłoszenie? Tej operacji nie można cofnąć.')) {
+      try {
+        // Wysłanie żądania usunięcia do API za pomocą serwisu
+        await ListingsService.delete(id);
+        
+        // Wyświetlenie komunikatu o sukcesie
+        toast.success('Ogłoszenie zostało usunięte!');
+        
+        // Przekierowanie do listy ogłoszeń
+        navigate('/profil/listings');
+      } catch (error) {
+        console.error('Błąd podczas usuwania ogłoszenia:', error);
+        toast.error('Wystąpił błąd podczas usuwania ogłoszenia. Spróbuj ponownie.');
+      }
+    }
   };
   
   return (
@@ -85,7 +151,13 @@ const EditListing = () => {
           <ArrowLeft className="w-4 h-4 mr-2" /> Powrót do moich ogłoszeń
         </a>
         
-        <form onSubmit={handleSubmit}>
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-12">
+            <Loader className="w-12 h-12 text-[#35530A] animate-spin mb-4" />
+            <p className="text-gray-600">Ładowanie danych ogłoszenia...</p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
             {/* Sekcja zdjęć */}
             <div>
@@ -274,7 +346,8 @@ const EditListing = () => {
               Usuń ogłoszenie
             </button>
           </div>
-        </form>
+          </form>
+        )}
       </div>
     </div>
   );
