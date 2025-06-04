@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import MessagesService from '../../../../services/api/messages';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../../../contexts/AuthContext';
+import { useNotifications } from '../../../../contexts/NotificationContext';
 import { FOLDER_MAP, DEFAULT_FOLDER } from '../../../../constants/messageFolders';
 
 /**
@@ -25,6 +26,7 @@ const useConversations = (activeTab) => {
   // Pobranie aktualnego użytkownika z kontekstu
   const { user } = useAuth();
   const currentUserId = user?._id || user?.id;
+  const { decreaseMessageCount } = useNotifications() || {};
 
   /**
    * Ujednolicona funkcja wyświetlająca powiadomienia
@@ -226,21 +228,26 @@ const useConversations = (activeTab) => {
     } finally {
       setLoading(false);
     }
-  }, [selectedConversation, showNotification]);
+  }, [selectedConversation, showNotification, conversations, decreaseMessageCount]);
 
   /**
    * Oznaczenie konwersacji jako przeczytanej
    */
   const markConversationAsRead = useCallback(async (conversationId) => {
     if (!conversationId) return;
-    
+
     try {
       await MessagesService.markConversationAsRead(conversationId);
-      
+
+      const unreadBefore = conversations.find(c => c.id === conversationId)?.unreadCount || 0;
+      if (unreadBefore > 0) {
+        decreaseMessageCount(unreadBefore);
+      }
+
       // Aktualizacja stanu konwersacji
-      setConversations(prevConversations => 
-        prevConversations.map(convo => 
-          convo.id === conversationId 
+      setConversations(prevConversations =>
+        prevConversations.map(convo =>
+          convo.id === conversationId
             ? { ...convo, unreadCount: 0, lastMessage: { ...convo.lastMessage, isRead: true } }
             : convo
         )

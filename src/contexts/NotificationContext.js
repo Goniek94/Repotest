@@ -81,6 +81,15 @@ export const NotificationProvider = ({ children }) => {
     setUnreadCount(unread);
   };
 
+  // Zmniejszanie licznika nieprzeczytanych wiadomości
+  const decreaseMessageCount = (count = 1) => {
+    if (!count) return;
+    setUnreadCount(prev => ({
+      ...prev,
+      messages: Math.max(0, (prev.messages || 0) - count)
+    }));
+  };
+
   // Oznaczanie powiadomienia jako przeczytane
   const markAsRead = async (notificationId) => {
     if (!isAuthenticated || !user) return;
@@ -290,7 +299,8 @@ export const NotificationProvider = ({ children }) => {
     markAsRead,
     markAllAsRead,
     deleteNotification,
-    fetchNotifications
+    fetchNotifications,
+    decreaseMessageCount
   };
 
   return (
