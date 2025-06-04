@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Paperclip, Send } from 'lucide-react';
 import MessagesHeader from './MessagesHeader';
 import MessagesTabs from './MessagesTabs';
@@ -11,6 +12,7 @@ import { useNotifications } from '../../../contexts/NotificationContext';
 import useConversations from './hooks/useConversations';
 import { useAuth } from '../../../contexts/AuthContext';
 import { getAuthToken, API_URL } from '../../../services/api/config';
+import { DEFAULT_FOLDER, FOLDER_MAP } from '../../../constants/messageFolders';
 
 /**
  * Główny komponent wiadomości
@@ -30,7 +32,11 @@ const Messages = () => {
   console.log('Token JWT:', getAuthToken() ? 'dostępny' : 'brak');
   
   // Stan lokalny komponentu
-  const [activeTab, setActiveTab] = useState('odebrane');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(() => {
+    const initial = searchParams.get('folder');
+    return FOLDER_MAP[initial] ? initial : DEFAULT_FOLDER;
+  });
   const [showNewMessage, setShowNewMessage] = useState(false);
   const [replyContent, setReplyContent] = useState('');
   const [attachments, setAttachments] = useState([]);
@@ -39,6 +45,11 @@ const Messages = () => {
   // Referencje
   const chatEndRef = useRef(null);
   const fileInputRef = useRef(null);
+
+  // Synchronizacja aktywnej zakładki z parametrem w adresie
+  useEffect(() => {
+    setSearchParams({ folder: activeTab });
+  }, [activeTab, setSearchParams]);
 
   // Hook useConversations zarządzający stanem i operacjami na konwersacjach
   const { 
@@ -246,9 +257,12 @@ const Messages = () => {
           />
           
           {/* Zakładki folderów - dostosowane do urządzeń */}
-          <MessagesTabs 
+          <MessagesTabs
             activeTab={activeTab}
-            onTabChange={setActiveTab}
+            onTabChange={(tab) => {
+              setActiveTab(tab);
+              setSearchParams({ folder: tab });
+            }}
             unreadCount={{
               odebrane: unreadCount.messages || 0,
               wyslane: 0,

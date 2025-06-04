@@ -1,6 +1,7 @@
 import React from 'react';
 import { Inbox, Send, Star, Archive } from 'lucide-react';
 import useBreakpoint from '../../../utils/responsive/useBreakpoint';
+import { UI_FOLDERS } from '../../../constants/messageFolders';
 
 /**
  * Komponent zakładek wiadomości
@@ -16,40 +17,19 @@ const MessagesTabs = ({ activeTab, onTabChange, unreadCount = {} }) => {
   const breakpoint = useBreakpoint();
   const isMobile = breakpoint === 'mobile';
   
-  // Podstawowe foldery (dostępne zawsze)
-  const baseFolders = [
-    { 
-      id: 'odebrane', 
-      label: 'Odebrane', 
-      icon: <Inbox className="w-5 h-5" />, 
-      count: unreadCount.odebrane || 0 
-    },
-    { 
-      id: 'wyslane', 
-      label: 'Wysłane', 
-      icon: <Send className="w-5 h-5" />, 
-      count: unreadCount.wyslane || 0 
-    }
-  ];
-  
-  // Dodatkowe foldery (tylko na mobile)
-  const mobileFolders = [
-    { 
-      id: 'wazne', 
-      label: 'Ważne', 
-      icon: <Star className="w-5 h-5" />, 
-      count: unreadCount.wazne || 0 
-    },
-    { 
-      id: 'archiwum', 
-      label: 'Archiwum', 
-      icon: <Archive className="w-5 h-5" />, 
-      count: unreadCount.archiwum || 0 
-    }
-  ];
-  
-  // Wybór folderów w zależności od urządzenia
-  const folders = isMobile ? [...baseFolders, ...mobileFolders] : baseFolders;
+  const ICONS = {
+    odebrane: <Inbox className="w-5 h-5" />,
+    wyslane: <Send className="w-5 h-5" />,
+    wazne: <Star className="w-5 h-5" />,
+    archiwum: <Archive className="w-5 h-5" />,
+  };
+
+  const folders = UI_FOLDERS.filter((f, idx) => isMobile || idx < 2).map((id) => ({
+    id,
+    label: id.charAt(0).toUpperCase() + id.slice(1),
+    icon: ICONS[id],
+    count: unreadCount[id] || 0,
+  }));
 
   return (
     <div className="bg-white border-b border-gray-200">
