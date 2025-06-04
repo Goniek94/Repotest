@@ -8,7 +8,7 @@ import ToastNotification from './components/notifications/ToastNotification';
 import 'react-toastify/dist/ReactToastify.css';
 import Navigation from './components/Navigation/Navigation';
 import Footer from './components/Footer';
-import SearchForm from './components/search/SearchForm';
+import SearchForm from './components/search/SearchFormUpdated';
 import FeaturedListings from './components/FeaturedListings/FeaturedListings';
 import ListingsPage from './components/ListingsView/ListingsPage';
 import CreateListingForm from './components/ListingForm/CreateListingForm';

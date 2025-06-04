@@ -18,6 +18,13 @@ import useCarData from './hooks/useCarData';
  */
 export default function SearchFormUpdated({ initialValues = {}, onFilterChange }) {
   const navigate = useNavigate();
+
+  // Pozwól na przekazanie 'brand' zamiast 'make' w initialValues
+  const sanitizedInitialValues = { ...initialValues };
+  if (sanitizedInitialValues.brand && !sanitizedInitialValues.make) {
+    sanitizedInitialValues.make = sanitizedInitialValues.brand;
+    delete sanitizedInitialValues.brand;
+  }
   
   // Pobierz dane o markach i modelach z backendu
   const { carData, brands, getModelsForBrand, loading, error } = useCarData();
@@ -52,7 +59,7 @@ export default function SearchFormUpdated({ initialValues = {}, onFilterChange }
     sellerType: '',
     vat: false,
     invoiceOptions: false,
-    ...initialValues
+    ...sanitizedInitialValues
   }));
 
   // Dostępne modele dla wybranej marki
@@ -139,8 +146,13 @@ export default function SearchFormUpdated({ initialValues = {}, onFilterChange }
   // Obsługa przycisku wyszukiwania
   const handleSearch = () => {
     if (onFilterChange) {
-      // Przekaż filtry do rodzica
-      onFilterChange(formData);
+      // Przekaż filtry do rodzica, zamieniając 'make' na 'brand'
+      const filtersForParent = { ...formData };
+      if (filtersForParent.make) {
+        filtersForParent.brand = filtersForParent.make;
+        delete filtersForParent.make;
+      }
+      onFilterChange(filtersForParent);
     } else {
       // Przejdź do strony wyników wyszukiwania
       const searchParams = new URLSearchParams();

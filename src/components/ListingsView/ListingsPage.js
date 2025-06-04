@@ -1,7 +1,7 @@
 // src/components/ListingsView/ListingsPage.js
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import SearchForm from '../../components/search/SearchForm';
+import SearchForm from '../../components/search/SearchFormUpdated';
 import ListingControls from './controls/ListingControls';
 import ListingListView from './display/list/ListingListView';
 // Import prawidłowego komponentu GridListingCard
