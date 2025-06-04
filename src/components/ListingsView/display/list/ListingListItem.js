@@ -48,7 +48,7 @@ const ListingListItem = memo(({
             e.stopPropagation();
             onFavorite(listing.id);
           }}
-          className="absolute top-2 right-2 sm:top-3 sm:right-3 p-1.5 sm:p-2 hover:scale-110 transition-transform duration-200 
+          className="absolute top-2 right-2 sm:top-3 sm:right-3 p-1.5 sm:p-2 hover:scale-110 transition-transform duration-200
                      bg-white rounded-full shadow-lg z-10"
         >
           <Heart
@@ -59,6 +59,11 @@ const ListingListItem = memo(({
           <div className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-[#35530A] text-white px-2 py-1 sm:px-3 sm:py-1.5 lg:px-2.5 lg:py-1.5 text-xs sm:text-sm lg:text-xs rounded-sm font-medium flex items-center gap-1.5 sm:gap-2 shadow-lg">
             <Medal className="w-3 h-3 sm:w-4 sm:h-4 lg:w-3.5 lg:h-3.5" />
             WYRÓŻNIONE
+          </div>
+        )}
+        {listing.matchLabel && (
+          <div className="absolute bottom-2 left-2 bg-black bg-opacity-60 text-white text-xs px-2 py-0.5 rounded-sm">
+            {listing.matchLabel}
           </div>
         )}
       </div>

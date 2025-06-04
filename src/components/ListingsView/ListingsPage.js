@@ -161,6 +161,10 @@ function ListingsPage() {
         };
       });
 
+      // Sortuj ogłoszenia według wyniku dopasowania malejąco, tak aby najlepiej
+      // pasujące pojawiały się na górze
+      mappedListings.sort((a, b) => (b.match_score || 0) - (a.match_score || 0));
+
       setListings(mappedListings);
       setTotalPages(response.totalPages || 1);
       setError(null);
