@@ -23,7 +23,7 @@ const useConversations = (activeTab) => {
   
   // Pobranie aktualnego użytkownika z kontekstu
   const { user } = useAuth();
-  const currentUserId = user?._id;
+  const currentUserId = user?._id || user?.id;
 
   /**
    * Mapowanie folderów między UI a API
