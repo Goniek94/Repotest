@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import MessagesService from '../../../../services/api/messages';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../../../contexts/AuthContext';
+import { FOLDER_MAP, DEFAULT_FOLDER } from '../../../../constants/messageFolders';
 
 /**
  * Hook zarządzający stanem i akcjami konwersacji
@@ -28,12 +29,10 @@ const useConversations = (activeTab) => {
   /**
    * Mapowanie folderów między UI a API
    */
-  const folderMap = {
-    'odebrane': 'inbox',
-    'wyslane': 'sent',
-    'wazne': 'starred',
-    'archiwum': 'archived'
-  };
+  // Mapowanie folderów pomiędzy UI a backendem zdefiniowane w stałej.
+  // useMemo zwraca tu tę samą referencję, ale główną wartością jest
+  // spójne użycie jednego źródła prawdy w całej aplikacji.
+  const folderMap = useMemo(() => FOLDER_MAP, []);
 
   /**
    * Ujednolicona funkcja wyświetlająca powiadomienia
@@ -58,7 +57,7 @@ const useConversations = (activeTab) => {
       setError(null);
       
       // Pobieranie listy konwersacji z określonego folderu
-      const backendFolder = folderMap[activeTab] || 'inbox';
+      const backendFolder = folderMap[activeTab] || folderMap[DEFAULT_FOLDER];
       
       console.log(`Pobieranie konwersacji z folderu: ${backendFolder}`);
       
@@ -346,7 +345,7 @@ const useConversations = (activeTab) => {
       setLoading(true);
       setError(null);
       
-      const backendFolder = folderMap[activeTab] || 'inbox';
+      const backendFolder = folderMap[activeTab] || folderMap[DEFAULT_FOLDER];
       const response = await MessagesService.searchConversations(query, backendFolder);
       
       // Normalizacja odpowiedzi
@@ -455,10 +454,13 @@ const useConversations = (activeTab) => {
     }
   }, [selectedConversation, currentUserId, user, showNotification]);
 
-  // Pobieranie konwersacji przy zmianie aktywnego folderu
+  // Pobieranie konwersacji przy zmianie aktywnego folderu lub użytkownika
+  // Celowo nie dodajemy fetchConversations do zależności, aby uniknąć
+  // zbędnego ponownego tworzenia funkcji i potencjalnej pętli zapytań.
   useEffect(() => {
     fetchConversations();
-  }, [activeTab, fetchConversations]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, currentUserId]);
   
   // Pobieranie wiadomości przy wyborze konwersacji
   useEffect(() => {
