@@ -77,14 +77,14 @@ const ListingListItem = memo(({
             <p className="text-sm sm:text-base lg:text-base text-gray-600 line-clamp-1">{listing.subtitle}</p>
           </div>
 
-          {/* Parametry w grid - przesunięte wyżej */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5 sm:gap-2 lg:gap-2">
+          {/* Parametry w jednym rzędzie z zawijaniem */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 sm:gap-x-4 sm:gap-y-2">
             {/* Paliwo */}
             <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
               <Fuel className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-black" />
               <div>
-                <div className="text-xs sm:text-xs lg:text-sm text-gray-500">Paliwo</div>
-                <div className="text-sm sm:text-base lg:text-base font-medium">{listing.fuel}</div>
+              <div className="text-sm sm:text-xs lg:text-sm text-gray-500">Paliwo</div>
+              <div className="text-base sm:text-base lg:text-base font-medium">{listing.fuel}</div>
               </div>
             </div>
             
@@ -92,8 +92,8 @@ const ListingListItem = memo(({
             <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
               <Gauge className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-black" />
               <div>
-                <div className="text-xs sm:text-xs lg:text-sm text-gray-500">Przebieg</div>
-                <div className="text-sm sm:text-base lg:text-base font-medium">{listing.mileage} km</div>
+              <div className="text-sm sm:text-xs lg:text-sm text-gray-500">Przebieg</div>
+              <div className="text-base sm:text-base lg:text-base font-medium">{listing.mileage} km</div>
               </div>
             </div>
 
@@ -101,8 +101,8 @@ const ListingListItem = memo(({
             <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
               <Box className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-black" />
               <div>
-                <div className="text-xs sm:text-xs lg:text-sm text-gray-500">Pojemność</div>
-                <div className="text-sm sm:text-base lg:text-base font-medium">{listing.engineCapacity}</div>
+              <div className="text-sm sm:text-xs lg:text-sm text-gray-500">Pojemność</div>
+              <div className="text-base sm:text-base lg:text-base font-medium">{listing.engineCapacity}</div>
               </div>
             </div>
 
@@ -110,8 +110,8 @@ const ListingListItem = memo(({
             <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
               <Calendar className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-black" />
               <div>
-                <div className="text-xs sm:text-xs lg:text-sm text-gray-500">Rok</div>
-                <div className="text-sm sm:text-base lg:text-base font-medium">{listing.year}</div>
+              <div className="text-sm sm:text-xs lg:text-sm text-gray-500">Rok</div>
+              <div className="text-base sm:text-base lg:text-base font-medium">{listing.year}</div>
               </div>
             </div>
 
@@ -119,8 +119,8 @@ const ListingListItem = memo(({
             <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
               <Power className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-black" />
               <div>
-                <div className="text-xs sm:text-xs lg:text-sm text-gray-500">Moc</div>
-                <div className="text-sm sm:text-base lg:text-base font-medium">{listing.power}</div>
+              <div className="text-sm sm:text-xs lg:text-sm text-gray-500">Moc</div>
+              <div className="text-base sm:text-base lg:text-base font-medium">{listing.power}</div>
               </div>
             </div>
             
@@ -128,8 +128,8 @@ const ListingListItem = memo(({
             <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
               <Car className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-black" />
               <div>
-                <div className="text-xs sm:text-xs lg:text-sm text-gray-500">Napęd</div>
-                <div className="text-sm sm:text-base lg:text-base font-medium">{listing.drive}</div>
+              <div className="text-sm sm:text-xs lg:text-sm text-gray-500">Napęd</div>
+              <div className="text-base sm:text-base lg:text-base font-medium">{listing.drive}</div>
               </div>
             </div>
           </div>
@@ -152,8 +152,8 @@ const ListingListItem = memo(({
               <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
                 <User className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-black" />
                 <div>
-                  <div className="text-xs sm:text-xs lg:text-sm text-gray-500">Sprzedawca</div>
-                  <div className="text-sm sm:text-base lg:text-base font-medium text-[#35530A]">
+                  <div className="text-sm sm:text-xs lg:text-sm text-gray-500">Sprzedawca</div>
+                  <div className="text-base sm:text-base lg:text-base font-medium text-[#35530A]">
                     {listing.sellerType === 'prywatny' ? 'Prywatny' : listing.sellerType}
                   </div>
                 </div>
@@ -165,8 +165,8 @@ const ListingListItem = memo(({
               <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
                 <MapPin className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-black" />
                 <div>
-                  <div className="text-xs sm:text-xs lg:text-sm text-gray-500">Lokalizacja</div>
-                  <div className="text-sm sm:text-base lg:text-base font-medium">
+                  <div className="text-sm sm:text-xs lg:text-sm text-gray-500">Lokalizacja</div>
+                  <div className="text-base sm:text-base lg:text-base font-medium">
                     {listing.city}
                     <div className="text-sm text-gray-500 hidden sm:block lg:block">({listing.location})</div>
                   </div>

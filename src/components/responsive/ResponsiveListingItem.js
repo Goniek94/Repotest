@@ -90,8 +90,8 @@ const ResponsiveListingItem = ({
             {listing.headline || listing.description?.substring(0, 60) || ''}
           </p>
           
-          {/* Parametry w 2 kolumnach */}
-          <div className="grid grid-cols-2 gap-2 text-xs">
+          {/* Parametry w jednym rzędzie z zawijaniem */}
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
             <div className="flex items-center gap-1">
               <div className="w-4 h-4 text-[#35530A] flex-shrink-0">
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -198,8 +198,8 @@ const ResponsiveListingItem = ({
               </div>
             </div>
             
-            {/* Parametry w 2 kolumnach */}
-            <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-auto">
+            {/* Parametry w jednym rzędzie z zawijaniem */}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-auto">
               <div className="flex items-center gap-1">
                 <div className="w-4 h-4 text-[#35530A] flex-shrink-0">
                   <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -207,8 +207,8 @@ const ResponsiveListingItem = ({
                   </svg>
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500">Rok</div>
-                  <div className="text-xs font-medium">{listing.year || '2015'}</div>
+                  <div className="text-sm sm:text-xs text-gray-500">Rok</div>
+                  <div className="text-base font-medium">{listing.year || '2015'}</div>
                 </div>
               </div>
               <div className="flex items-center gap-1">
@@ -218,8 +218,8 @@ const ResponsiveListingItem = ({
                   </svg>
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500">Przebieg</div>
-                  <div className="text-xs font-medium">{listing.mileage ? `${listing.mileage} km` : '82685 km'}</div>
+                  <div className="text-sm sm:text-xs text-gray-500">Przebieg</div>
+                  <div className="text-base font-medium">{listing.mileage ? `${listing.mileage} km` : '82685 km'}</div>
                 </div>
               </div>
               <div className="flex items-center gap-1">
@@ -229,8 +229,8 @@ const ResponsiveListingItem = ({
                   </svg>
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500">Paliwo</div>
-                  <div className="text-xs font-medium">{listing.fuelType || 'Diesel'}</div>
+                  <div className="text-sm sm:text-xs text-gray-500">Paliwo</div>
+                  <div className="text-base font-medium">{listing.fuelType || 'Diesel'}</div>
                 </div>
               </div>
               <div className="flex items-center gap-1">
@@ -238,8 +238,8 @@ const ResponsiveListingItem = ({
                   <MapPin className="w-3 h-3" />
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500">Lokalizacja</div>
-                  <div className="text-xs font-medium">{listing.city || listing.location || 'Kraków'}</div>
+                  <div className="text-sm sm:text-xs text-gray-500">Lokalizacja</div>
+                  <div className="text-base font-medium">{listing.city || listing.location || 'Kraków'}</div>
                 </div>
               </div>
             </div>
@@ -323,7 +323,7 @@ const ResponsiveListingItem = ({
           {/* Parametry - responsywny układ */}
           <div className="mt-4">
             {/* Główne parametry - pierwszy rząd */}
-            <div className="grid grid-cols-3 gap-x-4 gap-y-3">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
               {/* Paliwo */}
               <div className="flex items-center gap-2">
                 <div className="w-5 h-5 text-[#35530A] flex-shrink-0 flex items-center justify-center">
@@ -332,8 +332,8 @@ const ResponsiveListingItem = ({
                   </svg>
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500">Paliwo</div>
-                  <div className="text-sm font-medium">{listing.fuelType || 'Diesel'}</div>
+                  <div className="text-sm sm:text-xs text-gray-500">Paliwo</div>
+                  <div className="text-base font-medium">{listing.fuelType || 'Diesel'}</div>
                 </div>
               </div>
               
@@ -345,8 +345,8 @@ const ResponsiveListingItem = ({
                   </svg>
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500">Pojemność</div>
-                  <div className="text-sm font-medium">{listing.engineSize ? `${listing.engineSize} cm³` : '1178 cm³'}</div>
+                  <div className="text-sm sm:text-xs text-gray-500">Pojemność</div>
+                  <div className="text-base font-medium">{listing.engineSize ? `${listing.engineSize} cm³` : '1178 cm³'}</div>
                 </div>
               </div>
               
@@ -358,14 +358,14 @@ const ResponsiveListingItem = ({
                   </svg>
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500">Moc</div>
-                  <div className="text-sm font-medium">{listing.power ? `${listing.power} KM` : '149 KM'}</div>
+                  <div className="text-sm sm:text-xs text-gray-500">Moc</div>
+                  <div className="text-base font-medium">{listing.power ? `${listing.power} KM` : '149 KM'}</div>
                 </div>
               </div>
             </div>
             
             {/* Drugi rząd parametrów */}
-            <div className="grid grid-cols-3 gap-x-4 gap-y-3 mt-3">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-3 mt-3">
               {/* Przebieg */}
               <div className="flex items-center gap-2">
                 <div className="w-5 h-5 text-[#35530A] flex-shrink-0 flex items-center justify-center">
@@ -374,8 +374,8 @@ const ResponsiveListingItem = ({
                   </svg>
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500">Przebieg</div>
-                  <div className="text-sm font-medium">{listing.mileage ? `${listing.mileage} km` : '82685 km'}</div>
+                  <div className="text-sm sm:text-xs text-gray-500">Przebieg</div>
+                  <div className="text-base font-medium">{listing.mileage ? `${listing.mileage} km` : '82685 km'}</div>
                 </div>
               </div>
               
@@ -387,8 +387,8 @@ const ResponsiveListingItem = ({
                   </svg>
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500">Rok</div>
-                  <div className="text-sm font-medium">{listing.year || '2015'}</div>
+                  <div className="text-sm sm:text-xs text-gray-500">Rok</div>
+                  <div className="text-base font-medium">{listing.year || '2015'}</div>
                 </div>
               </div>
               
@@ -400,14 +400,14 @@ const ResponsiveListingItem = ({
                   </svg>
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500">Skrzynia</div>
-                  <div className="text-sm font-medium">{listing.transmission || 'Manualna'}</div>
+                  <div className="text-sm sm:text-xs text-gray-500">Skrzynia</div>
+                  <div className="text-base font-medium">{listing.transmission || 'Manualna'}</div>
                 </div>
               </div>
             </div>
             
             {/* Trzeci rząd - napęd, sprzedawca i lokalizacja */}
-            <div className="grid grid-cols-3 gap-x-4 gap-y-3 mt-3">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-3 mt-3">
               {/* Napęd */}
               <div className="flex items-center gap-2">
                 <div className="w-5 h-5 text-[#35530A] flex-shrink-0 flex items-center justify-center">
@@ -416,8 +416,8 @@ const ResponsiveListingItem = ({
                   </svg>
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500">Napęd</div>
-                  <div className="text-sm font-medium">{listing.drive || 'Napęd tylny'}</div>
+                  <div className="text-sm sm:text-xs text-gray-500">Napęd</div>
+                  <div className="text-base font-medium">{listing.drive || 'Napęd tylny'}</div>
                 </div>
               </div>
               
@@ -427,8 +427,8 @@ const ResponsiveListingItem = ({
                   <User className="w-4 h-4" />
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500">Sprzedawca</div>
-                  <div className="text-sm font-medium">{listing.sellerType || 'Firma'}</div>
+                  <div className="text-sm sm:text-xs text-gray-500">Sprzedawca</div>
+                  <div className="text-base font-medium">{listing.sellerType || 'Firma'}</div>
                 </div>
               </div>
               
@@ -438,7 +438,7 @@ const ResponsiveListingItem = ({
                   <MapPin className="w-4 h-4" />
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500">Lokalizacja</div>
-                  <div className="text-sm font-medium">
+                  <div className="text-sm sm:text-xs text-gray-500">Lokalizacja</div>
+                  <div className="text-base font-medium">
                     {listing.city || listing.location || 'Kraków'}
                     {listing.voivodeship && <span className="

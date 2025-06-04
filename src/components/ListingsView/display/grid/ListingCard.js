@@ -66,14 +66,14 @@ const ListingCard = memo(({ listing, onNavigate, onFavorite, isFavorite }) => {
           {shortDescription}
         </p>
 
-        {/* Parametry w dwóch kolumnach */}
-        <div className="grid grid-cols-2 gap-y-4">
+        {/* Parametry w jednym poziomym rzędzie z zawijaniem */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
           {/* Paliwo */}
           <div className="flex items-start">
             <span className="mr-2 text-lg">⛽</span>
             <div>
-              <div className="text-xs text-gray-500">Paliwo</div>
-              <div className="font-medium">{listing.fuel}</div>
+              <div className="text-sm sm:text-xs text-gray-500">Paliwo</div>
+              <div className="text-base font-medium">{listing.fuel}</div>
             </div>
           </div>
 
@@ -81,8 +81,8 @@ const ListingCard = memo(({ listing, onNavigate, onFavorite, isFavorite }) => {
           <div className="flex items-start">
             <span className="mr-2 text-lg">🛣️</span>
             <div>
-              <div className="text-xs text-gray-500">Przebieg</div>
-              <div className="font-medium">{listing.mileage} km</div>
+              <div className="text-sm sm:text-xs text-gray-500">Przebieg</div>
+              <div className="text-base font-medium">{listing.mileage} km</div>
             </div>
           </div>
 
@@ -90,8 +90,8 @@ const ListingCard = memo(({ listing, onNavigate, onFavorite, isFavorite }) => {
           <div className="flex items-start">
             <span className="mr-2 text-lg">📅</span>
             <div>
-              <div className="text-xs text-gray-500">Rok</div>
-              <div className="font-medium">{listing.year}</div>
+              <div className="text-sm sm:text-xs text-gray-500">Rok</div>
+              <div className="text-base font-medium">{listing.year}</div>
             </div>
           </div>
 
@@ -99,8 +99,8 @@ const ListingCard = memo(({ listing, onNavigate, onFavorite, isFavorite }) => {
           <div className="flex items-start">
             <span className="mr-2 text-lg">⚡</span>
             <div>
-              <div className="text-xs text-gray-500">Moc</div>
-              <div className="font-medium">{listing.power} KM</div>
+              <div className="text-sm sm:text-xs text-gray-500">Moc</div>
+              <div className="text-base font-medium">{listing.power} KM</div>
             </div>
           </div>
 
@@ -108,8 +108,8 @@ const ListingCard = memo(({ listing, onNavigate, onFavorite, isFavorite }) => {
           <div className="flex items-start">
             <span className="mr-2 text-lg">🚗</span>
             <div>
-              <div className="text-xs text-gray-500">Napęd</div>
-              <div className="font-medium">{listing.drive}</div>
+              <div className="text-sm sm:text-xs text-gray-500">Napęd</div>
+              <div className="text-base font-medium">{listing.drive}</div>
             </div>
           </div>
 
@@ -117,9 +117,9 @@ const ListingCard = memo(({ listing, onNavigate, onFavorite, isFavorite }) => {
           <div className="flex items-start">
             <span className="mr-2 text-lg">📍</span>
             <div>
-              <div className="text-xs text-gray-500">Lokalizacja</div>
-              <div className="font-medium">{listing.city}</div>
-              <div className="text-xs text-gray-500">({listing.region})</div>
+              <div className="text-sm sm:text-xs text-gray-500">Lokalizacja</div>
+              <div className="text-base font-medium">{listing.city}</div>
+              <div className="text-sm sm:text-xs text-gray-500">({listing.region})</div>
             </div>
           </div>
         </div>
