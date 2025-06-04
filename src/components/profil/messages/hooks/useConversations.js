@@ -108,20 +108,30 @@ const useConversations = (activeTab) => {
       }
       
       // Formatowanie konwersacji do jednolitego formatu
-      const formattedConversations = data.map(conversation => ({
-        id: conversation.user?._id || conversation._id,
-        userId: conversation.user?._id || conversation._id,
-        userName: conversation.user?.name || conversation.user?.email || 'Nieznany użytkownik',
-        lastMessage: {
-          content: conversation.lastMessage?.content || '',
-          date: new Date(conversation.lastMessage?.createdAt || conversation.lastMessage?.date || Date.now()),
-          isRead: conversation.lastMessage?.read || false,
-        },
-        unreadCount: conversation.unreadCount || 0,
-        isStarred: conversation.lastMessage?.starred || conversation.starred || false,
-        folder: backendFolder,
-        adInfo: conversation.adInfo || null,
-      }));
+      const formattedConversations = data.map(conversation => {
+        const userInfo = conversation.user || conversation.participant || conversation.partner || {};
+        const userId =
+          userInfo._id ||
+          userInfo.id ||
+          conversation.userId ||
+          conversation.otherUserId ||
+          conversation._id;
+
+        return {
+          id: conversation._id || userId,
+          userId,
+          userName: userInfo.name || userInfo.email || 'Nieznany użytkownik',
+          lastMessage: {
+            content: conversation.lastMessage?.content || '',
+            date: new Date(conversation.lastMessage?.createdAt || conversation.lastMessage?.date || Date.now()),
+            isRead: conversation.lastMessage?.read || false,
+          },
+          unreadCount: conversation.unreadCount || 0,
+          isStarred: conversation.lastMessage?.starred || conversation.starred || false,
+          folder: backendFolder,
+          adInfo: conversation.adInfo || null,
+        };
+      });
 
       console.log('Sformatowane konwersacje:', formattedConversations);
       
@@ -421,6 +431,9 @@ const useConversations = (activeTab) => {
     }
     
     try {
+      console.log('Wysyłanie odpowiedzi do:', selectedConversation.userId);
+      console.log('Treść:', content);
+      console.log('Liczba załączników:', attachments.length);
       const formData = new FormData();
       formData.append('content', content);
       
