@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import MessagesService from '../../../../services/api/messages';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../../../contexts/AuthContext';
@@ -28,12 +28,18 @@ const useConversations = (activeTab) => {
   /**
    * Mapowanie folderów między UI a API
    */
-  const folderMap = {
-    'odebrane': 'inbox',
-    'wyslane': 'sent',
-    'wazne': 'starred',
-    'archiwum': 'archived'
-  };
+  // Mapowanie folderów pomiędzy UI a backendem. Używamy useMemo, aby
+  // referencja była stała między renderami i nie powodowała niepotrzebnego
+  // odświeżania efektów zależnych od folderMap.
+  const folderMap = useMemo(
+    () => ({
+      'odebrane': 'inbox',
+      'wyslane': 'sent',
+      'wazne': 'starred',
+      'archiwum': 'archived'
+    }),
+    []
+  );
 
   /**
    * Ujednolicona funkcja wyświetlająca powiadomienia
