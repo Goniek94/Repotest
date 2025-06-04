@@ -26,6 +26,7 @@ const useConversations = (activeTab) => {
   const { user } = useAuth();
   const currentUserId = user?._id || user?.id;
 
+  /**
    * Ujednolicona funkcja wyświetlająca powiadomienia
    */
   const showNotification = useCallback((message, type = 'info') => {
@@ -48,7 +49,7 @@ const useConversations = (activeTab) => {
       setError(null);
       
       // Pobieranie listy konwersacji z określonego folderu
-      const backendFolder = folderMap[activeTab] || folderMap[DEFAULT_FOLDER];
+      const backendFolder = FOLDER_MAP[activeTab] || FOLDER_MAP[DEFAULT_FOLDER];
       
       console.log(`Pobieranie konwersacji z folderu: ${backendFolder}`);
       
@@ -94,7 +95,7 @@ const useConversations = (activeTab) => {
     } finally {
       setLoading(false);
     }
-  }, [activeTab, currentUserId, folderMap, showNotification]);
+  }, [activeTab, currentUserId, FOLDER_MAP, showNotification]);
 
   /**
    * Pobieranie wiadomości z wybranej konwersacji
@@ -253,25 +254,26 @@ const useConversations = (activeTab) => {
    */
   const deleteConversation = useCallback(async (conversationId) => {
     if (!conversationId) return;
-    
+
     try {
-      await MessagesService.deleteConversation(conversationId);
-      
+      // Zamiast trwałego usuwania przenosimy konwersację do archiwum
+      await MessagesService.archiveConversation(conversationId);
+
       // Usunięcie z listy konwersacji
-      setConversations(prevConversations => 
+      setConversations(prevConversations =>
         prevConversations.filter(convo => convo.id !== conversationId)
       );
-      
-      // Wyczyszczenie wybranej konwersacji jeśli była usunięta
+
+      // Wyczyszczenie wybranej konwersacji jeśli była przeniesiona
       if (selectedConversation && selectedConversation.id === conversationId) {
         setSelectedConversation(null);
         setChatMessages([]);
       }
-      
-      showNotification('Konwersacja została usunięta', 'success');
+
+      showNotification('Konwersacja przeniesiona do archiwum', 'success');
     } catch (err) {
-      console.error('Błąd podczas usuwania:', err);
-      showNotification('Nie udało się usunąć konwersacji', 'error');
+      console.error('Błąd podczas przenoszenia do archiwum:', err);
+      showNotification('Nie udało się przenieść do archiwum', 'error');
     }
   }, [selectedConversation, showNotification]);
 
@@ -282,7 +284,7 @@ const useConversations = (activeTab) => {
     if (!conversationId || !targetFolder) return;
     
     try {
-      const backendFolder = folderMap[targetFolder];
+      const backendFolder = FOLDER_MAP[targetFolder];
       if (!backendFolder) return;
       
       // Wybór odpowiedniej metody API zależnie od folderu docelowego
@@ -318,7 +320,7 @@ const useConversations = (activeTab) => {
       console.error('Błąd podczas przenoszenia:', err);
       showNotification(`Nie udało się przenieść konwersacji do ${targetFolder}`, 'error');
     }
-  }, [activeTab, fetchConversations, folderMap, selectedConversation, showNotification]);
+  }, [activeTab, fetchConversations, FOLDER_MAP, selectedConversation, showNotification]);
 
   /**
    * Wyszukiwanie konwersacji
@@ -336,7 +338,7 @@ const useConversations = (activeTab) => {
       setLoading(true);
       setError(null);
       
-      const backendFolder = folderMap[activeTab] || folderMap[DEFAULT_FOLDER];
+      const backendFolder = FOLDER_MAP[activeTab] || FOLDER_MAP[DEFAULT_FOLDER];
       const response = await MessagesService.searchConversations(query, backendFolder);
       
       // Normalizacja odpowiedzi
@@ -366,7 +368,7 @@ const useConversations = (activeTab) => {
     } finally {
       setLoading(false);
     }
-  }, [activeTab, fetchConversations, folderMap, showNotification]);
+  }, [activeTab, fetchConversations, FOLDER_MAP, showNotification]);
 
   /**
    * Wysłanie odpowiedzi w konwersacji
