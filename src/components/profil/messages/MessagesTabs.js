@@ -24,7 +24,8 @@ const MessagesTabs = ({ activeTab, onTabChange, unreadCount = {} }) => {
     archiwum: <Archive className="w-5 h-5" />,
   };
 
-  const folders = UI_FOLDERS.filter((f, idx) => isMobile || idx < 2).map((id) => ({
+  // Wyświetlamy wszystkie foldery niezależnie od typu urządzenia
+  const folders = UI_FOLDERS.map((id) => ({
     id,
     label: id.charAt(0).toUpperCase() + id.slice(1),
     icon: ICONS[id],
