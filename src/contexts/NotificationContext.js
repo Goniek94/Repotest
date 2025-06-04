@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import notificationService from '../services/notifications';
 import axios from 'axios';
+import { API_URL } from '../services/api/config';
 
 // Tworzenie kontekstu
 const NotificationContext = createContext();
@@ -29,8 +30,7 @@ export const NotificationProvider = ({ children }) => {
 
     setIsLoading(true);
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-      const response = await axios.get(`${apiUrl}/api/notifications`, {
+      const response = await axios.get(`${API_URL}/notifications`, {
         headers: {
           Authorization: `Bearer ${user.token}`
         }
@@ -86,8 +86,7 @@ export const NotificationProvider = ({ children }) => {
     if (!isAuthenticated || !user) return;
 
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-      await axios.put(`${apiUrl}/api/notifications/${notificationId}/read`, {}, {
+      await axios.put(`${API_URL}/notifications/${notificationId}/read`, {}, {
         headers: {
           Authorization: `Bearer ${user.token}`
         }
@@ -114,8 +113,7 @@ export const NotificationProvider = ({ children }) => {
     if (!isAuthenticated || !user) return;
 
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-      await axios.put(`${apiUrl}/api/notifications/read-all`, {}, {
+      await axios.put(`${API_URL}/notifications/read-all`, {}, {
         headers: {
           Authorization: `Bearer ${user.token}`
         }
@@ -138,8 +136,7 @@ export const NotificationProvider = ({ children }) => {
     if (!isAuthenticated || !user) return;
 
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-      await axios.delete(`${apiUrl}/api/notifications/${notificationId}`, {
+      await axios.delete(`${API_URL}/notifications/${notificationId}`, {
         headers: {
           Authorization: `Bearer ${user.token}`
         }
