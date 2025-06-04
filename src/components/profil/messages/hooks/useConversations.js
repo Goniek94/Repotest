@@ -254,25 +254,26 @@ const useConversations = (activeTab) => {
    */
   const deleteConversation = useCallback(async (conversationId) => {
     if (!conversationId) return;
-    
+
     try {
-      await MessagesService.deleteConversation(conversationId);
-      
+      // Zamiast trwałego usuwania przenosimy konwersację do archiwum
+      await MessagesService.archiveConversation(conversationId);
+
       // Usunięcie z listy konwersacji
-      setConversations(prevConversations => 
+      setConversations(prevConversations =>
         prevConversations.filter(convo => convo.id !== conversationId)
       );
-      
-      // Wyczyszczenie wybranej konwersacji jeśli była usunięta
+
+      // Wyczyszczenie wybranej konwersacji jeśli była przeniesiona
       if (selectedConversation && selectedConversation.id === conversationId) {
         setSelectedConversation(null);
         setChatMessages([]);
       }
-      
-      showNotification('Konwersacja została usunięta', 'success');
+
+      showNotification('Konwersacja przeniesiona do archiwum', 'success');
     } catch (err) {
-      console.error('Błąd podczas usuwania:', err);
-      showNotification('Nie udało się usunąć konwersacji', 'error');
+      console.error('Błąd podczas przenoszenia do archiwum:', err);
+      showNotification('Nie udało się przenieść do archiwum', 'error');
     }
   }, [selectedConversation, showNotification]);
 
