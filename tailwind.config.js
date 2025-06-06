@@ -4,8 +4,8 @@ module.exports = {
   content: [
     './pages/**/*.{js,jsx,ts,tsx}', // Dodano .js i .jsx
     './components/**/*.{js,jsx,ts,tsx}', // Dodano .js i .jsx
-    './app/**/*.{js,jsx,ts,tsx}', // Dodano .js i .jsx
     './src/**/*.{js,jsx,ts,tsx}', // Dodano .js i .jsx
+    './src/styles/**/*.css',
   ],
   theme: {
     container: {
