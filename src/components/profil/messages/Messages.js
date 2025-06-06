@@ -78,12 +78,10 @@ const Messages = () => {
     'Aktywna zakładka': activeTab
   });
 
-  // Przewijanie czatu do najnowszej wiadomości
-  useEffect(() => {
-    if (chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [chatMessages]);
+
+  // Wyłączono automatyczne przewijanie czatu na koniec listy wiadomości.
+  // Dzięki temu użytkownik zachowuje kontrolę nad pozycją scrolla
+  // i widok nie "ucieka" do ostatniej wiadomości po każdej aktualizacji.
   
   // Efekt diagnostyczny dla testowania API
   useEffect(() => {
