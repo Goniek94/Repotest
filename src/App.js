@@ -104,9 +104,14 @@ const HomePageContent = () => (
   </>
 );
 
-// Komponent dla logowania 
+// Komponent strony logowania wyświetlany na tle strony głównej
 const LoginPage = () => {
-  return <LoginModal isOpen={true} />;
+  return (
+    <>
+      <HomePageContent />
+      <LoginModal isOpen={true} />
+    </>
+  );
 };
 
 // Komponent opakowania dla formularza ogłoszenia
@@ -124,12 +129,13 @@ const AddListingViewWithProvider = () => (
 );
 
 const App = () => {
-  // Usunięto automatyczne wylogowanie przy wejściu na stronę
-  // Jeśli chcesz przywrócić produkcyjne zachowanie, odkomentuj poniższe linie:
-  // React.useEffect(() => {
-  //   clearAuthData();
-  //   fetch('/api/users/logout', { method: 'POST', credentials: 'include' });
-  // }, []);
+  // Przy każdym załadowaniu aplikacji czyścimy dane autoryzacyjne i
+  // wysyłamy żądanie wylogowania. Dzięki temu użytkownik musi zalogować
+  // się ponownie po odświeżeniu strony, co odpowiada wymaganiom klienta.
+  React.useEffect(() => {
+    clearAuthData();
+    fetch('/api/users/logout', { method: 'POST', credentials: 'include' });
+  }, []);
 
   return (
     <AuthProvider>
