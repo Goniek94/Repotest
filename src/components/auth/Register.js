@@ -295,14 +295,14 @@ function Register() {
   // Wysyłanie kodu (SYMULACJA)
   const handleSendVerificationCode = async (type) => {
     try {
-      console.log(`Symulacja wysyłania kodu weryfikacyjnego na ${type === 'phone' ? formData.phone : formData.email}`);
+      debug(`Symulacja wysyłania kodu weryfikacyjnego na ${type === 'phone' ? formData.phone : formData.email}`);
       
       // Symulacja opóźnienia sieciowego
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Symulacja kodu
       const mockCode = '123456';
-      console.log(`Wygenerowany kod: ${mockCode}`);
+      debug(`Wygenerowany kod: ${mockCode}`);
       startVerificationTimer(type);
     } catch (error) {
       setErrors((prev) => ({
@@ -315,7 +315,7 @@ function Register() {
   // Weryfikacja kodu (poprzez API)
   const handleVerifyCode = async (type) => {
     try {
-      console.log(`Weryfikacja kodu ${type}: ${formData[`${type}Code`]}`);
+      debug(`Weryfikacja kodu ${type}: ${formData[`${type}Code`]}`);
       setIsSubmitting(true);
       
       // Wywołanie API zamiast symulacji
@@ -325,7 +325,7 @@ function Register() {
         type
       );
       
-      console.log('Odpowiedź z weryfikacji kodu:', response);
+      debug('Odpowiedź z weryfikacji kodu:', response);
       
       if (response.verified) {
         if (type === 'email') {
@@ -373,7 +373,7 @@ function Register() {
       // Pełny numer telefonu z prefiksem
       const fullPhoneNumber = `${formData.phonePrefix}${formData.phone}`;
       
-      console.log('Rejestracja - dane wysyłane do backendu:', {
+      debug('Rejestracja - dane wysyłane do backendu:', {
         name: formData.name,
         lastName: formData.lastName,
         email: formData.email,
@@ -393,7 +393,7 @@ function Register() {
         marketingAccepted: formData.marketingAccepted
       });
       
-      console.log('Odpowiedź z backendu (rejestracja):', response);
+      debug('Odpowiedź z backendu (rejestracja):', response);
       
       // Pokaż komunikat o sukcesie
       setShowSuccessModal(true);

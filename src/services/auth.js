@@ -9,7 +9,7 @@ const AuthService = {
       if (response.data.token) {
         // Zapisujemy token i dane użytkownika
         setAuthData(response.data.token, response.data.user);
-        console.log('Zalogowano pomyślnie, token zapisany');
+        debug('Zalogowano pomyślnie, token zapisany');
       }
       return response.data;
     } catch (error) {

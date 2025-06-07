@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios from 'axios/dist/node/axios.cjs';
 import './DiscountManager.css'; // Używamy tych samych styli co dla DiscountManager
 
 const BonusManager = () => {

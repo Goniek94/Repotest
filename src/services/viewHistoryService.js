@@ -62,7 +62,7 @@ const getListingId = (listing) => {
       const pathParts = window.location.pathname.split('/');
       const possibleId = pathParts[pathParts.length - 1];
       if (possibleId && possibleId.length > 5) {
-        console.log('Znaleziono ID z URL:', possibleId);
+        debug('Znaleziono ID z URL:', possibleId);
         return possibleId;
       }
     }
@@ -88,7 +88,7 @@ const addToViewHistory = (listing) => {
     return getViewHistory();
   }
   
-  console.log('Dodaję ogłoszenie do historii:', adId);
+  debug('Dodaję ogłoszenie do historii:', adId);
   
   const history = getViewHistory();
   
@@ -104,7 +104,7 @@ const addToViewHistory = (listing) => {
   // Zapisz zaktualizowaną historię
   saveViewHistory(trimmedHistory);
   
-  console.log('Aktualna historia przeglądania:', trimmedHistory);
+  debug('Aktualna historia przeglądania:', trimmedHistory);
   
   return trimmedHistory;
 };
@@ -121,7 +121,7 @@ if (typeof window !== 'undefined' && window.location.pathname.includes('/oglosze
   const pathParts = window.location.pathname.split('/');
   const possibleId = pathParts[pathParts.length - 1];
   if (possibleId && possibleId.length > 5) {
-    console.log('Automatycznie dodaję oglądane ogłoszenie do historii:', possibleId);
+    debug('Automatycznie dodaję oglądane ogłoszenie do historii:', possibleId);
     // Dodajemy z opóźnieniem, aby upewnić się, że strona jest w pełni załadowana
     setTimeout(() => addToViewHistory(possibleId), 1000);
   }

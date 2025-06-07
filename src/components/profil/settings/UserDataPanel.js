@@ -23,7 +23,7 @@ const UserDataPanel = () => {
     if (userData) {
       // Debug: log userData to console
       // eslint-disable-next-line no-console
-      console.log('userData:', userData);
+      debug('userData:', userData);
     }
   }, [userData]);
 

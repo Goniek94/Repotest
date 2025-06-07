@@ -271,7 +271,7 @@ export const optimizeJavaScriptLoading = () => {
       entries.forEach(entry => {
         // Loguj tylko w trybie deweloperskim
         if (process.env.NODE_ENV === 'development' && entry.initiatorType === 'script') {
-          console.log(`[Script Loading] ${entry.name}: ${entry.duration.toFixed(0)}ms`);
+          debug(`[Script Loading] ${entry.name}: ${entry.duration.toFixed(0)}ms`);
         }
       });
     });
@@ -310,7 +310,7 @@ export const optimizeBundleSize = () => {
       entries.forEach(entry => {
         // Filtruj tylko chunki webpack
         if (entry.name.includes('chunk') && process.env.NODE_ENV === 'development') {
-          console.log(`[Chunk Loading] ${entry.name}: ${entry.duration.toFixed(0)}ms`);
+          debug(`[Chunk Loading] ${entry.name}: ${entry.duration.toFixed(0)}ms`);
         }
       });
     });

@@ -55,7 +55,7 @@ const Navigation = () => {
   // Używamy rzeczywistych danych o nieprzeczytanych powiadomieniach
   const notifications = {
     messages: unreadCount?.messages || 0,
-    alerts: unreadCount?.notifications || 0,
+    alerts: unreadCount?.alerts || 0,
   };
 
   return (

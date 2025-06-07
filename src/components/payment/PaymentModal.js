@@ -112,7 +112,7 @@ const PaymentModal = ({ isOpen, onClose, amount, listingType, adId, onPaymentCom
         try {
           await api.updateAdStatus(adId, 'opłacone');
         } catch (error) {
-          console.log('Symulacja płatności - pomijam błąd API:', error);
+          debug('Symulacja płatności - pomijam błąd API:', error);
           // Kontynuujemy pomimo błędu, bo to tylko symulacja
         }
         

@@ -38,14 +38,14 @@ class NotificationService {
 
       // Obsługa zdarzeń Socket.IO
       this.socket.on('connect', () => {
-        console.log('Połączono z serwerem powiadomień');
+        debug('Połączono z serwerem powiadomień');
         this.connected = true;
         this._emitEvent('connect');
         resolve();
       });
 
       this.socket.on('disconnect', () => {
-        console.log('Rozłączono z serwerem powiadomień');
+        debug('Rozłączono z serwerem powiadomień');
         this.connected = false;
         this._emitEvent('disconnect');
       });
@@ -58,7 +58,7 @@ class NotificationService {
 
       // Obsługa powiadomień
       this.socket.on('new_notification', (notification) => {
-        console.log('Otrzymano nowe powiadomienie:', notification);
+        debug('Otrzymano nowe powiadomienie:', notification);
         this._emitEvent('notification', notification);
       });
 
@@ -79,7 +79,7 @@ class NotificationService {
 
       // Obsługa potwierdzenia połączenia
       this.socket.on('connection_success', (data) => {
-        console.log('Potwierdzenie połączenia:', data);
+        debug('Potwierdzenie połączenia:', data);
         this._emitEvent('connection_success', data);
       });
     });

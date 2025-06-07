@@ -7,7 +7,7 @@ const ProtectedRoute = ({ children }) => {
   const location = useLocation();
   
   useEffect(() => {
-    console.log('ProtectedRoute sprawdzanie:', { 
+    debug('ProtectedRoute sprawdzanie:', { 
       isAuthenticated, 
       user: !!user,
       path: location.pathname,
@@ -27,7 +27,7 @@ const ProtectedRoute = ({ children }) => {
   }
 
   if (!isAuthenticated || !user) {
-    console.log('Przekierowanie do logowania z:', location.pathname);
+    debug('Przekierowanie do logowania z:', location.pathname);
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 

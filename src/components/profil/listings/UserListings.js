@@ -189,7 +189,7 @@ const UserListings = () => {
 
   // Przekierowanie do edycji ogłoszenia
   const handleEdit = (id) => {
-    console.log(`Navigating to edit listing with ID: ${id}`);
+    debug(`Navigating to edit listing with ID: ${id}`);
     navigate(`/profil/edytuj-ogloszenie/${id}`);
   };
   

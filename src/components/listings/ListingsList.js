@@ -45,7 +45,7 @@ const ListingsList = () => {
   // Tymczasowe logowanie pierwszego ogłoszenia do debugowania
   if (listings && listings.length > 0) {
     // eslint-disable-next-line no-console
-    console.log('DEBUG: pierwszy listing w liście:', listings[0]);
+    debug('DEBUG: pierwszy listing w liście:', listings[0]);
   }
 
   return (

@@ -293,9 +293,9 @@ const AddListingView = () => {
       setUploadProgress(70);
       
       // Debugowanie zawartości formData przed wysłaniem
-      console.log('Zawartość formData przed wysłaniem:');
+      debug('Zawartość formData przed wysłaniem:');
       for (let [key, value] of formData.entries()) {
-        console.log(`${key}: ${value instanceof File ? `File: ${value.name}` : value}`);
+        debug(`${key}: ${value instanceof File ? `File: ${value.name}` : value}`);
       }
       
       // Użycie AdsService zamiast bezpośredniego fetch

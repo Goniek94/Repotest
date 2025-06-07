@@ -111,16 +111,16 @@ const Settings = () => {
     const fetchUserProfile = async () => {
       // Jeśli dane zostały już pobrane, nie pobieraj ich ponownie
       if (dataFetchedRef.current) {
-        console.log("Dane już pobrane, pomijam zapytanie do API");
+        debug("Dane już pobrane, pomijam zapytanie do API");
         return;
       }
       
       try {
-        console.log("Pobieranie danych użytkownika z API...");
+        debug("Pobieranie danych użytkownika z API...");
         
         // Użyj userSettingsApi
         const backendUser = await fetchUserSettings();
-        console.log("Otrzymane dane użytkownika z API:", backendUser);
+        debug("Otrzymane dane użytkownika z API:", backendUser);
 
         if (!backendUser) {
           throw new Error("Brak danych użytkownika");
@@ -205,7 +205,7 @@ const Settings = () => {
     
     // Sprawdź sposób rejestracji
     if (userData.registrationType === 'google' || userData.registrationType === 'facebook') {
-      console.log('Użytkownik zalogowany przez zewnętrzny serwis - może brakować danych');
+      debug('Użytkownik zalogowany przez zewnętrzny serwis - może brakować danych');
     }
   };
   
@@ -245,7 +245,7 @@ const Settings = () => {
     setIsSaving(true);
     
     try {
-      console.log("Zapisywanie zmian w ustawieniach użytkownika...");
+      debug("Zapisywanie zmian w ustawieniach użytkownika...");
       
       // Przygotuj dane do wysłania
       const submitData = {
@@ -259,11 +259,11 @@ const Settings = () => {
         privacySettings: privacy
       };
       
-      console.log("Dane do zapisania:", submitData);
+      debug("Dane do zapisania:", submitData);
       
       // Użyj userSettingsApi
       const updatedData = await updateUserSettings(submitData);
-      console.log("Dane zostały zaktualizowane:", updatedData);
+      debug("Dane zostały zaktualizowane:", updatedData);
       
       // Wyświetl komunikat o sukcesie
       showAlert('Dane zostały zaktualizowane', 'success');
@@ -1041,7 +1041,7 @@ const Settings = () => {
                       className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:col-start-2 sm:text-sm"
                       onClick={() => {
                         // W rzeczywistej aplikacji - wywołanie API do usunięcia konta
-                        console.log('Usuwanie konta użytkownika');
+                        debug('Usuwanie konta użytkownika');
                         setShowDeleteModal(false);
                         showAlert('Twoje konto zostało usunięte', 'success');
                         // Przekierowanie do strony głównej po usunięciu konta
