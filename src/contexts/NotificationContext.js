@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import notificationService from '../services/notifications';
-import axios from 'axios/dist/node/axios.cjs';
+import axios from 'axios';
 import { API_URL } from '../services/api/config';
 
 // Tworzenie kontekstu
@@ -63,7 +63,7 @@ export const NotificationProvider = ({ children }) => {
   }, [isAuthenticated, user]);
 
   // Aktualizacja licznika nieprzeczytanych powiadomień
-  const updateUnreadCount = (notificationsList = notifications) => {
+  const updateUnreadCount = React.useCallback((notificationsList = notifications) => {
     const unread = notificationsList.reduce(
       (acc, notification) => {
         if (notification.isRead) return acc;
@@ -79,7 +79,7 @@ export const NotificationProvider = ({ children }) => {
     );
 
     setUnreadCount(unread);
-  };
+  }, [notifications]);
 
   // Zmniejszanie licznika nieprzeczytanych wiadomości
   const decreaseMessageCount = (count = 1) => {
@@ -288,7 +288,7 @@ export const NotificationProvider = ({ children }) => {
       setNotifications([]);
       setUnreadCount({ messages: 0, alerts: 0 });
     }
-  }, [isAuthenticated, user, fetchNotifications]); // fetchNotifications jest teraz zapamiętywane przez useCallback
+  }, [isAuthenticated, user, fetchNotifications, updateUnreadCount]); // fetchNotifications jest teraz zapamiętywane przez useCallback
 
   // Wartość kontekstu
   const value = {

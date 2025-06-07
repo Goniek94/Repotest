@@ -1,5 +1,5 @@
 // src/services/api/client.js
-import axios from 'axios/dist/node/axios.cjs';
+import axios from 'axios';
 import { API_URL, API_TIMEOUT, getAuthToken, clearAuthData } from './config';
 
 // Globalna instancja cache

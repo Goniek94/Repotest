@@ -4,6 +4,7 @@ export const debug = (...args) => {
   }
 };
 
+// Attach to global scope for convenient access
 if (typeof globalThis !== 'undefined') {
-  globalThis.debug = debug;
+  globalThis.debug = debug; // eslint-disable-line no-undef
 }
