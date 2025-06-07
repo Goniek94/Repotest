@@ -42,8 +42,7 @@ const Messages = () => {
   const [attachments, setAttachments] = useState([]);
   const [sendingReply, setSendingReply] = useState(false);
   
-  // Referencje
-  const chatEndRef = useRef(null);
+  // Referencja do inputa plików
   const fileInputRef = useRef(null);
 
   // Synchronizacja aktywnej zakładki z parametrem w adresie
@@ -425,8 +424,7 @@ const Messages = () => {
         />
       )}
       
-      {/* Referencja do końca czatu (dla automatycznego przewijania) */}
-      <div ref={chatEndRef} />
+      {/* Miejsce na dodatkowe elementy w przyszłości */}
     </div>
   );
 };

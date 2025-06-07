@@ -16,12 +16,8 @@ const ConversationChat = ({
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   
-  // Przewijanie do najnowszej wiadomości
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages]);
+  // Przewijanie zostało wyłączone, aby nie wymuszać automatycznego
+  // przewijania do dołu po każdej aktualizacji listy wiadomości.
   
   // Grupowanie wiadomości według daty
   const groupMessagesByDate = (msgs) => {

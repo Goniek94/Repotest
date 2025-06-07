@@ -145,7 +145,7 @@ const useConversations = (activeTab) => {
     } finally {
       setLoading(false);
     }
-  }, [activeTab, currentUserId, FOLDER_MAP, showNotification]);
+  }, [activeTab, currentUserId]);
 
   /**
    * Pobieranie wiadomości z wybranej konwersacji
@@ -375,7 +375,7 @@ const useConversations = (activeTab) => {
       console.error('Błąd podczas przenoszenia:', err);
       showNotification(`Nie udało się przenieść konwersacji do ${targetFolder}`, 'error');
     }
-  }, [activeTab, fetchConversations, FOLDER_MAP, selectedConversation, showNotification]);
+  }, [activeTab, selectedConversation, showNotification]);
 
   /**
    * Wyszukiwanie konwersacji
@@ -423,7 +423,7 @@ const useConversations = (activeTab) => {
     } finally {
       setLoading(false);
     }
-  }, [activeTab, fetchConversations, FOLDER_MAP, showNotification]);
+  }, [activeTab, showNotification]);
 
   /**
    * Wysłanie odpowiedzi w konwersacji
