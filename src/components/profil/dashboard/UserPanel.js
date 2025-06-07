@@ -31,7 +31,6 @@ const UserPanel = () => {
   // Stan dla breakpointów
   const breakpoint = useBreakpoint();
   const isMobile = breakpoint === 'mobile' || breakpoint === 'tablet';
-  const { unreadCount = { messages: 0, alerts: 0 } } = useNotifications() || {};
   
   // Stan aktywnej zakładki
   const [activeTab, setActiveTab] = useState(TABS.PANEL);

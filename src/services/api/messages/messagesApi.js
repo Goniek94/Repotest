@@ -20,7 +20,7 @@ const executeWithRetry = async (requestFn, retries = MAX_RETRIES) => {
     
     // Jeśli błąd 401 i mamy token oraz są jeszcze próby
     if (error.response?.status === 401 && getAuthToken() && retries > 0) {
-      console.log(`Ponowna próba po błędzie 401 (pozostało prób: ${retries})`);
+      debug(`Ponowna próba po błędzie 401 (pozostało prób: ${retries})`);
       // Odczekaj chwilę przed ponowną próbą
       await new Promise(resolve => setTimeout(resolve, 1000));
       return executeWithRetry(requestFn, retries - 1);
@@ -34,11 +34,11 @@ const executeWithRetry = async (requestFn, retries = MAX_RETRIES) => {
 
 // Pobieranie wiadomości dla danego folderu
 const getByFolder = (folder = 'inbox') => {
-  console.log(`Pobieranie wiadomości z folderu: ${folder}`);
+  debug(`Pobieranie wiadomości z folderu: ${folder}`);
   return executeWithRetry(() => 
     apiClient.get(`/messages/${folder}`)
       .then(response => {
-        console.log(`Otrzymano odpowiedź z /messages/${folder}:`, response.data);
+        debug(`Otrzymano odpowiedź z /messages/${folder}:`, response.data);
         return response.data;
       })
   );
@@ -51,11 +51,11 @@ const getById = (id) => {
     return Promise.reject(new Error('Brak identyfikatora wiadomości'));
   }
   
-  console.log(`Pobieranie wiadomości o ID: ${id}`);
+  debug(`Pobieranie wiadomości o ID: ${id}`);
   return executeWithRetry(() => 
     apiClient.get(`/messages/message/${id}`)
       .then(response => {
-        console.log(`Otrzymano odpowiedź z /messages/message/${id}:`, response.data);
+        debug(`Otrzymano odpowiedź z /messages/message/${id}:`, response.data);
         return response.data;
       })
   );
@@ -68,11 +68,11 @@ const markAsRead = (id) => {
     return Promise.reject(new Error('Brak identyfikatora wiadomości'));
   }
   
-  console.log(`Oznaczanie wiadomości ${id} jako przeczytanej`);
+  debug(`Oznaczanie wiadomości ${id} jako przeczytanej`);
   return executeWithRetry(() => 
     apiClient.patch(`/messages/read/${id}`)
       .then(response => {
-        console.log(`Odpowiedź po oznaczeniu wiadomości ${id} jako przeczytanej:`, response.data);
+        debug(`Odpowiedź po oznaczeniu wiadomości ${id} jako przeczytanej:`, response.data);
         return response.data;
       })
   );
@@ -85,7 +85,7 @@ const markMultipleAsRead = (ids) => {
     return Promise.reject(new Error('Brak lub nieprawidłowa lista identyfikatorów wiadomości'));
   }
   
-  console.log(`Oznaczanie wielu wiadomości jako przeczytane: ${ids.join(', ')}`);
+  debug(`Oznaczanie wielu wiadomości jako przeczytane: ${ids.join(', ')}`);
   
   // Oznaczanie każdej wiadomości oddzielnie z obsługą błędów dla każdej
   const markPromises = ids.map(id => 
@@ -99,7 +99,7 @@ const markMultipleAsRead = (ids) => {
   return Promise.all(markPromises)
     .then(responses => {
       const successCount = responses.filter(r => r.data || r.success).length;
-      console.log(`Pomyślnie oznaczono ${successCount}/${ids.length} wiadomości jako przeczytane`);
+      debug(`Pomyślnie oznaczono ${successCount}/${ids.length} wiadomości jako przeczytane`);
       return {
         success: true,
         totalCount: ids.length,
@@ -116,11 +116,11 @@ const toggleStar = (id) => {
     return Promise.reject(new Error('Brak identyfikatora wiadomości'));
   }
   
-  console.log(`Przełączanie gwiazdki dla wiadomości ${id}`);
+  debug(`Przełączanie gwiazdki dla wiadomości ${id}`);
   return executeWithRetry(() => 
     apiClient.patch(`/messages/star/${id}`)
       .then(response => {
-        console.log(`Odpowiedź po przełączeniu gwiazdki dla wiadomości ${id}:`, response.data);
+        debug(`Odpowiedź po przełączeniu gwiazdki dla wiadomości ${id}:`, response.data);
         return response.data;
       })
   );
@@ -133,11 +133,11 @@ const deleteMessage = (id) => {
     return Promise.reject(new Error('Brak identyfikatora wiadomości'));
   }
   
-  console.log(`Usuwanie wiadomości ${id}`);
+  debug(`Usuwanie wiadomości ${id}`);
   return executeWithRetry(() => 
     apiClient.delete(`/messages/${id}`)
       .then(response => {
-        console.log(`Odpowiedź po usunięciu wiadomości ${id}:`, response.data);
+        debug(`Odpowiedź po usunięciu wiadomości ${id}:`, response.data);
         return response.data;
       })
   );
@@ -155,7 +155,7 @@ const moveToFolder = (messageId, folder) => {
     return Promise.reject(new Error('Brak nazwy folderu docelowego'));
   }
   
-  console.log(`Przenoszenie wiadomości ${messageId} do folderu ${folder}`);
+  debug(`Przenoszenie wiadomości ${messageId} do folderu ${folder}`);
   
   // W zależności od folderu docelowego
   switch(folder) {
@@ -163,7 +163,7 @@ const moveToFolder = (messageId, folder) => {
       return executeWithRetry(() => 
         apiClient.patch(`/messages/archive/${messageId}`)
           .then(response => {
-            console.log(`Odpowiedź po przeniesieniu wiadomości ${messageId} do archiwum:`, response.data);
+            debug(`Odpowiedź po przeniesieniu wiadomości ${messageId} do archiwum:`, response.data);
             return response.data;
           })
       );
@@ -171,7 +171,7 @@ const moveToFolder = (messageId, folder) => {
       return executeWithRetry(() => 
         apiClient.patch(`/messages/unarchive/${messageId}`)
           .then(response => {
-            console.log(`Odpowiedź po przeniesieniu wiadomości ${messageId} do skrzynki odbiorczej:`, response.data);
+            debug(`Odpowiedź po przeniesieniu wiadomości ${messageId} do skrzynki odbiorczej:`, response.data);
             return response.data;
           })
       );
@@ -179,7 +179,7 @@ const moveToFolder = (messageId, folder) => {
       return executeWithRetry(() => 
         apiClient.patch(`/messages/star/${messageId}`)
           .then(response => {
-            console.log(`Odpowiedź po oznaczeniu wiadomości ${messageId} gwiazdką:`, response.data);
+            debug(`Odpowiedź po oznaczeniu wiadomości ${messageId} gwiazdką:`, response.data);
             return response.data;
           })
       );
@@ -187,13 +187,13 @@ const moveToFolder = (messageId, folder) => {
       return executeWithRetry(() => 
         apiClient.delete(`/messages/${messageId}`)
           .then(response => {
-            console.log(`Odpowiedź po przeniesieniu wiadomości ${messageId} do kosza:`, response.data);
+            debug(`Odpowiedź po przeniesieniu wiadomości ${messageId} do kosza:`, response.data);
             return response.data;
           })
       );
     default:
       // Dla innych folderów nie mamy bezpośredniej implementacji
-      console.log(`Przeniesienie do folderu ${folder} nie jest obsługiwane`);
+      debug(`Przeniesienie do folderu ${folder} nie jest obsługiwane`);
       return Promise.resolve({ 
         success: false, 
         message: `Przeniesienie do folderu ${folder} nie jest obsługiwane` 
@@ -213,7 +213,7 @@ const moveMultipleToFolder = (messageIds, folder) => {
     return Promise.reject(new Error('Brak nazwy folderu docelowego'));
   }
   
-  console.log(`Przenoszenie wielu wiadomości do folderu ${folder}: ${messageIds.join(', ')}`);
+  debug(`Przenoszenie wielu wiadomości do folderu ${folder}: ${messageIds.join(', ')}`);
   const movePromises = messageIds.map(id => moveToFolder(id, folder)
     .catch(error => {
       console.error(`Błąd podczas przenoszenia wiadomości ${id} do folderu ${folder}:`, error);
@@ -224,7 +224,7 @@ const moveMultipleToFolder = (messageIds, folder) => {
   return Promise.all(movePromises)
     .then(responses => {
       const successCount = responses.filter(r => r.success !== false).length;
-      console.log(`Pomyślnie przeniesiono ${successCount}/${messageIds.length} wiadomości do folderu ${folder}`);
+      debug(`Pomyślnie przeniesiono ${successCount}/${messageIds.length} wiadomości do folderu ${folder}`);
       return {
         success: true,
         totalCount: messageIds.length,
@@ -241,7 +241,7 @@ const reportMessage = (messageId, reason) => {
     return Promise.reject(new Error('Brak identyfikatora wiadomości'));
   }
   
-  console.log(`Zgłoszenie wiadomości ${messageId} z powodu: ${reason || 'nie podano'}`);
+  debug(`Zgłoszenie wiadomości ${messageId} z powodu: ${reason || 'nie podano'}`);
   // Aktualnie nie mamy implementacji API, więc zwracamy mock
   return Promise.resolve({ 
     success: true, 
@@ -253,13 +253,13 @@ const reportMessage = (messageId, reason) => {
 
 // Pobieranie statystyk wiadomości (liczba nieprzeczytanych itp.)
 const getStats = () => {
-  console.log('Pobieranie statystyk wiadomości');
+  debug('Pobieranie statystyk wiadomości');
   
   // Pobieramy wiadomości z folderu inbox i liczymy nieprzeczytane
   return executeWithRetry(() => 
     apiClient.get('/messages/inbox')
       .then(response => {
-        console.log('Odpowiedź po pobraniu wiadomości z folderu inbox:', response.data);
+        debug('Odpowiedź po pobraniu wiadomości z folderu inbox:', response.data);
         
         const messages = response.data || [];
         const unreadCount = Array.isArray(messages) 
@@ -282,7 +282,7 @@ const saveDraft = (messageData) => {
     return Promise.reject(new Error('Brak danych wiadomości'));
   }
   
-  console.log('Zapisywanie wersji roboczej:', messageData);
+  debug('Zapisywanie wersji roboczej:', messageData);
   
   const config = messageData instanceof FormData 
     ? { headers: { 'Content-Type': 'multipart/form-data' } }
@@ -291,7 +291,7 @@ const saveDraft = (messageData) => {
   return executeWithRetry(() => 
     apiClient.post('/messages/draft', messageData, config)
       .then(response => {
-        console.log('Odpowiedź po zapisaniu wersji roboczej:', response.data);
+        debug('Odpowiedź po zapisaniu wersji roboczej:', response.data);
         return response.data;
       })
   );

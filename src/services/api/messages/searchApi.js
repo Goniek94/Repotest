@@ -20,7 +20,7 @@ const executeWithRetry = async (requestFn, retries = MAX_RETRIES) => {
     
     // Jeśli błąd 401 i mamy token oraz są jeszcze próby
     if (error.response?.status === 401 && getAuthToken() && retries > 0) {
-      console.log(`Ponowna próba po błędzie 401 (pozostało prób: ${retries})`);
+      debug(`Ponowna próba po błędzie 401 (pozostało prób: ${retries})`);
       // Odczekaj chwilę przed ponowną próbą
       await new Promise(resolve => setTimeout(resolve, 1000));
       return executeWithRetry(requestFn, retries - 1);
@@ -42,13 +42,13 @@ const search = (query, folder = 'inbox') => {
     return Promise.reject(new Error('Brak frazy do wyszukania'));
   }
   
-  console.log(`Wyszukiwanie wiadomości zawierających "${query}" w folderze ${folder}`);
+  debug(`Wyszukiwanie wiadomości zawierających "${query}" w folderze ${folder}`);
   return executeWithRetry(() => 
     apiClient.get('/messages/search', { 
       params: { query, folder } 
     })
     .then(response => {
-      console.log(`Odpowiedź z wyszukiwania wiadomości:`, response.data);
+      debug(`Odpowiedź z wyszukiwania wiadomości:`, response.data);
       return response.data;
     })
   );
@@ -70,13 +70,13 @@ const getUserSuggestions = (query) => {
     return Promise.resolve([]);
   }
   
-  console.log(`Pobieranie sugestii użytkowników dla frazy "${query}"`);
+  debug(`Pobieranie sugestii użytkowników dla frazy "${query}"`);
   return executeWithRetry(() => 
     apiClient.get('/messages/users/suggestions', { 
       params: { query } 
     })
     .then(response => {
-      console.log(`Odpowiedź z sugestiami użytkowników:`, response.data);
+      debug(`Odpowiedź z sugestiami użytkowników:`, response.data);
       return response.data;
     })
   );
@@ -98,13 +98,13 @@ const searchUsers = (query) => {
     return Promise.resolve([]);
   }
   
-  console.log(`Wyszukiwanie użytkowników dla frazy "${query}"`);
+  debug(`Wyszukiwanie użytkowników dla frazy "${query}"`);
   return executeWithRetry(() => 
     apiClient.get('/messages/users/search', { 
       params: { query } 
     })
     .then(response => {
-      console.log(`Odpowiedź z wyszukiwania użytkowników:`, response.data);
+      debug(`Odpowiedź z wyszukiwania użytkowników:`, response.data);
       
       // Jeśli odpowiedź nie jest tablicą, zwracamy pustą tablicę
       if (!Array.isArray(response.data)) {
@@ -131,21 +131,21 @@ const searchConversations = (query, folder = 'inbox') => {
   
   // Nie wyszukujemy dla bardzo krótkich zapytań (mniej niż 2 znaki)
   if (query.trim().length < 2) {
-    console.log(`Zapytanie "${query}" jest zbyt krótkie do wyszukiwania konwersacji`);
+    debug(`Zapytanie "${query}" jest zbyt krótkie do wyszukiwania konwersacji`);
     return Promise.resolve([]);
   }
   
-  console.log(`Wyszukiwanie konwersacji zawierających "${query}" w folderze ${folder}`);
+  debug(`Wyszukiwanie konwersacji zawierających "${query}" w folderze ${folder}`);
   return executeWithRetry(() => 
     apiClient.get('/messages/conversations/search', { 
       params: { query, folder } 
     })
     .then(response => {
-      console.log(`Odpowiedź z wyszukiwania konwersacji:`, response.data);
+      debug(`Odpowiedź z wyszukiwania konwersacji:`, response.data);
       
       // Jeśli API konwersacji nie jest dostępne, używamy zwykłego wyszukiwania i grupujemy wyniki
       if (!response.data || !Array.isArray(response.data)) {
-        console.log('Odpowiedź z API konwersacji nieprawidłowa, próba fallbacku...');
+        debug('Odpowiedź z API konwersacji nieprawidłowa, próba fallbacku...');
         return search(query, folder)
           .then(messages => {
             if (!Array.isArray(messages)) {

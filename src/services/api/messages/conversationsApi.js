@@ -20,7 +20,7 @@ const executeWithRetry = async (requestFn, retries = MAX_RETRIES) => {
     
     // Jeśli błąd 401 i mamy token oraz są jeszcze próby
     if (error.response?.status === 401 && getAuthToken() && retries > 0) {
-      console.log(`Ponowna próba po błędzie 401 (pozostało prób: ${retries})`);
+      debug(`Ponowna próba po błędzie 401 (pozostało prób: ${retries})`);
       // Odczekaj chwilę przed ponowną próbą
       await new Promise(resolve => setTimeout(resolve, 1000));
       return executeWithRetry(requestFn, retries - 1);
@@ -32,13 +32,13 @@ const executeWithRetry = async (requestFn, retries = MAX_RETRIES) => {
 
 // Pobieranie listy konwersacji
 const getConversationsList = (folder = 'inbox') => {
-  console.log(`Pobieranie listy konwersacji z folderu: ${folder}`);
+  debug(`Pobieranie listy konwersacji z folderu: ${folder}`);
   return executeWithRetry(() => 
     apiClient.get('/messages/conversations', { 
       params: { folder } 
     })
     .then(response => {
-      console.log('Odpowiedź z /messages/conversations:', response.data);
+      debug('Odpowiedź z /messages/conversations:', response.data);
       return response.data;
     })
   );
@@ -51,11 +51,11 @@ const getConversation = (userId) => {
     return Promise.reject(new Error('Brak identyfikatora użytkownika'));
   }
   
-  console.log(`Pobieranie konwersacji z użytkownikiem ${userId}`);
+  debug(`Pobieranie konwersacji z użytkownikiem ${userId}`);
   return executeWithRetry(() => 
     apiClient.get(`/messages/conversation/${userId}`)
       .then(response => {
-        console.log(`Odpowiedź z /messages/conversation/${userId}:`, response.data);
+        debug(`Odpowiedź z /messages/conversation/${userId}:`, response.data);
         return response.data;
       })
   );
@@ -68,7 +68,7 @@ const getConversationMessages = (userId) => {
     return Promise.reject(new Error('Brak identyfikatora użytkownika'));
   }
   
-  console.log(`Pobieranie wiadomości z konwersacji z użytkownikiem ${userId}`);
+  debug(`Pobieranie wiadomości z konwersacji z użytkownikiem ${userId}`);
   return getConversation(userId);
 };
 
@@ -79,7 +79,7 @@ const markConversationAsRead = (userId) => {
     return Promise.reject(new Error('Brak identyfikatora użytkownika'));
   }
   
-  console.log(`Oznaczanie konwersacji z użytkownikiem ${userId} jako przeczytanej`);
+  debug(`Oznaczanie konwersacji z użytkownikiem ${userId} jako przeczytanej`);
   
   // Najpierw pobieramy konwersację, aby uzyskać ID wiadomości
   return executeWithRetry(() => 
@@ -96,7 +96,7 @@ const markConversationAsRead = (userId) => {
         );
         
         if (unreadMessages.length === 0) {
-          console.log('Brak nieprzeczytanych wiadomości w konwersacji');
+          debug('Brak nieprzeczytanych wiadomości w konwersacji');
           return { success: true, message: 'Brak nieprzeczytanych wiadomości' };
         }
         
@@ -107,7 +107,7 @@ const markConversationAsRead = (userId) => {
         
         return Promise.all(markPromises)
           .then(() => {
-            console.log(`Oznaczono ${unreadMessages.length} wiadomości jako przeczytane`);
+            debug(`Oznaczono ${unreadMessages.length} wiadomości jako przeczytane`);
             return { success: true, count: unreadMessages.length };
           });
       })
@@ -121,7 +121,7 @@ const toggleConversationStar = (userId) => {
     return Promise.reject(new Error('Brak identyfikatora użytkownika'));
   }
   
-  console.log(`Przełączanie gwiazdki dla konwersacji z użytkownikiem ${userId}`);
+  debug(`Przełączanie gwiazdki dla konwersacji z użytkownikiem ${userId}`);
   
   return executeWithRetry(() => 
     getConversation(userId)
@@ -138,7 +138,7 @@ const toggleConversationStar = (userId) => {
         
         return apiClient.patch(`/messages/star/${latestMessage._id}`)
           .then(response => {
-            console.log(`Przełączono gwiazdkę dla konwersacji z użytkownikiem ${userId}`);
+            debug(`Przełączono gwiazdkę dla konwersacji z użytkownikiem ${userId}`);
             return response.data;
           });
       })
@@ -152,7 +152,7 @@ const deleteConversation = (userId) => {
     return Promise.reject(new Error('Brak identyfikatora użytkownika'));
   }
   
-  console.log(`Usuwanie konwersacji z użytkownikiem ${userId}`);
+  debug(`Usuwanie konwersacji z użytkownikiem ${userId}`);
   
   return executeWithRetry(() => 
     getConversation(userId)
@@ -169,7 +169,7 @@ const deleteConversation = (userId) => {
         
         return Promise.all(deletePromises)
           .then(() => {
-            console.log(`Usunięto ${conversation.messages.length} wiadomości z konwersacji`);
+            debug(`Usunięto ${conversation.messages.length} wiadomości z konwersacji`);
             return { success: true, count: conversation.messages.length };
           });
       })
@@ -183,7 +183,7 @@ const archiveConversation = (userId) => {
     return Promise.reject(new Error('Brak identyfikatora użytkownika'));
   }
   
-  console.log(`Przenoszenie konwersacji z użytkownikiem ${userId} do archiwum`);
+  debug(`Przenoszenie konwersacji z użytkownikiem ${userId} do archiwum`);
   
   return executeWithRetry(() => 
     getConversation(userId)
@@ -200,7 +200,7 @@ const archiveConversation = (userId) => {
         
         return Promise.all(archivePromises)
           .then(() => {
-            console.log(`Zarchiwizowano ${conversation.messages.length} wiadomości z konwersacji`);
+            debug(`Zarchiwizowano ${conversation.messages.length} wiadomości z konwersacji`);
             return { success: true, count: conversation.messages.length };
           });
       })
@@ -214,7 +214,7 @@ const unarchiveConversation = (userId) => {
     return Promise.reject(new Error('Brak identyfikatora użytkownika'));
   }
   
-  console.log(`Przywracanie konwersacji z użytkownikiem ${userId} z archiwum`);
+  debug(`Przywracanie konwersacji z użytkownikiem ${userId} z archiwum`);
   
   return executeWithRetry(() => 
     getConversation(userId)
@@ -231,7 +231,7 @@ const unarchiveConversation = (userId) => {
         
         return Promise.all(unarchivePromises)
           .then(() => {
-            console.log(`Przywrócono ${conversation.messages.length} wiadomości z archiwum`);
+            debug(`Przywrócono ${conversation.messages.length} wiadomości z archiwum`);
             return { success: true, count: conversation.messages.length };
           });
       })
@@ -245,7 +245,7 @@ const moveConversationToTrash = (userId) => {
     return Promise.reject(new Error('Brak identyfikatora użytkownika'));
   }
   
-  console.log(`Przenoszenie konwersacji z użytkownikiem ${userId} do kosza`);
+  debug(`Przenoszenie konwersacji z użytkownikiem ${userId} do kosza`);
   return deleteConversation(userId);
 };
 
@@ -261,7 +261,7 @@ const moveConversationToFolder = (userId, folder) => {
     return Promise.reject(new Error('Brak nazwy folderu docelowego'));
   }
   
-  console.log(`Przenoszenie konwersacji z użytkownikiem ${userId} do folderu ${folder}`);
+  debug(`Przenoszenie konwersacji z użytkownikiem ${userId} do folderu ${folder}`);
   
   // Określenie akcji na podstawie folderu docelowego
   switch(folder) {
@@ -272,7 +272,7 @@ const moveConversationToFolder = (userId, folder) => {
     case 'trash':
       return moveConversationToTrash(userId);
     default:
-      console.log(`Przeniesienie do folderu ${folder} nie jest bezpośrednio obsługiwane`);
+      debug(`Przeniesienie do folderu ${folder} nie jest bezpośrednio obsługiwane`);
       return Promise.resolve({ success: false, message: `Przeniesienie do folderu ${folder} nie jest obsługiwane` });
   }
 };
@@ -289,7 +289,7 @@ const replyToConversation = (userId, messageData) => {
     return Promise.reject(new Error('Brak treści wiadomości'));
   }
   
-  console.log(`Odpowiadanie na konwersację z użytkownikiem ${userId}`);
+  debug(`Odpowiadanie na konwersację z użytkownikiem ${userId}`);
   
   const config = messageData instanceof FormData 
     ? { headers: { 'Content-Type': 'multipart/form-data' } }
@@ -302,10 +302,10 @@ const replyToConversation = (userId, messageData) => {
           console.warn('Nie znaleziono wiadomości w konwersacji');
           
           // Fallback - wysyłamy nową wiadomość
-          console.log(`Wysyłanie nowej wiadomości do użytkownika ${userId}`);
+          debug(`Wysyłanie nowej wiadomości do użytkownika ${userId}`);
           return apiClient.post(`/messages/send-to-user/${userId}`, messageData, config)
             .then(response => {
-              console.log(`Wysłano nową wiadomość do użytkownika ${userId}`);
+              debug(`Wysłano nową wiadomość do użytkownika ${userId}`);
               return response.data;
             });
         }
@@ -318,17 +318,17 @@ const replyToConversation = (userId, messageData) => {
         // Odpowiedz na tę wiadomość
         return apiClient.post(`/messages/reply/${latestMessage._id}`, messageData, config)
           .then(response => {
-            console.log(`Odpowiedziano na wiadomość w konwersacji z użytkownikiem ${userId}`);
+            debug(`Odpowiedziano na wiadomość w konwersacji z użytkownikiem ${userId}`);
             return response.data;
           })
           .catch(replyError => {
             console.error(`Błąd podczas odpowiadania na wiadomość:`, replyError);
             
             // Fallback - wysyłamy nową wiadomość
-            console.log(`Próba wysłania nowej wiadomości do użytkownika ${userId}`);
+            debug(`Próba wysłania nowej wiadomości do użytkownika ${userId}`);
             return apiClient.post(`/messages/send-to-user/${userId}`, messageData, config)
               .then(response => {
-                console.log(`Wysłano nową wiadomość do użytkownika ${userId}`);
+                debug(`Wysłano nową wiadomość do użytkownika ${userId}`);
                 return response.data;
               });
           });

@@ -38,7 +38,7 @@ const EditListing = () => {
       try {
         // Pobieranie danych ogłoszenia z API za pomocą serwisu
         const data = await ListingsService.getById(id);
-        console.log('Pobrane dane ogłoszenia:', data);
+        debug('Pobrane dane ogłoszenia:', data);
         
         // Aktualizacja stanu formularza danymi z API
         setFormData({

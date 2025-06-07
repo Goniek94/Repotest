@@ -35,7 +35,7 @@ const useConversations = (activeTab) => {
     if (typeof toast === 'function') {
       toast[type]?.(message) || toast(message);
     } else {
-      console.log(`[${type.toUpperCase()}] ${message}`);
+      debug(`[${type.toUpperCase()}] ${message}`);
     }
   }, []);
 
@@ -53,12 +53,12 @@ const useConversations = (activeTab) => {
       // Pobieranie listy konwersacji z określonego folderu
       const backendFolder = FOLDER_MAP[activeTab] || FOLDER_MAP[DEFAULT_FOLDER];
       
-      console.log(`Pobieranie konwersacji z folderu: ${backendFolder}`);
+      debug(`Pobieranie konwersacji z folderu: ${backendFolder}`);
       
       // Bezpośrednie wywołanie API - zapewnia pobieranie rzeczywistych danych
       let response = await MessagesService.getConversationsList(backendFolder);
 
-      console.log('Otrzymana odpowiedź z API:', response);
+      debug('Otrzymana odpowiedź z API:', response);
 
       // Sprawdź czy odpowiedź jest poprawna
       if (!response || (!Array.isArray(response) && !Array.isArray(response.data))) {
@@ -69,11 +69,11 @@ const useConversations = (activeTab) => {
       // Normalizacja odpowiedzi - może być bezpośrednio tablica lub w property data
       let data = Array.isArray(response) ? response : (Array.isArray(response.data) ? response.data : []);
 
-      console.log('Znormalizowane dane:', data);
+      debug('Znormalizowane dane:', data);
 
       // Jeśli API konwersacji zwróci pustą tablicę, próbujemy fallbacku do zwykłych wiadomości
       if (Array.isArray(data) && data.length === 0) {
-        console.log('Brak konwersacji z API, próba pobrania wiadomości z folderu.');
+        debug('Brak konwersacji z API, próba pobrania wiadomości z folderu.');
         const messagesFallback = await MessagesService.getByFolder(backendFolder);
 
         if (Array.isArray(messagesFallback) && messagesFallback.length > 0) {
@@ -105,7 +105,7 @@ const useConversations = (activeTab) => {
             }
           });
           data = Object.values(convMap);
-          console.log('Dane z fallbacku:', data);
+          debug('Dane z fallbacku:', data);
         }
       }
       
@@ -135,7 +135,7 @@ const useConversations = (activeTab) => {
         };
       });
 
-      console.log('Sformatowane konwersacje:', formattedConversations);
+      debug('Sformatowane konwersacje:', formattedConversations);
       
       setConversations(formattedConversations);
     } catch (err) {
@@ -157,11 +157,11 @@ const useConversations = (activeTab) => {
       setLoading(true);
       setError(null);
       
-      console.log(`Pobieranie wiadomości dla konwersacji z użytkownikiem ${selectedConversation.userId}`);
+      debug(`Pobieranie wiadomości dla konwersacji z użytkownikiem ${selectedConversation.userId}`);
       
       const response = await MessagesService.getConversation(selectedConversation.userId);
       
-      console.log('Otrzymana odpowiedź z API dla wiadomości:', response);
+      debug('Otrzymana odpowiedź z API dla wiadomości:', response);
       
       if (!response) {
         console.error('Brak odpowiedzi przy pobieraniu wiadomości');
@@ -173,7 +173,7 @@ const useConversations = (activeTab) => {
       // Obsługa różnych formatów odpowiedzi
       if (response.conversations) {
         // Format z grupowaniem według ogłoszeń
-        console.log('Format odpowiedzi: grupowanie według ogłoszeń');
+        debug('Format odpowiedzi: grupowanie według ogłoszeń');
         Object.values(response.conversations).forEach(convo => {
           if (convo.messages && Array.isArray(convo.messages)) {
             allMessages = [...allMessages, ...convo.messages];
@@ -181,19 +181,19 @@ const useConversations = (activeTab) => {
         });
       } else if (Array.isArray(response)) {
         // Bezpośrednia tablica wiadomości
-        console.log('Format odpowiedzi: bezpośrednia tablica wiadomości');
+        debug('Format odpowiedzi: bezpośrednia tablica wiadomości');
         allMessages = response;
       } else if (response.messages && Array.isArray(response.messages)) {
         // Wiadomości w property messages
-        console.log('Format odpowiedzi: wiadomości w property messages');
+        debug('Format odpowiedzi: wiadomości w property messages');
         allMessages = response.messages;
       } else if (response.data && Array.isArray(response.data)) {
         // Wiadomości w property data
-        console.log('Format odpowiedzi: wiadomości w property data');
+        debug('Format odpowiedzi: wiadomości w property data');
         allMessages = response.data;
       }
       
-      console.log('Wszystkie wiadomości przed formatowaniem:', allMessages);
+      debug('Wszystkie wiadomości przed formatowaniem:', allMessages);
       
       // Formatowanie wiadomości do jednolitego formatu
       const formattedChatMessages = allMessages.map(msg => ({
@@ -438,9 +438,9 @@ const useConversations = (activeTab) => {
     }
     
     try {
-      console.log('Wysyłanie odpowiedzi do:', selectedConversation.userId);
-      console.log('Treść:', content);
-      console.log('Liczba załączników:', attachments.length);
+      debug('Wysyłanie odpowiedzi do:', selectedConversation.userId);
+      debug('Treść:', content);
+      debug('Liczba załączników:', attachments.length);
       const formData = new FormData();
       formData.append('content', content);
       

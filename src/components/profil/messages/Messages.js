@@ -21,15 +21,15 @@ import { DEFAULT_FOLDER, FOLDER_MAP } from '../../../constants/messageFolders';
  * i zapewnia spójny interfejs użytkownika.
  */
 const Messages = () => {
-  console.log('=== Renderowanie komponentu Messages ===');
+  debug('=== Renderowanie komponentu Messages ===');
   
   // Kontekst powiadomień i autoryzacji
   const { unreadCount } = useNotifications();
   const { isAuthenticated, user } = useAuth();
   
-  console.log('Stan autoryzacji:', isAuthenticated ? 'zalogowany' : 'niezalogowany');
-  console.log('ID użytkownika:', user?._id || user?.id);
-  console.log('Token JWT:', getAuthToken() ? 'dostępny' : 'brak');
+  debug('Stan autoryzacji:', isAuthenticated ? 'zalogowany' : 'niezalogowany');
+  debug('ID użytkownika:', user?._id || user?.id);
+  debug('Token JWT:', getAuthToken() ? 'dostępny' : 'brak');
   
   // Stan lokalny komponentu
   const [searchParams, setSearchParams] = useSearchParams();
@@ -69,7 +69,7 @@ const Messages = () => {
     showNotification
   } = useConversations(activeTab);
   
-  console.log('Hook useConversations - dane:', {
+  debug('Hook useConversations - dane:', {
     'Ilość konwersacji': conversations?.length || 0,
     'Wybrana konwersacja': selectedConversation?.id || 'brak',
     'Ilość wiadomości w czacie': chatMessages?.length || 0,
@@ -85,15 +85,15 @@ const Messages = () => {
   
   // Efekt diagnostyczny dla testowania API
   useEffect(() => {
-    console.log('===== KOMPONENT MESSAGES ZAMONTOWANY =====');
-    console.log('Sprawdzenie stanu autoryzacji:', isAuthenticated ? 'zalogowany' : 'niezalogowany');
-    console.log('ID użytkownika:', user?._id || user?.id);
-    console.log('Token JWT:', getAuthToken() ? 'dostępny' : 'brak');
+    debug('===== KOMPONENT MESSAGES ZAMONTOWANY =====');
+    debug('Sprawdzenie stanu autoryzacji:', isAuthenticated ? 'zalogowany' : 'niezalogowany');
+    debug('ID użytkownika:', user?._id || user?.id);
+    debug('Token JWT:', getAuthToken() ? 'dostępny' : 'brak');
     
     // Test API - sprawdzenie, czy endpoint jest dostępny
     const testApi = async () => {
       try {
-        console.log('Testowanie połączenia z API wiadomości...');
+        debug('Testowanie połączenia z API wiadomości...');
         
         const headers = {};
         const token = getAuthToken();
@@ -106,12 +106,12 @@ const Messages = () => {
           credentials: 'include'
         });
         
-        console.log('Test API - status odpowiedzi:', response.status);
+        debug('Test API - status odpowiedzi:', response.status);
         
         if (response.ok) {
           const data = await response.json();
-          console.log('Test API - Otrzymano dane:', data);
-          console.log('Test API - Ilość konwersacji:', Array.isArray(data) ? data.length : 'brak danych');
+          debug('Test API - Otrzymano dane:', data);
+          debug('Test API - Ilość konwersacji:', Array.isArray(data) ? data.length : 'brak danych');
         } else {
           console.error('Test API - Błąd odpowiedzi:', response.statusText);
           try {
@@ -129,37 +129,37 @@ const Messages = () => {
     if (isAuthenticated) {
       testApi();
     } else {
-      console.log('Test API pominięty - użytkownik niezalogowany');
+      debug('Test API pominięty - użytkownik niezalogowany');
     }
     
     return () => {
-      console.log('===== KOMPONENT MESSAGES ODMONTOWANY =====');
+      debug('===== KOMPONENT MESSAGES ODMONTOWANY =====');
     };
   }, [isAuthenticated, user]);
   
   // Logowanie przy zmianie konwersacji
   useEffect(() => {
     if (conversations.length > 0) {
-      console.log('Pobrane konwersacje:', conversations);
+      debug('Pobrane konwersacje:', conversations);
     }
   }, [conversations]);
   
   useEffect(() => {
     if (selectedConversation) {
-      console.log('Wybrana konwersacja:', selectedConversation);
+      debug('Wybrana konwersacja:', selectedConversation);
     }
   }, [selectedConversation]);
   
   useEffect(() => {
     if (chatMessages.length > 0) {
-      console.log('Wiadomości w konwersacji:', chatMessages);
+      debug('Wiadomości w konwersacji:', chatMessages);
     }
   }, [chatMessages]);
 
   // Obsługa wyszukiwania
   const handleSearch = (e) => {
     const query = e.target.value;
-    console.log('Wyszukiwanie konwersacji:', query);
+    debug('Wyszukiwanie konwersacji:', query);
     setSearchTerm(query);
     searchConversations(query);
   };
@@ -168,7 +168,7 @@ const Messages = () => {
   const handleSendReply = async () => {
     if ((!replyContent.trim() && attachments.length === 0) || !selectedConversation) return;
     
-    console.log('Wysyłanie odpowiedzi:', {
+    debug('Wysyłanie odpowiedzi:', {
       do: selectedConversation.id,
       treść: replyContent,
       załączniki: attachments.length
@@ -177,7 +177,7 @@ const Messages = () => {
     setSendingReply(true);
     try {
       await sendReply(replyContent, attachments);
-      console.log('Odpowiedź wysłana pomyślnie');
+      debug('Odpowiedź wysłana pomyślnie');
       setReplyContent('');
       setAttachments([]);
     } catch (error) {
@@ -191,20 +191,20 @@ const Messages = () => {
 
   // Obsługa dodawania załączników
   const handleAttachmentClick = () => {
-    console.log('Kliknięcie przycisku załączników');
+    debug('Kliknięcie przycisku załączników');
     fileInputRef.current?.click();
   };
 
   // Obsługa wyboru plików
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
-    console.log('Wybrano pliki:', files.length);
+    debug('Wybrano pliki:', files.length);
     
     if (files.length === 0) return;
     
     // Ograniczenie liczby załączników
     if (attachments.length + files.length > 5) {
-      console.log('Za dużo załączników');
+      debug('Za dużo załączników');
       showNotification('Możesz dodać maksymalnie 5 załączników', 'warning');
       return;
     }
@@ -212,7 +212,7 @@ const Messages = () => {
     // Ograniczenie rozmiaru plików (10MB)
     const oversizedFiles = files.filter(file => file.size > 10 * 1024 * 1024);
     if (oversizedFiles.length > 0) {
-      console.log('Pliki za duże:', oversizedFiles.map(f => f.name));
+      debug('Pliki za duże:', oversizedFiles.map(f => f.name));
       showNotification('Niektóre pliki są zbyt duże (maksymalny rozmiar to 10MB)', 'warning');
       return;
     }
@@ -224,7 +224,7 @@ const Messages = () => {
       type: file.type
     }));
     
-    console.log('Dodano załączniki:', newAttachments);
+    debug('Dodano załączniki:', newAttachments);
     setAttachments(prev => [...prev, ...newAttachments]);
     e.target.value = ''; // Reset input
   };
@@ -236,7 +236,7 @@ const Messages = () => {
 
   // Funkcja do przekierowania na stronę logowania
   const handleLoginRedirect = () => {
-    console.log('Przekierowanie do strony logowania');
+    debug('Przekierowanie do strony logowania');
     localStorage.setItem('redirectAfterLogin', window.location.pathname);
     window.location.href = '/login';
   };

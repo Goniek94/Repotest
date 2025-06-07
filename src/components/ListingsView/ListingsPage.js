@@ -98,7 +98,7 @@ function ListingsPage() {
       });
 
       const response = result.data;
-      console.log('DEBUG: First ad from API:', response.ads && response.ads.length > 0 ? response.ads[0] : 'No ads');
+      debug('DEBUG: First ad from API:', response.ads && response.ads.length > 0 ? response.ads[0] : 'No ads');
 
       // Funkcja do generowania oznaczenia dopasowania
       function getMatchLabel(ad) {

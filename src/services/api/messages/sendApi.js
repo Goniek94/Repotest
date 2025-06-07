@@ -20,7 +20,7 @@ const executeWithRetry = async (requestFn, retries = MAX_RETRIES) => {
     
     // Jeśli błąd 401 i mamy token oraz są jeszcze próby
     if (error.response?.status === 401 && getAuthToken() && retries > 0) {
-      console.log(`Ponowna próba po błędzie 401 (pozostało prób: ${retries})`);
+      debug(`Ponowna próba po błędzie 401 (pozostało prób: ${retries})`);
       // Odczekaj chwilę przed ponowną próbą
       await new Promise(resolve => setTimeout(resolve, 1000));
       return executeWithRetry(requestFn, retries - 1);
@@ -41,7 +41,7 @@ const send = (messageData) => {
     return Promise.reject(new Error('Brak danych wiadomości'));
   }
   
-  console.log('Wysyłanie nowej wiadomości:', messageData instanceof FormData ? '[FormData]' : messageData);
+  debug('Wysyłanie nowej wiadomości:', messageData instanceof FormData ? '[FormData]' : messageData);
   
   const config = messageData instanceof FormData 
     ? { headers: { 'Content-Type': 'multipart/form-data' } }
@@ -50,7 +50,7 @@ const send = (messageData) => {
   return executeWithRetry(() => 
     apiClient.post('/messages/send', messageData, config)
       .then(response => {
-        console.log('Odpowiedź po wysłaniu wiadomości:', response.data);
+        debug('Odpowiedź po wysłaniu wiadomości:', response.data);
         return response.data;
       })
   );
@@ -73,7 +73,7 @@ const sendToUser = (userId, messageData) => {
     return Promise.reject(new Error('Brak danych wiadomości'));
   }
   
-  console.log(`Wysyłanie wiadomości do użytkownika ${userId}:`, messageData instanceof FormData ? '[FormData]' : messageData);
+  debug(`Wysyłanie wiadomości do użytkownika ${userId}:`, messageData instanceof FormData ? '[FormData]' : messageData);
   
   const config = messageData instanceof FormData 
     ? { headers: { 'Content-Type': 'multipart/form-data' } }
@@ -82,7 +82,7 @@ const sendToUser = (userId, messageData) => {
   return executeWithRetry(() => 
     apiClient.post(`/messages/send-to-user/${userId}`, messageData, config)
       .then(response => {
-        console.log(`Odpowiedź po wysłaniu wiadomości do użytkownika ${userId}:`, response.data);
+        debug(`Odpowiedź po wysłaniu wiadomości do użytkownika ${userId}:`, response.data);
         return response.data;
       })
   );
@@ -105,7 +105,7 @@ const sendToAd = (adId, messageData) => {
     return Promise.reject(new Error('Brak danych wiadomości'));
   }
   
-  console.log(`Wysyłanie wiadomości do właściciela ogłoszenia ${adId}:`, messageData instanceof FormData ? '[FormData]' : messageData);
+  debug(`Wysyłanie wiadomości do właściciela ogłoszenia ${adId}:`, messageData instanceof FormData ? '[FormData]' : messageData);
   
   const config = messageData instanceof FormData 
     ? { headers: { 'Content-Type': 'multipart/form-data' } }
@@ -114,7 +114,7 @@ const sendToAd = (adId, messageData) => {
   return executeWithRetry(() => 
     apiClient.post(`/messages/send-to-ad/${adId}`, messageData, config)
       .then(response => {
-        console.log(`Odpowiedź po wysłaniu wiadomości do właściciela ogłoszenia ${adId}:`, response.data);
+        debug(`Odpowiedź po wysłaniu wiadomości do właściciela ogłoszenia ${adId}:`, response.data);
         return response.data;
       })
   );
@@ -137,7 +137,7 @@ const replyToMessage = (messageId, messageData) => {
     return Promise.reject(new Error('Brak danych wiadomości'));
   }
   
-  console.log(`Odpowiadanie na wiadomość ${messageId}:`, messageData instanceof FormData ? '[FormData]' : messageData);
+  debug(`Odpowiadanie na wiadomość ${messageId}:`, messageData instanceof FormData ? '[FormData]' : messageData);
   
   const config = messageData instanceof FormData 
     ? { headers: { 'Content-Type': 'multipart/form-data' } }
@@ -146,7 +146,7 @@ const replyToMessage = (messageId, messageData) => {
   return executeWithRetry(() => 
     apiClient.post(`/messages/reply/${messageId}`, messageData, config)
       .then(response => {
-        console.log(`Odpowiedź po odpowiedzeniu na wiadomość ${messageId}:`, response.data);
+        debug(`Odpowiedź po odpowiedzeniu na wiadomość ${messageId}:`, response.data);
         return response.data;
       })
   )
@@ -156,7 +156,7 @@ const replyToMessage = (messageId, messageData) => {
     // Jeśli wiadomość nie istnieje lub inny problem, próbujemy pobrać dane adresata
     // i wysłać nową wiadomość jako fallback
     if (error.response?.status === 404) {
-      console.log(`Wiadomość ${messageId} nie istnieje, próba pobrania danych adresata...`);
+      debug(`Wiadomość ${messageId} nie istnieje, próba pobrania danych adresata...`);
       
       return apiClient.get(`/messages/message/${messageId}`)
         .then(response => {
@@ -167,7 +167,7 @@ const replyToMessage = (messageId, messageData) => {
             throw new Error('Nie można określić adresata wiadomości');
           }
           
-          console.log(`Wysyłanie nowej wiadomości do użytkownika ${recipientId} jako fallback`);
+          debug(`Wysyłanie nowej wiadomości do użytkownika ${recipientId} jako fallback`);
           return sendToUser(recipientId, messageData);
         })
         .catch(fallbackError => {

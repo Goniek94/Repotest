@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import notificationService from '../services/notifications';
-import axios from 'axios';
+import axios from 'axios/dist/node/axios.cjs';
 import { API_URL } from '../services/api/config';
 
 // Tworzenie kontekstu
@@ -171,11 +171,11 @@ export const NotificationProvider = ({ children }) => {
       fetchNotifications();
 
       // Inicjalizacja połączenia WebSocket
-      console.log('Inicjalizacja połączenia z serwerem powiadomień');
+      debug('Inicjalizacja połączenia z serwerem powiadomień');
       
       notificationService.connect(user.token)
         .then(() => {
-          console.log('Połączono z serwerem powiadomień');
+          debug('Połączono z serwerem powiadomień');
           setIsConnected(true);
           // Po poprawnym połączeniu odświeżamy listę powiadomień
           fetchNotifications();
@@ -219,7 +219,7 @@ export const NotificationProvider = ({ children }) => {
         // Odtwarzanie dźwięku dla nowych powiadomień
         try {
           const audio = new Audio('/notification-sound.mp3');
-          audio.play().catch(e => console.log('Nie można odtworzyć dźwięku powiadomienia:', e));
+          audio.play().catch(e => debug('Nie można odtworzyć dźwięku powiadomienia:', e));
         } catch (error) {
           console.error('Błąd podczas odtwarzania dźwięku:', error);
         }

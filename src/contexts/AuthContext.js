@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }) => {
         // Sprawdź czy minęło wystarczająco dużo czasu od ostatniej aktywności
         const timeSinceLastActivity = Date.now() - lastActivityRef.current;
         if (timeSinceLastActivity >= INACTIVITY_TIMEOUT) {
-          console.log('Automatyczne wylogowanie po okresie nieaktywności');
+          debug('Automatyczne wylogowanie po okresie nieaktywności');
           logout('/login?session_expired=true');
         }
       }, INACTIVITY_TIMEOUT);
@@ -78,7 +78,7 @@ export const AuthProvider = ({ children }) => {
         const currentUser = AuthService.getCurrentUser();
         const authenticated = AuthService.isAuthenticated();
 
-        console.log('Inicjalizacja auth:', { 
+        debug('Inicjalizacja auth:', { 
           user: !!currentUser, 
           isAuthenticated: authenticated,
           token: localStorage.getItem('token') ? 'Istnieje' : 'Brak'

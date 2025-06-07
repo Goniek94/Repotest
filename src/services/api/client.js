@@ -1,5 +1,5 @@
 // src/services/api/client.js
-import axios from 'axios';
+import axios from 'axios/dist/node/axios.cjs';
 import { API_URL, API_TIMEOUT, getAuthToken, clearAuthData } from './config';
 
 // Globalna instancja cache
@@ -44,7 +44,7 @@ apiClient.interceptors.response.use(
     if (error.response) {
       // Obsługa błędu 401 Unauthorized
       if (error.response.status === 401) {
-        console.log('Wykryto błąd 401 Unauthorized');
+        debug('Wykryto błąd 401 Unauthorized');
         clearAuthData();
       }
       
@@ -58,7 +58,7 @@ apiClient.interceptors.response.use(
           ? parseInt(error.response.headers['retry-after']) * 1000 
           : 1000;
         
-        console.log(`Zbyt wiele zapytań (429). Ponowna próba za ${retryAfter}ms...`);
+        debug(`Zbyt wiele zapytań (429). Ponowna próba za ${retryAfter}ms...`);
         
         try {
           // Czekamy określony czas i ponawiamy żądanie
@@ -143,7 +143,7 @@ apiClient.getSafe = async (url, params = {}, retries = 2) => {
       
       // Czekamy coraz dłużej przed kolejną próbą
       const delay = Math.pow(2, i) * 1000;
-      console.log(`Próba ${i+1}/${retries+1} nie powiodła się. Kolejna próba za ${delay}ms...`);
+      debug(`Próba ${i+1}/${retries+1} nie powiodła się. Kolejna próba za ${delay}ms...`);
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }

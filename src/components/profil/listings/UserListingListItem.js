@@ -62,7 +62,7 @@ const UserListingListItem = memo(({
     <div
       className={`bg-white rounded-sm shadow-md overflow-hidden cursor-pointer hover:shadow-xl transition-all duration-300 relative group ${isFeatured ? 'border-2 border-[#35530A]' : 'border border-gray-200'} flex flex-col sm:flex-row h-auto`}
       onClick={() => {
-        console.log('Navigating to listing:', listing.id || listing._id);
+        debug('Navigating to listing:', listing.id || listing._id);
         onNavigate && onNavigate(listing.id || listing._id);
       }}
       tabIndex={0}

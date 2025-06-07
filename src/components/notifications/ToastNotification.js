@@ -51,7 +51,7 @@ const ToastNotification = () => {
   const playNotificationSound = () => {
     try {
       const audio = new Audio('/notification-sound.mp3');
-      audio.play().catch(e => console.log('Nie można odtworzyć dźwięku powiadomienia:', e));
+      audio.play().catch(e => debug('Nie można odtworzyć dźwięku powiadomienia:', e));
     } catch (error) {
       console.error('Błąd podczas odtwarzania dźwięku:', error);
     }

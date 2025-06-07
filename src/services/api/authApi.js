@@ -19,7 +19,7 @@ const AuthService = {
       if (response.data.token) {
         // Zapisujemy token i dane użytkownika
         setAuthData(response.data.token, response.data.user);
-        console.log('Zalogowano pomyślnie, token zapisany');
+        debug('Zalogowano pomyślnie, token zapisany');
         
         // Po zalogowaniu czyścimy cache API
         apiClient.clearCache();
@@ -105,7 +105,7 @@ const AuthService = {
       // W przypadku błędu, zwracamy lokalne dane użytkownika, jeśli są dostępne
       const localUser = getUserData();
       if (localUser) {
-        console.log('Używam lokalnych danych użytkownika jako fallback');
+        debug('Używam lokalnych danych użytkownika jako fallback');
         return localUser;
       }
       const errorMessage = error.response?.data?.message || 'Błąd podczas odświeżania danych użytkownika';
@@ -242,7 +242,7 @@ const AuthService = {
       if (response.data.token) {
         // Zapisujemy token i dane użytkownika
         setAuthData(response.data.token, response.data.user);
-        console.log('Zalogowano przez Google pomyślnie, token zapisany');
+        debug('Zalogowano przez Google pomyślnie, token zapisany');
         
         // Po zalogowaniu czyścimy cache API
         apiClient.clearCache();

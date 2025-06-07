@@ -5,7 +5,7 @@ import { TransactionsService } from "../../services/api";
 
 // Prosta funkcja powiadomień zamiast react-toastify
 const showNotification = (message, type = 'info') => {
-  console.log(`[${type.toUpperCase()}] ${message}`);
+  debug(`[${type.toUpperCase()}] ${message}`);
   // Można również użyć window.alert() w razie potrzeby
   // alert(`${type.toUpperCase()}: ${message}`);
 };

@@ -65,7 +65,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
     };
     
     // Logowanie tylko gdy faktycznie zmieniła się autentykacja lub ścieżka
-    console.log('ProtectedRoute sprawdzanie:', { 
+    debug('ProtectedRoute sprawdzanie:', { 
       isAuthenticated, 
       user: !!user,
       path: location.pathname,
@@ -85,7 +85,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
   }
 
   if (!isAuthenticated || !user) {
-    console.log('Przekierowanie do logowania z:', location.pathname);
+    debug('Przekierowanie do logowania z:', location.pathname);
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
