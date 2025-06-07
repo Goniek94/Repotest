@@ -156,33 +156,29 @@ const useConversations = (activeTab) => {
     try {
       await MessagesService.markConversationAsRead(conversationId);
 
-      const unreadBefore = conversations.find(c => c.id === conversationId)?.unreadCount || 0;
-      if (unreadBefore > 0) {
-        decreaseMessageCount(unreadBefore);
-      }
-
-      // Aktualizacja stanu konwersacji
-      setConversations(prevConversations =>
-        prevConversations.map(convo =>
+      setConversations(prev => {
+        const unreadBefore = prev.find(c => c.id === conversationId)?.unreadCount || 0;
+        if (unreadBefore > 0) {
+          decreaseMessageCount(unreadBefore);
+        }
+        return prev.map(convo =>
           convo.id === conversationId
             ? { ...convo, unreadCount: 0, lastMessage: { ...convo.lastMessage, isRead: true } }
             : convo
-        )
-      );
+        );
+      });
 
-      // Aktualizacja wybranej konwersacji
-      if (selectedConversation && selectedConversation.id === conversationId) {
-        setSelectedConversation(prev => ({
-          ...prev,
-          unreadCount: 0,
-          lastMessage: { ...prev.lastMessage, isRead: true }
-        }));
-      }
+      setSelectedConversation(prev => {
+        if (prev && prev.id === conversationId) {
+          return { ...prev, unreadCount: 0, lastMessage: { ...prev.lastMessage, isRead: true } };
+        }
+        return prev;
+      });
     } catch (err) {
       console.error('Błąd podczas oznaczania jako przeczytane:', err);
       showNotification('Nie udało się oznaczyć konwersacji jako przeczytanej', 'error');
     }
-  }, [selectedConversation, showNotification]);
+  }, [decreaseMessageCount, showNotification]);
 
   /**
    * Pobieranie wiadomości z wybranej konwersacji
