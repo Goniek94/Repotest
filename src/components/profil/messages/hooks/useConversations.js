@@ -150,16 +150,16 @@ const useConversations = (activeTab) => {
   /**
    * Pobieranie wiadomości z wybranej konwersacji
    */
-  const fetchConversationMessages = useCallback(async () => {
-    if (!selectedConversation || !selectedConversation.userId) return;
+  const fetchConversationMessages = useCallback(async (conversation) => {
+    if (!conversation || !conversation.userId) return;
     
     try {
       setLoading(true);
       setError(null);
       
-      debug(`Pobieranie wiadomości dla konwersacji z użytkownikiem ${selectedConversation.userId}`);
+      debug(`Pobieranie wiadomości dla konwersacji z użytkownikiem ${conversation.userId}`);
       
-      const response = await MessagesService.getConversation(selectedConversation.userId);
+      const response = await MessagesService.getConversation(conversation.userId);
       
       debug('Otrzymana odpowiedź z API dla wiadomości:', response);
       
@@ -219,8 +219,8 @@ const useConversations = (activeTab) => {
       setChatMessages(formattedChatMessages);
       
       // Automatyczne oznaczenie jako przeczytane
-      if (selectedConversation.unreadCount > 0) {
-        markConversationAsRead(selectedConversation.id);
+      if (conversation.unreadCount > 0) {
+        markConversationAsRead(conversation.id);
       }
     } catch (err) {
       console.error('Błąd podczas pobierania wiadomości:', err);
@@ -228,7 +228,7 @@ const useConversations = (activeTab) => {
     } finally {
       setLoading(false);
     }
-  }, [selectedConversation, showNotification, decreaseMessageCount]);
+  }, [markConversationAsRead, showNotification, decreaseMessageCount]);
 
   /**
    * Oznaczenie konwersacji jako przeczytanej
@@ -516,9 +516,9 @@ const useConversations = (activeTab) => {
   // Pobieranie wiadomości przy wyborze konwersacji
   useEffect(() => {
     if (selectedConversation) {
-      fetchConversationMessages();
+      fetchConversationMessages(selectedConversation);
     }
-  }, [selectedConversation, fetchConversationMessages]);
+  }, [selectedConversation?.id, fetchConversationMessages]);
 
   // Filtrowanie konwersacji na podstawie wyszukiwania
   const filteredConversations = searchTerm.trim().length < 2 
