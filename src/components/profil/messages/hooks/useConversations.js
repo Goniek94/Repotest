@@ -148,6 +148,43 @@ const useConversations = (activeTab) => {
   }, [activeTab, currentUserId]);
 
   /**
+   * Oznaczenie konwersacji jako przeczytanej
+   */
+  const markConversationAsRead = useCallback(async (conversationId) => {
+    if (!conversationId) return;
+
+    try {
+      await MessagesService.markConversationAsRead(conversationId);
+
+      const unreadBefore = conversations.find(c => c.id === conversationId)?.unreadCount || 0;
+      if (unreadBefore > 0) {
+        decreaseMessageCount(unreadBefore);
+      }
+
+      // Aktualizacja stanu konwersacji
+      setConversations(prevConversations =>
+        prevConversations.map(convo =>
+          convo.id === conversationId
+            ? { ...convo, unreadCount: 0, lastMessage: { ...convo.lastMessage, isRead: true } }
+            : convo
+        )
+      );
+
+      // Aktualizacja wybranej konwersacji
+      if (selectedConversation && selectedConversation.id === conversationId) {
+        setSelectedConversation(prev => ({
+          ...prev,
+          unreadCount: 0,
+          lastMessage: { ...prev.lastMessage, isRead: true }
+        }));
+      }
+    } catch (err) {
+      console.error('Błąd podczas oznaczania jako przeczytane:', err);
+      showNotification('Nie udało się oznaczyć konwersacji jako przeczytanej', 'error');
+    }
+  }, [selectedConversation, showNotification]);
+
+  /**
    * Pobieranie wiadomości z wybranej konwersacji
    */
   const fetchConversationMessages = useCallback(async (conversation) => {
@@ -229,43 +266,6 @@ const useConversations = (activeTab) => {
       setLoading(false);
     }
   }, [markConversationAsRead, showNotification, decreaseMessageCount]);
-
-  /**
-   * Oznaczenie konwersacji jako przeczytanej
-   */
-  const markConversationAsRead = useCallback(async (conversationId) => {
-    if (!conversationId) return;
-
-    try {
-      await MessagesService.markConversationAsRead(conversationId);
-
-      const unreadBefore = conversations.find(c => c.id === conversationId)?.unreadCount || 0;
-      if (unreadBefore > 0) {
-        decreaseMessageCount(unreadBefore);
-      }
-
-      // Aktualizacja stanu konwersacji
-      setConversations(prevConversations =>
-        prevConversations.map(convo =>
-          convo.id === conversationId
-            ? { ...convo, unreadCount: 0, lastMessage: { ...convo.lastMessage, isRead: true } }
-            : convo
-        )
-      );
-      
-      // Aktualizacja wybranej konwersacji
-      if (selectedConversation && selectedConversation.id === conversationId) {
-        setSelectedConversation(prev => ({ 
-          ...prev, 
-          unreadCount: 0,
-          lastMessage: { ...prev.lastMessage, isRead: true }
-        }));
-      }
-    } catch (err) {
-      console.error('Błąd podczas oznaczania jako przeczytane:', err);
-      showNotification('Nie udało się oznaczyć konwersacji jako przeczytanej', 'error');
-    }
-  }, [selectedConversation, showNotification]);
 
   /**
    * Oznaczenie konwersacji jako ważnej (gwiazdka)
