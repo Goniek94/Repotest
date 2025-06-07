@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import notificationService from '../services/notifications';
 import axios from 'axios';
@@ -82,13 +82,13 @@ export const NotificationProvider = ({ children }) => {
   }, [notifications]);
 
   // Zmniejszanie licznika nieprzeczytanych wiadomości
-  const decreaseMessageCount = (count = 1) => {
+  const decreaseMessageCount = useCallback((count = 1) => {
     if (!count) return;
     setUnreadCount(prev => ({
       ...prev,
       messages: Math.max(0, (prev.messages || 0) - count)
     }));
-  };
+  }, []);
 
   // Oznaczanie powiadomienia jako przeczytane
   const markAsRead = async (notificationId) => {
