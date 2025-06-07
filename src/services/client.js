@@ -1,5 +1,5 @@
 // src/services/client.js
-import axios from 'axios/dist/node/axios.cjs';
+import axios from 'axios';
 import { API_URL, API_TIMEOUT, getAuthToken } from './api/config';
 
 // Tworzenie instancji axios z podstawową konfiguracją

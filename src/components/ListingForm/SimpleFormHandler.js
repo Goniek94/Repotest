@@ -1,5 +1,5 @@
 // SimpleFormHandler.js
-import axios from 'axios/dist/node/axios.cjs';
+import axios from 'axios';
 
 // Funkcja do prostego wysłania formularza
 export const submitSimpleForm = async (listingData, onSuccess, onError) => {
