@@ -228,7 +228,7 @@ const useConversations = (activeTab) => {
     } finally {
       setLoading(false);
     }
-  }, [selectedConversation, showNotification, conversations, decreaseMessageCount]);
+  }, [selectedConversation, showNotification, decreaseMessageCount]);
 
   /**
    * Oznaczenie konwersacji jako przeczytanej
