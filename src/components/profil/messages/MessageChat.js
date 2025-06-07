@@ -16,12 +16,8 @@ const MessageChat = ({
   const { user } = useAuth();
   const messagesEndRef = useRef(null);
   
-  // Przewijanie do najnowszej wiadomości po załadowaniu lub aktualizacji
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages]);
+  // Przewijanie do najnowszej wiadomości zostało świadomie wyłączone,
+  // aby użytkownik zachował pełną kontrolę nad pozycją scrolla.
   
   // Grupowanie wiadomości według daty
   const groupMessagesByDate = (msgs) => {
