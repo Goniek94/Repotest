@@ -68,7 +68,11 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
-\n## Environment Variables\nCreate a `.env.local` file with your Cloudinary credentials:\n```
+## Environment Variables
+Create a `.env.local` file with your Cloudinary credentials. You can use
+`env.example` as a template:
+
+```bash
 REACT_APP_CLOUDINARY_CLOUD_NAME=your_cloud_name
 REACT_APP_CLOUDINARY_UPLOAD_PRESET=your_upload_preset
 REACT_APP_CLOUDINARY_API_KEY=your_api_key
