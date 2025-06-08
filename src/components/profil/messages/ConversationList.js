@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Star, StarOff, Trash2, Check, Clock, MoreVertical, Archive, Folder, Paperclip } from 'lucide-react';
 
 /**
@@ -84,11 +84,9 @@ const ConversationList = ({
   };
   
   // Zamykanie menu akcji przy kliknięciu poza nim
-  const handleOutsideClick = () => {
-    if (openActionMenuId) {
-      setOpenActionMenuId(null);
-    }
-  };
+  const handleOutsideClick = useCallback(() => {
+    setOpenActionMenuId(null);
+  }, []);
   
   // Dodanie nasłuchiwania kliknięć poza menu
   React.useEffect(() => {
@@ -96,7 +94,7 @@ const ConversationList = ({
     return () => {
       document.removeEventListener('click', handleOutsideClick);
     };
-  }, [openActionMenuId]);
+  }, [handleOutsideClick]);
 
   return (
     <div className="overflow-y-auto h-full border-r border-gray-200 bg-white">
