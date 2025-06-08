@@ -189,16 +189,19 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Wartość kontekstu
-  const contextValue = {
-    user,
-    isAuthenticated,
-    isLoading,
-    login,
-    register,
-    logout,
-    refreshUser,
-    isAdmin
-  };
+  const contextValue = React.useMemo(
+    () => ({
+      user,
+      isAuthenticated,
+      isLoading,
+      login,
+      register,
+      logout,
+      refreshUser,
+      isAdmin
+    }),
+    [user, isAuthenticated, isLoading]
+  );
 
   return (
     <AuthContext.Provider value={contextValue}>

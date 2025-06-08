@@ -61,7 +61,7 @@ const ListingListItem = memo(({
             WYRÓŻNIONE
           </div>
         )}
-        {listing.matchLabel && (
+        {listing.matchLabel && listing.matchLabel !== 'Pozostałe ogłoszenia' && (
           <div className="absolute bottom-2 left-2 bg-black bg-opacity-60 text-white text-xs px-2 py-0.5 rounded-sm">
             {listing.matchLabel}
           </div>
