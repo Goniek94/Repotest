@@ -307,8 +307,8 @@ const useConversations = (activeTab) => {
     if (!conversationId) return;
 
     try {
-      // Zamiast trwałego usuwania przenosimy konwersację do archiwum
-      await MessagesService.archiveConversation(conversationId);
+      // Usuwamy konwersację, przenosząc ją do kosza
+      await MessagesService.moveConversationToTrash(conversationId);
 
       // Usunięcie z listy konwersacji
       setConversations(prevConversations =>
@@ -321,10 +321,10 @@ const useConversations = (activeTab) => {
         setChatMessages([]);
       }
 
-      showNotification('Konwersacja przeniesiona do archiwum', 'success');
+      showNotification('Konwersacja usunięta', 'success');
     } catch (err) {
-      console.error('Błąd podczas przenoszenia do archiwum:', err);
-      showNotification('Nie udało się przenieść do archiwum', 'error');
+      console.error('Błąd podczas usuwania konwersacji:', err);
+      showNotification('Nie udało się usunąć konwersacji', 'error');
     }
   }, [selectedConversation, showNotification]);
 
