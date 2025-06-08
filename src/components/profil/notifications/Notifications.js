@@ -183,7 +183,7 @@ const Notifications = () => {
     // Jeśli powiadomienie ma metadane z ID ogłoszenia lub wiadomości,
     // można przekierować użytkownika do odpowiedniej strony
     if (notification.metadata?.adId) {
-      window.location.href = `/ogloszenia/${notification.metadata.adId}`;
+      window.location.href = `/listing/${notification.metadata.adId}`;
     } else if (notification.metadata?.messageId) {
       window.location.href = `/profil/wiadomosci?message=${notification.metadata.messageId}`;
     }

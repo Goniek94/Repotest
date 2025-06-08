@@ -58,7 +58,11 @@ const getListingId = (listing) => {
     }
     
     // Sprawdzamy, czy mamy parametr URL 'id'
-    if (typeof window !== 'undefined' && window.location.pathname.includes('/ogloszenia/')) {
+    if (
+      typeof window !== 'undefined' &&
+      (window.location.pathname.includes('/ogloszenia/') ||
+        window.location.pathname.includes('/listing/'))
+    ) {
       const pathParts = window.location.pathname.split('/');
       const possibleId = pathParts[pathParts.length - 1];
       if (possibleId && possibleId.length > 5) {
@@ -117,7 +121,11 @@ const clearViewHistory = () => {
 };
 
 // Dodajemy ogłoszenie z bieżącego URL, jeśli jesteśmy na stronie szczegółów
-if (typeof window !== 'undefined' && window.location.pathname.includes('/ogloszenia/')) {
+if (
+  typeof window !== 'undefined' &&
+  (window.location.pathname.includes('/ogloszenia/') ||
+    window.location.pathname.includes('/listing/'))
+) {
   const pathParts = window.location.pathname.split('/');
   const possibleId = pathParts[pathParts.length - 1];
   if (possibleId && possibleId.length > 5) {

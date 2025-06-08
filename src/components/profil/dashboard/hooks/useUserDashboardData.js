@@ -4,7 +4,9 @@ import { getUserDashboard, ListingsService } from '../../../../services/api';
 import NotificationsService from '../../../../services/api/notificationsApi';
 import ViewHistoryService from '../../../../services/viewHistoryService';
 import { useFavorites } from '../../../../FavoritesContext';
+import ActivityLogService from '../../../../services/activityLogService';
 import getImageUrl from '../../../../utils/responsive/getImageUrl';
+import getActivityIcon from '../../../../utils/getActivityIcon';
 
 /**
  * Hook do pobierania danych panelu użytkownika
@@ -55,7 +57,7 @@ const useUserDashboardData = () => {
             return {
               id: ad.id,
               title: ad.title || `${ad.brand || ''} ${ad.model || ''}`.trim() || `Ogłoszenie ${ad.id?.slice(-6)}`,
-              href: `/ogloszenia/${ad.id}`,
+              href: `/listing/${ad.id}`,
               price: ad.price,
               image: getImageUrl(image),
               description: ad.status === 'opublikowane' ? 'Aktywne' : ad.status
@@ -84,7 +86,7 @@ const useUserDashboardData = () => {
               id: ad.id || ad._id || id,
               title:
                 ad.title || `${ad.brand || ''} ${ad.model || ''}`.trim() || `Ogłoszenie ${String(id).slice(-6)}`,
-              href: `/ogloszenia/${ad.id || ad._id || id}`,
+              href: `/listing/${ad.id || ad._id || id}`,
               price: ad.price,
               image: getImageUrl(image),
               description: ad.status === 'opublikowane' ? 'Aktywne' : ad.status
@@ -115,7 +117,7 @@ const useUserDashboardData = () => {
           }
           return {
             id: notification._id,
-            icon,
+            icon: getActivityIcon(icon),
             title: notification.title || "Nowe powiadomienie",
             description: notification.content || "Brak treści",
             time: new Date(notification.createdAt).toLocaleDateString('pl-PL', {
@@ -130,15 +132,20 @@ const useUserDashboardData = () => {
           };
         }) || [];
         
+        const localLog = ActivityLogService.getActivities(user.id);
         const allActivities = [
+          ...localLog,
           ...favoriteActivities,
           ...mappedActivities
-        ];
+        ].map(item => ({
+          ...item,
+          icon: typeof item.icon === 'string' ? getActivityIcon(item.icon) : item.icon
+        }));
 
         if (!allActivities.length) {
           setActivities([
             {
-              icon: 'mail',
+              icon: getActivityIcon('mail'),
               title: "Nowa wiadomość od użytkownika",
               description: "Odpowiedz, aby kontynuować rozmowę",
               time: "dziś, 10:17",
@@ -146,7 +153,7 @@ const useUserDashboardData = () => {
               actionLabel: "Odpowiedz",
             },
             {
-              icon: 'car',
+              icon: getActivityIcon('car'),
               title: "Dodano nowe ogłoszenie",
               description: "Sprawdź szczegóły swojego ogłoszenia",
               time: "wczoraj, 12:17",
@@ -154,7 +161,7 @@ const useUserDashboardData = () => {
               actionLabel: "Zobacz",
             },
             {
-              icon: 'bell',
+              icon: getActivityIcon('bell'),
               title: "Nowe powiadomienie systemowe",
               description: "Ważna aktualizacja regulaminu serwisu",
               time: "14.05.2025",

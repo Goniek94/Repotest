@@ -1,11 +1,14 @@
 // context/FavoritesContext.js
 import { createContext, useContext, useEffect, useState } from 'react';
+import ActivityLogService from './services/activityLogService';
+import { useAuth } from './contexts/AuthContext';
 
 const FavoritesContext = createContext();
 
 export const FavoritesProvider = ({ children }) => {
   const [favorites, setFavorites] = useState([]);
   const [favoriteActivities, setFavoriteActivities] = useState([]);
+  const { user } = useAuth();
 
   useEffect(() => {
     const saved = localStorage.getItem('favorites');
@@ -31,12 +34,13 @@ export const FavoritesProvider = ({ children }) => {
         hour: '2-digit',
         minute: '2-digit'
       }),
-      href: `/ogloszenia/${car.id}`,
+      href: `/listing/${car.id}`,
       actionLabel: 'Zobacz'
     };
     const newActivities = [activity, ...favoriteActivities].slice(0, 5);
     setFavoriteActivities(newActivities);
     localStorage.setItem('favoriteActivities', JSON.stringify(newActivities));
+    ActivityLogService.addActivity(activity, user?.id);
   };
 
   const removeFavorite = (id) => {
