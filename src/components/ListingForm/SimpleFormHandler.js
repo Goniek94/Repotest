@@ -1,5 +1,6 @@
 // SimpleFormHandler.js
 import axios from 'axios';
+import { getAuthToken } from '../../services/api/config';
 
 // Funkcja do prostego wysłania formularza
 export const submitSimpleForm = async (listingData, onSuccess, onError) => {
@@ -8,7 +9,7 @@ export const submitSimpleForm = async (listingData, onSuccess, onError) => {
     const axiosSimple = axios.create({
       baseURL: 'http://localhost:5000/api',
       headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
+        Authorization: `Bearer ${getAuthToken()}`
       }
     });
     

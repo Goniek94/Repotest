@@ -31,11 +31,12 @@ const executeWithRetry = async (requestFn, retries = MAX_RETRIES) => {
 };
 
 // Pobieranie listy konwersacji
-const getConversationsList = (folder = 'inbox') => {
+const getConversationsList = (folder = 'inbox', options = {}) => {
   debug(`Pobieranie listy konwersacji z folderu: ${folder}`);
   return executeWithRetry(() => 
-    apiClient.get('/messages/conversations', { 
-      params: { folder } 
+    apiClient.get('/messages/conversations', {
+      params: { folder },
+      signal: options.signal
     })
     .then(response => {
       debug('Odpowiedź z /messages/conversations:', response.data);
@@ -45,7 +46,7 @@ const getConversationsList = (folder = 'inbox') => {
 };
 
 // Pobieranie konwersacji z konkretnym użytkownikiem
-const getConversation = (userId) => {
+const getConversation = (userId, options = {}) => {
   if (!userId) {
     console.error('getConversation: Brak parametru userId');
     return Promise.reject(new Error('Brak identyfikatora użytkownika'));
@@ -53,7 +54,7 @@ const getConversation = (userId) => {
   
   debug(`Pobieranie konwersacji z użytkownikiem ${userId}`);
   return executeWithRetry(() => 
-    apiClient.get(`/messages/conversation/${userId}`)
+    apiClient.get(`/messages/conversation/${userId}`, { signal: options.signal })
       .then(response => {
         debug(`Odpowiedź z /messages/conversation/${userId}:`, response.data);
         return response.data;
