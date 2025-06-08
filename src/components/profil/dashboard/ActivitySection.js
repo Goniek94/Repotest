@@ -40,6 +40,9 @@ const ActivitySection = ({ recentAds = [], activities = [] }) => {
                   image={ad.image}
                   price={ad.price}
                 />
+=======
+                <RecentListingItem key={ad.id} title={ad.title} href={ad.href} />
+main
               ))}
             </div>
           )}
