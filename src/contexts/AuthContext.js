@@ -1,5 +1,6 @@
-import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
+import React, { createContext, useState, useContext, useEffect, useRef, useCallback } from 'react';
 import AuthService from '../services/auth';
+import { getAuthToken } from '../services/api/config';
 
 // Tworzenie kontekstu autoryzacji
 const AuthContext = createContext();
@@ -19,7 +20,7 @@ export const AuthProvider = ({ children }) => {
   const lastActivityRef = useRef(Date.now());
 
   // Funkcja resetująca timer nieaktywności
-  const resetInactivityTimer = () => {
+  const resetInactivityTimer = useCallback(() => {
     if (activityTimerRef.current) {
       clearTimeout(activityTimerRef.current);
     }
@@ -37,7 +38,7 @@ export const AuthProvider = ({ children }) => {
         }
       }, INACTIVITY_TIMEOUT);
     }
-  };
+  }, [isAuthenticated, resetInactivityTimer]);
   
   // Śledzenie aktywności użytkownika
   useEffect(() => {
@@ -67,7 +68,7 @@ export const AuthProvider = ({ children }) => {
         window.removeEventListener(event, handleUserActivity);
       });
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, resetInactivityTimer]);
 
   // Inicjalizacja stanu autoryzacji przy montowaniu komponentu
   useEffect(() => {
@@ -78,10 +79,10 @@ export const AuthProvider = ({ children }) => {
         const currentUser = AuthService.getCurrentUser();
         const authenticated = AuthService.isAuthenticated();
 
-        debug('Inicjalizacja auth:', { 
-          user: !!currentUser, 
+        debug('Inicjalizacja auth:', {
+          user: !!currentUser,
           isAuthenticated: authenticated,
-          token: localStorage.getItem('token') ? 'Istnieje' : 'Brak'
+          token: getAuthToken() ? 'Istnieje' : 'Brak'
         });
 
         setUser(currentUser);
@@ -103,7 +104,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     initAuth();
-  }, []);
+  }, [resetInactivityTimer]);
 
   // Funkcja logowania
   const login = async (email, password) => {
@@ -205,3 +206,4 @@ export const AuthProvider = ({ children }) => {
 };
 
 export default AuthContext;
+

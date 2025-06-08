@@ -38,6 +38,8 @@ const SettingsPanel = () => {
   const [loadingSettings, setLoadingSettings] = useState(true);
   const [settingsError, setSettingsError] = useState(null);
   const [settingsSuccess, setSettingsSuccess] = useState(false);
+  const [passwordError, setPasswordError] = useState(null);
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
 
   // Fetch user settings on mount
   useEffect(() => {
@@ -105,12 +107,18 @@ const SettingsPanel = () => {
   };
 
   // Handle password form submit
-  const handlePasswordSubmit = (e) => {
+  const handlePasswordSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Add password update logic here (API call)
-    // Example: apiClient.post('/user/change-password', passwordForm)
-    // .then(...)
-    // .catch(...)
+    try {
+      setPasswordError(null);
+      setPasswordSuccess(false);
+      await apiClient.post('/users/change-password', passwordForm);
+      setPasswordSuccess(true);
+      setPasswordForm({ oldPassword: '', newPassword: '', confirmPassword: '' });
+      setTimeout(() => setPasswordSuccess(false), 2000);
+    } catch (err) {
+      setPasswordError('Błąd podczas zmiany hasła.');
+    }
   };
 
   // ... (pozostała logika bez zmian)

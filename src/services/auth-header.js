@@ -5,8 +5,8 @@
  * @returns {Object} Obiekt z nagłówkiem Authorization lub pusty obiekt
  */
 export default function authHeader() {
-  // Pobierz token z localStorage lub cookie
-  const token = localStorage.getItem('token') || getCookie('token');
+  // Pobierz token wyłącznie z ciasteczka
+  const token = getCookie('token');
   
   if (token) {
     // Dla Spring Boot backendu

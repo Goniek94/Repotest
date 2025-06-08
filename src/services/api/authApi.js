@@ -91,13 +91,8 @@ const AuthService = {
       
       const updatedUser = response.data;
       
-      // Aktualizujemy tylko dane użytkownika, nie zmieniając tokenu
-      const token = localStorage.getItem('token');
-      if (token) {
-        setAuthData(token, updatedUser);
-      } else {
-        localStorage.setItem('user', JSON.stringify(updatedUser));
-      }
+      // Aktualizujemy tylko dane użytkownika
+      setAuthData(null, updatedUser);
       
       return updatedUser;
     } catch (error) {
@@ -117,7 +112,7 @@ const AuthService = {
    * Sprawdzenie czy użytkownik jest zalogowany
    * @returns {boolean} - Czy użytkownik jest zalogowany
    */
-  isAuthenticated: () => !!getUserData() && !!localStorage.getItem('token'),
+  isAuthenticated: () => !!getUserData(),
 
   /**
    * Pobranie danych użytkownika z cache lub localStorage
@@ -197,10 +192,7 @@ const AuthService = {
       const response = await apiClient.put('/users/profile', userData);
       
       // Aktualizacja danych w localStorage i cache
-      const token = localStorage.getItem('token');
-      if (token) {
-        setAuthData(token, response.data);
-      }
+      setAuthData(null, response.data);
       
       // Odświeżamy cache
       apiClient.clearCache('/users/profile');
@@ -264,10 +256,7 @@ const AuthService = {
       const response = await apiClient.put('/users/complete-google-profile', profileData);
       
       // Aktualizacja danych w localStorage i cache
-      const token = localStorage.getItem('token');
-      if (token) {
-        setAuthData(token, response.data.user);
-      }
+      setAuthData(null, response.data.user);
       
       // Odświeżamy cache
       apiClient.clearCache('/users/profile');
