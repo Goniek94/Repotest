@@ -1,7 +1,8 @@
 // ProfileNavigation.js
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Eye, Mail, FileText, Bell, History, PhoneCall, LogOut, Settings as SettingsIcon } from "lucide-react";
+import { Eye, Mail, FileText, Bell, History, PhoneCall, LogOut, Settings as SettingsIcon, Sliders } from "lucide-react";
+import { useAuth } from "../../../contexts/AuthContext";
 
 // Central config for all profile navigation
 const NAV_ITEMS = [
@@ -60,7 +61,9 @@ export default function ProfileNavigation({
   isDropdown = false,
   isOpen,
   setIsOpen,
+  user // Dodane user prop do otrzymania informacji o zalogowanym użytkowniku
 }) {
+  const { isAdmin } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -96,6 +99,18 @@ export default function ProfileNavigation({
         {isOpen && (
           <div className="absolute right-0 mt-2 w-64 bg-white rounded-[2px] shadow-xl z-50 border border-gray-200">
             <div className="py-2">
+              {/* Admin Panel link - widoczny tylko dla administratorów */}
+              {isAdmin() && (
+                <Link
+                  to="/admin"
+                  className="block px-4 py-2 text-[#35530A] font-bold hover:bg-gray-100 uppercase flex items-center gap-2"
+                  onClick={() => setIsOpen && setIsOpen(false)}
+                >
+                  <Sliders className="w-4 h-4 mr-2" />
+                  Panel Administratora
+                </Link>
+              )}
+              
               {NAV_ITEMS.map((item) => (
                 <Link
                   key={item.id}

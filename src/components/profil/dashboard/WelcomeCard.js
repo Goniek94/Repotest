@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../contexts/AuthContext';
 import { 
   Settings, 
   PlusCircle, 
@@ -25,6 +26,7 @@ const PRIMARY_COLOR = '#35530A';
  */
 const WelcomeCard = ({ user, userStats, isMobile, recentAds = [], activities = [] }) => {
   const navigate = useNavigate();
+  const { isAdmin } = useAuth();
   
   // Liczniki nieprzeczytanych wiadomości i powiadomień
   // W rzeczywistej implementacji te wartości powinny być pobierane z API
@@ -89,6 +91,7 @@ const WelcomeCard = ({ user, userStats, isMobile, recentAds = [], activities = [
   // Imię użytkownika
   const userName = user && user.name ? user.name : 'Użytkowniku';
   
+
   // Szybkie akcje
   const quickActions = [
     { icon: <Eye size={16} />, label: 'Ostatnio oglądane', path: '/profil/history' },
@@ -138,7 +141,19 @@ const WelcomeCard = ({ user, userStats, isMobile, recentAds = [], activities = [
       )}
       
       {/* Górna część z avatarem i powitaniem */}
-      <div className="p-4 sm:p-5 md:p-6 lg:p-8">
+      <div className="p-4 sm:p-5 md:p-6 lg:p-8 relative">
+        {/* Przycisk Panel Administratora - widoczny tylko dla administratorów */}
+        {isAdmin() && (
+          <button 
+            className="absolute top-4 right-4 sm:top-5 sm:right-5 md:top-6 md:right-6 lg:top-8 lg:right-8 bg-yellow-500 hover:bg-yellow-600 text-green-800 font-bold py-1.5 px-3 rounded-md shadow-md text-xs sm:text-sm transition-colors duration-200 flex items-center"
+            onClick={() => navigate('/admin')}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+            </svg>
+            Panel Administratora
+          </button>
+        )}
         <div className="flex items-center">
           {/* Avatar z inicjałem - zwiększone rozmiary */}
           <div className="bg-opacity-30 bg-white h-14 w-14 sm:h-16 sm:w-16 md:h-20 md:w-20 lg:h-24 lg:w-24 rounded-full flex items-center justify-center mr-4 sm:mr-5 md:mr-6 border-2 border-opacity-20 border-white shadow-lg">

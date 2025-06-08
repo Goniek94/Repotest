@@ -75,6 +75,7 @@ const Navigation = () => {
               isDropdown={true}
               isOpen={isUserMenuOpen}
               setIsOpen={setIsUserMenuOpen}
+              user={user}
             />
           ) : (
             <button

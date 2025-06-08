@@ -1,0 +1,28 @@
+[33m394d1b8[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{0}: pull: Fast-forward
+[33m20940ad[m HEAD@{1}: pull: Fast-forward
+[33me1ccc95[m HEAD@{2}: pull: Fast-forward
+[33m6321141[m HEAD@{3}: pull: Fast-forward
+[33m0062791[m HEAD@{4}: pull: Fast-forward
+[33m6fa5497[m HEAD@{5}: pull: Fast-forward
+[33m2c25ee0[m HEAD@{6}: pull: Fast-forward
+[33mb15b32b[m HEAD@{7}: pull: Fast-forward
+[33m0bc9a2f[m HEAD@{8}: pull: Fast-forward
+[33m5d07b19[m HEAD@{9}: pull: Fast-forward
+[33m8ac37e8[m HEAD@{10}: pull: Fast-forward
+[33mc6f3896[m HEAD@{11}: pull: Fast-forward
+[33mbc24edf[m HEAD@{12}: commit: Initial commit marketplace-frontend
+[33m4a8d500[m HEAD@{13}: commit: Initial commit frontendu
+[33m39380db[m[33m ([m[1;31mgithub/main[m[33m)[m HEAD@{14}: commit: feat: modułowa struktura API wiadomości i integracja z backendem
+[33m218cdd9[m HEAD@{15}: commit: feat: frontend: bezpieczeństwo, autoryzacja, poprawki formularza ogłoszeń, automatyczne wylogowanie, refaktoryzacja
+[33mc35c40a[m HEAD@{16}: commit: Backup 12.05 odzyskany – full commit po reflogu
+[33mc5f40b8[m[33m ([m[1;32modzyskaj-to[m[33m)[m HEAD@{17}: reset: moving to c5f40b8
+[33m79a4e3e[m HEAD@{18}: checkout: moving from odzyskaj-to to main
+[33mc5f40b8[m[33m ([m[1;32modzyskaj-to[m[33m)[m HEAD@{19}: checkout: moving from main to odzyskaj-to
+[33m79a4e3e[m HEAD@{20}: reset: moving to HEAD~1
+[33mdcacb46[m HEAD@{21}: reset: moving to HEAD~1
+[33mad40343[m HEAD@{22}: reset: moving to HEAD~1
+[33mc5f40b8[m[33m ([m[1;32modzyskaj-to[m[33m)[m HEAD@{23}: commit: Aktualizacja projektu marketplace-frontend
+[33mad40343[m HEAD@{24}: commit: Dodanie kodu backendu
+[33mdcacb46[m HEAD@{25}: commit: Początkowy commit projektu marketplace-frontend
+[33m79a4e3e[m HEAD@{26}: Branch: renamed refs/heads/master to refs/heads/main
+[33m79a4e3e[m HEAD@{28}: commit (initial): Initial commit

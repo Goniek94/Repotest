@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Eye, Mail, FileText, Bell, History, PhoneCall, Settings as SettingsIcon } from 'lucide-react';
+import { Eye, Mail, FileText, Bell, History, PhoneCall, Settings as SettingsIcon, Sliders } from 'lucide-react';
 import { useNotifications } from '../../../contexts/NotificationContext';
+import { useAuth } from '../../../contexts/AuthContext';
 import useBreakpoint from '../../../utils/responsive/useBreakpoint';
 
 // Importujemy te same elementy nawigacyjne co w ProfileNavigation
@@ -58,6 +59,7 @@ const MobileSidebar = () => {
   const location = useLocation();
   const breakpoint = useBreakpoint();
   const { unreadCount = { messages: 0, alerts: 0 } } = useNotifications() || {};
+  const { isAdmin } = useAuth();
   
   // Określamy, czy jesteśmy na urządzeniu mobilnym lub tablecie
   const isMobileOrTablet = breakpoint === 'mobile' || breakpoint === 'tablet';
@@ -82,6 +84,17 @@ const MobileSidebar = () => {
     <div className="fixed left-0 top-0 h-full flex flex-col bg-[#5A7834] text-white shadow-lg z-40 overflow-hidden w-12">
       {/* Nawigacja pionowa */}
       <nav className="flex flex-col h-full justify-center space-y-8 py-4">
+        {/* Admin Panel link - widoczny tylko dla administratorów */}
+        {isAdmin() && (
+          <Link
+            to="/admin"
+            className="flex flex-col items-center justify-center p-2 rounded-md transition-colors hover:bg-white hover:bg-opacity-10"
+            title="Panel Administratora"
+          >
+            <Sliders className="w-6 h-6 text-yellow-300" />
+          </Link>
+        )}
+        
         {NAV_ITEMS.map((item) => {
           const isActive = activeTab === item.id;
           return (
