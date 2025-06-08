@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo, useCallback } from 'react';
 import { FileText, Image, Check, CheckCircle, Clock, Paperclip, X, Download, Trash2, Archive } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 
@@ -21,38 +21,16 @@ const MessageChat = ({
   // Przewijanie do najnowszej wiadomości zostało świadomie wyłączone,
   // aby użytkownik zachował pełną kontrolę nad pozycją scrolla.
   
-  // Grupowanie wiadomości według daty
-  const groupMessagesByDate = (msgs) => {
-    if (!Array.isArray(msgs) || msgs.length === 0) return [];
-    
-    const groups = {};
-    
-    msgs.forEach(message => {
-      // Pobierz datę w formacie YYYY-MM-DD
-      const date = new Date(message.timestamp).toISOString().split('T')[0];
-      
-      if (!groups[date]) {
-        groups[date] = [];
-      }
-      groups[date].push(message);
-    });
-    
-    return Object.entries(groups).map(([date, messages]) => ({
-      date,
-      messages
-    }));
-  };
-  
-  // Formatowanie czasu wiadomości (godzina:minuta)
-  const formatMessageTime = (dateString) => {
+  // Memoizacja funkcji formatowania czasu - zapobiega niepotrzebnym re-renderom
+  const formatMessageTime = useCallback((dateString) => {
     return new Date(dateString).toLocaleTimeString('pl-PL', {
       hour: '2-digit',
       minute: '2-digit'
     });
-  };
+  }, []);
   
-  // Formatowanie daty nagłówka grupy wiadomości
-  const formatMessageDate = (dateString) => {
+  // Memoizacja funkcji formatowania daty nagłówka grupy wiadomości
+  const formatMessageDate = useCallback((dateString) => {
     const date = new Date(dateString);
     const today = new Date();
     const yesterday = new Date(today);
@@ -69,24 +47,59 @@ const MessageChat = ({
         year: 'numeric'
       });
     }
-  };
-  
-  // Sprawdzenie czy wiadomość jest od aktualnego użytkownika
-  const isCurrentUserMessage = (message) => {
+  }, []);
+
+  // Memoizacja funkcji sprawdzenia czy wiadomość jest od aktualnego użytkownika
+  const isCurrentUserMessage = useCallback((message) => {
     const senderId = typeof message.sender === 'string' ? message.sender : message.sender?.id || message.sender?._id;
     const currentUserId = currentUser?.id || user?._id;
     
     return senderId === currentUserId || senderId === 'currentUser';
-  };
+  }, [currentUser?.id, user?._id]);
   
-  // Formatowanie rozmiaru pliku
-  const formatFileSize = (bytes) => {
+  // Memoizacja grupowania wiadomości według daty - zapobiega niepotrzebnym obliczeniom
+  const groupedMessages = useMemo(() => {
+    if (!Array.isArray(messages) || messages.length === 0) return [];
+    
+    const groups = {};
+    
+    messages.forEach(message => {
+      // Pobierz datę w formacie YYYY-MM-DD
+      const date = new Date(message.timestamp).toISOString().split('T')[0];
+      
+      if (!groups[date]) {
+        groups[date] = [];
+      }
+      groups[date].push(message);
+    });
+    
+    return Object.entries(groups).map(([date, messages]) => ({
+      date,
+      messages
+    }));
+  }, [messages]);
+  
+  // Memoizacja funkcji formatowania rozmiaru pliku
+  const formatFileSize = useCallback((bytes) => {
     if (!bytes || isNaN(bytes)) return '';
     
     if (bytes < 1024) return bytes + ' B';
     else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
     else return (bytes / 1048576).toFixed(1) + ' MB';
-  };
+  }, []);
+
+  // Memoizowane handlery dla akcji - zapobiega tworzeniu nowych funkcji przy każdym renderze
+  const handleDeleteMessage = useCallback((messageId) => {
+    if (onDeleteMessage) {
+      onDeleteMessage(messageId);
+    }
+  }, [onDeleteMessage]);
+
+  const handleArchiveMessage = useCallback((messageId) => {
+    if (onArchiveMessage) {
+      onArchiveMessage(messageId);
+    }
+  }, [onArchiveMessage]);
 
   // Jeśli ładowanie, wyświetl spinner
   if (loading) {
@@ -116,7 +129,7 @@ const MessageChat = ({
   return (
     <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
       {/* Grupowanie wiadomości według daty */}
-      {groupMessagesByDate(messages).map(group => (
+      {groupedMessages.map(group => (
         <div key={group.date} className="mb-6">
           {/* Nagłówek daty */}
           <div className="flex justify-center mb-4">
@@ -132,7 +145,7 @@ const MessageChat = ({
               isCurrentUserMessage(message) !== isCurrentUserMessage(group.messages[index - 1]);
             
             return (
-              <div key={message.id || index} className="mb-4">
+              <div key={message.id || `${group.date}-${index}`} className="mb-4">
                 {/* Nazwa nadawcy (pokazywana tylko przy zmianie nadawcy) */}
                 {showSender && (
                   <div className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'} mb-1`}>
@@ -155,16 +168,18 @@ const MessageChat = ({
                       <div className="absolute -top-2 right-0 flex space-x-1 opacity-0 group-hover:opacity-100">
                         {onArchiveMessage && (
                           <button
-                            onClick={() => onArchiveMessage(message.id)}
+                            onClick={() => handleArchiveMessage(message.id)}
                             className="p-1 rounded-full bg-white bg-opacity-20 hover:bg-opacity-40 text-white"
+                            aria-label="Archiwizuj wiadomość"
                           >
                             <Archive className="w-3 h-3" />
                           </button>
                         )}
                         {onDeleteMessage && (
                           <button
-                            onClick={() => onDeleteMessage(message.id)}
+                            onClick={() => handleDeleteMessage(message.id)}
                             className="p-1 rounded-full bg-white bg-opacity-20 hover:bg-opacity-40 text-white"
+                            aria-label="Usuń wiadomość"
                           >
                             <Trash2 className="w-3 h-3" />
                           </button>
@@ -179,7 +194,7 @@ const MessageChat = ({
                       <div className="mt-2 space-y-2">
                         {message.attachments.map((attachment, i) => (
                           <div 
-                            key={attachment.id || i} 
+                            key={attachment.id || `${message.id}-attachment-${i}`} 
                             className={`flex items-center p-2 rounded ${
                               isCurrentUser ? 'bg-[#2A4208]' : 'bg-gray-100'
                             }`}
@@ -200,6 +215,7 @@ const MessageChat = ({
                               className={`p-1 rounded-full ${
                                 isCurrentUser ? 'text-white hover:bg-[#35530A]' : 'text-gray-600 hover:bg-gray-200'
                               }`}
+                              aria-label="Pobierz załącznik"
                             >
                               <Download className="w-4 h-4" />
                             </a>
