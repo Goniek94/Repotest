@@ -514,7 +514,8 @@ const useConversations = (activeTab) => {
     if (selectedConversation) {
       fetchConversationMessages(selectedConversation);
     }
-  }, [selectedConversation?.id, fetchConversationMessages]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedConversation?.id]);
 
   // Filtrowanie konwersacji na podstawie wyszukiwania
   const filteredConversations = searchTerm.trim().length < 2 
