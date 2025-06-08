@@ -22,6 +22,7 @@ const useConversations = (activeTab) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const searchTimeoutRef = useRef(null);
   
   // Pobranie aktualnego użytkownika z kontekstu
   const { user } = useAuth();
@@ -37,6 +38,15 @@ const useConversations = (activeTab) => {
     } else {
       debug(`[${type.toUpperCase()}] ${message}`);
     }
+  }, []);
+
+  // Czyszczenie oczekującego timeoutu wyszukiwania przy odmontowaniu
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
   }, []);
 
   /**
@@ -380,50 +390,56 @@ const useConversations = (activeTab) => {
   /**
    * Wyszukiwanie konwersacji
    */
-  const handleSearch = useCallback(async (query) => {
+  const handleSearch = useCallback((query) => {
     setSearchTerm(query);
-    
-    // Jeśli zapytanie jest krótkie, pokazujemy standardową listę
-    if (!query || query.trim().length < 2) {
-      fetchConversations();
-      return;
+
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
     }
-    
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const backendFolder = FOLDER_MAP[activeTab] || FOLDER_MAP[DEFAULT_FOLDER];
-      const response = await MessagesService.searchConversations(query, backendFolder);
-      
-      // Normalizacja odpowiedzi
-      const data = Array.isArray(response) ? response : (response.data || []);
-      
-      if (Array.isArray(data)) {
-        const searchResults = data.map(conversation => ({
-          id: conversation._id || conversation.user?._id,
-          userId: conversation.user?._id || conversation._id,
-          userName: conversation.user?.name || conversation.user?.email || 'Nieznany użytkownik',
-          lastMessage: {
-            content: conversation.lastMessage?.content || '',
-            date: new Date(conversation.lastMessage?.createdAt || conversation.lastMessage?.date || Date.now()),
-            isRead: conversation.lastMessage?.read || false,
-          },
-          unreadCount: conversation.unreadCount || 0,
-          isStarred: conversation.starred || conversation.lastMessage?.starred || false,
-          folder: conversation.folder || backendFolder,
-          adInfo: conversation.adInfo || null,
-        }));
-        
-        setConversations(searchResults);
+
+    searchTimeoutRef.current = setTimeout(async () => {
+      // Jeśli zapytanie jest krótkie, pokazujemy standardową listę
+      if (!query || query.trim().length < 2) {
+        fetchConversations();
+        return;
       }
-    } catch (err) {
-      console.error('Błąd podczas wyszukiwania:', err);
-      showNotification('Błąd podczas wyszukiwania', 'error');
-    } finally {
-      setLoading(false);
-    }
-  }, [activeTab, showNotification]);
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        const backendFolder = FOLDER_MAP[activeTab] || FOLDER_MAP[DEFAULT_FOLDER];
+        const response = await MessagesService.searchConversations(query, backendFolder);
+
+        // Normalizacja odpowiedzi
+        const data = Array.isArray(response) ? response : (response.data || []);
+
+        if (Array.isArray(data)) {
+          const searchResults = data.map(conversation => ({
+            id: conversation._id || conversation.user?._id,
+            userId: conversation.user?._id || conversation._id,
+            userName: conversation.user?.name || conversation.user?.email || 'Nieznany użytkownik',
+            lastMessage: {
+              content: conversation.lastMessage?.content || '',
+              date: new Date(conversation.lastMessage?.createdAt || conversation.lastMessage?.date || Date.now()),
+              isRead: conversation.lastMessage?.read || false,
+            },
+            unreadCount: conversation.unreadCount || 0,
+            isStarred: conversation.starred || conversation.lastMessage?.starred || false,
+            folder: conversation.folder || backendFolder,
+            adInfo: conversation.adInfo || null,
+          }));
+
+          setConversations(searchResults);
+        }
+      } catch (err) {
+        console.error('Błąd podczas wyszukiwania:', err);
+        showNotification('Błąd podczas wyszukiwania', 'error');
+      } finally {
+        setLoading(false);
+      }
+    }, 400);
+  }, [activeTab, showNotification, fetchConversations]);
 
   /**
    * Wysłanie odpowiedzi w konwersacji
