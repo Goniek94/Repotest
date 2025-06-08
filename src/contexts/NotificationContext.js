@@ -177,8 +177,7 @@ export const NotificationProvider = ({ children }) => {
         .then(() => {
           debug('Połączono z serwerem powiadomień');
           setIsConnected(true);
-          // Po poprawnym połączeniu odświeżamy listę powiadomień
-          fetchNotifications();
+          // Po poprawnym połączeniu nie musimy ponownie pobierać powiadomień
         })
         .catch(error => {
           console.error('Błąd połączenia z serwerem powiadomień:', error);
