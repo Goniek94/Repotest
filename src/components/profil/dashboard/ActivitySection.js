@@ -33,7 +33,16 @@ const ActivitySection = ({ recentAds = [], activities = [] }) => {
           ) : (
             <div className="flex flex-col gap-2 p-3 bg-white">
               {recentAds.map((ad) => (
+                <RecentListingItem
+                  key={ad.id}
+                  title={ad.title}
+                  href={ad.href}
+                  image={ad.image}
+                  price={ad.price}
+                />
+=======
                 <RecentListingItem key={ad.id} title={ad.title} href={ad.href} />
+main
               ))}
             </div>
           )}
