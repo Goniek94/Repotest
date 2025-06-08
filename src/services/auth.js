@@ -51,13 +51,8 @@ const AuthService = {
       const response = await apiClient.get('/users/profile');
       const updatedUser = response.data;
       
-      // Aktualizujemy tylko dane użytkownika, nie zmieniając tokenu
-      const token = localStorage.getItem('token');
-      if (token) {
-        setAuthData(token, updatedUser);
-      } else {
-        localStorage.setItem('user', JSON.stringify(updatedUser));
-      }
+      // Aktualizujemy tylko dane użytkownika
+      setAuthData(null, updatedUser);
       
       return updatedUser;
     } catch (error) {
@@ -67,7 +62,7 @@ const AuthService = {
   },
 
   // Sprawdzenie czy użytkownik jest zalogowany
-  isAuthenticated: () => !!getUserData() && !!localStorage.getItem('token'),
+  isAuthenticated: () => !!getUserData(),
 
   // Pobranie danych użytkownika
   getCurrentUser: () => getUserData(),

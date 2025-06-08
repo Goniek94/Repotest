@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import MessagesService from '../../../../services/api/messages';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../../../contexts/AuthContext';
@@ -43,7 +43,7 @@ const useConversations = (activeTab) => {
    * Pobieranie konwersacji z aktywnego folderu
    */
   // Pobieranie konwersacji z aktywnego folderu
-  const fetchConversations = useCallback(async () => {
+  const fetchConversations = useCallback(async (signal) => {
     if (!currentUserId) return;
     
     try {
@@ -56,7 +56,7 @@ const useConversations = (activeTab) => {
       debug(`Pobieranie konwersacji z folderu: ${backendFolder}`);
       
       // Bezpośrednie wywołanie API - zapewnia pobieranie rzeczywistych danych
-      let response = await MessagesService.getConversationsList(backendFolder);
+      let response = await MessagesService.getConversationsList(backendFolder, { signal });
 
       debug('Otrzymana odpowiedź z API:', response);
 
@@ -183,7 +183,7 @@ const useConversations = (activeTab) => {
   /**
    * Pobieranie wiadomości z wybranej konwersacji
    */
-  const fetchConversationMessages = useCallback(async (conversation) => {
+  const fetchConversationMessages = useCallback(async (conversation, signal) => {
     if (!conversation || !conversation.userId) return;
     
     try {
@@ -192,7 +192,7 @@ const useConversations = (activeTab) => {
       
       debug(`Pobieranie wiadomości dla konwersacji z użytkownikiem ${conversation.userId}`);
       
-      const response = await MessagesService.getConversation(conversation.userId);
+      const response = await MessagesService.getConversation(conversation.userId, { signal });
       
       debug('Otrzymana odpowiedź z API dla wiadomości:', response);
       
@@ -505,15 +505,31 @@ const useConversations = (activeTab) => {
   // Celowo nie dodajemy fetchConversations do zależności, aby uniknąć
   // zbędnego ponownego tworzenia funkcji i potencjalnej pętli zapytań.
   useEffect(() => {
-    fetchConversations();
+    const controller = new AbortController();
+    fetchConversations(controller.signal);
+    return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, currentUserId]);
   
   // Pobieranie wiadomości przy wyborze konwersacji
+  // Zabezpieczenie przed wielokrotnym wywołaniem dla tej samej konwersacji
+  const lastFetchedConversationId = useRef(null);
+
   useEffect(() => {
-    if (selectedConversation) {
-      fetchConversationMessages(selectedConversation);
+    const controller = new AbortController();
+    if (
+      selectedConversation &&
+      lastFetchedConversationId.current !== selectedConversation.id
+    ) {
+      lastFetchedConversationId.current = selectedConversation.id;
+      fetchConversationMessages(selectedConversation, controller.signal);
     }
+wxvmyf-codex/sprawdź-problemy-z-useeffect-i-custom-hookami
+    return () => controller.abort();
+t1je47-codex/sprawdź-problemy-z-useeffect-i-custom-hookami
+    return () => controller.abort();
+ main
+ain
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedConversation?.id]);
 

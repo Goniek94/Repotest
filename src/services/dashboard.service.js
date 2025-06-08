@@ -11,7 +11,7 @@ const dashboardService = {
    */
   getDashboardStats: async () => {
     try {
-      const response = await apiClient.get('/admin/dashboard/stats');
+      const response = await apiClient.get('/api/admin/dashboard/stats');
       
       // Dopasowanie struktury odpowiedzi do tego, czego oczekuje AdminPanel.js
       const { stats, recentActivity } = response.data;
@@ -20,7 +20,7 @@ const dashboardService = {
         totalUsers: stats.usersCount,
         totalListings: stats.adsCount,
         totalComments: stats.commentsCount,
-        activeDiscounts: 0, // domyślna wartość, można dostosować jeśli backend zwraca tę wartość
+        activeDiscounts: stats.notificationsCount, // Używamy notificationsCount jako liczby aktywnych powiadomień/zniżek
         recentActivities: formatRecentActivities(recentActivity)
       };
     } catch (error) {
@@ -36,7 +36,7 @@ const dashboardService = {
    */
   getUsers: async (params = {}) => {
     try {
-      const response = await apiClient.get('/admin/users', { params });
+      const response = await apiClient.get('/api/admin/users', { params });
       return response.data;
     } catch (error) {
       console.error('Błąd podczas pobierania listy użytkowników:', error);
@@ -51,7 +51,7 @@ const dashboardService = {
    */
   getUserDetails: async (userId) => {
     try {
-      const response = await apiClient.get(`/admin/users/${userId}`);
+      const response = await apiClient.get(`/api/admin/users/${userId}`);
       return response.data;
     } catch (error) {
       console.error(`Błąd podczas pobierania danych użytkownika ${userId}:`, error);
@@ -67,7 +67,7 @@ const dashboardService = {
    */
   updateUser: async (userId, userData) => {
     try {
-      const response = await apiClient.put(`/admin/users/${userId}`, userData);
+      const response = await apiClient.put(`/api/admin/users/${userId}`, userData);
       return response.data;
     } catch (error) {
       console.error(`Błąd podczas aktualizacji użytkownika ${userId}:`, error);
@@ -82,7 +82,7 @@ const dashboardService = {
    */
   deleteUser: async (userId) => {
     try {
-      const response = await apiClient.delete(`/admin/users/${userId}`);
+      const response = await apiClient.delete(`/api/admin/users/${userId}`);
       return response.data;
     } catch (error) {
       console.error(`Błąd podczas usuwania użytkownika ${userId}:`, error);
@@ -97,7 +97,7 @@ const dashboardService = {
    */
   getAds: async (params = {}) => {
     try {
-      const response = await apiClient.get('/admin/ads', { params });
+      const response = await apiClient.get('/api/admin/ads', { params });
       return response.data;
     } catch (error) {
       console.error('Błąd podczas pobierania listy ogłoszeń:', error);
@@ -112,7 +112,7 @@ const dashboardService = {
    */
   getAdDetails: async (adId) => {
     try {
-      const response = await apiClient.get(`/admin/ads/${adId}`);
+      const response = await apiClient.get(`/api/admin/ads/${adId}`);
       return response.data;
     } catch (error) {
       console.error(`Błąd podczas pobierania danych ogłoszenia ${adId}:`, error);
@@ -128,7 +128,7 @@ const dashboardService = {
    */
   updateAd: async (adId, adData) => {
     try {
-      const response = await apiClient.put(`/admin/ads/${adId}`, adData);
+      const response = await apiClient.put(`/api/admin/ads/${adId}`, adData);
       return response.data;
     } catch (error) {
       console.error(`Błąd podczas aktualizacji ogłoszenia ${adId}:`, error);
@@ -143,7 +143,7 @@ const dashboardService = {
    */
   deleteAd: async (adId) => {
     try {
-      const response = await apiClient.delete(`/admin/ads/${adId}`);
+      const response = await apiClient.delete(`/api/admin/ads/${adId}`);
       return response.data;
     } catch (error) {
       console.error(`Błąd podczas usuwania ogłoszenia ${adId}:`, error);
@@ -158,7 +158,7 @@ const dashboardService = {
    */
   getComments: async (params = {}) => {
     try {
-      const response = await apiClient.get('/admin/comments', { params });
+      const response = await apiClient.get('/api/admin/comments', { params });
       return response.data;
     } catch (error) {
       console.error('Błąd podczas pobierania listy komentarzy:', error);
@@ -173,7 +173,7 @@ const dashboardService = {
    */
   getDiscounts: async (params = {}) => {
     try {
-      const response = await apiClient.get('/admin/discounts', { params });
+      const response = await apiClient.get('/api/admin/discounts', { params });
       return response.data;
     } catch (error) {
       console.error('Błąd podczas pobierania listy zniżek:', error);

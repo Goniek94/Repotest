@@ -74,3 +74,17 @@ REACT_APP_CLOUDINARY_UPLOAD_PRESET=your_upload_preset
 REACT_APP_CLOUDINARY_API_KEY=your_api_key
 ```
 These values should not be committed to version control.
+
+## Production build
+
+1. Place all environment variables in `.env.local`. Example:
+   ```
+   REACT_APP_API_URL=https://your-api.example.com
+   REACT_APP_CLOUDINARY_CLOUD_NAME=your_cloud_name
+   REACT_APP_CLOUDINARY_UPLOAD_PRESET=your_upload_preset
+   REACT_APP_CLOUDINARY_API_KEY=your_api_key
+   ```
+2. Run `npm run build` to create the production bundle in `build/`.
+3. Serve the contents of the `build/` directory using your preferred HTTP server.
+
+Remember to keep `.env` files out of version control (they are ignored via `.gitignore`).
