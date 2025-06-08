@@ -1,6 +1,7 @@
 import React from 'react';
-import { BellRing } from 'lucide-react';
+import { BellRing, Eye } from 'lucide-react';
 import ActivityItem from '../components/ActivityItem';
+import RecentListingItem from '../components/RecentListingItem';
 import { useNavigate } from 'react-router-dom';
 
 // Główny kolor
@@ -18,6 +19,32 @@ const ActivitySection = ({ recentAds = [], activities = [] }) => {
   return (
     <div className="mb-8">
       <div className="flex flex-col w-full gap-4">
+        {/* Sekcja Ostatnio oglądane */}
+        <div className="w-full">
+          <div className="bg-[#35530A] p-3 flex items-center">
+            <Eye className="w-5 h-5 mr-2 text-white" />
+            <h2 className="text-lg font-bold text-white">Ostatnio oglądane</h2>
+          </div>
+
+          {recentAds.length === 0 ? (
+            <div className="bg-gray-50 p-4 text-sm text-gray-600 text-center">
+              Brak danych
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2 p-3 bg-white">
+              {recentAds.map((ad) => (
+                <RecentListingItem
+                  key={ad.id}
+                  title={ad.title}
+                  href={ad.href}
+                  image={ad.image}
+                  price={ad.price}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Sekcja Ostatnia aktywność */}
         <div className="w-full">
           <div className="bg-[#35530A] p-3 flex items-center">
