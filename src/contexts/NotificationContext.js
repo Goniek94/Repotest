@@ -316,20 +316,23 @@ export const NotificationProvider = ({ children }) => {
       setNotifications([]);
       setUnreadCount({ messages: 0, alerts: 0 });
     }
-  }, [isAuthenticated, user, fetchNotifications, updateUnreadCount]); // fetchNotifications jest teraz zapamiętywane przez useCallback
+  }, [isAuthenticated, user, fetchNotifications]); // updateUnreadCount intentionally omitted to prevent re-render loops
 
   // Wartość kontekstu
-  const value = {
-    notifications,
-    unreadCount,
-    isConnected,
-    isLoading,
-    markAsRead,
-    markAllAsRead,
-    deleteNotification,
-    fetchNotifications,
-    decreaseMessageCount
-  };
+  const value = React.useMemo(
+    () => ({
+      notifications,
+      unreadCount,
+      isConnected,
+      isLoading,
+      markAsRead,
+      markAllAsRead,
+      deleteNotification,
+      fetchNotifications,
+      decreaseMessageCount
+    }),
+    [notifications, unreadCount, isConnected, isLoading]
+  );
 
   return (
     <NotificationContext.Provider value={value}>
