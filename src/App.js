@@ -39,7 +39,7 @@ import { useAuth } from './contexts/AuthContext';
 
 // Ulepszony komponent dla tras chronionych z ograniczeniem zapętlenia
 const ProtectedRoute = ({ children, requireAdmin = false }) => {
-  const { user, isAuthenticated, loading } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
   
   // Używamy useRef zamiast stanu, aby przechować informację o ostatnim sprawdzeniu
@@ -65,15 +65,14 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
     };
     
     // Logowanie tylko gdy faktycznie zmieniła się autentykacja lub ścieżka
-    debug('ProtectedRoute sprawdzanie:', { 
-      isAuthenticated, 
+      debug('ProtectedRoute sprawdzanie:', {
+      isAuthenticated,
       user: !!user,
-      path: location.pathname,
-      token: localStorage.getItem('token') ? 'Istnieje' : 'Brak'
+      path: location.pathname
     });
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -129,13 +128,9 @@ const AddListingViewWithProvider = () => (
 );
 
 const App = () => {
-  // Przy każdym załadowaniu aplikacji czyścimy dane autoryzacyjne i
-  // wysyłamy żądanie wylogowania. Dzięki temu użytkownik musi zalogować
-  // się ponownie po odświeżeniu strony, co odpowiada wymaganiom klienta.
-  React.useEffect(() => {
-    clearAuthData();
-    fetch('/api/users/logout', { method: 'POST', credentials: 'include' });
-  }, []);
+  // Usunięto efekt automatycznie wylogowujący użytkownika przy każdym
+  // odświeżeniu strony, dzięki czemu stan logowania jest zachowywany
+  // między odświeżeniami aplikacji.
 
   return (
     <AuthProvider>

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaBars, FaTimes, FaUsers, FaCarAlt, FaComments, FaPercent, FaCog } from 'react-icons/fa';
-import authService from '../../services/auth.service';
+import authService from '../../services/auth';
 import dashboardService from '../../services/dashboard.service';
 
 const AdminPanel = () => {
