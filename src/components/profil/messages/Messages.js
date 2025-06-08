@@ -134,7 +134,7 @@ const Messages = () => {
     return () => {
       debug('===== KOMPONENT MESSAGES ODMONTOWANY =====');
     };
-  }, [isAuthenticated, user]);
+  }, []);
   
   // Logowanie przy zmianie konwersacji
   useEffect(() => {

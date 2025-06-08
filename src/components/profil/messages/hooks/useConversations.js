@@ -529,7 +529,7 @@ const useConversations = (activeTab) => {
     fetchConversations(controller.signal);
     return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, currentUserId]);
+  }, []);
   
   // Pobieranie wiadomości przy wyborze konwersacji
   // Zabezpieczenie przed wielokrotnym wywołaniem dla tej samej konwersacji
