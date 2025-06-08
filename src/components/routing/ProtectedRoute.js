@@ -13,21 +13,20 @@ import { logger, IS_DEV } from '../../services/api/config';
  * @returns {React.ReactNode} - Zawartość chronionej trasy lub przekierowanie
  */
 const ProtectedRoute = ({ children, requireAdmin = false }) => {
-  const { user, isAuthenticated, loading } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
   
   // Logowanie dla debugowania tylko w trybie deweloperskim
   if (IS_DEV) {
-    logger.log('ProtectedRoute sprawdzanie:', { 
-      isAuthenticated, 
+    logger.log('ProtectedRoute sprawdzanie:', {
+      isAuthenticated,
       user: !!user,
-      path: location.pathname,
-      token: localStorage.getItem('token') ? 'Istnieje' : 'Brak'
+      path: location.pathname
     });
   }
 
   // Komponent ładowania podczas sprawdzania uwierzytelnienia
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">

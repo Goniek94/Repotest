@@ -3,19 +3,18 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const ProtectedRoute = ({ children }) => {
-  const { user, isAuthenticated, loading } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
   
   useEffect(() => {
-    debug('ProtectedRoute sprawdzanie:', { 
-      isAuthenticated, 
+    debug('ProtectedRoute sprawdzanie:', {
+      isAuthenticated,
       user: !!user,
-      path: location.pathname,
-      token: localStorage.getItem('token') ? 'Istnieje' : 'Brak'
+      path: location.pathname
     });
   }, [isAuthenticated, user, location.pathname]);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">

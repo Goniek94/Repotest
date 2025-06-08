@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
 import AuthService from '../services/auth';
+import { getAuthToken } from '../services/api/config';
 
 // Tworzenie kontekstu autoryzacji
 const AuthContext = createContext();
@@ -78,10 +79,10 @@ export const AuthProvider = ({ children }) => {
         const currentUser = AuthService.getCurrentUser();
         const authenticated = AuthService.isAuthenticated();
 
-        debug('Inicjalizacja auth:', { 
-          user: !!currentUser, 
+        debug('Inicjalizacja auth:', {
+          user: !!currentUser,
           isAuthenticated: authenticated,
-          token: localStorage.getItem('token') ? 'Istnieje' : 'Brak'
+          token: getAuthToken() ? 'Istnieje' : 'Brak'
         });
 
         setUser(currentUser);
