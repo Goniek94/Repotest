@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../../../contexts/AuthContext';
-import { getUserDashboard } from '../../../../services/api';
+import { getUserDashboard, ListingsService } from '../../../../services/api';
 import NotificationsService from '../../../../services/api/notificationsApi';
+import ViewHistoryService from '../../../../services/viewHistoryService';
+import { useFavorites } from '../../../../FavoritesContext';
 
 /**
  * Hook do pobierania danych panelu użytkownika
@@ -19,6 +21,7 @@ const useUserDashboardData = () => {
   const [error, setError] = useState(null);
 
   const { user, isLoading: authLoading } = useAuth();
+  const { favoriteActivities } = useFavorites();
 
   // Pobieranie danych użytkownika
   useEffect(() => {
@@ -33,21 +36,43 @@ const useUserDashboardData = () => {
           completedTransactions: dashboard.completedTransactionsCount || 0
         });
 
-        // Set recent ads from backend
+        // Prepare recent ads from backend
+        let backendRecentAds = [];
         if (dashboard.recentViewedAds && dashboard.recentViewedAds.length > 0) {
-          setRecentAds(
-            dashboard.recentViewedAds.map(ad => ({
-              id: ad.id,
-              title: ad.title || `Ogłoszenie ${ad.id?.slice(-6)}`,
-              href: `/ogloszenia/${ad.id}`,
+          backendRecentAds = dashboard.recentViewedAds.map(ad => ({
+            id: ad.id,
+            title: ad.title || `Ogłoszenie ${ad.id?.slice(-6)}`,
+            href: `/ogloszenia/${ad.id}`,
+            price: ad.price,
+            image: ad.mainImage,
+            description: ad.status === 'opublikowane' ? 'Aktywne' : ad.status
+          }));
+        }
+
+        // Pobierz historię z localStorage i spróbuj uzupełnić danymi z API
+        const historyIds = ViewHistoryService.getViewHistory();
+        const localAds = [];
+        for (const id of historyIds) {
+          try {
+            const ad = await ListingsService.getById(id);
+            localAds.push({
+              id: ad.id || ad._id || id,
+              title: ad.title || `Ogłoszenie ${String(id).slice(-6)}`,
+              href: `/ogloszenia/${ad.id || ad._id || id}`,
               price: ad.price,
               image: ad.mainImage,
               description: ad.status === 'opublikowane' ? 'Aktywne' : ad.status
-            }))
-          );
-        } else {
-          setRecentAds([]);
+            });
+          } catch (e) {
+            // jeśli nie ma danych w API, pomijamy
+          }
         }
+
+        const combinedAds = [
+          ...localAds,
+          ...backendRecentAds.filter(ad => !localAds.some(l => l.id === ad.id))
+        ];
+        setRecentAds(combinedAds);
 
         // Fetch notifications/activities as before
         const notifications = await NotificationsService.getAll({ limit: 3 });
@@ -79,7 +104,12 @@ const useUserDashboardData = () => {
           };
         }) || [];
         
-        if (!mappedActivities.length) {
+        const allActivities = [
+          ...favoriteActivities,
+          ...mappedActivities
+        ];
+
+        if (!allActivities.length) {
           setActivities([
             {
               icon: 'mail',
@@ -107,7 +137,7 @@ const useUserDashboardData = () => {
             }
           ]);
         } else {
-          setActivities(mappedActivities);
+          setActivities(allActivities);
         }
 
         setIsLoading(false);
@@ -121,7 +151,7 @@ const useUserDashboardData = () => {
     if (user && !authLoading) {
       fetchUserData();
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, favoriteActivities]);
 
   return {
     userStats,
