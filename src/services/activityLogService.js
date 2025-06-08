@@ -34,6 +34,7 @@ function addActivity(activity, userId) {
 
 function logLogin(user) {
   if (!user?.id) return;
+  
   const activity = {
     id: Date.now(),
     icon: 'log-in',
@@ -49,6 +50,7 @@ function logLogin(user) {
     href: '#',
     actionLabel: 'OK'
   };
+  
   addActivity(activity, user.id);
 }
 

@@ -13,6 +13,7 @@ export const FavoritesProvider = ({ children }) => {
   useEffect(() => {
     const saved = localStorage.getItem('favorites');
     if (saved) setFavorites(JSON.parse(saved));
+    
     const savedActivities = localStorage.getItem('favoriteActivities');
     if (savedActivities) setFavoriteActivities(JSON.parse(savedActivities));
   }, []);
@@ -35,11 +36,15 @@ export const FavoritesProvider = ({ children }) => {
         minute: '2-digit'
       }),
       href: `/listing/${car.id}`,
-      actionLabel: 'Zobacz'
+      actionLabel: 'Zobacz',
+      isRead: false
     };
+
     const newActivities = [activity, ...favoriteActivities].slice(0, 5);
     setFavoriteActivities(newActivities);
     localStorage.setItem('favoriteActivities', JSON.stringify(newActivities));
+    
+    // Przekaż userId jeśli użytkownik jest zalogowany
     ActivityLogService.addActivity(activity, user?.id);
   };
 
@@ -49,8 +54,29 @@ export const FavoritesProvider = ({ children }) => {
     localStorage.setItem('favorites', JSON.stringify(updated));
   };
 
+  const markActivityAsRead = (activityId) => {
+    const updatedActivities = favoriteActivities.map(activity => 
+      activity.id === activityId 
+        ? { ...activity, isRead: true }
+        : activity
+    );
+    setFavoriteActivities(updatedActivities);
+    localStorage.setItem('favoriteActivities', JSON.stringify(updatedActivities));
+  };
+
+  const getUnreadActivitiesCount = () => {
+    return favoriteActivities.filter(activity => !activity.isRead).length;
+  };
+
   return (
-    <FavoritesContext.Provider value={{ favorites, addFavorite, removeFavorite, favoriteActivities }}>
+    <FavoritesContext.Provider value={{ 
+      favorites, 
+      addFavorite, 
+      removeFavorite, 
+      favoriteActivities,
+      markActivityAsRead,
+      getUnreadActivitiesCount
+    }}>
       {children}
     </FavoritesContext.Provider>
   );

@@ -132,7 +132,9 @@ const useUserDashboardData = () => {
           };
         }) || [];
         
+        // Resolved merge conflict - using user.id parameter
         const localLog = ActivityLogService.getActivities(user.id);
+        
         const allActivities = [
           ...localLog,
           ...favoriteActivities,
