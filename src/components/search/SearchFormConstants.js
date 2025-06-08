@@ -1,5 +1,13 @@
 // SearchFormConstants.js
 // All static data for the search form
+import {
+  BODY_TYPES,
+  COLORS,
+  FUEL_TYPES,
+  TRANSMISSION_TYPES,
+  DRIVE_TYPES,
+  COUNTRIES
+} from '../../constants/vehicleOptions';
 
 export const carData = {
   Abarth: ['500', '595', '695', 'Grande Punto', 'Punto Evo'],
@@ -85,17 +93,15 @@ export const carData = {
   Xpeng: ['G3', 'G9', 'P5', 'P7']
 };
 
-export const bodyTypes = [
-  'Sedan', 'Hatchback', 'SUV', 'Kombi', 'Coupé', 'Cabrio', 'VAN', 'Pickup', 'Minivan', 'Terenowy', 'Limuzyna', 'Dostawczy'
-];
+export const bodyTypes = BODY_TYPES;
 
 export const advancedOptions = {
   damageStatus: ['Brak uszkodzeń', 'Lekko uszkodzony', 'Poważnie uszkodzony', 'Uszkodzony', 'Bezwypadkowy'],
-  country: ['Polska', 'Niemcy', 'Francja', 'Włochy', 'Holandia', 'Belgia', 'Czechy', 'Słowacja', 'Austria', 'Szwajcaria', 'Hiszpania', 'Wielka Brytania', 'USA', 'Japonia', 'Inne państwa europejskie', 'Inne państwa pozaeuropejskie'],
-  fuelType: ['Benzyna', 'Diesel', 'Elektryczny', 'Hybrydowy', 'Plug-in Hybrid', 'LPG', 'CNG', 'Wodór', 'Etanol', 'Biodiesel'],
-  driveType: ['Przedni', 'Tylny', '4x4', 'AWD', 'Na przód'],
-  transmission: ['Automatyczna', 'Manualna', 'Półautomatyczna', 'Dwusprzęgłowa (DSG/PDK)', 'CVT', 'Sekwencyjna'],
-  color: ['Biały', 'Czarny', 'Srebrny', 'Szary', 'Grafitowy', 'Czerwony', 'Niebieski', 'Granatowy', 'Zielony', 'Brązowy', 'Beżowy', 'Złoty', 'Żółty', 'Pomarańczowy', 'Fioletowy', 'Różowy', 'Bordowy', 'Inny'],
+  country: COUNTRIES,
+  fuelType: FUEL_TYPES,
+  driveType: DRIVE_TYPES,
+  transmission: TRANSMISSION_TYPES,
+  color: COLORS,
   doorCount: ['2/3', '4/5', '6/7'],
   tuning: ['Tak', 'Nie'],
   vehicleCondition: ['Używany', 'Nowy', 'Powypadkowy', 'Uszkodzony', 'Do remontu', 'Bezwypadkowy'],

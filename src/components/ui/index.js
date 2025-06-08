@@ -6,3 +6,4 @@ export { default as Hidden } from './Hidden';
 export { default as Text } from './Text';
 export { default as Button } from './Button';
 export { default as Card, CardHeader, CardBody, CardFooter } from './Card';
+export { default as PhotoModal } from './PhotoModal';

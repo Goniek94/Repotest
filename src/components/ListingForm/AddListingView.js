@@ -2,10 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-import { MapPin, X, ChevronLeft, ChevronRight, Medal } from 'lucide-react';
+import { MapPin, ChevronLeft, ChevronRight, Medal } from 'lucide-react';
 import api from '../../services/api';
 import AdsService from '../../services/ads'; // Dodaj import AdsService
 import PaymentModal from '../payment/PaymentModal';
+import PhotoModal from '../ui/PhotoModal';
+import InfoRow from './preview/InfoRow';
 
 const AddListingView = () => {
   const navigate = useNavigate();
@@ -320,14 +322,6 @@ const AddListingView = () => {
     }
   };
 
-  // Komponent pomocniczy do wyświetlania wiersza info
-  const InfoRow = ({ label, value }) => (
-    <div className="p-2 bg-gray-50 rounded-[2px]">
-      <div className="text-gray-600 font-medium">{label}</div>
-      <div className="font-semibold text-black">{value || 'Nie podano'}</div>
-    </div>
-  );
-
   // Jeśli listingData jest wczytywany asynchronicznie, wstaw loader
   if (!listingData) {
     return (
@@ -380,46 +374,16 @@ const AddListingView = () => {
       )}
 
       {/* Modal ze zdjęciami */}
-      {isPhotoModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/80" onClick={closePhotoModal} />
-          <div className="relative text-center max-w-5xl w-full mx-4">
-            <button
-              className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors"
-              onClick={closePhotoModal}
-              title="Zamknij (Esc)"
-            >
-              <X className="w-8 h-8" />
-            </button>
-            <div className="flex justify-between items-center mt-10">
-              <button
-                onClick={prevPhoto}
-                className="bg-white/90 p-2 hover:bg-white transition-colors rounded-[2px]"
-                title="Poprzednie zdjęcie"
-              >
-                <ChevronLeft className="w-8 h-8" />
-              </button>
-              <img
-                src={typeof listingData.photos[photoIndex] === 'string' 
-                  ? listingData.photos[photoIndex] 
-                  : URL.createObjectURL(listingData.photos[photoIndex])}
-                alt={`Zdjęcie powiększone ${photoIndex + 1}`}
-                className="max-h-[85vh] w-auto mx-4 rounded-[2px]"
-              />
-              <button
-                onClick={nextPhoto}
-                className="bg-white/90 p-2 hover:bg-white transition-colors rounded-[2px]"
-                title="Następne zdjęcie"
-              >
-                <ChevronRight className="w-8 h-8" />
-              </button>
-            </div>
-            <div className="text-white mt-4 text-sm">
-              Zdjęcie {photoIndex + 1} z {listingData.photos.length}
-            </div>
-          </div>
-        </div>
-      )}
+      <PhotoModal
+        isOpen={isPhotoModalOpen}
+        photos={listingData.photos.map(photo =>
+          typeof photo === 'string' ? photo : URL.createObjectURL(photo)
+        )}
+        photoIndex={photoIndex}
+        onClose={closePhotoModal}
+        prevPhoto={prevPhoto}
+        nextPhoto={nextPhoto}
+      />
 
       {/* Główna zawartość - PODGLĄD OGŁOSZENIA */}
       <div className="max-w-6xl mx-auto">

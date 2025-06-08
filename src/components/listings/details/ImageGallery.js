@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import getImageUrl from '../../../utils/responsive/getImageUrl';
+import PhotoModal from '../../ui/PhotoModal';
 
 const ImageGallery = ({ images = [] }) => {
   const [selectedImage, setSelectedImage] = useState(0);
@@ -92,47 +93,14 @@ const ImageGallery = ({ images = [] }) => {
       </div>
 
       {/* Modal ze zdjęciami */}
-      {isPhotoModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div
-            className="absolute inset-0 bg-black/80"
-            onClick={closePhotoModal}
-          />
-          <div className="relative text-center max-w-5xl w-full mx-4">
-            <button
-              className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors"
-              onClick={closePhotoModal}
-              title="Zamknij (Esc)"
-            >
-              <X className="w-8 h-8" />
-            </button>
-            <div className="flex justify-between items-center mt-10">
-              <button
-                onClick={prevPhoto}
-                className="bg-white/90 p-2 hover:bg-white transition-colors rounded-sm"
-                title="Poprzednie zdjęcie"
-              >
-                <ChevronLeft className="w-8 h-8" />
-              </button>
-              <img
-                src={getImageUrl(displayImages[photoIndex])}
-                alt={`Zdjęcie powiększone ${photoIndex + 1}`}
-                className="max-h-[85vh] w-auto mx-4 rounded-sm"
-              />
-              <button
-                onClick={nextPhoto}
-                className="bg-white/90 p-2 hover:bg-white transition-colors rounded-sm"
-                title="Następne zdjęcie"
-              >
-                <ChevronRight className="w-8 h-8" />
-              </button>
-            </div>
-            <div className="text-white mt-4 text-sm">
-              Zdjęcie {photoIndex + 1} z {displayImages.length}
-            </div>
-          </div>
-        </div>
-      )}
+      <PhotoModal
+        isOpen={isPhotoModalOpen}
+        photos={displayImages.map(img => getImageUrl(img))}
+        photoIndex={photoIndex}
+        onClose={closePhotoModal}
+        prevPhoto={prevPhoto}
+        nextPhoto={nextPhoto}
+      />
     </div>
   );
 };

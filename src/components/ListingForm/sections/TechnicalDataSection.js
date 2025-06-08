@@ -1,12 +1,13 @@
 import React from 'react';
 import FormField from '../components/FormField';
+import {
+  FUEL_TYPES,
+  TRANSMISSION_TYPES,
+  DRIVE_TYPES,
+  COUNTRIES
+} from '../../../constants/vehicleOptions';
 
 const TechnicalDataSection = ({ formData, handleChange, errors }) => {
-  // Opcje dla typów
-  const fuelTypes = ['Benzyna', 'Diesel', 'Benzyna+LPG', 'Elektryczny', 'Hybryda'];
-  const transmissionTypes = ['Manualna', 'Automatyczna', 'Półautomatyczna'];
-  const driveTypes = ['Przedni', 'Tylny', '4x4'];
-  const countries = ['Polska', 'Niemcy', 'Francja', 'Włochy', 'Holandia', 'Belgia', 'Austria', 'Czechy', 'Słowacja', 'Szwajcaria', 'USA', 'Inny'];
 
   return (
     <div className="bg-white p-6 rounded-[2px] shadow-md">
@@ -50,7 +51,7 @@ const TechnicalDataSection = ({ formData, handleChange, errors }) => {
           value={formData.fuelType}
           onChange={(e) => handleChange('fuelType', e.target.value)}
           error={errors.fuelType}
-          options={fuelTypes.map(type => ({ value: type, label: type }))}
+          options={FUEL_TYPES.map(type => ({ value: type, label: type }))}
           placeholder="Wybierz rodzaj paliwa"
         />
         
@@ -61,7 +62,7 @@ const TechnicalDataSection = ({ formData, handleChange, errors }) => {
           name="countryOfOrigin"
           value={formData.countryOfOrigin}
           onChange={(e) => handleChange('countryOfOrigin', e.target.value)}
-          options={countries.map(country => ({ value: country, label: country }))}
+          options={COUNTRIES.map(country => ({ value: country, label: country }))}
           placeholder="Wybierz kraj"
         />
       </div>
@@ -109,7 +110,7 @@ const TechnicalDataSection = ({ formData, handleChange, errors }) => {
             value={formData.transmission}
             onChange={(e) => handleChange('transmission', e.target.value)}
             error={errors.transmission}
-            options={transmissionTypes.map(type => ({ value: type, label: type }))}
+          options={TRANSMISSION_TYPES.map(type => ({ value: type, label: type }))}
             placeholder="Wybierz typ skrzyni"
           />
           
@@ -121,7 +122,7 @@ const TechnicalDataSection = ({ formData, handleChange, errors }) => {
             value={formData.drive}
             onChange={(e) => handleChange('drive', e.target.value)}
             error={errors.drive}
-            options={driveTypes.map(type => ({ value: type, label: type }))}
+          options={DRIVE_TYPES.map(type => ({ value: type, label: type }))}
             placeholder="Wybierz napęd"
           />
           

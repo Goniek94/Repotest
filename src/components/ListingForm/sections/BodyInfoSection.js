@@ -1,17 +1,8 @@
 import React from 'react';
 import FormField from '../components/FormField';
+import { BODY_TYPES, COLORS } from '../../../constants/vehicleOptions';
+
 const BodyInfoSection = ({ formData, handleChange, errors }) => {
-  // Opcje dla typu nadwozia
-  const bodyTypes = [
-    'Hatchback', 'Sedan', 'Kombi', 'SUV', 'Coupe',
-    'Cabrio', 'Terenowe', 'Minivan', 'Dostawcze'
-  ];
-  
-  // Opcje dla koloru
-  const colors = [
-    'Czarny', 'Biały', 'Srebrny', 'Czerwony', 'Niebieski', 
-    'Zielony', 'Żółty', 'Brązowy', 'Złoty', 'Szary', 'Inny'
-  ];
   
   // Opcje dla liczby drzwi
   const doorOptions = [
@@ -44,7 +35,7 @@ const BodyInfoSection = ({ formData, handleChange, errors }) => {
             value={formData.bodyType}
             onChange={(e) => handleChange('bodyType', e.target.value)}
             error={errors.bodyType}
-            options={bodyTypes.map(type => ({ value: type, label: type }))}
+            options={BODY_TYPES.map(type => ({ value: type, label: type }))}
             placeholder="Wybierz typ nadwozia"
           />
           
@@ -56,7 +47,7 @@ const BodyInfoSection = ({ formData, handleChange, errors }) => {
             value={formData.color}
             onChange={(e) => handleChange('color', e.target.value)}
             error={errors.color}
-            options={colors.map(color => ({ value: color, label: color }))}
+            options={COLORS.map(color => ({ value: color, label: color }))}
             placeholder="Wybierz kolor"
           />
           
