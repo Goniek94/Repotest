@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../../../contexts/AuthContext';
-import { getUserDashboard } from '../../../../services/api';
+import { getUserDashboard, ListingsService } from '../../../../services/api';
 import NotificationsService from '../../../../services/api/notificationsApi';
+import ViewHistoryService from '../../../../services/viewHistoryService';
+import { useFavorites } from '../../../../FavoritesContext';
+import getImageUrl from '../../../../utils/responsive/getImageUrl';
 
 /**
  * Hook do pobierania danych panelu użytkownika
@@ -19,6 +22,7 @@ const useUserDashboardData = () => {
   const [error, setError] = useState(null);
 
   const { user, isLoading: authLoading } = useAuth();
+  const { favoriteActivities } = useFavorites();
 
   // Pobieranie danych użytkownika
   useEffect(() => {
@@ -33,21 +37,68 @@ const useUserDashboardData = () => {
           completedTransactions: dashboard.completedTransactionsCount || 0
         });
 
-        // Set recent ads from backend
+        // Prepare recent ads from backend
+        let backendRecentAds = [];
         if (dashboard.recentViewedAds && dashboard.recentViewedAds.length > 0) {
-          setRecentAds(
-            dashboard.recentViewedAds.map(ad => ({
+          backendRecentAds = dashboard.recentViewedAds.map(ad => {
+            let image = ad.mainImage;
+            if (ad.images && ad.images.length > 0) {
+              const idx =
+                typeof ad.mainImageIndex === 'number' &&
+                ad.mainImageIndex >= 0 &&
+                ad.mainImageIndex < ad.images.length
+                  ? ad.mainImageIndex
+                  : 0;
+              image = ad.images[idx];
+            }
+
+            return {
               id: ad.id,
-              title: ad.title || `Ogłoszenie ${ad.id?.slice(-6)}`,
+              title: ad.title || `${ad.brand || ''} ${ad.model || ''}`.trim() || `Ogłoszenie ${ad.id?.slice(-6)}`,
               href: `/ogloszenia/${ad.id}`,
               price: ad.price,
-              image: ad.mainImage,
+              image: getImageUrl(image),
               description: ad.status === 'opublikowane' ? 'Aktywne' : ad.status
-            }))
-          );
-        } else {
-          setRecentAds([]);
+            };
+          });
         }
+
+        // Pobierz historię z localStorage i spróbuj uzupełnić danymi z API
+        const historyIds = ViewHistoryService.getViewHistory();
+        const localAds = [];
+        for (const id of historyIds) {
+          try {
+            const ad = await ListingsService.getById(id);
+            let image = ad.mainImage;
+            if (ad.images && ad.images.length > 0) {
+              const idx =
+                typeof ad.mainImageIndex === 'number' &&
+                ad.mainImageIndex >= 0 &&
+                ad.mainImageIndex < ad.images.length
+                  ? ad.mainImageIndex
+                  : 0;
+              image = ad.images[idx];
+            }
+
+            localAds.push({
+              id: ad.id || ad._id || id,
+              title:
+                ad.title || `${ad.brand || ''} ${ad.model || ''}`.trim() || `Ogłoszenie ${String(id).slice(-6)}`,
+              href: `/ogloszenia/${ad.id || ad._id || id}`,
+              price: ad.price,
+              image: getImageUrl(image),
+              description: ad.status === 'opublikowane' ? 'Aktywne' : ad.status
+            });
+          } catch (e) {
+            // jeśli nie ma danych w API, pomijamy
+          }
+        }
+
+        const combinedAds = [
+          ...localAds,
+          ...backendRecentAds.filter(ad => !localAds.some(l => l.id === ad.id))
+        ];
+        setRecentAds(combinedAds);
 
         // Fetch notifications/activities as before
         const notifications = await NotificationsService.getAll({ limit: 3 });
@@ -79,7 +130,12 @@ const useUserDashboardData = () => {
           };
         }) || [];
         
-        if (!mappedActivities.length) {
+        const allActivities = [
+          ...favoriteActivities,
+          ...mappedActivities
+        ];
+
+        if (!allActivities.length) {
           setActivities([
             {
               icon: 'mail',
@@ -107,7 +163,7 @@ const useUserDashboardData = () => {
             }
           ]);
         } else {
-          setActivities(mappedActivities);
+          setActivities(allActivities);
         }
 
         setIsLoading(false);
@@ -121,7 +177,7 @@ const useUserDashboardData = () => {
     if (user && !authLoading) {
       fetchUserData();
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, favoriteActivities]);
 
   return {
     userStats,
