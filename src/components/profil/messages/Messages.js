@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo, memo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Paperclip, Send } from 'lucide-react';
 import MessagesHeader from './MessagesHeader';
@@ -14,13 +14,80 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { getAuthToken, API_URL } from '../../../services/api/config';
 import { DEFAULT_FOLDER, FOLDER_MAP } from '../../../constants/messageFolders';
 
+// Funkcja debug przeniesiona poza komponent dla lepszej wydajności
+const debug = (message, data) => {
+  if (process.env.NODE_ENV === 'development') {
+    console.log(message, data);
+  }
+};
+
+// Stałe konfiguracyjne
+const MAX_ATTACHMENTS = 5;
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const ACCEPTED_FILE_TYPES = "image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt";
+
+// Komponent AttachmentItem dla lepszej wydajności
+const AttachmentItem = memo(({ attachment, index, onRemove }) => (
+  <div className="bg-gray-100 rounded px-2 py-1 text-sm flex items-center gap-1">
+    <span className="truncate max-w-[150px]" title={attachment.name}>
+      {attachment.name}
+    </span>
+    <button 
+      className="text-gray-500 hover:text-red-500 ml-1"
+      onClick={() => onRemove(index)}
+      aria-label={`Usuń załącznik ${attachment.name}`}
+    >
+      &times;
+    </button>
+  </div>
+));
+
+// Komponent LoadingSpinner
+const LoadingSpinner = memo(() => (
+  <div className="flex justify-center items-center h-64">
+    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#35530A]"></div>
+  </div>
+));
+
+// Komponent ErrorMessage
+const ErrorMessage = memo(({ message }) => (
+  <div className="flex justify-center items-center h-64 p-4 text-center text-red-500">
+    <p>{message}</p>
+  </div>
+));
+
+// Komponent EmptyState
+const EmptyState = memo(({ message }) => (
+  <div className="flex justify-center items-center h-64 p-4 text-center text-gray-500">
+    <p>{message}</p>
+  </div>
+));
+
+// Komponent AuthError
+const AuthError = memo(({ onLoginRedirect }) => (
+  <div className="flex flex-col justify-center items-center h-64 p-4">
+    <div className="text-red-500 mb-4">
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m0 0v2m0-2h2m-2 0H9m3-4V8m0 0V6m0 2h2m-2 0H9" />
+      </svg>
+      <p className="text-center font-medium text-lg">Twoja sesja wygasła. Zaloguj się ponownie, aby kontynuować.</p>
+    </div>
+    <button 
+      className="px-4 py-2 bg-[#35530A] text-white rounded-md hover:bg-[#2A4208] transition-colors"
+      onClick={onLoginRedirect}
+    >
+      Zaloguj się
+    </button>
+  </div>
+));
+
 /**
  * Główny komponent wiadomości
  * 
  * Integruje wszystkie komponenty związane z wiadomościami
  * i zapewnia spójny interfejs użytkownika.
  */
-const Messages = () => {
+const Messages = memo(() => {
   debug('=== Renderowanie komponentu Messages ===');
   
   // Kontekst powiadomień i autoryzacji
@@ -64,7 +131,7 @@ const Messages = () => {
     toggleStar,
     deleteConversation,
     moveToFolder,
-    removeMessage,
+    deleteMessage,
     archiveMessage,
     sendReply,
     showNotification
@@ -79,16 +146,22 @@ const Messages = () => {
     'Aktywna zakładka': activeTab
   });
 
+  // Memoizacja danych unread count dla MessagesTabs
+  const unreadCountMemo = useMemo(() => ({
+    odebrane: unreadCount.messages || 0,
+    wyslane: 0,
+    wazne: 0,
+    archiwum: 0
+  }), [unreadCount.messages]);
 
-  // Wyłączono automatyczne przewijanie czatu na koniec listy wiadomości.
-  // Dzięki temu użytkownik zachowuje kontrolę nad pozycją scrolla
-  // i widok nie "ucieka" do ostatniej wiadomości po każdej aktualizacji.
-  
+  // Memoizacja ID użytkownika
+  const userId = useMemo(() => user?._id || user?.id, [user?._id, user?.id]);
+
   // Efekt diagnostyczny dla testowania API
   useEffect(() => {
     debug('===== KOMPONENT MESSAGES ZAMONTOWANY =====');
     debug('Sprawdzenie stanu autoryzacji:', isAuthenticated ? 'zalogowany' : 'niezalogowany');
-    debug('ID użytkownika:', user?._id || user?.id);
+    debug('ID użytkownika:', userId);
     debug('Token JWT:', getAuthToken() ? 'dostępny' : 'brak');
     
     // Test API - sprawdzenie, czy endpoint jest dostępny
@@ -136,7 +209,7 @@ const Messages = () => {
     return () => {
       debug('===== KOMPONENT MESSAGES ODMONTOWANY =====');
     };
-  }, []);
+  }, [isAuthenticated, userId]);
   
   // Logowanie przy zmianie konwersacji
   useEffect(() => {
@@ -157,16 +230,45 @@ const Messages = () => {
     }
   }, [chatMessages]);
 
-  // Obsługa wyszukiwania
-  const handleSearch = (e) => {
+  // Memoizowane handlery
+  const handleSearch = useCallback((e) => {
     const query = e.target.value;
     debug('Wyszukiwanie konwersacji:', query);
     setSearchTerm(query);
     searchConversations(query);
-  };
+  }, [setSearchTerm, searchConversations]);
+
+  const handleNewMessage = useCallback(() => {
+    setShowNewMessage(true);
+  }, []);
+
+  const handleTabChange = useCallback((tab) => {
+    setActiveTab(tab);
+    setSearchParams({ folder: tab });
+  }, [setSearchParams]);
+
+  const handleStar = useCallback((conversationId) => {
+    toggleStar(conversationId);
+  }, [toggleStar]);
+
+  const handleDelete = useCallback((conversationId) => {
+    deleteConversation(conversationId);
+  }, [deleteConversation]);
+
+  const handleMove = useCallback((conversationId, folder) => {
+    moveToFolder(conversationId, folder);
+  }, [moveToFolder]);
+
+  const handleArchive = useCallback((conversationId) => {
+    moveToFolder(conversationId, 'archiwum');
+  }, [moveToFolder]);
+
+  const handleBack = useCallback(() => {
+    selectConversation(null);
+  }, [selectConversation]);
 
   // Obsługa wysyłania odpowiedzi
-  const handleSendReply = async () => {
+  const handleSendReply = useCallback(async () => {
     if ((!replyContent.trim() && attachments.length === 0) || !selectedConversation) return;
     
     debug('Wysyłanie odpowiedzi:', {
@@ -188,33 +290,42 @@ const Messages = () => {
     } finally {
       setSendingReply(false);
     }
-  };
+  }, [replyContent, attachments, selectedConversation, sendReply, showNotification]);
 
   // Obsługa dodawania załączników
-  const handleAttachmentClick = () => {
+  const handleAttachmentClick = useCallback(() => {
     debug('Kliknięcie przycisku załączników');
     fileInputRef.current?.click();
-  };
+  }, []);
+
+  // Walidacja plików
+  const validateFiles = useCallback((files) => {
+    // Ograniczenie liczby załączników
+    if (attachments.length + files.length > MAX_ATTACHMENTS) {
+      showNotification(`Możesz dodać maksymalnie ${MAX_ATTACHMENTS} załączników`, 'warning');
+      return false;
+    }
+    
+    // Ograniczenie rozmiaru plików
+    const oversizedFiles = files.filter(file => file.size > MAX_FILE_SIZE);
+    if (oversizedFiles.length > 0) {
+      debug('Pliki za duże:', oversizedFiles.map(f => f.name));
+      showNotification('Niektóre pliki są zbyt duże (maksymalny rozmiar to 10MB)', 'warning');
+      return false;
+    }
+    
+    return true;
+  }, [attachments.length, showNotification]);
 
   // Obsługa wyboru plików
-  const handleFileSelect = (e) => {
+  const handleFileSelect = useCallback((e) => {
     const files = Array.from(e.target.files);
     debug('Wybrano pliki:', files.length);
     
     if (files.length === 0) return;
     
-    // Ograniczenie liczby załączników
-    if (attachments.length + files.length > 5) {
-      debug('Za dużo załączników');
-      showNotification('Możesz dodać maksymalnie 5 załączników', 'warning');
-      return;
-    }
-    
-    // Ograniczenie rozmiaru plików (10MB)
-    const oversizedFiles = files.filter(file => file.size > 10 * 1024 * 1024);
-    if (oversizedFiles.length > 0) {
-      debug('Pliki za duże:', oversizedFiles.map(f => f.name));
-      showNotification('Niektóre pliki są zbyt duże (maksymalny rozmiar to 10MB)', 'warning');
+    if (!validateFiles(files)) {
+      e.target.value = ''; // Reset input
       return;
     }
     
@@ -228,19 +339,79 @@ const Messages = () => {
     debug('Dodano załączniki:', newAttachments);
     setAttachments(prev => [...prev, ...newAttachments]);
     e.target.value = ''; // Reset input
-  };
+  }, [validateFiles]);
 
   // Usuwanie załącznika
-  const removeAttachment = (index) => {
-    setAttachments(attachments.filter((_, i) => i !== index));
-  };
+  const removeAttachment = useCallback((index) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index));
+  }, []);
 
   // Funkcja do przekierowania na stronę logowania
-  const handleLoginRedirect = () => {
+  const handleLoginRedirect = useCallback(() => {
     debug('Przekierowanie do strony logowania');
     localStorage.setItem('redirectAfterLogin', window.location.pathname);
     window.location.href = '/login';
-  };
+  }, []);
+
+  // Handler dla zamknięcia modalu nowej wiadomości
+  const handleCloseNewMessage = useCallback(() => {
+    setShowNewMessage(false);
+  }, []);
+
+  // Handler dla wysłania nowej wiadomości
+  const handleSendNewMessage = useCallback(() => {
+    setShowNewMessage(false);
+    // Odświeżenie listy konwersacji po wysłaniu nowej wiadomości
+    if (activeTab === 'wyslane') {
+      searchConversations('');
+    }
+  }, [activeTab, searchConversations]);
+
+  // Memoizacja warunków renderowania
+  const isButtonDisabled = useMemo(() => {
+    return sendingReply || (!replyContent.trim() && attachments.length === 0) || !selectedConversation;
+  }, [sendingReply, replyContent, attachments.length, selectedConversation]);
+
+  // Memoizacja zawartości lewej kolumny
+  const leftColumnContent = useMemo(() => {
+    if (!isAuthenticated) {
+      return <AuthError onLoginRedirect={handleLoginRedirect} />;
+    }
+    
+    if (error) {
+      return <ErrorMessage message={error} />;
+    }
+    
+    if (loading && conversations.length === 0) {
+      return <LoadingSpinner />;
+    }
+    
+    if (conversations.length === 0) {
+      return <EmptyState message="Nie znaleziono wiadomości w tym folderze." />;
+    }
+    
+    return (
+      <MessageList
+        messages={conversations}
+        activeConversation={selectedConversation?.id}
+        onSelectConversation={selectConversation}
+        onStar={handleStar}
+        onDelete={handleDelete}
+        onMove={handleMove}
+      />
+    );
+  }, [
+    isAuthenticated,
+    error,
+    loading,
+    conversations,
+    selectedConversation?.id,
+    selectConversation,
+    handleStar,
+    handleDelete,
+    handleMove,
+    handleLoginRedirect
+  ]);
 
   // Rendering komponentu
   return (
@@ -251,67 +422,22 @@ const Messages = () => {
           <MessagesHeader 
             searchTerm={searchTerm}
             onSearch={handleSearch}
-            onNewMessage={() => setShowNewMessage(true)}
+            onNewMessage={handleNewMessage}
             unreadCount={unreadCount.messages}
           />
           
           {/* Zakładki folderów - dostosowane do urządzeń */}
           <MessagesTabs
             activeTab={activeTab}
-            onTabChange={(tab) => {
-              setActiveTab(tab);
-              setSearchParams({ folder: tab });
-            }}
-            unreadCount={{
-              odebrane: unreadCount.messages || 0,
-              wyslane: 0,
-              wazne: 0,
-              archiwum: 0
-            }}
+            onTabChange={handleTabChange}
+            unreadCount={unreadCountMemo}
           />
           
           {/* Główna zawartość */}
           <div className="flex flex-1 overflow-hidden">
             {/* Lista konwersacji (lewa kolumna) */}
             <div className="w-full md:w-2/5 border-r border-gray-200 flex flex-col overflow-hidden">
-              {/* Komunikat o błędzie autoryzacji */}
-              {!isAuthenticated ? (
-                <div className="flex flex-col justify-center items-center h-64 p-4">
-                  <div className="text-red-500 mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m0 0v2m0-2h2m-2 0H9m3-4V8m0 0V6m0 2h2m-2 0H9" />
-                    </svg>
-                    <p className="text-center font-medium text-lg">Twoja sesja wygasła. Zaloguj się ponownie, aby kontynuować.</p>
-                  </div>
-                  <button 
-                    className="px-4 py-2 bg-[#35530A] text-white rounded-md hover:bg-[#2A4208] transition-colors"
-                    onClick={handleLoginRedirect}
-                  >
-                    Zaloguj się
-                  </button>
-                </div>
-              ) : error ? (
-                <div className="flex justify-center items-center h-64 p-4 text-center text-red-500">
-                  <p>{error}</p>
-                </div>
-              ) : loading && conversations.length === 0 ? (
-                <div className="flex justify-center items-center h-64">
-                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#35530A]"></div>
-                </div>
-              ) : conversations.length === 0 ? (
-                <div className="flex justify-center items-center h-64 p-4 text-center text-gray-500">
-                  <p>Nie znaleziono wiadomości w tym folderze.</p>
-                </div>
-              ) : (
-                <MessageList
-                  messages={conversations}
-                  activeConversation={selectedConversation?.id}
-                  onSelectConversation={selectConversation}
-                  onStar={toggleStar}
-                  onDelete={deleteConversation}
-                  onMove={moveToFolder}
-                />
-              )}
+              {leftColumnContent}
             </div>
             
             {/* Zawartość konwersacji (prawa kolumna) */}
@@ -321,10 +447,10 @@ const Messages = () => {
                   {/* Nagłówek konwersacji */}
                   <ChatHeader 
                     conversation={selectedConversation} 
-                    onStar={() => toggleStar(selectedConversation.id)} 
-                    onDelete={() => deleteConversation(selectedConversation.id)}
-                    onArchive={() => moveToFolder(selectedConversation.id, 'archiwum')}
-                    onBack={() => selectConversation(null)}
+                    onStar={() => handleStar(selectedConversation.id)} 
+                    onDelete={() => handleDelete(selectedConversation.id)}
+                    onArchive={() => handleArchive(selectedConversation.id)}
+                    onBack={handleBack}
                   />
                   
                   {/* Wiadomości w konwersacji */}
@@ -332,7 +458,7 @@ const Messages = () => {
                     messages={chatMessages}
                     currentUser={user}
                     loading={loading}
-                    onRemoveMessage={removeMessage}
+                    onDeleteMessage={deleteMessage}
                     onArchiveMessage={archiveMessage}
                   />
                   
@@ -341,19 +467,13 @@ const Messages = () => {
                     {/* Lista załączników */}
                     {attachments.length > 0 && (
                       <div className="flex flex-wrap gap-2 mb-2">
-                        {attachments.map((file, index) => (
-                          <div 
-                            key={index}
-                            className="bg-gray-100 rounded px-2 py-1 text-sm flex items-center gap-1"
-                          >
-                            <span className="truncate max-w-[150px]">{file.name}</span>
-                            <button 
-                              className="text-gray-500 hover:text-red-500"
-                              onClick={() => removeAttachment(index)}
-                            >
-                              &times;
-                            </button>
-                          </div>
+                        {attachments.map((attachment, index) => (
+                          <AttachmentItem
+                            key={`${attachment.name}-${index}`}
+                            attachment={attachment}
+                            index={index}
+                            onRemove={removeAttachment}
+                          />
                         ))}
                       </div>
                     )}
@@ -371,10 +491,11 @@ const Messages = () => {
                       <div className="flex flex-col gap-2">
                         {/* Przycisk załączników */}
                         <button
-                          className="p-3 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+                          className="p-3 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           onClick={handleAttachmentClick}
                           disabled={sendingReply}
                           title="Dodaj załącznik"
+                          aria-label="Dodaj załącznik"
                         >
                           <Paperclip className="h-6 w-6" />
                         </button>
@@ -383,8 +504,9 @@ const Messages = () => {
                         <button
                           className="p-3 rounded-lg bg-[#35530A] text-white hover:bg-[#2A4208] transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
                           onClick={handleSendReply}
-                          disabled={sendingReply || (!replyContent.trim() && attachments.length === 0) || !selectedConversation}
+                          disabled={isButtonDisabled}
                           title="Wyślij wiadomość"
+                          aria-label="Wyślij wiadomość"
                         >
                           {sendingReply ? (
                             <div className="h-6 w-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -402,12 +524,12 @@ const Messages = () => {
                       className="hidden"
                       multiple
                       onChange={handleFileSelect}
-                      accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+                      accept={ACCEPTED_FILE_TYPES}
                     />
                   </div>
                 </>
               ) : (
-                <EmptyChat onNewMessage={() => setShowNewMessage(true)} />
+                <EmptyChat onNewMessage={handleNewMessage} />
               )}
             </div>
           </div>
@@ -417,20 +539,15 @@ const Messages = () => {
       {/* Modal nowej wiadomości */}
       {showNewMessage && (
         <MessageForm
-          onClose={() => setShowNewMessage(false)}
-          onSend={() => {
-            setShowNewMessage(false);
-            // Odświeżenie listy konwersacji po wysłaniu nowej wiadomości
-            if (activeTab === 'wyslane') {
-              searchConversations('');
-            }
-          }}
+          onClose={handleCloseNewMessage}
+          onSend={handleSendNewMessage}
         />
       )}
-      
-      {/* Miejsce na dodatkowe elementy w przyszłości */}
     </div>
   );
-};
+});
+
+// Dodanie displayName dla lepszego debugowania
+Messages.displayName = 'Messages';
 
 export default Messages;
