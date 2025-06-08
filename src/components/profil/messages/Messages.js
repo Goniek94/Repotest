@@ -64,6 +64,8 @@ const Messages = () => {
     toggleStar,
     deleteConversation,
     moveToFolder,
+    deleteMessage,
+    archiveMessage,
     sendReply,
     showNotification
   } = useConversations(activeTab);
@@ -330,6 +332,8 @@ const Messages = () => {
                     messages={chatMessages}
                     currentUser={user}
                     loading={loading}
+                    onDeleteMessage={deleteMessage}
+                    onArchiveMessage={archiveMessage}
                   />
                   
                   {/* Pole odpowiedzi */}

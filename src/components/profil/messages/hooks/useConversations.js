@@ -521,6 +521,42 @@ const useConversations = (activeTab) => {
     }
   }, [selectedConversation, currentUserId, user, showNotification]);
 
+  /**
+   * Usunięcie pojedynczej wiadomości
+   */
+  const deleteMessage = useCallback(async (messageId) => {
+    if (!messageId) return;
+
+    try {
+      await MessagesService.delete(messageId);
+
+      setChatMessages(prev => prev.filter(m => m.id !== messageId));
+
+      showNotification('Wiadomość usunięta', 'success');
+    } catch (err) {
+      console.error('Błąd podczas usuwania wiadomości:', err);
+      showNotification('Nie udało się usunąć wiadomości', 'error');
+    }
+  }, [showNotification]);
+
+  /**
+   * Archiwizacja pojedynczej wiadomości
+   */
+  const archiveMessage = useCallback(async (messageId) => {
+    if (!messageId) return;
+
+    try {
+      await MessagesService.moveToFolder(messageId, 'archived');
+
+      setChatMessages(prev => prev.filter(m => m.id !== messageId));
+
+      showNotification('Wiadomość zarchiwizowana', 'success');
+    } catch (err) {
+      console.error('Błąd podczas archiwizacji wiadomości:', err);
+      showNotification('Nie udało się zarchiwizować wiadomości', 'error');
+    }
+  }, [showNotification]);
+
   // Pobieranie konwersacji przy zmianie aktywnego folderu lub użytkownika
   // Celowo nie dodajemy fetchConversations do zależności, aby uniknąć
   // zbędnego ponownego tworzenia funkcji i potencjalnej pętli zapytań.
@@ -578,6 +614,8 @@ const useConversations = (activeTab) => {
     toggleStar,
     deleteConversation,
     moveToFolder,
+    deleteMessage,
+    archiveMessage,
     sendReply,
     showNotification
   };
