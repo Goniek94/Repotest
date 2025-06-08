@@ -486,7 +486,7 @@ const useConversations = (activeTab) => {
     setSelectedConversation(conversation);
   }, [conversations]);
 
-  // Akcje na wiadomościach zostały wydzielone do osobnego hooka
+  // Stałe zależności dla useMessageActions
   const messageActionsConfig = useMemo(() => ({
     selectedConversation,
     setSelectedConversation,

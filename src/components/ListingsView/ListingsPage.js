@@ -104,9 +104,8 @@ function ListingsPage() {
       function getMatchLabel(ad) {
         if (ad.match_score >= 100) return 'Dopasowanie: 100 pkt (idealne)';
         if (ad.match_score >= 50) return `Dopasowanie: ${ad.match_score} pkt`;
-        if (ad.match_score > 0) return `Częściowe dopasowanie: ${ad.match_score} pkt`;
-        if (ad.match_score === 1) return 'Podobne ogłoszenie (ta sama marka)';
-        return 'Pozostałe ogłoszenia';
+        if (ad.match_score > 0) return `Podobne ogłoszenie (${ad.match_score} pkt)`;
+        return null;
       }
 
       const mappedListings = (response.ads || []).map(ad => {
@@ -161,11 +160,23 @@ function ListingsPage() {
         };
       });
 
-      // Sortuj ogłoszenia według wyniku dopasowania malejąco, tak aby najlepiej
-      // pasujące pojawiały się na górze
-      mappedListings.sort((a, b) => (b.match_score || 0) - (a.match_score || 0));
+      // Pogrupuj ogłoszenia tak, aby najpierw pokazywać w pełni dopasowane,
+      // następnie podobne, a na końcu pozostałe
+      const exact = [];
+      const similar = [];
+      const remaining = [];
 
-      setListings(mappedListings);
+      mappedListings.forEach(ad => {
+        if (ad.match_score >= 50) {
+          exact.push(ad);
+        } else if (ad.match_score > 0) {
+          similar.push(ad);
+        } else {
+          remaining.push(ad);
+        }
+      });
+
+      setListings([...exact, ...similar, ...remaining]);
       setTotalPages(response.totalPages || 1);
       setError(null);
     } catch (err) {
