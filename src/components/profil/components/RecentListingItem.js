@@ -1,4 +1,5 @@
 import React from "react";
+import getImageUrl from "../../../utils/responsive/getImageUrl";
 
 /**
  * Uproszczony komponent dla wyświetlania ogłoszenia
@@ -25,7 +26,7 @@ const RecentListingItem = ({
         <div className="w-12 h-12 bg-gray-200 rounded-sm overflow-hidden flex-shrink-0">
           {image ? (
             <img
-              src={image}
+              src={getImageUrl(image)}
               alt={title}
               className="w-full h-full object-cover"
               loading="lazy"
