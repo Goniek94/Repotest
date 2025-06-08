@@ -524,7 +524,9 @@ const useConversations = (activeTab) => {
       lastFetchedConversationId.current = selectedConversation.id;
       fetchConversationMessages(selectedConversation, controller.signal);
     }
+t1je47-codex/sprawdź-problemy-z-useeffect-i-custom-hookami
     return () => controller.abort();
+ main
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedConversation?.id]);
 
