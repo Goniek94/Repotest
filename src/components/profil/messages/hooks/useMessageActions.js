@@ -47,7 +47,7 @@ const useMessageActions = ({
     [selectedConversation, setSelectedConversation, setConversations]
   );
 
-const removeMessage = useCallback(
+  const deleteMessage = useCallback(
     async (messageId) => {
       if (!messageId) return;
       try {
@@ -149,7 +149,7 @@ const removeMessage = useCallback(
     [selectedConversation, currentUserId, user, showNotification, setChatMessages, setConversations, setSelectedConversation]
   );
 
-  return { sendReply, removeMessage, archiveMessage };
+  return { sendReply, deleteMessage, archiveMessage };
 };
 
 export default useMessageActions;

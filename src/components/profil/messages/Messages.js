@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Paperclip, Send } from 'lucide-react';
 import MessagesHeader from './MessagesHeader';
@@ -13,6 +13,13 @@ import useConversations from './hooks/useConversations';
 import { useAuth } from '../../../contexts/AuthContext';
 import { getAuthToken, API_URL } from '../../../services/api/config';
 import { DEFAULT_FOLDER, FOLDER_MAP } from '../../../constants/messageFolders';
+
+// Funkcja debug przeniesiona poza komponent dla lepszej wydajności
+const debug = (message, data) => {
+  if (process.env.NODE_ENV === 'development') {
+    console.log(message, data);
+  }
+};
 
 /**
  * Główny komponent wiadomości
@@ -64,7 +71,7 @@ const Messages = () => {
     toggleStar,
     deleteConversation,
     moveToFolder,
-    removeMessage,
+    deleteMessage,
     archiveMessage,
     sendReply,
     showNotification
@@ -79,6 +86,13 @@ const Messages = () => {
     'Aktywna zakładka': activeTab
   });
 
+  // Memoizacja danych unread count dla MessagesTabs
+  const unreadCountMemo = useMemo(() => ({
+    odebrane: unreadCount.messages || 0,
+    wyslane: 0,
+    wazne: 0,
+    archiwum: 0
+  }), [unreadCount.messages]);
 
   // Wyłączono automatyczne przewijanie czatu na koniec listy wiadomości.
   // Dzięki temu użytkownik zachowuje kontrolę nad pozycją scrolla
@@ -136,7 +150,7 @@ const Messages = () => {
     return () => {
       debug('===== KOMPONENT MESSAGES ODMONTOWANY =====');
     };
-  }, []);
+  }, [isAuthenticated, user?._id, user?.id]); // Dodano dependencje
   
   // Logowanie przy zmianie konwersacji
   useEffect(() => {
@@ -157,16 +171,45 @@ const Messages = () => {
     }
   }, [chatMessages]);
 
-  // Obsługa wyszukiwania
-  const handleSearch = (e) => {
+  // Memoizowane handlery
+  const handleSearch = useCallback((e) => {
     const query = e.target.value;
     debug('Wyszukiwanie konwersacji:', query);
     setSearchTerm(query);
     searchConversations(query);
-  };
+  }, [setSearchTerm, searchConversations]);
+
+  const handleNewMessage = useCallback(() => {
+    setShowNewMessage(true);
+  }, []);
+
+  const handleTabChange = useCallback((tab) => {
+    setActiveTab(tab);
+    setSearchParams({ folder: tab });
+  }, [setSearchParams]);
+
+  const handleStar = useCallback((conversationId) => {
+    toggleStar(conversationId);
+  }, [toggleStar]);
+
+  const handleDelete = useCallback((conversationId) => {
+    deleteConversation(conversationId);
+  }, [deleteConversation]);
+
+  const handleMove = useCallback((conversationId, folder) => {
+    moveToFolder(conversationId, folder);
+  }, [moveToFolder]);
+
+  const handleArchive = useCallback((conversationId) => {
+    moveToFolder(conversationId, 'archiwum');
+  }, [moveToFolder]);
+
+  const handleBack = useCallback(() => {
+    selectConversation(null);
+  }, [selectConversation]);
 
   // Obsługa wysyłania odpowiedzi
-  const handleSendReply = async () => {
+  const handleSendReply = useCallback(async () => {
     if ((!replyContent.trim() && attachments.length === 0) || !selectedConversation) return;
     
     debug('Wysyłanie odpowiedzi:', {
@@ -188,16 +231,16 @@ const Messages = () => {
     } finally {
       setSendingReply(false);
     }
-  };
+  }, [replyContent, attachments, selectedConversation, sendReply, showNotification]);
 
   // Obsługa dodawania załączników
-  const handleAttachmentClick = () => {
+  const handleAttachmentClick = useCallback(() => {
     debug('Kliknięcie przycisku załączników');
     fileInputRef.current?.click();
-  };
+  }, []);
 
   // Obsługa wyboru plików
-  const handleFileSelect = (e) => {
+  const handleFileSelect = useCallback((e) => {
     const files = Array.from(e.target.files);
     debug('Wybrano pliki:', files.length);
     
@@ -228,19 +271,38 @@ const Messages = () => {
     debug('Dodano załączniki:', newAttachments);
     setAttachments(prev => [...prev, ...newAttachments]);
     e.target.value = ''; // Reset input
-  };
+  }, [attachments.length, showNotification]);
 
   // Usuwanie załącznika
-  const removeAttachment = (index) => {
-    setAttachments(attachments.filter((_, i) => i !== index));
-  };
+  const removeAttachment = useCallback((index) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index));
+  }, []);
 
   // Funkcja do przekierowania na stronę logowania
-  const handleLoginRedirect = () => {
+  const handleLoginRedirect = useCallback(() => {
     debug('Przekierowanie do strony logowania');
     localStorage.setItem('redirectAfterLogin', window.location.pathname);
     window.location.href = '/login';
-  };
+  }, []);
+
+  // Handler dla zamknięcia modalu nowej wiadomości
+  const handleCloseNewMessage = useCallback(() => {
+    setShowNewMessage(false);
+  }, []);
+
+  // Handler dla wysłania nowej wiadomości
+  const handleSendNewMessage = useCallback(() => {
+    setShowNewMessage(false);
+    // Odświeżenie listy konwersacji po wysłaniu nowej wiadomości
+    if (activeTab === 'wyslane') {
+      searchConversations('');
+    }
+  }, [activeTab, searchConversations]);
+
+  // Memoizacja warunków renderowania
+  const isButtonDisabled = useMemo(() => {
+    return sendingReply || (!replyContent.trim() && attachments.length === 0) || !selectedConversation;
+  }, [sendingReply, replyContent, attachments.length, selectedConversation]);
 
   // Rendering komponentu
   return (
@@ -251,23 +313,15 @@ const Messages = () => {
           <MessagesHeader 
             searchTerm={searchTerm}
             onSearch={handleSearch}
-            onNewMessage={() => setShowNewMessage(true)}
+            onNewMessage={handleNewMessage}
             unreadCount={unreadCount.messages}
           />
           
           {/* Zakładki folderów - dostosowane do urządzeń */}
           <MessagesTabs
             activeTab={activeTab}
-            onTabChange={(tab) => {
-              setActiveTab(tab);
-              setSearchParams({ folder: tab });
-            }}
-            unreadCount={{
-              odebrane: unreadCount.messages || 0,
-              wyslane: 0,
-              wazne: 0,
-              archiwum: 0
-            }}
+            onTabChange={handleTabChange}
+            unreadCount={unreadCountMemo}
           />
           
           {/* Główna zawartość */}
@@ -307,9 +361,9 @@ const Messages = () => {
                   messages={conversations}
                   activeConversation={selectedConversation?.id}
                   onSelectConversation={selectConversation}
-                  onStar={toggleStar}
-                  onDelete={deleteConversation}
-                  onMove={moveToFolder}
+                  onStar={handleStar}
+                  onDelete={handleDelete}
+                  onMove={handleMove}
                 />
               )}
             </div>
@@ -321,10 +375,10 @@ const Messages = () => {
                   {/* Nagłówek konwersacji */}
                   <ChatHeader 
                     conversation={selectedConversation} 
-                    onStar={() => toggleStar(selectedConversation.id)} 
-                    onDelete={() => deleteConversation(selectedConversation.id)}
-                    onArchive={() => moveToFolder(selectedConversation.id, 'archiwum')}
-                    onBack={() => selectConversation(null)}
+                    onStar={() => handleStar(selectedConversation.id)} 
+                    onDelete={() => handleDelete(selectedConversation.id)}
+                    onArchive={() => handleArchive(selectedConversation.id)}
+                    onBack={handleBack}
                   />
                   
                   {/* Wiadomości w konwersacji */}
@@ -332,7 +386,7 @@ const Messages = () => {
                     messages={chatMessages}
                     currentUser={user}
                     loading={loading}
-                    onRemoveMessage={removeMessage}
+                    onDeleteMessage={deleteMessage}
                     onArchiveMessage={archiveMessage}
                   />
                   
@@ -383,7 +437,7 @@ const Messages = () => {
                         <button
                           className="p-3 rounded-lg bg-[#35530A] text-white hover:bg-[#2A4208] transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
                           onClick={handleSendReply}
-                          disabled={sendingReply || (!replyContent.trim() && attachments.length === 0) || !selectedConversation}
+                          disabled={isButtonDisabled}
                           title="Wyślij wiadomość"
                         >
                           {sendingReply ? (
@@ -407,7 +461,7 @@ const Messages = () => {
                   </div>
                 </>
               ) : (
-                <EmptyChat onNewMessage={() => setShowNewMessage(true)} />
+                <EmptyChat onNewMessage={handleNewMessage} />
               )}
             </div>
           </div>
@@ -417,14 +471,8 @@ const Messages = () => {
       {/* Modal nowej wiadomości */}
       {showNewMessage && (
         <MessageForm
-          onClose={() => setShowNewMessage(false)}
-          onSend={() => {
-            setShowNewMessage(false);
-            // Odświeżenie listy konwersacji po wysłaniu nowej wiadomości
-            if (activeTab === 'wyslane') {
-              searchConversations('');
-            }
-          }}
+          onClose={handleCloseNewMessage}
+          onSend={handleSendNewMessage}
         />
       )}
       
