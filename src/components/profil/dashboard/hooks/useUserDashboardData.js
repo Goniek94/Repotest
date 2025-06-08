@@ -6,6 +6,7 @@ import ViewHistoryService from '../../../../services/viewHistoryService';
 import { useFavorites } from '../../../../FavoritesContext';
 import ActivityLogService from '../../../../services/activityLogService';
 import getImageUrl from '../../../../utils/responsive/getImageUrl';
+import getActivityIcon from '../../../../utils/getActivityIcon';
 
 /**
  * Hook do pobierania danych panelu użytkownika
@@ -116,7 +117,7 @@ const useUserDashboardData = () => {
           }
           return {
             id: notification._id,
-            icon,
+            icon: getActivityIcon(icon),
             title: notification.title || "Nowe powiadomienie",
             description: notification.content || "Brak treści",
             time: new Date(notification.createdAt).toLocaleDateString('pl-PL', {
@@ -131,17 +132,22 @@ const useUserDashboardData = () => {
           };
         }) || [];
         
-        const localLog = ActivityLogService.getActivities();
+        // Resolved merge conflict - using user.id parameter
+        const localLog = ActivityLogService.getActivities(user.id);
+        
         const allActivities = [
           ...localLog,
           ...favoriteActivities,
           ...mappedActivities
-        ];
+        ].map(item => ({
+          ...item,
+          icon: typeof item.icon === 'string' ? getActivityIcon(item.icon) : item.icon
+        }));
 
         if (!allActivities.length) {
           setActivities([
             {
-              icon: 'mail',
+              icon: getActivityIcon('mail'),
               title: "Nowa wiadomość od użytkownika",
               description: "Odpowiedz, aby kontynuować rozmowę",
               time: "dziś, 10:17",
@@ -149,7 +155,7 @@ const useUserDashboardData = () => {
               actionLabel: "Odpowiedz",
             },
             {
-              icon: 'car',
+              icon: getActivityIcon('car'),
               title: "Dodano nowe ogłoszenie",
               description: "Sprawdź szczegóły swojego ogłoszenia",
               time: "wczoraj, 12:17",
@@ -157,7 +163,7 @@ const useUserDashboardData = () => {
               actionLabel: "Zobacz",
             },
             {
-              icon: 'bell',
+              icon: getActivityIcon('bell'),
               title: "Nowe powiadomienie systemowe",
               description: "Ważna aktualizacja regulaminu serwisu",
               time: "14.05.2025",

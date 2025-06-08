@@ -1,8 +1,13 @@
 const STORAGE_KEY = 'userActivities';
 
-function getActivities() {
+function getKey(userId) {
+  return `${STORAGE_KEY}_${userId}`;
+}
+
+function getActivities(userId) {
+  if (!userId) return [];
   try {
-    const data = localStorage.getItem(STORAGE_KEY);
+    const data = localStorage.getItem(getKey(userId));
     return data ? JSON.parse(data) : [];
   } catch (e) {
     console.error('Błąd wczytywania aktywności:', e);
@@ -10,22 +15,26 @@ function getActivities() {
   }
 }
 
-function saveActivities(activities) {
+function saveActivities(userId, activities) {
+  if (!userId) return;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(activities));
+    localStorage.setItem(getKey(userId), JSON.stringify(activities));
   } catch (e) {
     console.error('Błąd zapisu aktywności:', e);
   }
 }
 
-function addActivity(activity) {
-  const current = getActivities();
+function addActivity(activity, userId) {
+  if (!userId) return [];
+  const current = getActivities(userId);
   const updated = [activity, ...current].slice(0, 5);
-  saveActivities(updated);
+  saveActivities(userId, updated);
   return updated;
 }
 
 function logLogin(user) {
+  if (!user?.id) return;
+  
   const activity = {
     id: Date.now(),
     icon: 'log-in',
@@ -41,7 +50,8 @@ function logLogin(user) {
     href: '#',
     actionLabel: 'OK'
   };
-  addActivity(activity);
+  
+  addActivity(activity, user.id);
 }
 
 export default {

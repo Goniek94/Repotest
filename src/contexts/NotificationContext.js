@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
+import ActivityLogService from '../services/activityLogService';
+import getActivityIcon from '../utils/getActivityIcon';
 import notificationService from '../services/notifications';
 import axios from 'axios';
 import { API_URL } from '../services/api/config';
@@ -214,13 +216,40 @@ export const NotificationProvider = ({ children }) => {
           }
           return newCount;
         });
-        
+
         // Odtwarzanie dźwięku dla nowych powiadomień
         try {
           const audio = new Audio('/notification-sound.mp3');
           audio.play().catch(e => debug('Nie można odtworzyć dźwięku powiadomienia:', e));
         } catch (error) {
           console.error('Błąd podczas odtwarzania dźwięku:', error);
+        }
+
+        if (user?.id) {
+          const activity = {
+            id: notification._id || Date.now(),
+            icon: getActivityIcon(
+              notification.type === 'new_message'
+                ? 'mail'
+                : notification.type === 'message_reply'
+                ? 'reply'
+                : notification.type === 'message_liked'
+                ? 'heart'
+                : 'bell'
+            ),
+            title: notification.title || 'Nowe powiadomienie',
+            description: notification.content || '',
+            time: new Date(notification.createdAt || Date.now()).toLocaleDateString('pl-PL', {
+              day: 'numeric',
+              month: 'numeric',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            }),
+            href: notification.link || '#',
+            actionLabel: notification.type === 'new_message' || notification.type === 'message_reply' ? 'Odpowiedz' : 'Zobacz'
+          };
+          ActivityLogService.addActivity(activity, user.id);
         }
       };
 
