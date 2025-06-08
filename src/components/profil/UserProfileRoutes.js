@@ -7,6 +7,7 @@ import UserListings from './listings/UserListings';
 import Notifications from './notifications/Notifications';
 import TransactionHistory from './TransactionHistory';
 import UserSettings from './settings/UserSettings';
+import ViewHistoryPage from './ViewHistoryPage';
 
 /**
  * Komponent obsługujący routing w panelu użytkownika
@@ -24,6 +25,7 @@ const UserProfileRoutes = () => {
         <Route path="messages/*" element={<Messages />} />
         <Route path="listings/*" element={<UserListings />} />
         <Route path="notifications" element={<Notifications />} />
+        <Route path="history" element={<ViewHistoryPage />} />
         <Route path="transactions" element={<TransactionHistory />} />
         <Route path="settings/*" element={<UserSettings />} />
         
