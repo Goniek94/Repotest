@@ -20,6 +20,7 @@ const ActivitySection = ({ recentAds = [], activities = [] }) => {
             <Eye className="w-5 h-5 mr-2 text-white" />
             <h2 className="text-lg font-bold text-white">Ostatnio oglądane</h2>
           </div>
+          
           {recentAds.length === 0 ? (
             <div className="bg-gray-50 p-4 text-sm text-gray-600 text-center">
               Brak danych
