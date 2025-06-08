@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect, useRef, useCallback } from 'react';
 import AuthService from '../services/auth';
 import { getAuthToken } from '../services/api/config';
+import ActivityLogService from '../services/activityLogService';
 
 // Tworzenie kontekstu autoryzacji
 const AuthContext = createContext();
@@ -114,6 +115,7 @@ export const AuthProvider = ({ children }) => {
       setUser(data.user);
       setIsAuthenticated(true);
       resetInactivityTimer(); // Reset timera po zalogowaniu
+      ActivityLogService.logLogin(data.user);
       return data;
     } catch (error) {
       console.error('Błąd logowania:', error);

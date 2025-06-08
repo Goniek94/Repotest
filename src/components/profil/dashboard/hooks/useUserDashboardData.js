@@ -4,6 +4,7 @@ import { getUserDashboard, ListingsService } from '../../../../services/api';
 import NotificationsService from '../../../../services/api/notificationsApi';
 import ViewHistoryService from '../../../../services/viewHistoryService';
 import { useFavorites } from '../../../../FavoritesContext';
+import ActivityLogService from '../../../../services/activityLogService';
 import getImageUrl from '../../../../utils/responsive/getImageUrl';
 
 /**
@@ -130,7 +131,9 @@ const useUserDashboardData = () => {
           };
         }) || [];
         
+        const localLog = ActivityLogService.getActivities();
         const allActivities = [
+          ...localLog,
           ...favoriteActivities,
           ...mappedActivities
         ];
