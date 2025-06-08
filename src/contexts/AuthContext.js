@@ -38,7 +38,7 @@ export const AuthProvider = ({ children }) => {
         }
       }, INACTIVITY_TIMEOUT);
     }
-  }, [isAuthenticated, resetInactivityTimer]);
+  }, [isAuthenticated, INACTIVITY_TIMEOUT]);
   
   // Śledzenie aktywności użytkownika
   useEffect(() => {
