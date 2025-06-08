@@ -4,9 +4,6 @@ import ActivityItem from '../components/ActivityItem';
 import RecentListingItem from '../components/RecentListingItem';
 import { useNavigate } from 'react-router-dom';
 
-// Główny kolor
-const PRIMARY_COLOR = '#35530A';
-
 /**
  * Komponent sekcji aktywności użytkownika
  * @param {Object} props - Właściwości komponentu
@@ -14,8 +11,6 @@ const PRIMARY_COLOR = '#35530A';
  * @param {Array} props.activities - Lista aktywności użytkownika
  */
 const ActivitySection = ({ recentAds = [], activities = [] }) => {
-  const navigate = useNavigate();
-
   return (
     <div className="mb-8">
       <div className="flex flex-col w-full gap-4">
@@ -25,7 +20,6 @@ const ActivitySection = ({ recentAds = [], activities = [] }) => {
             <Eye className="w-5 h-5 mr-2 text-white" />
             <h2 className="text-lg font-bold text-white">Ostatnio oglądane</h2>
           </div>
-
           {recentAds.length === 0 ? (
             <div className="bg-gray-50 p-4 text-sm text-gray-600 text-center">
               Brak danych
@@ -40,14 +34,11 @@ const ActivitySection = ({ recentAds = [], activities = [] }) => {
                   image={ad.image}
                   price={ad.price}
                 />
-=======
-                <RecentListingItem key={ad.id} title={ad.title} href={ad.href} />
-main
               ))}
             </div>
           )}
         </div>
-
+        
         {/* Sekcja Ostatnia aktywność */}
         <div className="w-full">
           <div className="bg-[#35530A] p-3 flex items-center">
