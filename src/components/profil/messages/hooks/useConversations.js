@@ -349,11 +349,15 @@ const useConversations = (activeTab) => {
       
       // Aktualizacja listy konwersacji
       if (activeTab !== targetFolder) {
-        setConversations(prevConversations => 
-          prevConversations.filter(convo => convo.id !== conversationId)
-        );
+        fetchConversations(); // Odświeżenie listy w docelowym folderze
       } else {
-        fetchConversations(); // Odświeżenie listy w aktualnym folderze
+        setConversations(prevConversations =>
+          prevConversations.map(convo =>
+            convo.id === conversationId
+              ? { ...convo, folder: backendFolder }
+              : convo
+          )
+        );
       }
       
       // Aktualizacja wybranej konwersacji
