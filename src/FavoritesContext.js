@@ -32,7 +32,7 @@ export const FavoritesProvider = ({ children }) => {
         hour: '2-digit',
         minute: '2-digit'
       }),
-      href: `/ogloszenia/${car.id}`,
+      href: `/listing/${car.id}`,
       actionLabel: 'Zobacz'
     };
     const newActivities = [activity, ...favoriteActivities].slice(0, 5);

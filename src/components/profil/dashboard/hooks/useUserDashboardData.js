@@ -56,7 +56,7 @@ const useUserDashboardData = () => {
             return {
               id: ad.id,
               title: ad.title || `${ad.brand || ''} ${ad.model || ''}`.trim() || `Ogłoszenie ${ad.id?.slice(-6)}`,
-              href: `/ogloszenia/${ad.id}`,
+              href: `/listing/${ad.id}`,
               price: ad.price,
               image: getImageUrl(image),
               description: ad.status === 'opublikowane' ? 'Aktywne' : ad.status
@@ -85,7 +85,7 @@ const useUserDashboardData = () => {
               id: ad.id || ad._id || id,
               title:
                 ad.title || `${ad.brand || ''} ${ad.model || ''}`.trim() || `Ogłoszenie ${String(id).slice(-6)}`,
-              href: `/ogloszenia/${ad.id || ad._id || id}`,
+              href: `/listing/${ad.id || ad._id || id}`,
               price: ad.price,
               image: getImageUrl(image),
               description: ad.status === 'opublikowane' ? 'Aktywne' : ad.status
