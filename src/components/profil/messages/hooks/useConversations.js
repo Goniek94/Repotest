@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import MessagesService from '../../../../services/api/messages';
+import useMessageActions from './useMessageActions';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../../../contexts/AuthContext';
 import { useNotifications } from '../../../../contexts/NotificationContext';
@@ -441,85 +442,17 @@ const useConversations = (activeTab) => {
     }, 400);
   }, [activeTab, showNotification, fetchConversations]);
 
-  /**
-   * Wysłanie odpowiedzi w konwersacji
-   */
-  const sendReply = useCallback(async (content, attachments = []) => {
-    if ((!content || !content.trim()) && (!attachments || attachments.length === 0)) {
-      return Promise.reject(new Error('Brak treści wiadomości'));
-    }
-    
-    if (!selectedConversation || !selectedConversation.userId) {
-      return Promise.reject(new Error('Nie wybrano konwersacji'));
-    }
-    
-    try {
-      debug('Wysyłanie odpowiedzi do:', selectedConversation.userId);
-      debug('Treść:', content);
-      debug('Liczba załączników:', attachments.length);
-      const formData = new FormData();
-      formData.append('content', content);
-      
-      // Dodanie załączników do formularza
-      attachments.forEach(attachment => {
-        formData.append('attachments', attachment.file || attachment);
-      });
-      
-      const response = await MessagesService.replyToConversation(selectedConversation.userId, formData);
-      
-      // Optymistyczna aktualizacja UI - dodanie nowej wiadomości do czatu
-      const newMessage = {
-        id: response?.data?._id || `temp-${Date.now()}`,
-        sender: currentUserId,
-        senderName: user?.name || user?.email || 'Ja',
-        content: content,
-        timestamp: new Date(),
-        isRead: true,
-        isDelivered: true,
-        isDelivering: false,
-        attachments: attachments.map(attachment => ({
-          id: `temp-${attachment.name}`,
-          name: attachment.name,
-          url: attachment.file ? URL.createObjectURL(attachment.file) : attachment.url,
-          type: (attachment.file ? attachment.file.type : attachment.type) || 'application/octet-stream'
-        }))
-      };
-      
-      setChatMessages(prevMessages => [...prevMessages, newMessage]);
-      
-      // Aktualizacja ostatniej wiadomości w konwersacji
-      setConversations(prevConversations => 
-        prevConversations.map(convo => 
-          convo.id === selectedConversation.id 
-            ? { 
-                ...convo, 
-                lastMessage: {
-                  content: content,
-                  date: new Date(),
-                  isRead: true
-                } 
-              }
-            : convo
-        )
-      );
-      
-      setSelectedConversation(prev => ({
-        ...prev,
-        lastMessage: {
-          content: content,
-          date: new Date(),
-          isRead: true
-        }
-      }));
-      
-      showNotification('Wiadomość wysłana', 'success');
-      return Promise.resolve();
-    } catch (err) {
-      console.error('Błąd podczas wysyłania:', err);
-      showNotification('Nie udało się wysłać wiadomości', 'error');
-      return Promise.reject(err);
-    }
-  }, [selectedConversation, currentUserId, user, showNotification]);
+  // Akcje na wiadomościach zostały wydzielone do osobnego hooka,
+  // aby uprościć strukturę useConversations.
+  const { sendReply, deleteMessage, archiveMessage } = useMessageActions({
+    selectedConversation,
+    setSelectedConversation,
+    setConversations,
+    setChatMessages,
+    currentUserId,
+    user,
+    showNotification
+  });
 
   /**
    * Usunięcie pojedynczej wiadomości
