@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { FileText, Image, Check, CheckCircle, Clock, Paperclip, X, Download } from 'lucide-react';
+import { FileText, Image, Check, CheckCircle, Clock, Paperclip, X, Download, Trash2, Archive } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 
 /**
@@ -8,10 +8,12 @@ import { useAuth } from '../../../contexts/AuthContext';
  * Odpowiada za prezentację wiadomości, nie zawiera logiki biznesowej,
  * która została przeniesiona do hooka useConversations.
  */
-const MessageChat = ({ 
-  messages, 
+const MessageChat = ({
+  messages,
   currentUser,
-  loading
+  loading,
+  onRemoveMessage,
+  onArchiveMessage
 }) => {
   const { user } = useAuth();
   const messagesEndRef = useRef(null);
@@ -142,13 +144,33 @@ const MessageChat = ({
                 
                 {/* Wiadomość */}
                 <div className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
-                  <div 
-                    className={`max-w-[85%] md:max-w-[70%] rounded-lg px-4 py-2.5 shadow-sm ${
-                      isCurrentUser 
-                        ? 'bg-[#35530A] text-white rounded-br-none' 
+                  <div
+                    className={`relative group max-w-[85%] md:max-w-[70%] rounded-lg px-4 py-2.5 shadow-sm ${
+                      isCurrentUser
+                        ? 'bg-[#35530A] text-white rounded-br-none'
                         : 'bg-white text-gray-800 rounded-bl-none'
                     }`}
                   >
+                    {isCurrentUser && (
+                      <div className="absolute -top-2 right-0 flex space-x-1 opacity-0 group-hover:opacity-100">
+                        {onArchiveMessage && (
+                          <button
+                            onClick={() => onArchiveMessage(message.id)}
+                            className="p-1 rounded-full bg-white bg-opacity-20 hover:bg-opacity-40 text-white"
+                          >
+                            <Archive className="w-3 h-3" />
+                          </button>
+                        )}
+                        {onRemoveMessage && (
+                          <button
+                            onClick={() => onRemoveMessage(message.id)}
+                            className="p-1 rounded-full bg-white bg-opacity-20 hover:bg-opacity-40 text-white"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+                    )}
                     {/* Treść wiadomości */}
                     <div className="whitespace-pre-wrap break-words">{message.content}</div>
                     

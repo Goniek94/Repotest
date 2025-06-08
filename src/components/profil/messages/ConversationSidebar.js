@@ -13,7 +13,7 @@ const ConversationSidebar = ({
   selectedMessage,
   onMessageClick,
   toggleStar,
-  deleteMessage,
+  removeMessage,
   loading
 }) => {
   // Definicja folderów
@@ -137,7 +137,7 @@ const ConversationSidebar = ({
                     </button>
                     
                     <button
-                      onClick={(e) => deleteMessage(message.id, e)}
+                      onClick={(e) => removeMessage(message.id, e)}
                       className="p-1 rounded-full text-gray-400 hover:bg-gray-100 hover:text-red-500"
                     >
                       <Trash2 className="w-4 h-4" />
