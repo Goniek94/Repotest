@@ -26,12 +26,7 @@ import ListingDetails from './components/listings/details/ListingDetails';
 import { clearAuthData } from './services/api/config';
 
 // Komponenty admina
-import AdminLayout from './components/admin/AdminLayout';
-import AdminDashboard from './components/admin/dashboard/AdminDashboard';
-import AdminUsers from './components/admin/users/AdminUsers';
-import AdminListings from './components/admin/listings/AdminListings';
-import AdminComments from './components/comments/admin/AdminComments';
-import AdminDiscounts from './components/discounts/admin/AdminDiscounts';
+import AdminPanel from './components/admin/AdminPanel';
 
 // Komponenty profilu użytkownika
 import UserProfileRoutes from './components/profil/UserProfileRoutes';
@@ -203,16 +198,10 @@ const App = () => {
                   path="/admin"
                   element={
                     <ProtectedRoute requireAdmin>
-                      <AdminLayout />
+                      <AdminPanel />
                     </ProtectedRoute>
                   }
-                >
-                  <Route index element={<AdminDashboard />} />
-                  <Route path="users" element={<AdminUsers />} />
-                  <Route path="listings" element={<AdminListings />} />
-                  <Route path="comments" element={<AdminComments />} />
-                  <Route path="discounts" element={<AdminDiscounts />} />
-                </Route>
+                />
 
                 {/* Panel użytkownika i wszystkie jego podstrony */}
                 <Route
