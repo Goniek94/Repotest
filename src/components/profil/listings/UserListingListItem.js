@@ -97,28 +97,6 @@ const UserListingListItem = memo(({
           <Calendar className="w-4 h-4" />
           {formatDate(listing.createdAt)}
         </div>
-        {/* Favorite button */}
-        <button
-          onClick={e => {
-            e.stopPropagation();
-            if (onFavorite) {
-              // Toggle local state immediately for better UX
-              const newFavoriteState = !isFavorite;
-              // Update the element's appearance immediately
-              e.currentTarget.querySelector('svg').classList.toggle('fill-red-500');
-              e.currentTarget.querySelector('svg').classList.toggle('stroke-red-500');
-              e.currentTarget.querySelector('svg').classList.toggle('stroke-gray-400');
-              // Call the actual handler
-              onFavorite(listing.id || listing._id, newFavoriteState);
-            }
-          }}
-          className="absolute top-2 right-2 p-1.5 bg-white rounded-full shadow-lg z-10 hover:scale-110 transition-transform"
-          title="Polub"
-        >
-          <Heart
-            className={`w-5 h-5 ${isFavorite ? 'fill-red-500 stroke-red-500' : 'stroke-gray-400'}`}
-          />
-        </button>
         {/* Green border is enough to show featured status - no text badge needed */}
       </div>
 
@@ -129,10 +107,6 @@ const UserListingListItem = memo(({
           <div>
             <h3 className="text-lg sm:text-xl font-bold mb-1 line-clamp-1">{listing.title}</h3>
             <p className="text-sm sm:text-base text-gray-600 line-clamp-1">{listing.subtitle}</p>
-            <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
-              <CalendarIcon className="w-4 h-4" />
-              <span>Dodano: {formatDate(listing.createdAt)}</span>
-            </div>
             {/* Parameters grid */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
               <div className="flex items-center gap-2 text-gray-700">
@@ -180,18 +154,18 @@ const UserListingListItem = memo(({
             </div>
           </div>
           {/* Stats */}
-          <div className="flex gap-4 mt-3 border-t border-gray-100 pt-3">
-            <div className="flex items-center rounded-full px-4 py-2 shadow bg-white border border-gray-200 text-[#35530A] font-semibold text-base gap-2">
+          <div className="flex w-full mt-3 border-t border-gray-100 pt-3">
+            <div className="flex items-center flex-1 px-4 py-2 shadow bg-white border border-gray-200 text-[#35530A] font-semibold text-base gap-2 border-r-0">
               <Eye className="w-5 h-5" />
               <span className="font-bold">{listing.views || 0}</span>
               <span className="text-xs font-medium text-gray-600">wyświetleń</span>
             </div>
-            <div className="flex items-center rounded-full px-4 py-2 shadow bg-white border border-gray-200 text-[#b91c1c] font-semibold text-base gap-2">
+            <div className="flex items-center flex-1 px-4 py-2 shadow bg-white border border-gray-200 text-[#b91c1c] font-semibold text-base gap-2 border-r-0 border-l-0">
               <Heart className="w-5 h-5" />
               <span className="font-bold">{listing.likes || 0}</span>
               <span className="text-xs font-medium text-gray-600">polubień</span>
             </div>
-            <div className="flex items-center rounded-full px-4 py-2 shadow bg-white border border-gray-200 text-[#35530A] font-semibold text-base gap-2">
+            <div className="flex items-center flex-1 px-4 py-2 shadow bg-white border border-gray-200 text-[#35530A] font-semibold text-base gap-2 border-l-0">
               <Clock className="w-5 h-5" />
               <span className="font-bold">{getDaysRemaining() || 0}</span>
               <span className="text-xs font-medium text-gray-600">dni do końca</span>
@@ -199,31 +173,31 @@ const UserListingListItem = memo(({
           </div>
         </div>
         {/* Actions section */}
-        <div className="flex flex-col items-stretch justify-center gap-2 p-3 min-w-[120px] bg-gray-50 border-l border-gray-100">
+        <div className="flex flex-col items-stretch justify-start gap-2 p-3 min-w-[120px] bg-gray-50 border-l border-gray-100">
           <button
             onClick={e => { e.stopPropagation(); onEdit && onEdit(listing.id || listing._id); }}
-            className="flex items-center justify-center gap-2 px-4 py-2 rounded bg-blue-500 hover:bg-blue-600 text-white font-semibold text-sm transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-2 rounded bg-gradient-to-r from-[#6B8E23] to-[#556B2F] hover:from-[#556B2F] hover:to-[#4A5D28] text-white font-semibold text-sm transition-all duration-300 shadow-md"
             title="Edytuj"
           >
             <Edit className="w-4 h-4" /> Edytuj
           </button>
           <button
             onClick={e => { e.stopPropagation(); onEnd && onEnd(listing.id || listing._id); }}
-            className="flex items-center justify-center gap-2 px-4 py-2 rounded bg-yellow-400 hover:bg-yellow-500 text-white font-semibold text-sm transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-2 rounded bg-gradient-to-r from-[#6B8E23] to-[#556B2F] hover:from-[#556B2F] hover:to-[#4A5D28] text-white font-semibold text-sm transition-all duration-300 shadow-md"
             title="Zakończ"
           >
             <Trash className="w-4 h-4" /> Zakończ
           </button>
           <button
             onClick={e => { e.stopPropagation(); onExtend && onExtend(listing.id || listing._id); }}
-            className="flex items-center justify-center gap-2 px-4 py-2 rounded bg-green-500 hover:bg-green-600 text-white font-semibold text-sm transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-2 rounded bg-gradient-to-r from-[#6B8E23] to-[#556B2F] hover:from-[#556B2F] hover:to-[#4A5D28] text-white font-semibold text-sm transition-all duration-300 shadow-md"
             title="Przedłuż"
           >
             <RefreshCw className="w-4 h-4" /> Przedłuż
           </button>
           <button
             onClick={e => { e.stopPropagation(); onDelete && onDelete(listing.id || listing._id); }}
-            className="flex items-center justify-center gap-2 px-4 py-2 rounded bg-red-500 hover:bg-red-600 text-white font-semibold text-sm transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-2 rounded bg-gradient-to-r from-[#6B8E23] to-[#556B2F] hover:from-[#556B2F] hover:to-[#4A5D28] text-white font-semibold text-sm transition-all duration-300 shadow-md"
             title="Usuń"
           >
             <Trash className="w-4 h-4" /> Usuń

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { fetchNotificationPreferences, updateNotificationPreferences } from '../../../services/api/userSettingsApi';
 import { 
   Bell, 
   Mail, 
@@ -29,6 +30,23 @@ const NotificationsPanel = () => {
   
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Fetch notification preferences from the backend
+  useEffect(() => {
+    setIsLoading(true);
+    fetchNotificationPreferences()
+      .then(data => {
+        setSettings(data);
+        setIsLoading(false);
+      })
+      .catch(err => {
+        console.error('Błąd podczas pobierania ustawień powiadomień:', err);
+        setError('Nie udało się pobrać ustawień powiadomień.');
+        setIsLoading(false);
+      });
+  }, []);
 
   // Obsługa przełączania ustawień
   const handleToggle = (key) => {
@@ -39,12 +57,13 @@ const NotificationsPanel = () => {
   };
 
   // Obsługa zapisywania zmian
-  const handleSaveChanges = (e) => {
+  const handleSaveChanges = async (e) => {
     e.preventDefault();
     setIsSaving(true);
+    setError(null);
     
-    // Symulacja opóźnienia API
-    setTimeout(() => {
+    try {
+      await updateNotificationPreferences(settings);
       setIsSaving(false);
       setShowSuccess(true);
       
@@ -52,7 +71,11 @@ const NotificationsPanel = () => {
       setTimeout(() => {
         setShowSuccess(false);
       }, 3000);
-    }, 1000);
+    } catch (err) {
+      console.error('Błąd podczas zapisywania ustawień powiadomień:', err);
+      setError('Nie udało się zapisać ustawień powiadomień.');
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -65,6 +88,28 @@ const NotificationsPanel = () => {
       
       <form onSubmit={handleSaveChanges} className="p-4 sm:p-6">
         <p className="text-gray-600 mb-8">Dostosuj sposób otrzymywania powiadomień i alertów</p>
+        
+        {/* Komunikat o błędzie */}
+        {error && (
+          <div className="mb-6 p-4 rounded bg-red-50 border-l-4 border-red-500 text-red-700">
+            <div className="flex items-start">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 mt-0.5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              <div>
+                <p className="font-medium">{error}</p>
+                <p className="text-sm mt-1">Spróbuj odświeżyć stronę lub zaloguj się ponownie.</p>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Wskaźnik ładowania */}
+        {isLoading ? (
+          <div className="flex justify-center items-center py-16">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+          </div>
+        ) : (
         
         <div className="space-y-6 sm:space-y-8">
           {/* Sekcja powiadomień email */}
@@ -149,6 +194,7 @@ const NotificationsPanel = () => {
             </div>
           </div>
         </div>
+        )}
         
         {/* Informacja o ochronie prywatności */}
         <div className="mt-8 p-4 bg-blue-50 rounded-lg flex items-start">

@@ -22,7 +22,7 @@ function ListingsPage() {
   const [filters, setFilters] = useState({});
 
   // Stany UI
-  const [searchOpen, setSearchOpen] = useState(true); // Domyślnie otwarta wyszukiwarka
+  const [searchOpen, setSearchOpen] = useState(false); // Domyślnie ukryta wyszukiwarka
   const [sortType, setSortType] = useState('none');
   const [offerType, setOfferType] = useState('all');
   const [onlyFeatured, setOnlyFeatured] = useState(false);

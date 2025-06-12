@@ -7,7 +7,9 @@ import {
   Reply,
   Bell,
   Car,
-  AlertCircle
+  AlertCircle,
+  Clock,
+  Tag
 } from 'lucide-react';
 
 const iconMap = {
@@ -18,7 +20,9 @@ const iconMap = {
   heart: <Heart size={16} className="text-red-500" />,
   bell: <Bell size={16} className="text-green-600" />,
   car: <Car size={16} className="text-green-600" />,
-  'alert-circle': <AlertCircle size={16} className="text-amber-500" />
+  'alert-circle': <AlertCircle size={16} className="text-amber-500" />,
+  clock: <Clock size={16} className="text-orange-500" />,
+  tag: <Tag size={16} className="text-purple-500" />
 };
 
 export default function getActivityIcon(name) {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { changePassword } from '../../../services/api/userSettingsApi';
 import { 
   Lock, 
   Eye, 
@@ -130,7 +131,7 @@ const SecurityPanel = () => {
   };
 
   // Obsługa zmiany hasła
-  const handleChangePassword = (e) => {
+  const handleChangePassword = async (e) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -139,8 +140,12 @@ const SecurityPanel = () => {
     
     setIsSaving(true);
     
-    // Symulacja opóźnienia API
-    setTimeout(() => {
+    try {
+      await changePassword({
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword
+      });
+      
       setIsSaving(false);
       setShowSuccess(true);
       
@@ -155,7 +160,24 @@ const SecurityPanel = () => {
       setTimeout(() => {
         setShowSuccess(false);
       }, 3000);
-    }, 1500);
+    } catch (error) {
+      console.error('Błąd podczas zmiany hasła:', error);
+      
+      // Określ odpowiedni komunikat błędu na podstawie kodu odpowiedzi
+      if (error.response) {
+        if (error.response.status === 401) {
+          setPasswordError('Nieprawidłowe obecne hasło. Spróbuj ponownie.');
+        } else if (error.response.status === 400) {
+          setPasswordError('Nieprawidłowy format nowego hasła. Sprawdź wymagania.');
+        } else {
+          setPasswordError('Wystąpił błąd. Spróbuj ponownie później.');
+        }
+      } else {
+        setPasswordError('Nie można połączyć się z serwerem. Sprawdź połączenie internetowe.');
+      }
+      
+      setIsSaving(false);
+    }
   };
   
   // Obsługa usuwania konta

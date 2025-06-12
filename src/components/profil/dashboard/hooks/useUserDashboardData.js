@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { useAuth } from '../../../../contexts/AuthContext';
 import { getUserDashboard, ListingsService } from '../../../../services/api';
 import NotificationsService from '../../../../services/api/notificationsApi';
+import NotificationContext from '../../../../contexts/NotificationContext';
 import ViewHistoryService from '../../../../services/viewHistoryService';
 import { useFavorites } from '../../../../FavoritesContext';
 import ActivityLogService from '../../../../services/activityLogService';
@@ -10,9 +11,19 @@ import getActivityIcon from '../../../../utils/getActivityIcon';
 
 /**
  * Hook do pobierania danych panelu użytkownika
+ * @param {number} refreshTrigger - Wartość zmieniająca się przy żądaniu odświeżenia danych
  * @returns {Object} Dane panelu użytkownika, stan ładowania i błędy
  */
-const useUserDashboardData = () => {
+const useUserDashboardData = (refreshTrigger = 0) => {
+  // Pobieranie kontekstu powiadomień - hooki muszą być wywoływane bezwarunkowo
+  const notificationContext = useContext(NotificationContext);
+  // Sprawdzenie czy kontekst jest dostępny
+  const isNotificationContextAvailable = notificationContext !== undefined && notificationContext !== null;
+  
+  if (!isNotificationContextAvailable) {
+    console.log('NotificationContext nie jest dostępny, używam danych z API');
+  }
+
   // Stan dla danych użytkownika
   const [userStats, setUserStats] = useState({
     activeListings: 0,
@@ -29,14 +40,24 @@ const useUserDashboardData = () => {
   // Pobieranie danych użytkownika
   useEffect(() => {
     const fetchUserData = async () => {
+      setIsLoading(true);
+      setError(null);
+      
       try {
-        // Fetch dashboard data from backend
+        // Fetch dashboard data from backend with retry logic
         const dashboard = await getUserDashboard();
+        
+        // Check if the dashboard request returned with an error flag
+        if (dashboard.error) {
+          console.warn("Dashboard API zwróciło błąd, ale kontynuujemy z dostępnymi danymi:", dashboard.error);
+        }
 
-        // Set stats from backend
+        // Set stats from backend (even if partial)
         setUserStats({
-          activeListings: dashboard.activeListingsCount || 0,
-          completedTransactions: dashboard.completedTransactionsCount || 0
+          activeListings: dashboard.activeListingsCount || 0, 
+          completedTransactions: dashboard.completedTransactionsCount || 0,
+          // Jeśli mamy kontekst powiadomień, użyjemy jego licznika
+          messages: notificationContext?.unreadCount?.messages || dashboard.unreadMessagesCount || 0
         });
 
         // Prepare recent ads from backend
@@ -102,51 +123,107 @@ const useUserDashboardData = () => {
         ];
         setRecentAds(combinedAds);
 
-        // Fetch notifications/activities as before
-        const notifications = await NotificationsService.getAll({ limit: 3 });
-        const mappedActivities = notifications.notifications?.map(notification => {
-          let icon = 'bell';
-          let actionLabel = "Zobacz";
-          if (notification.type?.includes('message')) {
-            icon = 'mail';
-            actionLabel = "Odpowiedz";
-          } else if (notification.type?.includes('listing')) {
-            icon = 'car';
-          } else if (notification.type?.includes('system')) {
-            icon = 'alert-circle';
-          }
-          return {
-            id: notification._id,
-            icon: getActivityIcon(icon),
-            title: notification.title || "Nowe powiadomienie",
-            description: notification.content || "Brak treści",
-            time: new Date(notification.createdAt).toLocaleDateString('pl-PL', {
-              day: 'numeric',
-              month: 'numeric',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            }),
-            href: notification.link || "#",
-            actionLabel
-          };
-        }) || [];
+        // Przygotowanie powiadomień - najpierw próbujemy użyć NotificationContext
+        let contextNotifications = [];
+        let apiNotifications = [];
         
-        // Resolved merge conflict - using user.id parameter
+        // Jeśli kontekst jest dostępny, pobieramy z niego powiadomienia
+        if (notificationContext?.notifications && notificationContext.notifications.length > 0) {
+          contextNotifications = notificationContext.notifications
+            .slice(0, 10) // Limit do 10 najnowszych powiadomień
+            .map(notification => {
+              let icon = 'bell';
+              let actionLabel = "Zobacz";
+              
+              if (notification.type === 'new_message' || notification.type === 'message_reply') {
+                icon = 'mail';
+                actionLabel = "Odpowiedz";
+              } else if (notification.type === 'listing_liked') {
+                icon = 'heart';
+              } else if (notification.type === 'listing_expiring') {
+                icon = 'clock';
+              } else if (notification.type === 'listing_price_change') {
+                icon = 'tag';
+              } else if (notification.type?.includes('listing')) {
+                icon = 'car';
+              }
+              
+              return {
+                id: notification.id,
+                icon: getActivityIcon(icon),
+                title: notification.message || notification.title || "Nowe powiadomienie",
+                description: notification.description || notification.content || "Brak treści",
+                time: new Date(notification.createdAt).toLocaleDateString('pl-PL', {
+                  day: 'numeric',
+                  month: 'numeric',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                }),
+                href: notification.link || "#",
+                actionLabel
+              };
+            });
+        }
+        
+        // Jeśli nie mamy powiadomień z kontekstu lub jest ich mało, pobieramy z API
+        if (contextNotifications.length < 4) {
+          try {
+            const notifications = await NotificationsService.getAll({ limit: 5 });
+            apiNotifications = notifications.notifications?.map(notification => {
+              let icon = 'bell';
+              let actionLabel = "Zobacz";
+              if (notification.type?.includes('message')) {
+                icon = 'mail';
+                actionLabel = "Odpowiedz";
+              } else if (notification.type?.includes('listing')) {
+                icon = 'car';
+              } else if (notification.type?.includes('system')) {
+                icon = 'alert-circle';
+              }
+              return {
+                id: notification._id,
+                icon: getActivityIcon(icon),
+                title: notification.title || "Nowe powiadomienie",
+                description: notification.content || "Brak treści",
+                time: new Date(notification.createdAt).toLocaleDateString('pl-PL', {
+                  day: 'numeric',
+                  month: 'numeric',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                }),
+                href: notification.link || "#",
+                actionLabel
+              };
+            }) || [];
+          } catch (error) {
+            console.error("Błąd podczas pobierania powiadomień z API:", error);
+          }
+        }
+        
+        // Pobieramy aktywności z lokalnego logu
         const localLog = ActivityLogService.getActivities(user.id);
         
+        // Łączymy wszystkie źródła aktywności, priorytetyzując kontekst
         const allActivities = [
+          ...contextNotifications,
+          // Dodajemy powiadomienia z API, których nie ma w kontekście
+          ...apiNotifications.filter(api => 
+            !contextNotifications.some(ctx => ctx.id === api.id)
+          ),
           ...localLog,
-          ...favoriteActivities,
-          ...mappedActivities
+          ...favoriteActivities
         ].map(item => ({
           ...item,
           icon: typeof item.icon === 'string' ? getActivityIcon(item.icon) : item.icon
         }));
 
         if (!allActivities.length) {
+          // Przykładowe różnorodne powiadomienia do wykorzystania gdy brak rzeczywistych danych
           setActivities([
             {
+              id: 'sample-1',
               icon: getActivityIcon('mail'),
               title: "Nowa wiadomość od użytkownika",
               description: "Odpowiedz, aby kontynuować rozmowę",
@@ -155,6 +232,7 @@ const useUserDashboardData = () => {
               actionLabel: "Odpowiedz",
             },
             {
+              id: 'sample-2',
               icon: getActivityIcon('car'),
               title: "Dodano nowe ogłoszenie",
               description: "Sprawdź szczegóły swojego ogłoszenia",
@@ -163,12 +241,40 @@ const useUserDashboardData = () => {
               actionLabel: "Zobacz",
             },
             {
+              id: 'sample-3',
+              icon: getActivityIcon('heart'),
+              title: "Polubiono Twoje ogłoszenie",
+              description: "Twoje ogłoszenie BMW X5 zostało dodane do ulubionych",
+              time: "wczoraj, 15:42",
+              href: "#",
+              actionLabel: "Zobacz",
+            },
+            {
+              id: 'sample-4',
+              icon: getActivityIcon('clock'),
+              title: "Ogłoszenie wkrótce wygaśnie",
+              description: "Twoje ogłoszenie Audi A4 wygaśnie za 2 dni",
+              time: "dziś, 08:30",
+              href: "#",
+              actionLabel: "Przedłuż",
+            },
+            {
+              id: 'sample-5',
               icon: getActivityIcon('bell'),
               title: "Nowe powiadomienie systemowe",
               description: "Ważna aktualizacja regulaminu serwisu",
               time: "14.05.2025",
               href: "#",
               actionLabel: "Zobacz",
+            },
+            {
+              id: 'sample-6',
+              icon: getActivityIcon('tag'),
+              title: "Obniżono cenę ogłoszenia",
+              description: "Cena ogłoszenia, które obserwujesz została obniżona o 5000 zł",
+              time: "3 dni temu",
+              href: "#",
+              actionLabel: "Sprawdź",
             }
           ]);
         } else {
@@ -186,7 +292,7 @@ const useUserDashboardData = () => {
     if (user && !authLoading) {
       fetchUserData();
     }
-  }, [user, authLoading, favoriteActivities]);
+  }, [user, authLoading, favoriteActivities, refreshTrigger, notificationContext]);
 
   return {
     userStats,

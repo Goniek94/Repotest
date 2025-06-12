@@ -10,6 +10,7 @@ import ActivitySection from './ActivitySection';
 import TransactionHistoryTab from './TabContent/TransactionHistoryTab';
 import NotificationsTab from './TabContent/NotificationsTab';
 import ContactTab from './TabContent/ContactTab';
+import { dismissNotification } from '../../../services/api';
 
 // Główny kolor aplikacji
 const PRIMARY_COLOR = '#35530A';
@@ -35,8 +36,16 @@ const UserPanel = () => {
   // Stan aktywnej zakładki
   const [activeTab, setActiveTab] = useState(TABS.PANEL);
   
+  // Funkcja odświeżania danych
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  
   // Pobieranie danych użytkownika za pomocą hooka
-  const { userStats, recentAds, activities, isLoading, error, user } = useUserDashboardData();
+  const { userStats, recentAds, activities, isLoading, error, user } = useUserDashboardData(refreshTrigger);
+  
+  // Funkcja ponownego ładowania danych
+  const handleRetry = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
 
   // Konfiguracja zakładek głównej nawigacji
   const navigationTabs = [
@@ -48,6 +57,23 @@ const UserPanel = () => {
     { id: TABS.CONTACT, label: 'Kontakt', icon: <Phone size={isMobile ? 18 : 20} /> }
   ];
 
+  // Stan dla usuniętych aktywności
+  const [dismissedActivities, setDismissedActivities] = useState([]);
+  
+  // Funkcja do obsługi usuwania aktywności
+  const handleDismissActivity = async (id) => {
+    // Natychmiast aktualizujemy lokalny stan dla lepszego UX
+    setDismissedActivities(prev => [...prev, id]);
+    
+    try {
+      // Wywołanie API do usunięcia powiadomienia na serwerze
+      await dismissNotification(id);
+    } catch (error) {
+      console.error('Błąd podczas odrzucania powiadomienia:', error);
+      // Lokalne odrzucenie działa nawet gdy API zawiedzie
+    }
+  };
+  
   // Renderowanie zawartości panelu głównego
   const renderPanelContent = () => {
     // Wyświetlanie stanu ładowania
@@ -63,25 +89,26 @@ const UserPanel = () => {
       );
     }
     
-    // Wyświetlanie błędu
-    if (error) {
-      return (
-        <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4 sm:p-6 my-4 sm:my-6">
-          <h3 className="text-lg sm:text-xl font-semibold mb-2 sm:mb-3">Wystąpił błąd</h3>
-          <p className="text-sm sm:text-base">Nie udało się załadować danych. Spróbuj ponownie później.</p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="mt-3 sm:mt-4 bg-red-100 hover:bg-red-200 text-red-800 py-2 px-4 rounded-md text-sm sm:text-base transition-colors duration-200"
-          >
-            Odśwież stronę
-          </button>
-        </div>
-      );
-    }
-    
     // Renderowanie zawartości panelu
     return (
       <div className="transition-opacity duration-300 ease-in-out animate-fadeIn">
+        {/* Wyświetl banner z błędem, jeśli wystąpił problem */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4 sm:p-5 mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between">
+              <div>
+                <h3 className="text-base sm:text-lg font-semibold mb-1 sm:mb-2">Wystąpił problem z ładowaniem danych</h3>
+                <p className="text-sm">Niektóre informacje mogą być niedostępne. Wyświetlamy dostępne dane.</p>
+              </div>
+              <button 
+                onClick={handleRetry}
+                className="mt-3 sm:mt-0 bg-red-100 hover:bg-red-200 text-red-800 py-2 px-4 rounded-md text-sm transition-colors duration-200 whitespace-nowrap"
+              >
+                Spróbuj ponownie
+              </button>
+            </div>
+          </div>
+        )}
         {/* Karta powitalna */}
         <WelcomeCard 
           user={user} 
@@ -92,7 +119,8 @@ const UserPanel = () => {
         {/* Sekcja aktywności */}
         <ActivitySection
           recentAds={recentAds}
-          activities={activities}
+          activities={activities.filter(item => !dismissedActivities.includes(item.id))}
+          onDismissActivity={handleDismissActivity}
         />
       </div>
     );

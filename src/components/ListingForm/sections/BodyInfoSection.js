@@ -1,133 +1,202 @@
-import React from 'react';
-import FormField from '../components/FormField';
+import React, { useState } from 'react';
 import { BODY_TYPES, COLORS } from '../../../constants/vehicleOptions';
+import SelectField from '../components/SelectField';
 
 const BodyInfoSection = ({ formData, handleChange, errors }) => {
+  // Stan dla śledzenia otwartych dropdown
+  const [openDropdowns, setOpenDropdowns] = useState({});
   
   // Opcje dla liczby drzwi
   const doorOptions = [
-    { value: '2', label: '2 drzwi' },
-    { value: '3', label: '3 drzwi' },
-    { value: '4', label: '4 drzwi' },
-    { value: '5', label: '5 drzwi' },
-    { value: '6', label: '6 drzwi' }
+    '2 drzwi',
+    '3 drzwi',
+    '4 drzwi',
+    '5 drzwi',
+    '6 drzwi'
   ];
   
   // Opcje dla wykończenia
   const finishOptions = [
-    { value: 'Metalik', label: 'Metalik' },
-    { value: 'Matowy', label: 'Matowy' },
-    { value: 'Perłowy', label: 'Perłowy' },
-    { value: 'Standardowy', label: 'Standardowy' }
+    'Metalik',
+    'Matowy',
+    'Perłowy',
+    'Standardowy'
   ];
+
+  // Opcje tak/nie dla checkboxów
+  const booleanOptions = ['Tak', 'Nie'];
   
+  // Obsługa przełączania dropdown
+  const toggleDropdown = (name) => {
+    setOpenDropdowns(prev => ({
+      ...prev,
+      [name]: !prev[name]
+    }));
+  };
+
+  // Obsługa zmiany opcji
+  const handleOptionChange = (name, option) => {
+    handleChange(name, option);
+    // Zamknij dropdown po wyborze opcji
+    setOpenDropdowns(prev => ({
+      ...prev,
+      [name]: false
+    }));
+  };
+
   return (
-    <div className="bg-white p-6 rounded-[2px] shadow-md">
-      {/* Nagłówek główny przeniesiony do komponentu CreateListingForm */}
-      <div className="mb-6">
-        
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          {/* Typ nadwozia jako dropdown zamiast radio buttons */}
-          <FormField
-            type="select"
-            label="Typ nadwozia*"
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {/* Typ nadwozia - jako dropdown select */}
+        <div className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
+          formData.bodyType ? 'border-[#35530A] bg-green-50' : 'border-gray-300'
+        }`}>
+          <SelectField
             name="bodyType"
-            value={formData.bodyType}
-            onChange={(e) => handleChange('bodyType', e.target.value)}
+            label="Typ nadwozia"
+            options={BODY_TYPES}
+            value={formData.bodyType || ''}
+            onChange={handleOptionChange}
+            openDropdowns={openDropdowns}
+            toggleDropdown={toggleDropdown}
+            required={true}
             error={errors.bodyType}
-            options={BODY_TYPES.map(type => ({ value: type, label: type }))}
             placeholder="Wybierz typ nadwozia"
-          />
-          
-          {/* Kolor */}
-          <FormField
-            type="select"
-            label="Kolor*"
-            name="color"
-            value={formData.color}
-            onChange={(e) => handleChange('color', e.target.value)}
-            error={errors.color}
-            options={COLORS.map(color => ({ value: color, label: color }))}
-            placeholder="Wybierz kolor"
-          />
-          
-          {/* Liczba drzwi jako dropdown */}
-          <FormField
-            type="select"
-            label="Liczba drzwi*"
-            name="doors"
-            value={formData.doors}
-            onChange={(e) => handleChange('doors', e.target.value)}
-            error={errors.doors}
-            options={doorOptions}
-            placeholder="Wybierz ilość drzwi"
-          />
-          
-          {/* Rodzaj wykończenia */}
-          <FormField
-            type="select"
-            label="Wykończenie"
-            name="finish"
-            value={formData.finish || ''}
-            onChange={(e) => handleChange('finish', e.target.value)}
-            error={errors.finish}
-            options={finishOptions}
-            placeholder="Wybierz wykończenie"
           />
         </div>
         
-        {/* Dodatkowe cechy nadwozia jako checkboxy */}
-        <div className="mt-6">
-          <h4 className="font-semibold mb-3">Dodatkowe cechy nadwozia:</h4>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={formData.hasSunroof === 'Tak'}
-                onChange={(e) => handleChange('hasSunroof', e.target.checked ? 'Tak' : 'Nie')}
-                style={{ accentColor: '#35530A' }}
-              />
-              <span>Szyberdach</span>
-            </label>
-            
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={formData.hasAlloyWheels === 'Tak'}
-                onChange={(e) => handleChange('hasAlloyWheels', e.target.checked ? 'Tak' : 'Nie')}
-                style={{ accentColor: '#35530A' }}
-              />
-              <span>Alufelgi</span>
-            </label>
-            
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={formData.hasRoofRails === 'Tak'}
-                onChange={(e) => handleChange('hasRoofRails', e.target.checked ? 'Tak' : 'Nie')}
-                style={{ accentColor: '#35530A' }}
-              />
-              <span>Relingi dachowe</span>
-            </label>
-            
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={formData.hasParkingSensors === 'Tak'}
-                onChange={(e) => handleChange('hasParkingSensors', e.target.checked ? 'Tak' : 'Nie')}
-                style={{ accentColor: '#35530A' }}
-              />
-              <span>Czujniki parkowania</span>
-            </label>
+        {/* Kolor - jako dropdown select */}
+        <div className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
+          formData.color ? 'border-[#35530A] bg-green-50' : 'border-gray-300'
+        }`}>
+          <SelectField
+            name="color"
+            label="Kolor"
+            options={COLORS}
+            value={formData.color || ''}
+            onChange={handleOptionChange}
+            openDropdowns={openDropdowns}
+            toggleDropdown={toggleDropdown}
+            required={true}
+            error={errors.color}
+            placeholder="Wybierz kolor"
+          />
+        </div>
+        
+        {/* Liczba drzwi - jako dropdown select */}
+        <div className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
+          formData.doors ? 'border-[#35530A] bg-green-50' : 'border-gray-300'
+        }`}>
+          <SelectField
+            name="doors"
+            label="Liczba drzwi"
+            options={doorOptions}
+            value={formData.doors ? `${formData.doors} drzwi` : ''}
+            onChange={(name, option) => {
+              // Wyciągnij liczbę z opcji (np. "2 drzwi" -> "2")
+              const doorCount = option.split(' ')[0];
+              handleOptionChange(name, doorCount);
+            }}
+            openDropdowns={openDropdowns}
+            toggleDropdown={toggleDropdown}
+            required={true}
+            error={errors.doors}
+            placeholder="Wybierz ilość drzwi"
+          />
+        </div>
+        
+        {/* Wykończenie - jako dropdown select */}
+        <div className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
+          formData.finish ? 'border-[#35530A] bg-green-50' : 'border-gray-300'
+        }`}>
+          <SelectField
+            name="finish"
+            label="Wykończenie"
+            options={finishOptions}
+            value={formData.finish || ''}
+            onChange={handleOptionChange}
+            openDropdowns={openDropdowns}
+            toggleDropdown={toggleDropdown}
+            placeholder="Wybierz wykończenie"
+          />
+        </div>
+      </div>
+      
+      {/* Dodatkowe cechy nadwozia - teraz jako dropdown selects */}
+      <div className="mt-6">
+        <h4 className="text-sm font-semibold text-gray-700 mb-3">Dodatkowe cechy nadwozia:</h4>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+          {/* Szyberdach */}
+          <div className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
+            formData.hasSunroof === 'Tak' ? 'border-[#35530A] bg-green-50' : 'border-gray-300'
+          }`}>
+            <SelectField
+              name="hasSunroof"
+              label="Szyberdach"
+              options={booleanOptions}
+              value={formData.hasSunroof || ''}
+              onChange={handleOptionChange}
+              openDropdowns={openDropdowns}
+              toggleDropdown={toggleDropdown}
+              placeholder="Wybierz"
+            />
+          </div>
+          
+          {/* Alufelgi */}
+          <div className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
+            formData.hasAlloyWheels === 'Tak' ? 'border-[#35530A] bg-green-50' : 'border-gray-300'
+          }`}>
+            <SelectField
+              name="hasAlloyWheels"
+              label="Alufelgi"
+              options={booleanOptions}
+              value={formData.hasAlloyWheels || ''}
+              onChange={handleOptionChange}
+              openDropdowns={openDropdowns}
+              toggleDropdown={toggleDropdown}
+              placeholder="Wybierz"
+            />
+          </div>
+          
+          {/* Relingi dachowe */}
+          <div className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
+            formData.hasRoofRails === 'Tak' ? 'border-[#35530A] bg-green-50' : 'border-gray-300'
+          }`}>
+            <SelectField
+              name="hasRoofRails"
+              label="Relingi dachowe"
+              options={booleanOptions}
+              value={formData.hasRoofRails || ''}
+              onChange={handleOptionChange}
+              openDropdowns={openDropdowns}
+              toggleDropdown={toggleDropdown}
+              placeholder="Wybierz"
+            />
+          </div>
+          
+          {/* Czujniki parkowania */}
+          <div className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
+            formData.hasParkingSensors === 'Tak' ? 'border-[#35530A] bg-green-50' : 'border-gray-300'
+          }`}>
+            <SelectField
+              name="hasParkingSensors"
+              label="Czujniki parkowania"
+              options={booleanOptions}
+              value={formData.hasParkingSensors || ''}
+              onChange={handleOptionChange}
+              openDropdowns={openDropdowns}
+              toggleDropdown={toggleDropdown}
+              placeholder="Wybierz"
+            />
           </div>
         </div>
       </div>
       
       {/* Informacje pomocnicze */}
-      <div className="bg-[#F5FAF5] border-l-4 border-[#35530A] p-4 rounded-[2px] mt-4">
-        <p className="text-[#35530A] text-sm font-medium">
+      <div className="bg-[#F5FAF5] border-l-4 border-[#35530A] p-4 rounded-[2px]">
+        <p className="text-[#35530A] text-sm">
           Dokładne dane dotyczące nadwozia i koloru pomagają potencjalnym kupującym 
-          lepiej ocenić pojazd. Wybierz wszystkie parametry, które najlepiej opisują Twój samochód.
+          lepiej ocenić pojazd.
         </p>
       </div>
     </div>

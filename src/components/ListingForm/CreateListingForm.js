@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BasicInfoSection from './sections/BasicInfoSection';
 import VehicleStatusSection from './sections/VehicleStatusSection';
@@ -22,6 +22,17 @@ const CreateListingForm = () => {
     validateForm
   } = useListingForm();
   const { toast, showToast, hideToast } = useToast();
+  
+  // Stan dla śledzenia otwartych sekcji
+  const [openSections, setOpenSections] = useState({
+    basic: true,
+    status: false,
+    body: false,
+    technical: false,
+    location: false,
+    photos: false,
+    description: false
+  });
 
   // Obsługa submitu formularza
   const handleSubmit = (e) => {
@@ -40,71 +51,167 @@ const CreateListingForm = () => {
     }
   };
 
+  // Obsługa przełączania sekcji
+  const toggleSection = (section) => {
+    setOpenSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
+
+  // Komponent dla nagłówka sekcji
+  const SectionHeader = ({ id, title, isOpen, onClick }) => (
+    <div 
+      className="flex items-center justify-between p-4 border border-gray-200 rounded-[2px] bg-white cursor-pointer hover:bg-gray-50 transition-colors"
+      onClick={onClick}
+    >
+      <h2 className="text-lg font-medium">{title}</h2>
+      <span className={`transform transition-transform ${isOpen ? 'rotate-180' : ''}`}>▼</span>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gray-50 py-6">
       <div className="max-w-[1100px] mx-auto px-6">
         <h1 className="text-3xl font-bold text-center text-gray-900 mb-6">Dodaj nowe ogłoszenie</h1>
         
-        <form onSubmit={handleSubmit} className="space-y-8">
-          <div id="section-basic" className="bg-[#f7f8fa] p-6 rounded-[2px] shadow-md border border-gray-200">
-            <h2 className="text-2xl font-bold mb-6 border-b pb-2">1. Podstawowe informacje o pojeździe</h2>
-            <BasicInfoSection
-              formData={formData}
-              handleChange={handleChange}
-              errors={errors}
-              showToast={showToast}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Sekcja podstawowych informacji */}
+          <div>
+            <SectionHeader 
+              id="section-basic-header" 
+              title="1. Podstawowe informacje o pojeździe" 
+              isOpen={openSections.basic}
+              onClick={() => toggleSection('basic')}
             />
+            {openSections.basic && (
+              <div className="p-4 bg-white border border-gray-200 border-t-0 rounded-b-[2px]">
+                <BasicInfoSection
+                  formData={formData}
+                  handleChange={handleChange}
+                  errors={errors}
+                  showToast={showToast}
+                />
+              </div>
+            )}
           </div>
-          <div id="section-status" className="bg-[#f7f8fa] p-6 rounded-[2px] shadow-md border border-gray-200">
-            <h2 className="text-2xl font-bold mb-6 border-b pb-2">2. Stan pojazdu</h2>
-            <VehicleStatusSection
-              formData={formData}
-              handleChange={handleChange}
-              errors={errors}
+          
+          {/* Sekcja stanu pojazdu */}
+          <div>
+            <SectionHeader 
+              id="section-status-header" 
+              title="2. Stan pojazdu" 
+              isOpen={openSections.status}
+              onClick={() => toggleSection('status')}
             />
+            {openSections.status && (
+              <div className="p-4 bg-white border border-gray-200 border-t-0 rounded-b-[2px]">
+                <VehicleStatusSection
+                  formData={formData}
+                  handleChange={handleChange}
+                  errors={errors}
+                />
+              </div>
+            )}
           </div>
-          <div id="section-body" className="bg-[#f7f8fa] p-6 rounded-[2px] shadow-md border border-gray-200">
-            <h2 className="text-2xl font-bold mb-6 border-b pb-2">3. Nadwozie i kolor</h2>
-            <BodyInfoSection
-              formData={formData}
-              handleChange={handleChange}
-              errors={errors}
+          
+          {/* Sekcja nadwozia */}
+          <div>
+            <SectionHeader 
+              id="section-body-header" 
+              title="3. Nadwozie i kolor" 
+              isOpen={openSections.body}
+              onClick={() => toggleSection('body')}
             />
+            {openSections.body && (
+              <div className="p-4 bg-white border border-gray-200 border-t-0 rounded-b-[2px]">
+                <BodyInfoSection
+                  formData={formData}
+                  handleChange={handleChange}
+                  errors={errors}
+                />
+              </div>
+            )}
           </div>
-          <div id="section-technical" className="bg-[#f7f8fa] p-6 rounded-[2px] shadow-md border border-gray-200">
-            <h2 className="text-2xl font-bold mb-6 border-b pb-2">4. Dane techniczne</h2>
-            <TechnicalDataSection
-              formData={formData}
-              handleChange={handleChange}
-              errors={errors}
+          
+          {/* Sekcja danych technicznych */}
+          <div>
+            <SectionHeader 
+              id="section-technical-header" 
+              title="4. Dane techniczne" 
+              isOpen={openSections.technical}
+              onClick={() => toggleSection('technical')}
             />
+            {openSections.technical && (
+              <div className="p-4 bg-white border border-gray-200 border-t-0 rounded-b-[2px]">
+                <TechnicalDataSection
+                  formData={formData}
+                  handleChange={handleChange}
+                  errors={errors}
+                />
+              </div>
+            )}
           </div>
-          <div id="section-location" className="bg-[#f7f8fa] p-6 rounded-[2px] shadow-md border border-gray-200">
-            <h2 className="text-2xl font-bold mb-6 border-b pb-2">5. Lokalizacja pojazdu</h2>
-            <LocationSection
-              formData={formData}
-              handleChange={handleChange}
-              errors={errors}
+          
+          {/* Sekcja lokalizacji */}
+          <div>
+            <SectionHeader 
+              id="section-location-header" 
+              title="5. Lokalizacja pojazdu" 
+              isOpen={openSections.location}
+              onClick={() => toggleSection('location')}
             />
+            {openSections.location && (
+              <div className="p-4 bg-white border border-gray-200 border-t-0 rounded-b-[2px]">
+                <LocationSection
+                  formData={formData}
+                  handleChange={handleChange}
+                  errors={errors}
+                />
+              </div>
+            )}
           </div>
-          <div id="section-photos" className="bg-[#f7f8fa] p-6 rounded-[2px] shadow-md border border-gray-200">
-            <h2 className="text-2xl font-bold mb-6 border-b pb-2">6. Zdjęcia pojazdu</h2>
-            <PhotoUploadSection
-              formData={formData}
-              setFormData={setFormData}
-              errors={errors}
-              showToast={showToast}
+          
+          {/* Sekcja zdjęć */}
+          <div>
+            <SectionHeader 
+              id="section-photos-header" 
+              title="6. Zdjęcia pojazdu" 
+              isOpen={openSections.photos}
+              onClick={() => toggleSection('photos')}
             />
+            {openSections.photos && (
+              <div className="p-4 bg-white border border-gray-200 border-t-0 rounded-b-[2px]">
+                <PhotoUploadSection
+                  formData={formData}
+                  setFormData={setFormData}
+                  errors={errors}
+                  showToast={showToast}
+                />
+              </div>
+            )}
           </div>
-          <div id="section-description" className="bg-[#f7f8fa] p-6 rounded-[2px] shadow-md border border-gray-200">
-            <h2 className="text-2xl font-bold mb-6 border-b pb-2">7. Opis i cena</h2>
-            <DescriptionPriceSection
-              formData={formData}
-              handleChange={handleChange}
-              errors={errors}
+          
+          {/* Sekcja opisu i ceny */}
+          <div>
+            <SectionHeader 
+              id="section-description-header" 
+              title="7. Opis i cena" 
+              isOpen={openSections.description}
+              onClick={() => toggleSection('description')}
             />
+            {openSections.description && (
+              <div className="p-4 bg-white border border-gray-200 border-t-0 rounded-b-[2px]">
+                <DescriptionPriceSection
+                  formData={formData}
+                  handleChange={handleChange}
+                  errors={errors}
+                />
+              </div>
+            )}
           </div>
-          <div className="bg-[#f7f8fa] p-6 rounded-[2px] shadow-md sticky bottom-4 z-10 border-t border-gray-200">
+          
+          <div className="bg-white p-6 rounded-[2px] shadow-md sticky bottom-4 z-10 border border-gray-200 mt-6">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
               <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-[2px] w-full md:w-auto">
                 <div className="font-medium mb-1">Przed kontynuacją upewnij się, że:</div>

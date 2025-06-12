@@ -1,36 +1,82 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 const VehicleStatusSection = ({ formData, handleChange, errors }) => {
+  // Stan do śledzenia otwartych/zamkniętych list rozwijanych
+  const [openDropdowns, setOpenDropdowns] = useState({});
+
   // Lista opcji stanu pojazdu z możliwością wyboru wielu
   const statusOptions = [
-    { name: 'condition', label: 'Stan', options: ['Nowy', 'Używany'], required: true, type: 'radio' },
-    { name: 'accidentStatus', label: 'Wypadkowość', options: ['Bezwypadkowy', 'Powypadkowy'], type: 'radio' },
-    { name: 'damageStatus', label: 'Uszkodzenia', options: ['Nieuszkodzony', 'Uszkodzony'], type: 'radio' },
-    { name: 'tuning', label: 'Tuning' },
-    { name: 'imported', label: 'Importowany' },
-    { name: 'registeredInPL', label: 'Zarejestrowany w PL' },
-    { name: 'firstOwner', label: 'Pierwszy właściciel' },
-    { name: 'disabledAdapted', label: 'Dla niepełnosprawnych' }
+    { name: 'condition', label: 'Stan', options: ['Nowy', 'Używany'], required: true },
+    { name: 'accidentStatus', label: 'Wypadkowość', options: ['Bezwypadkowy', 'Powypadkowy'] },
+    { name: 'damageStatus', label: 'Uszkodzenia', options: ['Nieuszkodzony', 'Uszkodzony'] },
+    { name: 'tuning', label: 'Tuning', options: ['Tak', 'Nie'] },
+    { name: 'imported', label: 'Importowany', options: ['Tak', 'Nie'] },
+    { name: 'registeredInPL', label: 'Zarejestrowany w PL', options: ['Tak', 'Nie'] },
+    { name: 'firstOwner', label: 'Pierwszy właściciel', options: ['Tak', 'Nie'] },
+    { name: 'disabledAdapted', label: 'Dla niepełnosprawnych', options: ['Tak', 'Nie'] }
   ];
 
-  // Obsługa zmiany stanu pola
-  const handleOptionChange = (name, option, type = 'checkbox') => {
-    // Dla przycisków radio zawsze ustawiamy wartość
-    if (type === 'radio') {
-      handleChange(name, option);
-    } else {
-      // Dla checkboxów przełączamy między Tak/Nie
-      const newValue = formData[name] === 'Tak' ? 'Nie' : 'Tak';
-      handleChange(name, newValue);
-    }
+  // Obsługa otwierania/zamykania listy rozwijanej
+  const toggleDropdown = (name) => {
+    setOpenDropdowns(prev => ({
+      ...prev,
+      [name]: !prev[name]
+    }));
   };
 
-  // Sprawdzanie, czy opcja jest zaznaczona
-  const isSelected = (name, option = 'Tak', type = 'checkbox') => {
-    if (type === 'radio') {
-      return formData[name] === option;
-    }
-    return formData[name] === option;
+  // Obsługa zmiany opcji
+  const handleOptionChange = (name, option) => {
+    handleChange(name, option);
+    // Zamknij dropdown po wyborze opcji
+    setOpenDropdowns(prev => ({
+      ...prev,
+      [name]: false
+    }));
+  };
+
+  // Komponent pola select (lista rozwijana)
+  const SelectField = ({ name, label, options, required }) => {
+    const currentValue = formData[name] || '';
+    
+    return (
+      <div className="relative">
+        <label className="block font-semibold mb-3 text-gray-800">
+          {label}
+          {required && <span className="text-red-500 ml-1">*</span>}
+          {errors[name] && <span className="text-red-500 ml-1 text-sm">({errors[name]})</span>}
+        </label>
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => toggleDropdown(name)}
+            className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A] bg-white text-left flex items-center justify-between"
+          >
+            <span className={`${currentValue ? 'text-gray-700' : 'text-gray-500'}`}>
+              {currentValue || 'Wybierz'}
+            </span>
+            <span className={`transform transition-transform ${openDropdowns[name] ? 'rotate-180' : ''}`}>
+              ▼
+            </span>
+          </button>
+          
+          {openDropdowns[name] && (
+            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-[2px] shadow-lg overflow-y-auto">
+              {options.map((option) => (
+                <div 
+                  key={option} 
+                  className="px-3 py-2 hover:bg-gray-50 cursor-pointer"
+                  onClick={() => handleOptionChange(name, option)}
+                >
+                  <span className={`text-sm ${currentValue === option ? 'font-semibold text-[#35530A]' : ''}`}>
+                    {option}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -44,52 +90,20 @@ const VehicleStatusSection = ({ formData, handleChange, errors }) => {
             <div 
               key={option.name} 
               className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
-                (option.type === 'radio' && formData[option.name]) || 
-                (!option.type && formData[option.name] === 'Tak') 
+                formData[option.name] === 'Tak' || 
+                (option.name === 'condition' && formData[option.name]) ||
+                (option.name === 'accidentStatus' && formData[option.name] === 'Bezwypadkowy') ||
+                (option.name === 'damageStatus' && formData[option.name] === 'Nieuszkodzony')
                   ? 'border-[#35530A] bg-green-50' 
                   : 'border-gray-300'
               }`}
             >
-              <label className="block font-semibold mb-3 text-gray-800">
-                {option.label}
-                {option.required && <span className="text-red-500 ml-1">*</span>}
-                {errors[option.name] && <span className="text-red-500 ml-1 text-sm">({errors[option.name]})</span>}
-              </label>
-              
-              <div className="space-y-2">
-                {option.options ? (
-                  // Opcje wyboru dla pól z wieloma wartościami
-                  option.options.map((opt) => (
-                    <label key={opt} className="flex items-center gap-2 cursor-pointer group">
-                      <input
-                        type={option.type || 'radio'}
-                        name={option.name}
-                        checked={isSelected(option.name, opt, option.type)}
-                        onChange={() => handleOptionChange(option.name, opt, option.type)}
-                        className="w-4 h-4"
-                        style={{ accentColor: '#35530A' }}
-                      />
-                      <span className="text-sm group-hover:text-[#35530A] transition-colors">
-                        {opt}
-                      </span>
-                    </label>
-                  ))
-                ) : (
-                  // Checkbox Tak/Nie dla prostych pól
-                  <label className="flex items-center gap-2 cursor-pointer group">
-                    <input
-                      type="checkbox"
-                      checked={isSelected(option.name)}
-                      onChange={() => handleOptionChange(option.name)}
-                      className="w-4 h-4"
-                      style={{ accentColor: '#35530A' }}
-                    />
-                    <span className="text-sm group-hover:text-[#35530A] transition-colors">
-                      Tak
-                    </span>
-                  </label>
-                )}
-              </div>
+              <SelectField 
+                name={option.name} 
+                label={option.label} 
+                options={option.options}
+                required={option.required} 
+              />
             </div>
           ))}
         </div>
@@ -100,52 +114,15 @@ const VehicleStatusSection = ({ formData, handleChange, errors }) => {
             <div 
               key={option.name} 
               className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
-                (option.type === 'radio' && formData[option.name]) || 
-                (!option.type && formData[option.name] === 'Tak') 
-                  ? 'border-[#35530A] bg-green-50' 
-                  : 'border-gray-300'
+                formData[option.name] === 'Tak' ? 'border-[#35530A] bg-green-50' : 'border-gray-300'
               }`}
             >
-              <label className="block font-semibold mb-3 text-gray-800">
-                {option.label}
-                {option.required && <span className="text-red-500 ml-1">*</span>}
-                {errors[option.name] && <span className="text-red-500 ml-1 text-sm">({errors[option.name]})</span>}
-              </label>
-              
-              <div className="space-y-2">
-                {option.options ? (
-                  // Opcje wyboru dla pól z wieloma wartościami
-                  option.options.map((opt) => (
-                    <label key={opt} className="flex items-center gap-2 cursor-pointer group">
-                      <input
-                        type={option.type || 'radio'}
-                        name={option.name}
-                        checked={isSelected(option.name, opt, option.type)}
-                        onChange={() => handleOptionChange(option.name, opt, option.type)}
-                        className="w-4 h-4"
-                        style={{ accentColor: '#35530A' }}
-                      />
-                      <span className="text-sm group-hover:text-[#35530A] transition-colors">
-                        {opt}
-                      </span>
-                    </label>
-                  ))
-                ) : (
-                  // Checkbox Tak/Nie dla prostych pól
-                  <label className="flex items-center gap-2 cursor-pointer group">
-                    <input
-                      type="checkbox"
-                      checked={isSelected(option.name)}
-                      onChange={() => handleOptionChange(option.name)}
-                      className="w-4 h-4"
-                      style={{ accentColor: '#35530A' }}
-                    />
-                    <span className="text-sm group-hover:text-[#35530A] transition-colors">
-                      Tak
-                    </span>
-                  </label>
-                )}
-              </div>
+              <SelectField 
+                name={option.name} 
+                label={option.label}
+                options={option.options}
+                required={option.required} 
+              />
             </div>
           ))}
         </div>

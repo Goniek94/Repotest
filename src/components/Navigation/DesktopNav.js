@@ -21,7 +21,7 @@ const DesktopNav = ({ user }) => {
             to="/" 
             className={`px-3 py-2 transition-colors border-b-3 ${
               isActive('/') 
-                ? 'text-[#35530A] bg-[#f5f8f0] border-[#35530A]' 
+                ? 'text-[#35530A] border-[#35530A]' // Usunięto bg-[#f5f8f0]
                 : 'hover:bg-gray-100 rounded-[2px] border-transparent'
             }`}
           >
@@ -33,7 +33,7 @@ const DesktopNav = ({ user }) => {
             to="/listings" 
             className={`px-3 py-2 transition-colors border-b-3 ${
               isActive('/listings') 
-                ? 'text-[#35530A] bg-[#f5f8f0] border-[#35530A]' 
+                ? 'text-[#35530A] border-[#35530A]' // Usunięto bg-[#f5f8f0]
                 : 'hover:bg-gray-100 rounded-[2px] border-transparent'
             }`}
           >

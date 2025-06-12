@@ -5,6 +5,7 @@ import MobileSidebar from '../navigation/MobileSidebar';
 import ProfileNavigation from '../navigation/ProfileNavigation';
 import { useNotifications } from '../../../contexts/NotificationContext';
 import { useAuth } from '../../../contexts/AuthContext';
+import { SidebarProvider, MainContentWrapper } from '../navigation/MainContentWrapper';
 
 const ProfileLayout = () => {
   const breakpoint = useBreakpoint();
@@ -13,14 +14,18 @@ const ProfileLayout = () => {
   const { user } = useAuth();
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 bg-white relative">
-      <MobileSidebar user={user} />
+    <SidebarProvider>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 bg-white relative">
+        <MobileSidebar user={user} />
 
-      <main className="space-y-6 mt-6 ml-12">
-        {!isMobile && <ProfileNavigation notifications={unreadCount} user={user} />}
-        <Outlet />
-      </main>
-    </div>
+        <MainContentWrapper>
+          <main className="space-y-6 mt-6">
+            {!isMobile && <ProfileNavigation notifications={unreadCount} user={user} />}
+            <Outlet />
+          </main>
+        </MainContentWrapper>
+      </div>
+    </SidebarProvider>
   );
 };
 

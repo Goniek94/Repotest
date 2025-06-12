@@ -1,5 +1,7 @@
-import React from 'react';
-import { BellRing, Car, MessageSquare, Tag, ShoppingCart, CheckCircle, AlertCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, BellRing, AlertCircle } from 'lucide-react';
+import useUserDashboardData from '../hooks/useUserDashboardData';
+import { dismissNotification } from '../../../../services/api';
 
 // Główny kolor aplikacji
 const PRIMARY_COLOR = '#35530A';
@@ -8,121 +10,122 @@ const PRIMARY_COLOR = '#35530A';
  * Komponent wyświetlający powiadomienia użytkownika
  */
 const NotificationsTab = () => {
-  // Przykładowe dane powiadomień
-  const notifications = [
-    { 
-      id: 1, 
-      type: 'message', 
-      title: 'Nowa wiadomość', 
-      description: 'Jan Kowalski napisał do Ciebie w sprawie BMW X5', 
-      date: '1 godzina temu',
-      read: false,
-      icon: <MessageSquare size={16} className="text-blue-500" />
-    },
-    { 
-      id: 2, 
-      type: 'price', 
-      title: 'Obniżka ceny', 
-      description: 'Cena oglądanego przez Ciebie Audi A4 została obniżona o 5000 zł', 
-      date: '5 godzin temu',
-      read: false,
-      icon: <Tag size={16} className="text-green-500" />
-    },
-    { 
-      id: 3, 
-      type: 'transaction', 
-      title: 'Transakcja zakończona', 
-      description: 'Twoja transakcja zakupu Volkswagen Golf została zakończona pomyślnie', 
-      date: '2 dni temu',
-      read: true,
-      icon: <ShoppingCart size={16} className="text-purple-500" />
-    },
-    { 
-      id: 4, 
-      type: 'listing', 
-      title: 'Ogłoszenie zaakceptowane', 
-      description: 'Twoje ogłoszenie BMW X5 zostało zaakceptowane i jest już widoczne', 
-      date: '3 dni temu',
-      read: true,
-      icon: <CheckCircle size={16} className="text-green-500" />
-    },
-    { 
-      id: 5, 
-      type: 'alert', 
-      title: 'Ważna informacja', 
-      description: 'Twoje ogłoszenie Audi A3 wygaśnie za 2 dni. Rozważ jego przedłużenie.', 
-      date: '5 dni temu',
-      read: true,
-      icon: <AlertCircle size={16} className="text-amber-500" />
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [dismissedActivities, setDismissedActivities] = useState([]);
+  
+  // Pobieranie danych z tego samego źródła co dashboard
+  const { activities, isLoading, error } = useUserDashboardData(refreshTrigger);
+  
+  // Funkcja odświeżania danych
+  const handleRetry = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
+  
+  // Funkcja do obsługi usuwania aktywności
+  const handleDismissActivity = async (id) => {
+    // Natychmiast aktualizujemy lokalny stan dla lepszego UX
+    setDismissedActivities(prev => [...prev, id]);
+    
+    try {
+      // Wywołanie API do usunięcia powiadomienia na serwerze
+      await dismissNotification(id);
+    } catch (error) {
+      console.error('Błąd podczas odrzucania powiadomienia:', error);
+      // Lokalne odrzucenie działa nawet gdy API zawiedzie
     }
-  ];
+  };
+  
+  // Filtrowanie powiadomień (usunięte nie są wyświetlane)
+  const filteredActivities = activities.filter(item => !dismissedActivities.includes(item.id));
 
   return (
-    <div>
+    <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-6">
       {/* Nagłówek z gradientem */}
       <div className="bg-gradient-to-r from-green-800 to-green-600 text-white p-3 flex items-center">
         <BellRing className="w-5 h-5 mr-2" />
-        <h2 className="text-lg font-medium">Ostatnia aktywność</h2>
+        <h2 className="text-lg font-medium">Powiadomienia</h2>
       </div>
       
-      {/* Lista powiadomień */}
-      {notifications.length > 0 ? (
-        <div className="bg-white">
-          {notifications.map((notification) => {
-            // Określenie koloru paska bocznego w zależności od typu powiadomienia
-            const isUrgent = notification.type === 'alert';
-            const borderColor = isUrgent ? 'border-red-500' : 'border-green-600';
-            const bgColor = isUrgent ? 'bg-red-50' : 'bg-white';
-            
-            return (
-              <div 
-                key={notification.id} 
-                className={`flex items-start relative ${bgColor} border-b border-gray-100 ${
-                  !notification.read ? 'border-l-4 ' + borderColor : ''
-                }`}
+      {/* Błąd ładowania */}
+      {error && (
+        <div className="bg-red-50 p-4 border-b border-red-100">
+          <div className="flex items-start">
+            <AlertCircle className="w-5 h-5 text-red-500 mr-2 flex-shrink-0 mt-0.5" />
+            <div>
+              <h3 className="text-sm font-medium text-red-800">Wystąpił problem</h3>
+              <p className="text-sm text-red-700 mt-1">Nie udało się załadować powiadomień.</p>
+              <button 
+                onClick={handleRetry}
+                className="mt-2 text-xs font-medium text-red-800 bg-red-100 hover:bg-red-200 px-3 py-1 rounded-md transition-colors"
               >
-                {/* Kolorowy pasek po lewej (widoczny zawsze, ale bardziej wyraźny dla nieprzeczytanych) */}
-                {notification.read && <div className={`absolute left-0 top-0 bottom-0 w-1 bg-opacity-50 ${isUrgent ? 'bg-red-200' : 'bg-green-200'}`}></div>}
-                
-                <div className="flex-1 p-3 ml-1">
-                  <div className="flex">
-                    {/* Ikona */}
-                    <div className="mr-3 mt-0.5">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        isUrgent ? 'bg-red-100 text-red-500' : 'bg-green-100 text-green-600'
-                      }`}>
+                Spróbuj ponownie
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Stan ładowania */}
+      {isLoading && (
+        <div className="flex flex-col items-center justify-center py-10 bg-white">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-l-2" 
+               style={{ borderColor: PRIMARY_COLOR }}></div>
+          <p className="mt-4 text-gray-600 text-sm">
+            Ładowanie powiadomień...
+          </p>
+        </div>
+      )}
+      
+      {/* Lista powiadomień */}
+      {!isLoading && !error && (
+        <>
+          {filteredActivities.length > 0 ? (
+            <div className="bg-white">
+              {filteredActivities.map((notification) => (
+                <div 
+                  key={notification.id || `activity-${Math.random()}`} 
+                  className="border-b border-gray-100 relative"
+                >
+                  <div className="p-4 bg-white">
+                    <div className="flex items-start">
+                      <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
                         {notification.icon}
                       </div>
-                    </div>
-                    
-                    {/* Treść powiadomienia */}
-                    <div className="flex-1">
-                      <div className="flex justify-between items-start">
-                        <h3 className="text-sm font-semibold text-gray-800">
-                          {notification.title}
-                        </h3>
-                        <span className="text-xs text-gray-500 ml-2">{notification.date}</span>
+                      <div className="flex-grow min-w-0">
+                        <h4 className="font-bold text-gray-800 text-sm">{notification.title}</h4>
+                        <p className="text-xs text-gray-600 mb-1.5">{notification.description}</p>
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs text-gray-500">{notification.time}</span>
+                          <a href={notification.href} className="text-green-800 font-medium text-xs">
+                            {notification.actionLabel || "Zobacz"} →
+                          </a>
+                        </div>
                       </div>
-                      <p className="text-xs text-gray-600 mt-1">{notification.description}</p>
-                    </div>
-                    
-                    {/* Przycisk odpowiedzi */}
-                    <div className="ml-4">
-                      <button className="text-green-700 hover:text-green-800 text-xs font-semibold bg-transparent">
-                        Odpowiedź →
+                      <button 
+                        className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 transition-colors"
+                        onClick={() => handleDismissActivity(notification.id)}
+                        aria-label="Usuń powiadomienie"
+                      >
+                        <X size={16} />
                       </button>
                     </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="text-center py-8 bg-white border-t border-b border-gray-100">
-          <BellRing size={32} className="mx-auto text-gray-400 mb-2" />
-          <p className="text-gray-500 text-sm">Brak nowych powiadomień</p>
-        </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-10 bg-white border-b border-gray-100">
+              <BellRing size={32} className="mx-auto text-gray-400 mb-3" />
+              <p className="text-gray-500">Brak nowych powiadomień</p>
+              <button 
+                onClick={handleRetry}
+                className="mt-3 text-xs font-medium text-green-800 underline"
+              >
+                Odśwież
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

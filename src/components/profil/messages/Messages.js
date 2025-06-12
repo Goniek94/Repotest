@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo, memo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Paperclip, Send } from 'lucide-react';
+import { Paperclip, Send, ArrowLeft, Menu, X } from 'lucide-react';
 import MessagesHeader from './MessagesHeader';
 import MessagesTabs from './MessagesTabs';
 import MessageList from './MessageList';
@@ -14,73 +14,6 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { getAuthToken, API_URL } from '../../../services/api/config';
 import { DEFAULT_FOLDER, FOLDER_MAP } from '../../../constants/messageFolders';
 
-// Funkcja debug przeniesiona poza komponent dla lepszej wydajności
-const debug = (message, data) => {
-  if (process.env.NODE_ENV === 'development') {
-    console.log(message, data);
-  }
-};
-
-// Stałe konfiguracyjne
-const MAX_ATTACHMENTS = 5;
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const ACCEPTED_FILE_TYPES = "image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt";
-
-// Komponent AttachmentItem dla lepszej wydajności
-const AttachmentItem = memo(({ attachment, index, onRemove }) => (
-  <div className="bg-gray-100 rounded px-2 py-1 text-sm flex items-center gap-1">
-    <span className="truncate max-w-[150px]" title={attachment.name}>
-      {attachment.name}
-    </span>
-    <button 
-      className="text-gray-500 hover:text-red-500 ml-1"
-      onClick={() => onRemove(index)}
-      aria-label={`Usuń załącznik ${attachment.name}`}
-    >
-      &times;
-    </button>
-  </div>
-));
-
-// Komponent LoadingSpinner
-const LoadingSpinner = memo(() => (
-  <div className="flex justify-center items-center h-64">
-    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#35530A]"></div>
-  </div>
-));
-
-// Komponent ErrorMessage
-const ErrorMessage = memo(({ message }) => (
-  <div className="flex justify-center items-center h-64 p-4 text-center text-red-500">
-    <p>{message}</p>
-  </div>
-));
-
-// Komponent EmptyState
-const EmptyState = memo(({ message }) => (
-  <div className="flex justify-center items-center h-64 p-4 text-center text-gray-500">
-    <p>{message}</p>
-  </div>
-));
-
-// Komponent AuthError
-const AuthError = memo(({ onLoginRedirect }) => (
-  <div className="flex flex-col justify-center items-center h-64 p-4">
-    <div className="text-red-500 mb-4">
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m0 0v2m0-2h2m-2 0H9m3-4V8m0 0V6m0 2h2m-2 0H9" />
-      </svg>
-      <p className="text-center font-medium text-lg">Twoja sesja wygasła. Zaloguj się ponownie, aby kontynuować.</p>
-    </div>
-    <button 
-      className="px-4 py-2 bg-[#35530A] text-white rounded-md hover:bg-[#2A4208] transition-colors"
-      onClick={onLoginRedirect}
-    >
-      Zaloguj się
-    </button>
-  </div>
-));
-
 /**
  * Główny komponent wiadomości
  * 
@@ -88,15 +21,9 @@ const AuthError = memo(({ onLoginRedirect }) => (
  * i zapewnia spójny interfejs użytkownika.
  */
 const Messages = memo(() => {
-  debug('=== Renderowanie komponentu Messages ===');
-  
   // Kontekst powiadomień i autoryzacji
   const { unreadCount } = useNotifications();
   const { isAuthenticated, user } = useAuth();
-  
-  debug('Stan autoryzacji:', isAuthenticated ? 'zalogowany' : 'niezalogowany');
-  debug('ID użytkownika:', user?._id || user?.id);
-  debug('Token JWT:', getAuthToken() ? 'dostępny' : 'brak');
   
   // Stan lokalny komponentu
   const [searchParams, setSearchParams] = useSearchParams();
@@ -108,6 +35,9 @@ const Messages = memo(() => {
   const [replyContent, setReplyContent] = useState('');
   const [attachments, setAttachments] = useState([]);
   const [sendingReply, setSendingReply] = useState(false);
+  
+  // Stan dla widoku mobilnego
+  const [mobileView, setMobileView] = useState('list'); // 'list' lub 'chat'
   
   // Referencja do inputa plików
   const fileInputRef = useRef(null);
@@ -136,15 +66,6 @@ const Messages = memo(() => {
     sendReply,
     showNotification
   } = useConversations(activeTab);
-  
-  debug('Hook useConversations - dane:', {
-    'Ilość konwersacji': conversations?.length || 0,
-    'Wybrana konwersacja': selectedConversation?.id || 'brak',
-    'Ilość wiadomości w czacie': chatMessages?.length || 0,
-    'Stan ładowania': loading ? 'ładowanie' : 'zakończone',
-    'Błędy': error || 'brak',
-    'Aktywna zakładka': activeTab
-  });
 
   // Memoizacja danych unread count dla MessagesTabs
   const unreadCountMemo = useMemo(() => ({
@@ -154,97 +75,28 @@ const Messages = memo(() => {
     archiwum: 0
   }), [unreadCount.messages]);
 
-  // Memoizacja ID użytkownika
-  const userId = useMemo(() => user?._id || user?.id, [user?._id, user?.id]);
-
-  // Efekt diagnostyczny dla testowania API
-  useEffect(() => {
-    debug('===== KOMPONENT MESSAGES ZAMONTOWANY =====');
-    debug('Sprawdzenie stanu autoryzacji:', isAuthenticated ? 'zalogowany' : 'niezalogowany');
-    debug('ID użytkownika:', userId);
-    debug('Token JWT:', getAuthToken() ? 'dostępny' : 'brak');
-    
-    // Test API - sprawdzenie, czy endpoint jest dostępny
-    const testApi = async () => {
-      try {
-        debug('Testowanie połączenia z API wiadomości...');
-        
-        const headers = {};
-        const token = getAuthToken();
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-        
-        const response = await fetch(`${API_URL}/messages/conversations`, {
-          headers,
-          credentials: 'include'
-        });
-        
-        debug('Test API - status odpowiedzi:', response.status);
-        
-        if (response.ok) {
-          const data = await response.json();
-          debug('Test API - Otrzymano dane:', data);
-          debug('Test API - Ilość konwersacji:', Array.isArray(data) ? data.length : 'brak danych');
-        } else {
-          console.error('Test API - Błąd odpowiedzi:', response.statusText);
-          try {
-            const errorData = await response.json();
-            console.error('Test API - Szczegóły błędu:', errorData);
-          } catch (e) {
-            console.error('Test API - Nie można sparsować błędu JSON');
-          }
-        }
-      } catch (error) {
-        console.error('Test API - Wyjątek podczas wykonywania zapytania:', error);
-      }
-    };
-    
-    if (isAuthenticated) {
-      testApi();
-    } else {
-      debug('Test API pominięty - użytkownik niezalogowany');
-    }
-    
-    return () => {
-      debug('===== KOMPONENT MESSAGES ODMONTOWANY =====');
-    };
-  }, [isAuthenticated, userId]);
-  
-  // Logowanie przy zmianie konwersacji
-  useEffect(() => {
-    if (conversations.length > 0) {
-      debug('Pobrane konwersacje:', conversations);
-    }
-  }, [conversations]);
-  
-  useEffect(() => {
-    if (selectedConversation) {
-      debug('Wybrana konwersacja:', selectedConversation);
-    }
-  }, [selectedConversation]);
-  
-  useEffect(() => {
-    if (chatMessages.length > 0) {
-      debug('Wiadomości w konwersacji:', chatMessages);
-    }
-  }, [chatMessages]);
-
   // Memoizowane handlery
   const handleSearch = useCallback((e) => {
     const query = e.target.value;
-    debug('Wyszukiwanie konwersacji:', query);
     setSearchTerm(query);
     searchConversations(query);
   }, [setSearchTerm, searchConversations]);
 
-  const handleNewMessage = useCallback(() => {
+  const handleNewMessage = useCallback((e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     setShowNewMessage(true);
   }, []);
 
   const handleTabChange = useCallback((tab) => {
     setActiveTab(tab);
     setSearchParams({ folder: tab });
+    // Po zmianie zakładki wróć do listy na mobile
+    if (window.innerWidth < 768) {
+      setMobileView('list');
+    }
   }, [setSearchParams]);
 
   const handleStar = useCallback((conversationId) => {
@@ -253,6 +105,10 @@ const Messages = memo(() => {
 
   const handleDelete = useCallback((conversationId) => {
     deleteConversation(conversationId);
+    // Po usunięciu wróć do listy na mobile
+    if (window.innerWidth < 768) {
+      setMobileView('list');
+    }
   }, [deleteConversation]);
 
   const handleMove = useCallback((conversationId, folder) => {
@@ -261,31 +117,47 @@ const Messages = memo(() => {
 
   const handleArchive = useCallback((conversationId) => {
     moveToFolder(conversationId, 'archiwum');
+    // Po archiwizacji wróć do listy na mobile
+    if (window.innerWidth < 768) {
+      setMobileView('list');
+    }
   }, [moveToFolder]);
 
-  const handleBack = useCallback(() => {
+  const handleBack = useCallback((e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     selectConversation(null);
+    setMobileView('list');
+  }, [selectConversation]);
+
+  // Obsługa wyboru konwersacji z automatycznym przejściem do czatu na mobile
+  const handleSelectConversation = useCallback((conversation) => {
+    if (!conversation) return;
+    
+    selectConversation(conversation);
+    if (window.innerWidth < 768) {
+      setMobileView('chat');
+    }
   }, [selectConversation]);
 
   // Obsługa wysyłania odpowiedzi
-  const handleSendReply = useCallback(async () => {
-    if ((!replyContent.trim() && attachments.length === 0) || !selectedConversation) return;
+  const handleSendReply = useCallback(async (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     
-    debug('Wysyłanie odpowiedzi:', {
-      do: selectedConversation.id,
-      treść: replyContent,
-      załączniki: attachments.length
-    });
+    if ((!replyContent.trim() && attachments.length === 0) || !selectedConversation) return;
     
     setSendingReply(true);
     try {
       await sendReply(replyContent, attachments);
-      debug('Odpowiedź wysłana pomyślnie');
       setReplyContent('');
       setAttachments([]);
     } catch (error) {
       console.error('Błąd podczas wysyłania wiadomości:', error);
-      console.error('Szczegóły błędu:', error.response?.data || error.message);
       showNotification('Nie udało się wysłać wiadomości', 'error');
     } finally {
       setSendingReply(false);
@@ -293,38 +165,31 @@ const Messages = memo(() => {
   }, [replyContent, attachments, selectedConversation, sendReply, showNotification]);
 
   // Obsługa dodawania załączników
-  const handleAttachmentClick = useCallback(() => {
-    debug('Kliknięcie przycisku załączników');
+  const handleAttachmentClick = useCallback((e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     fileInputRef.current?.click();
   }, []);
-
-  // Walidacja plików
-  const validateFiles = useCallback((files) => {
-    // Ograniczenie liczby załączników
-    if (attachments.length + files.length > MAX_ATTACHMENTS) {
-      showNotification(`Możesz dodać maksymalnie ${MAX_ATTACHMENTS} załączników`, 'warning');
-      return false;
-    }
-    
-    // Ograniczenie rozmiaru plików
-    const oversizedFiles = files.filter(file => file.size > MAX_FILE_SIZE);
-    if (oversizedFiles.length > 0) {
-      debug('Pliki za duże:', oversizedFiles.map(f => f.name));
-      showNotification('Niektóre pliki są zbyt duże (maksymalny rozmiar to 10MB)', 'warning');
-      return false;
-    }
-    
-    return true;
-  }, [attachments.length, showNotification]);
 
   // Obsługa wyboru plików
   const handleFileSelect = useCallback((e) => {
     const files = Array.from(e.target.files);
-    debug('Wybrano pliki:', files.length);
     
     if (files.length === 0) return;
     
-    if (!validateFiles(files)) {
+    // Ograniczenie liczby załączników
+    if (attachments.length + files.length > 5) {
+      showNotification('Możesz dodać maksymalnie 5 załączników', 'warning');
+      e.target.value = ''; // Reset input
+      return;
+    }
+    
+    // Ograniczenie rozmiaru plików (10MB)
+    const oversizedFiles = files.filter(file => file.size > 10 * 1024 * 1024);
+    if (oversizedFiles.length > 0) {
+      showNotification('Niektóre pliki są zbyt duże (maksymalny rozmiar to 10MB)', 'warning');
       e.target.value = ''; // Reset input
       return;
     }
@@ -336,10 +201,9 @@ const Messages = memo(() => {
       type: file.type
     }));
     
-    debug('Dodano załączniki:', newAttachments);
     setAttachments(prev => [...prev, ...newAttachments]);
     e.target.value = ''; // Reset input
-  }, [validateFiles]);
+  }, [attachments.length, showNotification]);
 
   // Usuwanie załącznika
   const removeAttachment = useCallback((index) => {
@@ -348,18 +212,25 @@ const Messages = memo(() => {
 
   // Funkcja do przekierowania na stronę logowania
   const handleLoginRedirect = useCallback(() => {
-    debug('Przekierowanie do strony logowania');
     localStorage.setItem('redirectAfterLogin', window.location.pathname);
     window.location.href = '/login';
   }, []);
 
   // Handler dla zamknięcia modalu nowej wiadomości
-  const handleCloseNewMessage = useCallback(() => {
+  const handleCloseNewMessage = useCallback((e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     setShowNewMessage(false);
   }, []);
 
   // Handler dla wysłania nowej wiadomości
-  const handleSendNewMessage = useCallback(() => {
+  const handleSendNewMessage = useCallback((e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     setShowNewMessage(false);
     // Odświeżenie listy konwersacji po wysłaniu nowej wiadomości
     if (activeTab === 'wyslane') {
@@ -372,29 +243,190 @@ const Messages = memo(() => {
     return sendingReply || (!replyContent.trim() && attachments.length === 0) || !selectedConversation;
   }, [sendingReply, replyContent, attachments.length, selectedConversation]);
 
+  // Komponent mobilnego nagłówka czatu
+  const MobileChatHeader = memo(({ conversation, onBack, onStar, onDelete, onArchive }) => (
+    <div className="md:hidden bg-white border-b border-gray-200 p-4 flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onBack(e);
+          }}
+          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          aria-label="Wróć do listy konwersacji"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-gray-900 truncate">
+            {conversation.subject || 'Bez tematu'}
+          </h3>
+          <p className="text-sm text-gray-500 truncate">
+            {conversation.participants?.map(p => p.name).join(', ') || 'Nieznany nadawca'}
+          </p>
+        </div>
+      </div>
+      <div className="flex items-center gap-1">
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onStar();
+          }}
+          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          aria-label="Oznacz jako ważne"
+        >
+          <svg className={`h-5 w-5 ${conversation.isStarred ? 'text-yellow-500 fill-current' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+          </svg>
+        </button>
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onArchive();
+          }}
+          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          aria-label="Archiwizuj"
+        >
+          <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8l4 4 4-4m0 0L9 4m4 4v12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  ));
+
+  // Komponent pola odpowiedzi (wspólny dla desktop i mobile)
+  const ReplyField = useMemo(() => (
+    <div className="p-3 sm:p-4 border-t border-gray-200 bg-white">
+      {/* Lista załączników */}
+      {attachments.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-2">
+          {attachments.map((attachment, index) => (
+            <div key={`${attachment.name}-${index}`} className="bg-gray-100 rounded px-2 py-1 text-sm flex items-center gap-1">
+              <span className="truncate max-w-[100px] sm:max-w-[150px]" title={attachment.name}>
+                {attachment.name}
+              </span>
+              <button 
+                className="text-gray-500 hover:text-red-500 ml-1"
+                onClick={() => removeAttachment(index)}
+                aria-label={`Usuń załącznik ${attachment.name}`}
+              >
+                &times;
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+      
+      {/* Pole tekstowe i przyciski */}
+      <div className="flex items-end gap-2">
+        <textarea
+          className="flex-grow p-2 sm:p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35530A] focus:border-transparent resize-none text-sm sm:text-base"
+          placeholder="Napisz wiadomość..."
+          rows="2"
+          value={replyContent}
+          onChange={(e) => setReplyContent(e.target.value)}
+          disabled={sendingReply}
+        />
+        <div className="flex flex-col gap-1 sm:gap-2">
+          {/* Przycisk załączników */}
+          <button
+            className="p-2 sm:p-3 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleAttachmentClick(e);
+            }}
+            disabled={sendingReply}
+            title="Dodaj załącznik"
+            aria-label="Dodaj załącznik"
+          >
+            <Paperclip className="h-5 w-5 sm:h-6 sm:w-6" />
+          </button>
+          
+          {/* Przycisk wysyłania */}
+          <button
+            className="p-2 sm:p-3 rounded-lg bg-[#35530A] text-white hover:bg-[#2A4208] transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleSendReply(e);
+            }}
+            disabled={isButtonDisabled}
+            title="Wyślij wiadomość"
+            aria-label="Wyślij wiadomość"
+          >
+            {sendingReply ? (
+              <div className="h-5 w-5 sm:h-6 sm:w-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Send className="h-5 w-5 sm:h-6 sm:w-6" />
+            )}
+          </button>
+        </div>
+      </div>
+      
+      {/* Ukryty input do wyboru plików */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        className="hidden"
+        multiple
+        onChange={handleFileSelect}
+        accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+      />
+    </div>
+  ), [attachments, replyContent, sendingReply, isButtonDisabled, handleAttachmentClick, handleSendReply, removeAttachment, handleFileSelect]);
+
   // Memoizacja zawartości lewej kolumny
   const leftColumnContent = useMemo(() => {
     if (!isAuthenticated) {
-      return <AuthError onLoginRedirect={handleLoginRedirect} />;
+      return (
+        <div className="flex flex-col justify-center items-center h-64 p-4">
+          <div className="text-red-500 mb-4">
+            <p className="text-center font-medium text-lg">Twoja sesja wygasła. Zaloguj się ponownie, aby kontynuować.</p>
+          </div>
+          <button 
+            className="px-4 py-2 bg-[#35530A] text-white rounded-md hover:bg-[#2A4208] transition-colors"
+            onClick={handleLoginRedirect}
+          >
+            Zaloguj się
+          </button>
+        </div>
+      );
     }
     
     if (error) {
-      return <ErrorMessage message={error} />;
+      return (
+        <div className="flex justify-center items-center h-64 p-4 text-center text-red-500">
+          <p>{error}</p>
+        </div>
+      );
     }
     
     if (loading && conversations.length === 0) {
-      return <LoadingSpinner />;
+      return (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#35530A]"></div>
+        </div>
+      );
     }
     
     if (conversations.length === 0) {
-      return <EmptyState message="Nie znaleziono wiadomości w tym folderze." />;
+      return (
+        <div className="flex justify-center items-center h-64 p-4 text-center text-gray-500">
+          <p>Nie znaleziono wiadomości w tym folderze.</p>
+        </div>
+      );
     }
     
     return (
       <MessageList
         messages={conversations}
         activeConversation={selectedConversation?.id}
-        onSelectConversation={selectConversation}
+        onSelectConversation={handleSelectConversation}
         onStar={handleStar}
         onDelete={handleDelete}
         onMove={handleMove}
@@ -406,7 +438,7 @@ const Messages = memo(() => {
     loading,
     conversations,
     selectedConversation?.id,
-    selectConversation,
+    handleSelectConversation,
     handleStar,
     handleDelete,
     handleMove,
@@ -416,15 +448,17 @@ const Messages = memo(() => {
   // Rendering komponentu
   return (
     <div className="bg-gray-50 min-h-screen pb-6">
-      <div className="max-w-7xl mx-auto p-4">
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-100 h-[80vh] flex flex-col">
+      <div className="max-w-7xl mx-auto p-2 sm:p-4">
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-100 h-[calc(100vh-2rem)] sm:h-[80vh] flex flex-col">
           {/* Nagłówek - widoczny tylko na desktopie */}
-          <MessagesHeader 
-            searchTerm={searchTerm}
-            onSearch={handleSearch}
-            onNewMessage={handleNewMessage}
-            unreadCount={unreadCount.messages}
-          />
+          <div className="hidden md:block">
+            <MessagesHeader 
+              searchTerm={searchTerm}
+              onSearch={handleSearch}
+              onNewMessage={handleNewMessage}
+              unreadCount={unreadCount.messages}
+            />
+          </div>
           
           {/* Zakładki folderów - dostosowane do urządzeń */}
           <MessagesTabs
@@ -435,101 +469,115 @@ const Messages = memo(() => {
           
           {/* Główna zawartość */}
           <div className="flex flex-1 overflow-hidden">
-            {/* Lista konwersacji (lewa kolumna) */}
-            <div className="w-full md:w-2/5 border-r border-gray-200 flex flex-col overflow-hidden">
-              {leftColumnContent}
+            {/* WIDOK DESKTOPOWY - podział na dwie kolumny */}
+            <div className="hidden md:flex md:flex-1 md:overflow-hidden">
+              {/* Lista konwersacji (lewa kolumna) */}
+              <div className="w-2/5 border-r border-gray-200 flex flex-col overflow-hidden">
+                {leftColumnContent}
+              </div>
+              
+              {/* Zawartość konwersacji (prawa kolumna) */}
+              <div className="w-3/5 flex flex-col overflow-hidden">
+                {selectedConversation ? (
+                  <>
+                    {/* Nagłówek konwersacji */}
+                    <ChatHeader 
+                      conversation={selectedConversation} 
+                      onStar={() => handleStar(selectedConversation.id)} 
+                      onDelete={() => handleDelete(selectedConversation.id)}
+                      onArchive={() => handleArchive(selectedConversation.id)}
+                      onBack={handleBack}
+                    />
+                    
+                    {/* Wiadomości w konwersacji */}
+                    <MessageChat
+                      messages={chatMessages}
+                      currentUser={user}
+                      loading={loading}
+                      onDeleteMessage={deleteMessage}
+                      onArchiveMessage={archiveMessage}
+                    />
+                    
+                    {/* Pole odpowiedzi */}
+                    {ReplyField}
+                  </>
+                ) : (
+                  <EmptyChat onNewMessage={handleNewMessage} />
+                )}
+              </div>
             </div>
             
-            {/* Zawartość konwersacji (prawa kolumna) */}
-            <div className="hidden md:flex md:w-3/5 flex-col overflow-hidden">
-              {selectedConversation ? (
+            {/* WIDOK MOBILNY - przełączanie między listą a czatem */}
+            <div className="md:hidden flex flex-col flex-1 overflow-hidden">
+              {mobileView === 'list' ? (
                 <>
-                  {/* Nagłówek konwersacji */}
-                  <ChatHeader 
-                    conversation={selectedConversation} 
-                    onStar={() => handleStar(selectedConversation.id)} 
-                    onDelete={() => handleDelete(selectedConversation.id)}
-                    onArchive={() => handleArchive(selectedConversation.id)}
-                    onBack={handleBack}
-                  />
+                  {/* Mobilny nagłówek z przyciskiem nowej wiadomości */}
+                  <div className="bg-white border-b border-gray-200 p-4 flex items-center justify-between">
+                    <h2 className="text-lg font-semibold text-gray-900">
+                      Wiadomości
+                    </h2>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleNewMessage(e);
+                      }}
+                      className="px-3 py-2 bg-[#35530A] text-white rounded-md hover:bg-[#2A4208] transition-colors text-sm"
+                    >
+                      Nowa
+                    </button>
+                  </div>
                   
-                  {/* Wiadomości w konwersacji */}
-                  <MessageChat
-                    messages={chatMessages}
-                    currentUser={user}
-                    loading={loading}
-                    onDeleteMessage={deleteMessage}
-                    onArchiveMessage={archiveMessage}
-                  />
-                  
-                  {/* Pole odpowiedzi */}
-                  <div className="p-4 border-t border-gray-200 bg-white">
-                    {/* Lista załączników */}
-                    {attachments.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mb-2">
-                        {attachments.map((attachment, index) => (
-                          <AttachmentItem
-                            key={`${attachment.name}-${index}`}
-                            attachment={attachment}
-                            index={index}
-                            onRemove={removeAttachment}
-                          />
-                        ))}
-                      </div>
-                    )}
-                    
-                    {/* Pole tekstowe i przyciski */}
-                    <div className="flex items-end gap-2">
-                      <textarea
-                        className="flex-grow p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35530A] focus:border-transparent resize-none"
-                        placeholder="Napisz wiadomość..."
-                        rows="3"
-                        value={replyContent}
-                        onChange={(e) => setReplyContent(e.target.value)}
-                        disabled={sendingReply}
-                      />
-                      <div className="flex flex-col gap-2">
-                        {/* Przycisk załączników */}
-                        <button
-                          className="p-3 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                          onClick={handleAttachmentClick}
-                          disabled={sendingReply}
-                          title="Dodaj załącznik"
-                          aria-label="Dodaj załącznik"
-                        >
-                          <Paperclip className="h-6 w-6" />
-                        </button>
-                        
-                        {/* Przycisk wysyłania */}
-                        <button
-                          className="p-3 rounded-lg bg-[#35530A] text-white hover:bg-[#2A4208] transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
-                          onClick={handleSendReply}
-                          disabled={isButtonDisabled}
-                          title="Wyślij wiadomość"
-                          aria-label="Wyślij wiadomość"
-                        >
-                          {sendingReply ? (
-                            <div className="h-6 w-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          ) : (
-                            <Send className="h-6 w-6" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                    
-                    {/* Ukryty input do wyboru plików */}
+                  {/* Mobilne pole wyszukiwania */}
+                  <div className="bg-white border-b border-gray-200 p-4">
                     <input
-                      type="file"
-                      ref={fileInputRef}
-                      className="hidden"
-                      multiple
-                      onChange={handleFileSelect}
-                      accept={ACCEPTED_FILE_TYPES}
+                      type="text"
+                      placeholder="Szukaj wiadomości..."
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35530A] focus:border-transparent"
+                      value={searchTerm}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        handleSearch(e);
+                      }}
                     />
+                  </div>
+                  
+                  {/* Lista konwersacji */}
+                  <div className="flex-1 overflow-hidden">
+                    {leftColumnContent}
                   </div>
                 </>
               ) : (
-                <EmptyChat onNewMessage={handleNewMessage} />
+                <>
+                  {/* Mobilny nagłówek czatu */}
+                  {selectedConversation && (
+                    <MobileChatHeader
+                      conversation={selectedConversation}
+                      onBack={handleBack}
+                      onStar={() => handleStar(selectedConversation.id)}
+                      onDelete={() => handleDelete(selectedConversation.id)}
+                      onArchive={() => handleArchive(selectedConversation.id)}
+                    />
+                  )}
+                  
+                  {/* Wiadomości w konwersacji */}
+                  <div className="flex-1 overflow-hidden">
+                    {selectedConversation ? (
+                      <MessageChat
+                        messages={chatMessages}
+                        currentUser={user}
+                        loading={loading}
+                        onDeleteMessage={deleteMessage}
+                        onArchiveMessage={archiveMessage}
+                      />
+                    ) : (
+                      <EmptyChat onNewMessage={handleNewMessage} />
+                    )}
+                  </div>
+                  
+                  {/* Pole odpowiedzi */}
+                  {selectedConversation && ReplyField}
+                </>
               )}
             </div>
           </div>

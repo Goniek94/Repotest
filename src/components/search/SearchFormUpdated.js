@@ -31,34 +31,45 @@ export default function SearchFormUpdated({ initialValues = {}, onFilterChange }
 
   // Stan formularza
   const [formData, setFormData] = useState(() => ({
-    make: '',
-    model: '',
+    make: [],  // Checklist - musi być tablica
+    model: [],  // Checklist - musi być tablica
     priceFrom: '',
     priceTo: '',
     yearFrom: '',
     yearTo: '',
-    bodyType: '',
+    bodyType: [],  // Checklist - musi być tablica
     damageStatus: '',
     country: '',
-    region: '',
-    fuelType: '',
+    region: [],  // Checklist - musi być tablica
+    city: [],    // Checklist - musi być tablica
+    fuelType: [],  // Checklist - musi być tablica
     driveType: '',
     mileageFrom: '',
     mileageTo: '',
     location: '',
-    transmission: '',
+    transmission: [],  // Checklist - musi być tablica
     enginePowerFrom: '',
     enginePowerTo: '',
     engineCapacityFrom: '',
     engineCapacityTo: '',
-    color: '',
-    doorCount: '',
+    color: [],   // Checklist - musi być tablica
+    doorCount: [],  // Checklist - musi być tablica
     tuning: '',
+    condition: [],  // Checklist - musi być tablica
+    accidentStatus: '',
+    countryOfOrigin: [],  // Checklist - musi być tablica
+    finish: [],  // Checklist - musi być tablica
+    weightFrom: '',
+    weightTo: '',
     vehicleCondition: '',
     sellingForm: '',
     sellerType: '',
     vat: false,
     invoiceOptions: false,
+    imported: false,
+    registeredInPL: false,
+    firstOwner: false,
+    disabledAdapted: false,
     ...sanitizedInitialValues
   }));
 
@@ -71,19 +82,122 @@ export default function SearchFormUpdated({ initialValues = {}, onFilterChange }
   // Liczba pasujących wyników z backendu
   const [matchingResults, setMatchingResults] = useState(0);
 
+  // Funkcja resetująca wszystkie filtry
+  const resetAllFilters = () => {
+    // Lista wszystkich pól formularza do zresetowania
+    const defaultFormData = {
+      make: [],  // Checklist - musi być tablica
+      model: [], // Checklist - musi być tablica
+      priceFrom: '',
+      priceTo: '',
+      yearFrom: '',
+      yearTo: '',
+      bodyType: [],  // Checklist - musi być tablica
+      damageStatus: '',
+      country: '',
+      region: [],  // Checklist - musi być tablica
+      city: [],    // Checklist - musi być tablica
+      fuelType: [], // Checklist - musi być tablica
+      driveType: '',
+      mileageFrom: '',
+      mileageTo: '',
+      location: '',
+      transmission: [], // Checklist - musi być tablica
+      enginePowerFrom: '',
+      enginePowerTo: '',
+      engineCapacityFrom: '',
+      engineCapacityTo: '',
+      color: [],   // Checklist - musi być tablica
+      doorCount: [], // Checklist - musi być tablica
+      tuning: '',
+      condition: [], // Checklist - musi być tablica
+      accidentStatus: '',
+      countryOfOrigin: [], // Checklist - musi być tablica
+      finish: [],  // Checklist - musi być tablica
+      weightFrom: '',
+      weightTo: '',
+      sellerType: '',
+      imported: false,
+      registeredInPL: false,
+      firstOwner: false,
+      disabledAdapted: false,
+      vehicleCondition: '',
+      sellingForm: '',
+      vat: false,
+      invoiceOptions: false
+    };
+    
+    // Resetuj formularze
+    setFormData(defaultFormData);
+    
+    // Resetuj dostępne modele
+    setAvailableModels([]);
+  };
+
   // Aktualizuj dostępne modele, gdy zmienia się marka
   useEffect(() => {
     const updateModels = async () => {
-      if (formData.make) {
-        const models = await getModelsForBrand(formData.make);
-        setAvailableModels(models);
+      console.log('Aktualizacja modeli dla marek:', formData.make);
+      
+      if (formData.make && formData.make.length > 0) {
+        // Jeśli wybrano jedną markę, pobierz jej modele
+        if (formData.make.length === 1) {
+          const models = await getModelsForBrand(formData.make[0]);
+          console.log(`Pobrano ${models.length} modeli dla marki ${formData.make[0]}:`, models);
+          setAvailableModels(models);
+        } else {
+          // Jeśli wybrano wiele marek, pobierz modele dla wszystkich wybranych marek
+          let allModels = [];
+          for (const brand of formData.make) {
+            const models = await getModelsForBrand(brand);
+            console.log(`Pobrano ${models.length} modeli dla marki ${brand}`);
+            allModels = [...allModels, ...models];
+          }
+          // Usuń duplikaty i posortuj
+          const uniqueModels = [...new Set(allModels)].sort();
+          console.log(`Łącznie pobrano ${uniqueModels.length} unikalnych modeli dla wybranych marek`);
+          setAvailableModels(uniqueModels);
+        }
       } else {
+        console.log('Nie wybrano żadnej marki, czyszczenie listy modeli');
         setAvailableModels([]);
       }
     };
     
     updateModels();
   }, [formData.make, getModelsForBrand]);
+
+  // Resetuj wybrane modele, gdy zmienia się lista dostępnych modeli
+  useEffect(() => {
+    if (formData.model && formData.model.length > 0 && availableModels.length > 0) {
+      // Filtruj wybrane modele tak, aby pozostały tylko te, które są dostępne dla wybranej marki
+      const validModels = formData.model.filter(model => availableModels.includes(model));
+      
+      // Jeśli lista wybranych modeli zmieniła się, zaktualizuj stan formularza
+      if (validModels.length !== formData.model.length) {
+        console.log('Resetowanie wybranych modeli, które nie należą do wybranej marki', {
+          oldModels: formData.model,
+          newModels: validModels,
+          availableModels
+        });
+        
+        handleInputChange({
+          target: {
+            name: 'model',
+            value: validModels
+          }
+        });
+      }
+    } else if (formData.model && formData.model.length > 0 && availableModels.length === 0) {
+      // Jeśli nie ma dostępnych modeli, a jakieś są wybrane, wyczyść wybrane modele
+      handleInputChange({
+        target: {
+          name: 'model',
+          value: []
+        }
+      });
+    }
+  }, [availableModels, formData.model]);
 
   // Pobierz rzeczywistą liczbę wyników z backendu przy zmianie filtrów
   useEffect(() => {
@@ -184,10 +298,6 @@ export default function SearchFormUpdated({ initialValues = {}, onFilterChange }
   return (
     <section className="bg-[#F5F7F9] py-6 px-3 sm:px-4">
       <div className="max-w-7xl mx-auto">
-        <h2 className="text-2xl md:text-3xl font-bold text-[#35530A] text-center mb-5 uppercase">
-          Wyszukaj pojazd
-        </h2>
-        
         {/* Komunikat o ładowaniu */}
         {loading && (
           <div className="bg-blue-50 p-3 mb-4 rounded-md text-blue-700 text-center">
@@ -195,14 +305,18 @@ export default function SearchFormUpdated({ initialValues = {}, onFilterChange }
           </div>
         )}
         
-        {/* Komunikat o błędzie */}
-        {error && (
-          <div className="bg-red-50 p-3 mb-4 rounded-md text-red-700 text-center">
-            {error}
-          </div>
-        )}
-        
         <div className="bg-white p-5 shadow-md rounded-[2px] mb-4">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-bold text-gray-800">Filtry wyszukiwania</h2>
+            <button
+              type="button"
+              onClick={resetAllFilters}
+              className="text-sm text-gray-600 hover:text-red-600 hover:underline"
+            >
+              Wyczyść wszystkie filtry
+            </button>
+          </div>
+          
           <BasicFilters
             formData={formData}
             handleInputChange={handleInputChange}
@@ -220,6 +334,7 @@ export default function SearchFormUpdated({ initialValues = {}, onFilterChange }
               handleInputChange={handleInputChange}
               advancedOptions={advancedOptions}
               regions={regions}
+              carData={carData}
             />
           )}
           

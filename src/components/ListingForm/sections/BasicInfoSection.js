@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import FormField from '../components/FormField';
+import SelectField from '../components/SelectField';
 import api from '../../../services/api';
 import useCarData from '../../../components/search/hooks/useCarData';
 import { carData as staticCarData } from '../../../components/search/SearchFormConstants';
 
 const BasicInfoSection = ({ formData, handleChange, errors, showToast }) => {
   // Używamy hooka useCarData do pobierania rzeczywistych danych z API
-  const { carData, brands, getModelsForBrand, loading: loadingCarData } = useCarData();
+  const { carData, brands, getModelsForBrand, getGenerationsForModel, loading: loadingCarData } = useCarData();
   
   const [availableModels, setAvailableModels] = useState([]);
   const [availableGenerations, setAvailableGenerations] = useState([]);
@@ -14,13 +15,18 @@ const BasicInfoSection = ({ formData, handleChange, errors, showToast }) => {
   const [isLoadingModels, setIsLoadingModels] = useState(false);
   // Tablica pól, które zostały wypełnione przez dane z VIN i są zablokowane do edycji
   const [lockedFields, setLockedFields] = useState([]);
+  // Stan dla śledzenia otwartych dropdowns
+  const [openDropdowns, setOpenDropdowns] = useState({});
   
   // Lata produkcji - dynamicznie generowane
   const currentYear = new Date().getFullYear();
   const years = [];
   for (let i = currentYear + 1; i >= 1900; i--) {
-    years.push({ value: i.toString(), label: i.toString() });
+    years.push(i.toString());
   }
+  
+  // Opcje dla typu sprzedawcy
+  const sellerTypeOptions = ['prywatny', 'firma'];
   
   // Aktualizacja dostępnych modeli na podstawie wybranej marki - pobieramy z API
   useEffect(() => {
@@ -39,21 +45,26 @@ const BasicInfoSection = ({ formData, handleChange, errors, showToast }) => {
         console.error('Błąd podczas pobierania modeli:', error);
         // Fallback do statycznych danych w przypadku błędu
         setAvailableModels(staticCarData[formData.brand] || []);
-        showToast('Wystąpił problem z pobieraniem modeli. Używam danych lokalnych.', 'warning');
       } finally {
         setIsLoadingModels(false);
       }
     };
     
     fetchModels();
-  }, [formData.brand, getModelsForBrand, showToast]);
+  }, [formData.brand, getModelsForBrand]);
   
   // Aktualizacja dostępnych generacji na podstawie wybranego modelu
   useEffect(() => {
-    // Generacje zostały usunięte z nowej struktury danych
-    // W przyszłości można dodać generacje jako osobny serwis
-    setAvailableGenerations([]);
-  }, [formData.brand, formData.model]);
+    if (!formData.brand || !formData.model) {
+      setAvailableGenerations([]);
+      return;
+    }
+    
+    // Pobieramy generacje dla wybranego modelu
+    const generations = getGenerationsForModel(formData.brand, formData.model);
+    setAvailableGenerations(generations);
+    console.log(`Pobrano generacje dla ${formData.brand} ${formData.model}:`, generations);
+  }, [formData.brand, formData.model, getGenerationsForModel]);
   
   // Funkcja pomocnicza do sprawdzania czy pole jest zablokowane
   const isFieldLocked = (fieldName) => {
@@ -70,6 +81,32 @@ const BasicInfoSection = ({ formData, handleChange, errors, showToast }) => {
     
     // W przeciwnym razie pozwalamy na zmianę
     handleChange(fieldName, value);
+  };
+  
+  // Obsługa przełączania dropdown
+  const toggleDropdown = (name) => {
+    setOpenDropdowns(prev => ({
+      ...prev,
+      [name]: !prev[name]
+    }));
+  };
+  
+  // Obsługa zmiany opcji w dropdown
+  const handleOptionChange = (name, option) => {
+    // Sprawdzamy czy pole jest zablokowane
+    if (isFieldLocked(name)) {
+      showToast(`Pole "${name}" jest zablokowane - dane pochodzą z CEPiK`, 'warning');
+      return;
+    }
+    
+    // W przeciwnym razie pozwalamy na zmianę
+    handleChange(name, option);
+    
+    // Zamknij dropdown po wyborze opcji
+    setOpenDropdowns(prev => ({
+      ...prev,
+      [name]: false
+    }));
   };
   
   // Funkcja resetowania zablokowanych pól
@@ -155,13 +192,9 @@ const BasicInfoSection = ({ formData, handleChange, errors, showToast }) => {
   };
   
   return (
-    <div>
+    <div className="space-y-6">
       {/* Nagłówek ogłoszenia */}
-      <div className="mb-6">
-        <h3 className="text-white p-2 rounded-[2px] mb-4 bg-[#35530A]">
-          Podstawowe informacje o ogłoszeniu
-        </h3>
-        
+      <div className="border rounded-lg p-4 transition-all duration-200 hover:shadow-md border-gray-300">
         <FormField
           type="text"
           label="Nagłówek ogłoszenia*"
@@ -180,81 +213,51 @@ const BasicInfoSection = ({ formData, handleChange, errors, showToast }) => {
         </div>
       </div>
 
-      {/* Kto sprzedaje - jako karty wyboru */}
-      <div className="mb-6">
-        <label className="block font-semibold mb-2">Kto sprzedaje?*</label>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <label className={`
-            flex flex-col items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer
-            ${formData.sellerType === 'prywatny' ? 'border-[#35530A] bg-green-50' : 'border-gray-200 hover:border-[#35530A]'}
-            transition-all duration-200
-          `}>
-            <input
-              type="radio"
-              name="sellerType"
-              value="prywatny"
-              checked={formData.sellerType === 'prywatny'}
-              onChange={(e) => handleFieldChange('sellerType', e.target.value)}
-              className="sr-only" // Ukrycie domyślnego radiobuttona
-              disabled={isFieldLocked('sellerType')}
-            />
-            <svg xmlns="http://www.w3.org/2000/svg" className={`w-10 h-10 ${formData.sellerType === 'prywatny' ? 'text-[#35530A]' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-            <span className="font-medium text-center">Osoba prywatna</span>
-          </label>
-          
-          <label className={`
-            flex flex-col items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer
-            ${formData.sellerType === 'firma' ? 'border-[#35530A] bg-green-50' : 'border-gray-200 hover:border-[#35530A]'}
-            transition-all duration-200
-          `}>
-            <input
-              type="radio"
-              name="sellerType"
-              value="firma"
-              checked={formData.sellerType === 'firma'}
-              onChange={(e) => handleFieldChange('sellerType', e.target.value)}
-              className="sr-only" // Ukrycie domyślnego radiobuttona
-              disabled={isFieldLocked('sellerType')}
-            />
-            <svg xmlns="http://www.w3.org/2000/svg" className={`w-10 h-10 ${formData.sellerType === 'firma' ? 'text-[#35530A]' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
-            <span className="font-medium text-center">Firma</span>
-          </label>
-        </div>
-        {errors.sellerType && (
-          <div className="text-red-500 text-xs mt-1">{errors.sellerType}</div>
-        )}
+      {/* Kto sprzedaje - jako dropdown select */}
+      <div className="border rounded-lg p-4 transition-all duration-200 hover:shadow-md border-gray-300">
+        <SelectField
+          name="sellerType"
+          label="Kto sprzedaje?"
+          options={sellerTypeOptions.map(type => type === 'prywatny' ? 'Osoba prywatna' : 'Firma')}
+          value={formData.sellerType === 'prywatny' ? 'Osoba prywatna' : formData.sellerType === 'firma' ? 'Firma' : ''}
+          onChange={(name, option) => {
+            const value = option === 'Osoba prywatna' ? 'prywatny' : 'firma';
+            handleOptionChange(name, value);
+          }}
+          openDropdowns={openDropdowns}
+          toggleDropdown={toggleDropdown}
+          required={true}
+          error={errors.sellerType}
+          placeholder="Wybierz typ sprzedawcy"
+          disabled={isFieldLocked('sellerType')}
+        />
       </div>
 
       {/* Sekcja VIN */}
-      <div className="mb-8 border p-4 rounded-[2px] bg-gray-50">
-        <h3 className="text-lg font-semibold mb-4">
+      <div className="bg-gray-50 p-4 rounded-[2px] border border-gray-200">
+        <h3 className="font-medium mb-3">
           Wyszukaj dane pojazdu po numerze VIN (opcjonalnie)
         </h3>
         <div className="flex flex-col md:flex-row gap-3 mb-3">
-          <FormField
+          <input
             type="text"
             name="vin"
-            value={formData.vin}
+            value={formData.vin || ''}
             onChange={(e) => handleFieldChange('vin', e.target.value.toUpperCase())}
             placeholder="Wprowadź numer VIN (17 znaków)"
             maxLength={17}
-            error={errors.vin}
-            className="flex-1"
+            className="flex-1 h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
           />
           <button
             type="button"
             onClick={fetchVinData}
             disabled={isLoadingVin || !formData.vin || formData.vin.length !== 17}
-            className="text-white px-4 py-2 rounded-[2px] flex items-center gap-2 bg-[#35530A] hover:bg-[#2D4A06] disabled:bg-gray-400 transition-colors h-[42px]"
+            className="text-white px-4 py-2 rounded-[2px] flex items-center gap-2 bg-[#35530A] hover:bg-[#2D4A06] disabled:bg-gray-400 transition-colors h-[40px] whitespace-nowrap"
           >
-            {isLoadingVin ? 'Pobieranie...' : 'Pobierz Dane z CEPiK'}
+            {isLoadingVin ? 'Pobieranie...' : 'Pobierz dane z CEPiK'}
           </button>
         </div>
-        <div className="text-sm text-gray-600 mt-1">
+        <div className="text-sm text-gray-600">
           Wprowadź 17-znakowy numer VIN, aby automatycznie pobrać dane pojazdu z bazy CEPiK.
         </div>
         
@@ -278,116 +281,137 @@ const BasicInfoSection = ({ formData, handleChange, errors, showToast }) => {
         )}
       </div>
 
-      {/* Marka, model, generacja, wersja */}
-      <div className="mb-6">
-        <h3 className="text-white p-2 rounded-[2px] mb-4 bg-[#35530A]">
-          Dane podstawowe pojazdu
-        </h3>
+      {/* Dane pojazdu - siatka w stylu wyszukiwarki */}
+      <div className="space-y-4">
+        <h3 className="font-medium mb-2">Dane podstawowe pojazdu</h3>
         
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          {/* Komunikat o ładowaniu danych */}
-          {loadingCarData && (
-            <div className="md:col-span-4 p-2 bg-blue-50 rounded-[2px] text-blue-700 text-sm mb-3">
-              Ładowanie danych o markach i modelach...
+        {/* Używamy grid z równymi kolumnami */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Marka pojazdu */}
+          <div className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
+            formData.brand ? 'border-[#35530A] bg-green-50' : 'border-gray-300'
+          }`}>
+            <SelectField
+              name="brand"
+              label={renderFieldLabel('Marka', 'brand', true)}
+              options={brands}
+              value={formData.brand || ''}
+              onChange={handleOptionChange}
+              openDropdowns={openDropdowns}
+              toggleDropdown={toggleDropdown}
+              required={true}
+              error={errors.brand}
+              placeholder="Wybierz markę"
+              disabled={isFieldLocked('brand') || loadingCarData}
+            />
+          </div>
+          
+          {/* Model pojazdu */}
+          <div className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
+            formData.model ? 'border-[#35530A] bg-green-50' : 'border-gray-300'
+          }`}>
+            <SelectField
+              name="model"
+              label={renderFieldLabel('Model', 'model', true)}
+              options={availableModels}
+              value={formData.model || ''}
+              onChange={handleOptionChange}
+              openDropdowns={openDropdowns}
+              toggleDropdown={toggleDropdown}
+              required={true}
+              error={errors.model}
+              placeholder={!formData.brand ? "Najpierw wybierz markę" : isLoadingModels ? "Ładowanie modeli..." : "Wybierz model"}
+              disabled={!formData.brand || isFieldLocked('model') || isLoadingModels}
+            />
+          </div>
+          
+          {/* Generacja pojazdu */}
+          <div className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
+            formData.generation ? 'border-[#35530A] bg-green-50' : 'border-gray-300'
+          }`}>
+            <SelectField
+              name="generation"
+              label={renderFieldLabel('Generacja', 'generation', false)}
+              options={availableGenerations}
+              value={formData.generation || ''}
+              onChange={handleOptionChange}
+              openDropdowns={openDropdowns}
+              toggleDropdown={toggleDropdown}
+              required={false}
+              error={errors.generation}
+              placeholder={!formData.model ? "Najpierw wybierz model" : availableGenerations.length === 0 ? "Brak dostępnych generacji" : "Wybierz generację"}
+              disabled={!formData.model || isFieldLocked('generation') || availableGenerations.length === 0}
+            />
+          </div>
+          
+          {/* Rok produkcji */}
+          <div className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
+            formData.productionYear ? 'border-[#35530A] bg-green-50' : 'border-gray-300'
+          }`}>
+            <SelectField
+              name="productionYear"
+              label={renderFieldLabel('Rok produkcji', 'productionYear', true)}
+              options={years}
+              value={formData.productionYear || ''}
+              onChange={handleOptionChange}
+              openDropdowns={openDropdowns}
+              toggleDropdown={toggleDropdown}
+              required={true}
+              error={errors.productionYear}
+              placeholder="Wybierz rok"
+              disabled={isFieldLocked('productionYear')}
+            />
+          </div>
+          
+          {/* Wersja silnika - jako input w ujednoliconym kontenerze */}
+          <div className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
+            formData.version ? 'border-[#35530A] bg-green-50' : 'border-gray-300'
+          }`}>
+            <label className="block font-semibold mb-3 text-gray-800">
+              {renderFieldLabel('Wersja silnika', 'version')}
+            </label>
+            <div className="relative h-10"> {/* Stała wysokość dla dopasowania do SelectField */}
+              <input
+                type="text"
+                name="version"
+                value={formData.version || ''}
+                onChange={(e) => handleFieldChange('version', e.target.value)}
+                placeholder="np. 1.4 TSI"
+                disabled={isFieldLocked('version')}
+                className={`w-full h-full text-sm px-3 border ${isFieldLocked('version') ? 'border-gray-200 bg-gray-50' : 'border-gray-300'} rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A] ${isFieldLocked('version') ? 'cursor-not-allowed' : ''}`}
+              />
             </div>
-          )}
+          </div>
           
-          <FormField
-            type="select"
-            label={renderFieldLabel('Marka', 'brand', true)}
-            name="brand"
-            value={formData.brand}
-            onChange={(e) => handleFieldChange('brand', e.target.value)}
-            error={errors.brand}
-            options={brands.map(brand => ({ value: brand, label: brand }))}
-            placeholder="Wybierz markę"
-            disabled={isFieldLocked('brand') || loadingCarData}
-            className={isFieldLocked('brand') ? 'bg-gray-100' : ''}
-          />
-          
-          <FormField
-            type="select"
-            label={renderFieldLabel('Model', 'model', true)}
-            name="model"
-            value={formData.model}
-            onChange={(e) => handleFieldChange('model', e.target.value)}
-            error={errors.model}
-            options={availableModels.map(model => ({ value: model, label: model }))}
-            placeholder={isLoadingModels ? "Ładowanie modeli..." : "Wybierz model"}
-            disabled={!formData.brand || isFieldLocked('model') || isLoadingModels}
-            className={isFieldLocked('model') ? 'bg-gray-100' : ''}
-          />
-          
-          <FormField
-            type="select"
-            label={renderFieldLabel('Generacja', 'generation')}
-            name="generation"
-            value={formData.generation}
-            onChange={(e) => handleFieldChange('generation', e.target.value)}
-            options={availableGenerations.map(gen => {
-              // Zamiana (2017-obecnie) na 2017+
-              const match = typeof gen === 'string' && gen.match(/(\d{4})-obecnie/);
-              let label = gen;
-              if (match) {
-                label = `${match[1]}+`;
-              }
-              return { value: gen, label };
-            })}
-            placeholder="Wybierz generację"
-            disabled={!formData.model || isFieldLocked('generation')}
-            className={isFieldLocked('generation') ? 'bg-gray-100' : ''}
-          />
-          
-          <FormField
-            type="text"
-            label={renderFieldLabel('Wersja silnika', 'version')}
-            name="version"
-            value={formData.version}
-            onChange={(e) => handleFieldChange('version', e.target.value)}
-            placeholder="np. 1.4 TSI"
-            disabled={isFieldLocked('version')}
-            className={isFieldLocked('version') ? 'bg-gray-100' : ''}
-          />
+          {/* Numer rejestracyjny - jako input w ujednoliconym kontenerze */}
+          <div className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
+            formData.registrationNumber ? 'border-[#35530A] bg-green-50' : 'border-gray-300'
+          }`}>
+            <label className="block font-semibold mb-3 text-gray-800">
+              {renderFieldLabel('Numer rejestracyjny', 'registrationNumber')}
+            </label>
+            <div className="relative h-10"> {/* Stała wysokość dla dopasowania do SelectField */}
+              <input
+                type="text"
+                name="registrationNumber"
+                value={formData.registrationNumber || ''}
+                onChange={(e) => handleFieldChange('registrationNumber', e.target.value.toUpperCase())}
+                placeholder="np. WA12345"
+                maxLength={10}
+                disabled={isFieldLocked('registrationNumber')}
+                className={`w-full h-full text-sm px-3 border ${isFieldLocked('registrationNumber') ? 'border-gray-200 bg-gray-50' : 'border-gray-300'} rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A] ${isFieldLocked('registrationNumber') ? 'cursor-not-allowed' : ''}`}
+              />
+            </div>
+            <div className="text-xs text-gray-500 mt-1">
+              Wprowadź bez spacji, np. WA12345
+            </div>
+          </div>
         </div>
       </div>
       
-      {/* Rok, numer rejestracyjny */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        {/* Rok produkcji jako dropdown */}
-        <FormField
-          type="select"
-          label={renderFieldLabel('Rok produkcji', 'productionYear', true)}
-          name="productionYear"
-          value={formData.productionYear}
-          onChange={(e) => handleFieldChange('productionYear', e.target.value)}
-          error={errors.productionYear}
-          options={years}
-          placeholder="Wybierz rok"
-          disabled={isFieldLocked('productionYear')}
-          className={isFieldLocked('productionYear') ? 'bg-gray-100' : ''}
-        />
-        
-        <FormField
-          type="text"
-          label={renderFieldLabel('Numer rejestracyjny', 'registrationNumber')}
-          name="registrationNumber"
-          value={formData.registrationNumber}
-          onChange={(e) => handleFieldChange('registrationNumber', e.target.value.toUpperCase())}
-          placeholder="np. WA12345"
-          maxLength={10}
-          info="Wprowadź bez spacji, np. WA12345"
-          disabled={isFieldLocked('registrationNumber')}
-          className={isFieldLocked('registrationNumber') ? 'bg-gray-100' : ''}
-        />
-        
-        {/* Pusty blok dla zachowania układu */}
-        <div className="hidden md:block"></div>
-        <div className="hidden md:block"></div>
-      </div>
-      
       {/* Informacje pomocnicze */}
-      <div className="bg-[#F5FAF5] border-l-4 border-[#35530A] p-4 rounded-[2px] mt-4">
-        <p className="text-[#35530A] text-sm font-medium">
+      <div className="bg-[#F5FAF5] border-l-4 border-[#35530A] p-4 rounded-[2px]">
+        <p className="text-[#35530A] text-sm">
           Podanie dokładnych i prawdziwych informacji o pojeździe zwiększa zaufanie potencjalnych 
           kupujących. Pamiętaj, że wszystkie dane będą weryfikowane przez kupujących.
         </p>

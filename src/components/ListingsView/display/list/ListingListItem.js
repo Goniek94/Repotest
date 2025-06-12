@@ -11,6 +11,7 @@ import {
   User,
   Medal
 } from 'lucide-react';
+import getImageUrl from '../../../../utils/responsive/getImageUrl';
 
 const ListingListItem = memo(({ 
   listing, 
@@ -33,7 +34,7 @@ const ListingListItem = memo(({
       {/* Zdjęcie */}
       <div className="w-full sm:w-[300px] lg:w-[336px] h-48 sm:h-full relative overflow-hidden flex-shrink-0">
         <img
-          src={listing.image}
+          src={getImageUrl(listing.image)}
           alt={listing.title}
           className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
           loading="lazy"
@@ -77,59 +78,68 @@ const ListingListItem = memo(({
             <p className="text-sm sm:text-base lg:text-base text-gray-600 line-clamp-1">{listing.subtitle}</p>
           </div>
 
-          {/* Parametry w jednym rzędzie z zawijaniem */}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 sm:gap-x-4 sm:gap-y-2">
-            {/* Paliwo */}
-            <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
-              <Fuel className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-black" />
-              <div>
-              <div className="text-sm sm:text-xs lg:text-sm text-gray-500">Paliwo</div>
-              <div className="text-base sm:text-base lg:text-base font-medium">{listing.fuel}</div>
+          {/* Parametry w 3 kolumnach po 2 parametry */}
+          <div className="grid grid-cols-3 gap-x-4 gap-y-2 sm:gap-x-4 sm:gap-y-2">
+            {/* Kolumna 1 */}
+            <div className="space-y-2">
+              {/* Paliwo */}
+              <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
+                <Fuel className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-black" />
+                <div>
+                  <div className="text-sm sm:text-xs lg:text-sm text-gray-500">Paliwo</div>
+                  <div className="text-base sm:text-base lg:text-base font-medium">{listing.fuel}</div>
+                </div>
               </div>
-            </div>
-            
-            {/* Przebieg */}
-            <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
-              <Gauge className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-black" />
-              <div>
-              <div className="text-sm sm:text-xs lg:text-sm text-gray-500">Przebieg</div>
-              <div className="text-base sm:text-base lg:text-base font-medium">{listing.mileage} km</div>
-              </div>
-            </div>
-
-            {/* Pojemność */}
-            <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
-              <Box className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-black" />
-              <div>
-              <div className="text-sm sm:text-xs lg:text-sm text-gray-500">Pojemność</div>
-              <div className="text-base sm:text-base lg:text-base font-medium">{listing.engineCapacity}</div>
+              
+              {/* Przebieg */}
+              <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
+                <Gauge className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-black" />
+                <div>
+                  <div className="text-sm sm:text-xs lg:text-sm text-gray-500">Przebieg</div>
+                  <div className="text-base sm:text-base lg:text-base font-medium">{listing.mileage} km</div>
+                </div>
               </div>
             </div>
 
-            {/* Rok */}
-            <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
-              <Calendar className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-black" />
-              <div>
-              <div className="text-sm sm:text-xs lg:text-sm text-gray-500">Rok</div>
-              <div className="text-base sm:text-base lg:text-base font-medium">{listing.year}</div>
+            {/* Kolumna 2 */}
+            <div className="space-y-2">
+              {/* Pojemność */}
+              <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
+                <Box className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-black" />
+                <div>
+                  <div className="text-sm sm:text-xs lg:text-sm text-gray-500">Pojemność</div>
+                  <div className="text-base sm:text-base lg:text-base font-medium">{listing.engineCapacity}</div>
+                </div>
+              </div>
+
+              {/* Rok */}
+              <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
+                <Calendar className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-black" />
+                <div>
+                  <div className="text-sm sm:text-xs lg:text-sm text-gray-500">Rok</div>
+                  <div className="text-base sm:text-base lg:text-base font-medium">{listing.year}</div>
+                </div>
               </div>
             </div>
 
-            {/* Moc */}
-            <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
-              <Power className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-black" />
-              <div>
-              <div className="text-sm sm:text-xs lg:text-sm text-gray-500">Moc</div>
-              <div className="text-base sm:text-base lg:text-base font-medium">{listing.power}</div>
+            {/* Kolumna 3 */}
+            <div className="space-y-2">
+              {/* Moc */}
+              <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
+                <Power className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-black" />
+                <div>
+                  <div className="text-sm sm:text-xs lg:text-sm text-gray-500">Moc</div>
+                  <div className="text-base sm:text-base lg:text-base font-medium">{listing.power}</div>
+                </div>
               </div>
-            </div>
-            
-            {/* Napęd */}
-            <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
-              <Car className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-black" />
-              <div>
-              <div className="text-sm sm:text-xs lg:text-sm text-gray-500">Napęd</div>
-              <div className="text-base sm:text-base lg:text-base font-medium">{listing.drive}</div>
+              
+              {/* Napęd */}
+              <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
+                <Car className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-black" />
+                <div>
+                  <div className="text-sm sm:text-xs lg:text-sm text-gray-500">Napęd</div>
+                  <div className="text-base sm:text-base lg:text-base font-medium">{listing.drive}</div>
+                </div>
               </div>
             </div>
           </div>

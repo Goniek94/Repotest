@@ -1,179 +1,481 @@
 import React, { useState, useEffect } from 'react';
-import { fetchUserSettings } from '../../../services/api/userSettingsApi';
+import { FaCheck, FaTimes, FaExclamationTriangle, FaMobileAlt, FaEnvelope, FaGoogle, FaUser, FaInfo } from 'react-icons/fa';
+import useUserDashboardData from '../dashboard/hooks/useUserDashboardData';
+import { fetchUserSettings, updateUserProfile } from '../../../services/api/userSettingsApi';
+import { sendVerificationCode, verifyVerificationCode } from '../../../services/api/verificationApi';
+import { useAuth } from '../../../contexts/AuthContext';
 
 const UserDataPanel = () => {
-  const [userData, setUserData] = useState(null);
+  const { user: authUser } = useAuth();
+  const { userData, isLoading: isUserDataLoading } = useUserDashboardData();
+  
+  const [userForm, setUserForm] = useState({
+    name: '',
+    lastName: '',
+    email: '',
+    phoneNumber: '',
+    dob: ''
+  });
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
+  const [success, setSuccess] = useState(false);
+  
+  // Verification states
+  const [showVerification, setShowVerification] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [verificationLoading, setVerificationLoading] = useState(false);
+  const [verificationError, setVerificationError] = useState(null);
+  const [verificationSuccess, setVerificationSuccess] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
+  
+  // Local state for verification status
+  const [verificationStatus, setVerificationStatus] = useState({
+    isVerified: false,
+    isEmailVerified: false,
+    isPhoneVerified: false,
+    registrationType: 'standard'
+  });
+  
+  // Load user data on mount
   useEffect(() => {
-    setLoading(true);
-    fetchUserSettings()
-      .then(data => {
-        setUserData(data);
+    const loadUserData = async () => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        const data = await fetchUserSettings();
+        console.log('User data loaded:', data);
+        
+        // Fill form with user data
+        setUserForm({
+          name: data.name || '',
+          lastName: data.lastName || '',
+          email: data.email || '',
+          phoneNumber: data.phoneNumber || '',
+          dob: data.dob ? new Date(data.dob).toISOString().split('T')[0] : ''
+        });
+        
+        // Set verification status directly from backend data
+        setVerificationStatus({
+          isVerified: data.isVerified || false,
+          isEmailVerified: data.isEmailVerified || false,
+          isPhoneVerified: data.isPhoneVerified || false,
+          registrationType: data.registrationType || 'standard'
+        });
+        
+        // Check if profile requires verification
+        if (data.registrationType === 'google' && !data.isVerified) {
+          setShowVerification(true);
+        }
+        
         setLoading(false);
-      })
-      .catch(() => {
-        setError('Nie udało się pobrać danych użytkownika.');
+      } catch (err) {
+        console.log('Error loading user settings:', err);
+        setError('Nie udało się pobrać danych użytkownika. Spróbuj odświeżyć stronę lub zaloguj się ponownie.');
         setLoading(false);
-      });
+      }
+    };
+    
+    loadUserData();
   }, []);
-
-  useEffect(() => {
-    if (userData) {
-      // Debug: log userData to console
-      // eslint-disable-next-line no-console
-      debug('userData:', userData);
+  
+  // Handle form changes
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setUserForm(prev => ({ ...prev, [name]: value }));
+  };
+  
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setSuccess(false);
+    
+    try {
+      await updateUserProfile(userForm);
+      setSuccess(true);
+      setLoading(false);
+      
+      // Briefly show success message
+      setTimeout(() => {
+        setSuccess(false);
+      }, 3000);
+    } catch (err) {
+      console.log('Error updating profile:', err);
+      setError('Nie udało się zaktualizować profilu. Spróbuj ponownie później.');
+      setLoading(false);
     }
-  }, [userData]);
-
-  if (loading) {
+  };
+  
+  // Send verification code to phone
+  const handleSendVerificationCode = async () => {
+    setVerificationLoading(true);
+    setVerificationError(null);
+    setCodeSent(false);
+    
+    try {
+      const response = await sendVerificationCode({
+        phoneNumber: userForm.phoneNumber,
+        type: 'phone'
+      });
+      
+      setCodeSent(true);
+      setVerificationLoading(false);
+      
+      // If in dev mode, we might have a code for testing
+      if (response.devCode) {
+        console.log('Dev verification code:', response.devCode);
+      }
+    } catch (err) {
+      console.log('Error sending verification code:', err);
+      setVerificationError('Nie udało się wysłać kodu weryfikacyjnego. Sprawdź numer telefonu i spróbuj ponownie.');
+      setVerificationLoading(false);
+    }
+  };
+  
+  // Verify phone code
+  const handleVerifyCode = async () => {
+    if (!verificationCode || verificationCode.length !== 6) {
+      setVerificationError('Kod weryfikacyjny musi mieć 6 cyfr.');
+      return;
+    }
+    
+    setVerificationLoading(true);
+    setVerificationError(null);
+    
+    try {
+      const response = await verifyVerificationCode({
+        phoneNumber: userForm.phoneNumber,
+        code: verificationCode,
+        type: 'phone'
+      });
+      
+      if (response.verified) {
+        setVerificationSuccess(true);
+        setShowVerification(false);
+        
+        // Briefly show success message
+        setTimeout(() => {
+          window.location.reload(); // Reload to update verification status
+        }, 2000);
+      } else {
+        setVerificationError('Nieprawidłowy kod weryfikacyjny. Spróbuj ponownie.');
+      }
+      
+      setVerificationLoading(false);
+    } catch (err) {
+      console.log('Error verifying code:', err);
+      setVerificationError('Nie udało się zweryfikować kodu. Spróbuj ponownie później.');
+      setVerificationLoading(false);
+    }
+  };
+  
+  // Use local verification status directly
+  const { isVerified, isEmailVerified, isPhoneVerified, registrationType } = verificationStatus;
+  
+  // Render verification indicator with icon
+  const renderVerificationStatus = (isVerified, type) => (
+    <div className={`flex items-center ${isVerified ? 'text-green-600' : 'text-amber-600'}`}>
+      {isVerified ? (
+        <>
+          <FaCheck className="mr-1" />
+          <span>{type === 'email' ? 'E-mail zweryfikowany' : 'Telefon zweryfikowany'}</span>
+        </>
+      ) : (
+        <>
+          <FaExclamationTriangle className="mr-1" />
+          <span className="mr-2">{type === 'email' ? 'E-mail niezweryfikowany' : 'Telefon niezweryfikowany'}</span>
+          <button 
+            onClick={() => type === 'email' ? alert('Funkcja weryfikacji e-mail zostanie wkrótce udostępniona') : setShowVerification(true)} 
+            className="text-blue-600 hover:underline text-sm"
+          >
+            Zweryfikuj się
+          </button>
+        </>
+      )}
+    </div>
+  );
+  
+  // Loading state
+  if (loading || isUserDataLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+      <div className="bg-white rounded-lg shadow-sm p-6 animate-pulse">
+        <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
+        <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+        <div className="h-4 bg-gray-200 rounded w-1/2 mb-6"></div>
+        <div className="space-y-4">
+          <div className="h-10 bg-gray-200 rounded"></div>
+          <div className="h-10 bg-gray-200 rounded"></div>
+          <div className="h-10 bg-gray-200 rounded"></div>
+        </div>
       </div>
     );
   }
-
+  
+  // Error state
   if (error) {
     return (
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-6 p-4 rounded bg-red-50 border-l-4 border-red-500 text-red-700">
-          <div className="flex items-start">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 mt-0.5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-            </svg>
-            <div>
-              <p className="font-medium">{error}</p>
-              <p className="text-sm mt-1">Spróbuj odświeżyć stronę lub zaloguj się ponownie.</p>
-            </div>
-          </div>
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="flex items-center text-red-600 mb-4">
+          <FaExclamationTriangle className="mr-2" />
+          <h2 className="text-lg font-medium">Błąd ładowania danych</h2>
         </div>
-        <div className="mb-6 p-4 rounded bg-blue-50 border-l-4 border-blue-500 text-blue-700">
-          <div className="flex items-start">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 mt-0.5 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-            </svg>
-            <div>
-              <p className="font-medium">Dane kluczowe</p>
-              <p className="text-sm mt-1">
-                Imię, nazwisko, data urodzenia oraz dane kontaktowe zostały zweryfikowane podczas rejestracji. 
-                Te dane nie mogą być zmienione. Jeśli potrzebujesz wprowadzić korektę, skontaktuj się z administratorem.
-              </p>
-            </div>
-          </div>
-        </div>
+        <p className="text-gray-700">{error}</p>
+        <p className="mt-4 text-gray-600">
+          Spróbuj odświeżyć stronę lub zaloguj się ponownie.
+        </p>
       </div>
     );
   }
-
-  // Display user data and messages based on registration type and verification status
-  const isStandard = userData?.registrationType === 'standard';
-  const isGoogle = userData?.registrationType === 'google';
-  const isFullyVerified = userData?.isEmailVerified && userData?.isPhoneVerified;
-
+  
   return (
-    <div className="max-w-4xl mx-auto">
-      {/* Info box */}
-      {isStandard && (
-        <div className="mb-6 p-4 rounded border-l-4" style={{ background: '#FFF8E1', borderColor: '#FFC300', color: '#0A1931' }}>
-          <div className="flex items-start">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 mt-0.5" style={{ color: '#FFC300' }} viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-            </svg>
-            <div>
-              <p className="font-bold">Konto zarejestrowane standardowo</p>
-              <p className="text-sm mt-1">
-                Twój adres e-mail oraz numer telefonu zostały zweryfikowane podczas rejestracji. <br />
-                <span style={{ color: '#00C48C', fontWeight: 600 }}>Dane są potwierdzone.</span> <br />
-                Jeśli chcesz zmienić dane, skontaktuj się z administratorem.
-              </p>
+    <div className="bg-white rounded-lg shadow-sm p-6">
+      {/* Account type and verification status */}
+      <div className="mb-6 border-b pb-4">
+        <h2 className="text-xl font-medium mb-4">Status konta</h2>
+        
+        <div className="flex items-center mb-2">
+          {registrationType === 'google' ? (
+            <div className="flex items-center text-blue-600 mr-4">
+              <FaGoogle className="mr-1" />
+              <span>Konto Google</span>
             </div>
-          </div>
-        </div>
-      )}
-
-      {isGoogle && !isFullyVerified && (
-        <div className="mb-6 p-4 rounded border-l-4" style={{ background: '#FFF8E1', borderColor: '#FFC300', color: '#0A1931' }}>
-          <div className="flex items-start">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 mt-0.5" style={{ color: '#FFC300' }} viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-            </svg>
-            <div>
-              <p className="font-bold">Konto utworzone przez Google</p>
-              <p className="text-sm mt-1">
-                Aby korzystać w pełni z serwisu, musisz zweryfikować swoje dane: imię, nazwisko, numer telefonu oraz e-mail.<br />
-                <span style={{ color: '#FF5733', fontWeight: 600 }}>Uzupełnij brakujące dane w panelu poniżej.</span>
-              </p>
+          ) : (
+            <div className="flex items-center text-gray-700 mr-4">
+              <FaUser className="mr-1" />
+              <span>Konto standardowe</span>
             </div>
-          </div>
-        </div>
-      )}
-
-      {isGoogle && isFullyVerified && (
-        <div className="mb-6 p-4 rounded border-l-4" style={{ background: '#FFF8E1', borderColor: '#FFC300', color: '#0A1931' }}>
-          <div className="flex items-start">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 mt-0.5" style={{ color: '#FFC300' }} viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-            </svg>
-            <div>
-              <p className="font-bold">Dane zweryfikowane</p>
-              <p className="text-sm mt-1">
-                Twoje dane zostały zweryfikowane. Możesz korzystać w pełni z serwisu.
-              </p>
+          )}
+          
+          {isVerified ? (
+            <div className="text-green-600 flex items-center">
+              <FaCheck className="mr-1" />
+              <span>Zweryfikowane</span>
             </div>
+          ) : (
+            <div className="text-amber-600 flex items-center">
+              <FaExclamationTriangle className="mr-1" />
+              <span>Wymaga weryfikacji</span>
+            </div>
+          )}
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3">
+          <div className="flex items-center">
+            <FaEnvelope className="mr-2 text-gray-600" />
+            {renderVerificationStatus(isEmailVerified, 'email')}
           </div>
-        </div>
-      )}
-
-      {/* Dane użytkownika */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Imię</label>
-          <input
-            type="text"
-            value={userData?.name || ''}
-            disabled
-            className="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-md text-gray-700 cursor-not-allowed"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Nazwisko</label>
-          <input
-            type="text"
-            value={userData?.lastName || ''}
-            disabled
-            className="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-md text-gray-700 cursor-not-allowed"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Data urodzenia</label>
-          <input
-            type="text"
-            value={userData?.dob ? new Date(userData.dob).toLocaleDateString('pl-PL') : ''}
-            disabled
-            className="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-md text-gray-700 cursor-not-allowed"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Telefon</label>
-          <input
-            type="text"
-            value={userData?.phoneNumber || ''}
-            disabled
-            className="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-md text-gray-700 cursor-not-allowed"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-          <input
-            type="text"
-            value={userData?.email || ''}
-            disabled
-            className="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-md text-gray-700 cursor-not-allowed"
-          />
+          <div className="flex items-center">
+            <FaMobileAlt className="mr-2 text-gray-600" />
+            {renderVerificationStatus(isPhoneVerified, 'phone')}
+          </div>
         </div>
       </div>
+      
+      {/* Verification interface */}
+      {showVerification && !isPhoneVerified && (
+        <div className="mb-6 bg-blue-50 p-4 rounded-lg border border-blue-200">
+          <h3 className="text-lg font-medium mb-2 text-blue-700">
+            Dokończ weryfikację konta
+          </h3>
+          <p className="text-gray-700 mb-4">
+            Aby w pełni korzystać z serwisu, zweryfikuj swój numer telefonu.
+          </p>
+          
+          <div className="mb-4">
+            <label className="block text-gray-700 mb-1">
+              Numer telefonu
+            </label>
+            <div className="flex">
+              <input
+                type="tel"
+                name="phoneNumber"
+                value={userForm.phoneNumber}
+                onChange={handleChange}
+                className="border rounded-l p-2 w-full"
+                placeholder="+48 123 456 789"
+                disabled={codeSent}
+              />
+              <button
+                onClick={handleSendVerificationCode}
+                disabled={verificationLoading || codeSent}
+                className={`px-4 py-2 rounded-r 
+                  ${codeSent ? 'bg-green-500' : 'bg-blue-600'} 
+                  text-white hover:opacity-90 disabled:opacity-50`}
+              >
+                {codeSent ? 'Kod wysłany' : 'Wyślij kod'}
+              </button>
+            </div>
+          </div>
+          
+          {codeSent && (
+            <div className="mb-4">
+              <label className="block text-gray-700 mb-1">
+                Kod weryfikacyjny
+              </label>
+              <div className="flex">
+                <input
+                  type="text"
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value)}
+                  className="border rounded-l p-2 w-full"
+                  placeholder="123456"
+                  maxLength={6}
+                />
+                <button
+                  onClick={handleVerifyCode}
+                  disabled={verificationLoading || !verificationCode}
+                  className="px-4 py-2 rounded-r bg-blue-600 text-white hover:opacity-90 disabled:opacity-50"
+                >
+                  Weryfikuj
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Wprowadź 6-cyfrowy kod otrzymany SMS-em
+              </p>
+            </div>
+          )}
+          
+          {verificationError && (
+            <div className="text-red-600 mb-4">
+              <FaExclamationTriangle className="inline mr-1" />
+              {verificationError}
+            </div>
+          )}
+          
+          {verificationSuccess && (
+            <div className="text-green-600 mb-4">
+              <FaCheck className="inline mr-1" />
+              Numer telefonu zweryfikowany pomyślnie! Odświeżanie...
+            </div>
+          )}
+        </div>
+      )}
+      
+      {/* User data form */}
+      <form onSubmit={handleSubmit}>
+        <div className="mb-6">
+          <h2 className="text-xl font-medium mb-4">Dane użytkownika</h2>
+          
+          {/* Info box for verification data */}
+          {isVerified && (
+            <div className="bg-blue-50 p-3 rounded-lg mb-4 text-sm text-gray-700">
+              <div className="flex items-center mb-1 text-blue-700">
+                <FaInfo className="mr-1" />
+                <span className="font-medium">Dane kluczowe</span>
+              </div>
+              <p>
+                Imię, nazwisko, data urodzenia oraz dane kontaktowe zostały zweryfikowane podczas rejestracji. 
+                Jeśli potrzebujesz wprowadzić korektę, skontaktuj się z administratorem.
+              </p>
+            </div>
+          )}
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-gray-700 mb-1" htmlFor="name">
+                Imię
+              </label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                value={userForm.name}
+                onChange={handleChange}
+                className="w-full p-2 border rounded"
+                disabled={registrationType === 'google'}
+              />
+            </div>
+            <div>
+              <label className="block text-gray-700 mb-1" htmlFor="lastName">
+                Nazwisko
+              </label>
+              <input
+                type="text"
+                id="lastName"
+                name="lastName"
+                value={userForm.lastName}
+                onChange={handleChange}
+                className="w-full p-2 border rounded"
+                disabled={registrationType === 'google'}
+              />
+            </div>
+            <div>
+              <label className="block text-gray-700 mb-1" htmlFor="email">
+                E-mail
+              </label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={userForm.email}
+                className="w-full p-2 border rounded bg-gray-100"
+                disabled={true}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Adres e-mail nie może być zmieniony
+              </p>
+            </div>
+            <div>
+              <label className="block text-gray-700 mb-1" htmlFor="phoneNumber">
+                Telefon
+              </label>
+              <input
+                type="tel"
+                id="phoneNumber"
+                name="phoneNumber"
+                value={userForm.phoneNumber}
+                onChange={handleChange}
+                className={`w-full p-2 border rounded ${isPhoneVerified ? 'bg-gray-100' : ''}`}
+                disabled={isPhoneVerified || showVerification}
+              />
+              {isPhoneVerified && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Numer telefonu został zweryfikowany
+                </p>
+              )}
+            </div>
+            <div>
+              <label className="block text-gray-700 mb-1" htmlFor="dob">
+                Data urodzenia
+              </label>
+              <input
+                type="date"
+                id="dob"
+                name="dob"
+                value={userForm.dob}
+                onChange={handleChange}
+                className="w-full p-2 border rounded"
+                disabled={registrationType === 'google'}
+              />
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex items-center justify-end">
+          <button
+            type="submit"
+            disabled={loading || showVerification}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+          >
+            {loading ? 'Zapisywanie...' : 'Zapisz zmiany'}
+          </button>
+        </div>
+        
+        {success && (
+          <div className="mt-3 text-green-600 flex items-center">
+            <FaCheck className="mr-2" /> Dane zaktualizowane pomyślnie
+          </div>
+        )}
+        
+        {error && (
+          <div className="mt-3 text-red-600 flex items-center">
+            <FaExclamationTriangle className="mr-2" /> {error}
+          </div>
+        )}
+      </form>
     </div>
   );
 };

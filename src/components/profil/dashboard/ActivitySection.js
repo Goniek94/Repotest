@@ -1,5 +1,5 @@
-import React from 'react';
-import { BellRing, Eye } from 'lucide-react';
+import React, { useState } from 'react';
+import { BellRing, Eye, X } from 'lucide-react';
 import ActivityItem from '../components/ActivityItem';
 import RecentListingItem from '../components/RecentListingItem';
 import { useNavigate } from 'react-router-dom';
@@ -9,8 +9,30 @@ import { useNavigate } from 'react-router-dom';
  * @param {Object} props - Właściwości komponentu
  * @param {Array} props.recentAds - Lista ostatnio przeglądanych ogłoszeń
  * @param {Array} props.activities - Lista aktywności użytkownika
+ * @param {Function} props.onDismissActivity - Funkcja wywoływana po usunięciu aktywności
  */
-const ActivitySection = ({ recentAds = [], activities = [] }) => {
+const ActivitySection = ({ recentAds = [], activities = [], onDismissActivity }) => {
+  const navigate = useNavigate();
+  const [dismissedActivities, setDismissedActivities] = useState([]);
+  
+  // Funkcja do lokalnego usuwania aktywności
+  const handleDismiss = (id) => {
+    setDismissedActivities(prev => [...prev, id]);
+    if (onDismissActivity) {
+      onDismissActivity(id);
+    }
+  };
+  
+  // Filtrowanie aktywności, które nie zostały usunięte i ograniczenie do 4
+  const filteredActivities = activities
+    .filter(item => !dismissedActivities.includes(item.id))
+    .slice(0, 4);
+    
+  // Funkcja nawigacji do pełnej listy powiadomień
+  const goToNotifications = () => {
+    navigate('/profil/notifications');
+  };
+  
   return (
     <div className="mb-8">
       <div className="flex flex-col md:flex-row w-full gap-4">
@@ -47,7 +69,7 @@ const ActivitySection = ({ recentAds = [], activities = [] }) => {
             <h2 className="text-lg font-bold text-white">Ostatnia aktywność</h2>
           </div>
           
-          {activities.length === 0 ? (
+          {filteredActivities.length === 0 ? (
             <div className="bg-gray-50 p-4 flex flex-col items-center justify-center">
               <div className="bg-gray-100 p-2 rounded-full mb-3">
                 <BellRing className="h-6 w-6 text-gray-600" />
@@ -56,13 +78,13 @@ const ActivitySection = ({ recentAds = [], activities = [] }) => {
             </div>
           ) : (
             <div>
-              {activities.map((item, idx) => (
+              {filteredActivities.map((item, idx) => (
                 <div 
                   key={idx} 
                   className="border-b border-green-100"
                 >
                   <div className="p-3 bg-white">
-                    <div className="flex items-start">
+                    <div className="flex items-start relative">
                       <div className="w-7 h-7 bg-gray-100 rounded-full flex items-center justify-center mr-2 flex-shrink-0">
                         {item.icon}
                       </div>
@@ -76,10 +98,27 @@ const ActivitySection = ({ recentAds = [], activities = [] }) => {
                           </a>
                         </div>
                       </div>
+                      <button 
+                        className="absolute top-0 right-0 text-gray-400 hover:text-gray-600 transition-colors"
+                        onClick={() => handleDismiss(item.id)}
+                        aria-label="Usuń powiadomienie"
+                      >
+                        <X size={16} />
+                      </button>
                     </div>
                   </div>
                 </div>
               ))}
+              
+              {/* Przycisk "Zobacz wszystkie" */}
+              <div className="bg-gray-50 p-3 text-center">
+                <button 
+                  onClick={goToNotifications}
+                  className="text-sm font-medium text-green-800 hover:text-green-700"
+                >
+                  Zobacz wszystkie powiadomienia →
+                </button>
+              </div>
             </div>
           )}
         </div>

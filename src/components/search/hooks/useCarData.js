@@ -1,111 +1,184 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import CarDataService from '../../../services/carDataService';
 import { carData as staticCarData } from '../SearchFormConstants';
+import { generationsData, getGenerationsForModel as getStaticGenerations } from '../GenerationsData';
 
 /**
- * Hook do pobierania i zarządzania danymi o markach i modelach samochodów
- * Najpierw próbuje pobrać dane z backendu, a jeśli to się nie uda, używa statycznych danych
+ * Hook do pobierania danych o markach i modelach samochodów.
+ * Najpierw próbuje pobrać dane z backendu, jeśli to się nie uda, używa danych statycznych.
  * 
- * @returns {Object} Obiekt zawierający dane o markach i modelach oraz funkcje pomocnicze
+ * @returns {Object} Object zawierający carData, brands, getModelsForBrand, getGenerationsForModel, loading i error
  */
 const useCarData = () => {
-  // Stan przechowujący dane o markach i modelach
-  const [carData, setCarData] = useState(staticCarData);
-  
-  // Stan przechowujący dostępne marki
-  const [brands, setBrands] = useState(Object.keys(staticCarData));
-  
-  // Stan przechowujący modele dla wybranej marki
-  const [modelsForBrand, setModelsForBrand] = useState({});
-  
+  // Stan dla danych o markach i modelach
+  const [carData, setCarData] = useState({});
+  // Stan dla listy marek
+  const [brands, setBrands] = useState([]);
   // Stan ładowania
   const [loading, setLoading] = useState(true);
-  
   // Stan błędu
   const [error, setError] = useState(null);
+  // Cache modeli dla marek
+  const [modelsCache, setModelsCache] = useState({});
+  // Cache generacji dla modeli
+  const [generationsCache, setGenerationsCache] = useState({});
 
-  // Pobierz dane o markach i modelach z backendu
-  useEffect(() => {
-    const fetchCarData = async () => {
-      try {
-        setLoading(true);
-        const data = await CarDataService.getCarData();
-        
-        // Jeśli otrzymaliśmy dane z backendu, zaktualizuj stan
-        if (data && Object.keys(data).length > 0) {
-          setCarData(data);
-          setBrands(Object.keys(data).sort());
-        }
-        
-        setError(null);
-      } catch (err) {
-        console.error('Błąd podczas pobierania danych o markach i modelach:', err);
-        setError('Nie udało się pobrać danych o markach i modelach. Używam danych statycznych.');
-        // W przypadku błędu, używamy statycznych danych
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchCarData();
-  }, []);
+  // Funkcja do pobierania modeli dla konkretnej marki
+  const getModelsForBrand = useCallback(async (brand) => {
+    // Jeśli mamy już modele dla tej marki w cache, zwróć je
+    if (modelsCache[brand]) {
+      console.log(`Pobieranie modeli dla marki ${brand} z cache`, modelsCache[brand]);
+      return modelsCache[brand];
+    }
 
-  /**
-   * Pobierz modele dla danej marki
-   * @param {string} brand - Nazwa marki
-   * @returns {Promise<void>}
-   */
-  const getModelsForBrand = async (brand) => {
-    if (!brand) {
-      setModelsForBrand({});
-      return [];
-    }
-    
-    // Jeśli już mamy modele dla tej marki w cache, zwróć je
-    if (modelsForBrand[brand]) {
-      return modelsForBrand[brand];
-    }
-    
     try {
-      // Pobierz modele z backendu
-      const models = await CarDataService.getModelsForBrand(brand);
+      // Najpierw próbujemy pobrać modele z backendu
+      const response = await CarDataService.getModelsForBrand(brand);
       
-      // Zaktualizuj cache
-      setModelsForBrand(prev => ({
+      if (response && response.data && Array.isArray(response.data.models)) {
+        // Jeśli udało się pobrać modele z backendu, aktualizujemy cache i zwracamy je
+        const models = response.data.models.sort();
+        setModelsCache(prev => ({
+          ...prev,
+          [brand]: models
+        }));
+        console.log(`Pobrano modele dla marki ${brand} z backendu`, models);
+        return models;
+      }
+    } catch (err) {
+      console.warn(`Nie udało się pobrać modeli dla marki ${brand} z backendu, używam danych statycznych`, err);
+    }
+
+    // Jeśli nie udało się pobrać modeli z backendu, próbujemy użyć danych statycznych
+    if (carData[brand]) {
+      // Pobieramy modele z danych wczytanych wcześniej
+      const models = carData[brand].sort();
+      setModelsCache(prev => ({
         ...prev,
         [brand]: models
       }));
-      
+      console.log(`Pobrano modele dla marki ${brand} z danych statycznych`, models);
       return models;
-    } catch (err) {
-      console.error(`Błąd podczas pobierania modeli dla marki ${brand}:`, err);
-      
-      // W przypadku błędu, użyj statycznych danych
-      const staticModels = carData[brand] || [];
-      
-      // Zaktualizuj cache
-      setModelsForBrand(prev => ({
+    } else if (staticCarData[brand]) {
+      // Pobieramy modele z danych statycznych
+      const models = staticCarData[brand].sort();
+      setModelsCache(prev => ({
         ...prev,
-        [brand]: staticModels
+        [brand]: models
       }));
-      
-      return staticModels;
+      console.log(`Pobrano modele dla marki ${brand} z danych statycznych (fallback)`, models);
+      return models;
     }
-  };
 
-  /**
-   * Wyczyść cache danych
-   */
-  const clearCache = () => {
-    CarDataService.clearCache();
-    setModelsForBrand({});
-  };
+    // Jeśli nie ma danych ani w backendzie, ani w danych statycznych, zwracamy pustą tablicę
+    console.warn(`Brak modeli dla marki ${brand} w danych statycznych`);
+    return [];
+  }, [carData, modelsCache]);
+
+  // Funkcja do pobierania generacji dla konkretnej marki i modelu
+  const getGenerationsForModel = useCallback((make, model) => {
+    // Jeśli brak marki lub modelu, zwróć pustą tablicę
+    if (!make || !model) return [];
+
+    // Utwórz klucz cache
+    const cacheKey = `${make}-${model}`;
+
+    // Jeśli mamy już generacje dla tej marki i modelu w cache, zwróć je
+    if (generationsCache[cacheKey]) {
+      console.log(`Pobieranie generacji dla ${make} ${model} z cache`, generationsCache[cacheKey]);
+      return generationsCache[cacheKey];
+    }
+
+    // Pobierz generacje z danych statycznych
+    const generations = getStaticGenerations(make, model);
+    
+    // Aktualizuj cache i zwróć generacje
+    setGenerationsCache(prev => ({
+      ...prev,
+      [cacheKey]: generations
+    }));
+    
+    console.log(`Pobrano generacje dla ${make} ${model}`, generations);
+    return generations;
+  }, [generationsCache]);
+
+  // Efekt pobierający dane o markach i modelach przy inicjalizacji
+  useEffect(() => {
+    let isMounted = true;
+    
+    const fetchCarData = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        // Sprawdź, czy mamy dane w localStorage
+        const cachedData = localStorage.getItem('carData');
+        if (cachedData) {
+          const parsedData = JSON.parse(cachedData);
+          if (parsedData && typeof parsedData === 'object' && Object.keys(parsedData).length > 0) {
+            if (isMounted) {
+              console.log('Pobrano dane o markach i modelach z localStorage', Object.keys(parsedData).length);
+              setCarData(parsedData);
+              setBrands(Object.keys(parsedData).sort());
+              setLoading(false);
+              return;
+            }
+          }
+        }
+
+        // Jeśli nie ma danych w localStorage, pobierz z backendu
+        const response = await CarDataService.getAllBrandsAndModels();
+        
+        if (response && response.data && typeof response.data === 'object') {
+          const data = response.data;
+          
+          if (Object.keys(data).length > 0) {
+            // Zapisz dane w localStorage dla przyszłego użycia
+            localStorage.setItem('carData', JSON.stringify(data));
+            
+            if (isMounted) {
+              console.log('Pobrano dane o markach i modelach z backendu', Object.keys(data).length);
+              setCarData(data);
+              setBrands(Object.keys(data).sort());
+              setLoading(false);
+              return;
+            }
+          }
+        }
+        
+        // Jeśli dane z backendu są puste lub niepoprawne, użyj danych statycznych
+        if (isMounted) {
+          console.log('Używam statycznych danych o markach i modelach', Object.keys(staticCarData).length);
+          setCarData(staticCarData);
+          setBrands(Object.keys(staticCarData).sort());
+        }
+      } catch (err) {
+        console.warn('Błąd podczas pobierania danych o markach i modelach:', err);
+        if (isMounted) {
+          // Używamy danych statycznych jako fallback, bez komunikatu o błędzie
+          setError(null);
+          setCarData(staticCarData);
+          setBrands(Object.keys(staticCarData).sort());
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchCarData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return {
     carData,
     brands,
     getModelsForBrand,
-    clearCache,
+    getGenerationsForModel,
     loading,
     error
   };

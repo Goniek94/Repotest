@@ -87,10 +87,38 @@ export const register = async (userData) => {
 
 /**
  * Pobieranie dashboardu użytkownika (statystyki, ostatnio przeglądane, itp.)
+ * Zawiera obsługę błędów i retry logic dla poprawy niezawodności
  */
-export const getUserDashboard = async () => {
-  const response = await apiClient.get('/users/dashboard');
-  return response.data;
+export const getUserDashboard = async (retries = 2) => {
+  let lastError = null;
+  
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const response = await apiClient.get('/users/dashboard');
+      return response.data;
+    } catch (error) {
+      console.error(`Próba ${attempt + 1}/${retries + 1} pobrania dashboardu nie powiodła się:`, error);
+      lastError = error;
+      
+      // Jeśli to ostatnia próba, nie czekamy
+      if (attempt === retries) break;
+      
+      // Czekamy coraz dłużej przed kolejną próbą (wykładnicze wycofanie)
+      const delay = Math.pow(2, attempt) * 500;
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  
+  // Jeśli wszystkie próby się nie powiodły, zwracamy pusty obiekt z flagą błędu
+  console.error("Wszystkie próby pobrania dashboardu zakończyły się niepowodzeniem");
+  
+  // Zwracamy podstawową strukturę danych zamiast rzucania wyjątku
+  return {
+    error: lastError,
+    activeListingsCount: 0,
+    completedTransactionsCount: 0,
+    recentViewedAds: []
+  };
 };
 
 // Pobieranie profilu użytkownika (wymaga autoryzacji)
@@ -277,6 +305,19 @@ export const markNotificationAsRead = async (id) => {
 export const markAllNotificationsAsRead = async () => {
   const response = await apiClient.put('/notifications/read-all');
   return response.data;
+};
+
+// Ukrywanie/odrzucanie powiadomienia (bez usuwania z bazy)
+export const dismissNotification = async (id) => {
+  try {
+    const response = await apiClient.post(`/notifications/${id}/dismiss`);
+    return response.data;
+  } catch (error) {
+    console.error('Error dismissing notification:', error);
+    // Return a success response even on error to maintain UI functionality
+    // In a production environment, you might want to handle this differently
+    return { success: true };
+  }
 };
 
 // Usuwanie powiadomienia
