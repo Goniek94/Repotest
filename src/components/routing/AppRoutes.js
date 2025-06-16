@@ -5,6 +5,7 @@ import HomePage from './HomePage';
 import LoginPage from './LoginPage';
 import { CreateListingWithProvider, AddListingViewWithProvider } from './ListingRoutes';
 import EditListing from '../profil/listings/EditListing';
+import EditListingView from '../ListingForm/EditListingView';
 
 // Komponenty stron
 import ListingsPage from '../ListingsView/ListingsPage';
@@ -84,7 +85,7 @@ const AppRoutes = () => {
         path="/edit-listing/:id"
         element={
           <ProtectedRoute>
-            <EditListingViewWithProvider />
+            <EditListingView />
           </ProtectedRoute>
         }
       />

@@ -1,37 +1,56 @@
 import React, { memo } from 'react';
-import { Heart } from 'lucide-react';
+import { 
+  Heart, 
+  MapPin, 
+  User,
+  Fuel,
+  Calendar,
+  Gauge,
+  Power,
+  Car,
+  Box,
+  Medal
+} from 'lucide-react';
+import getImageUrl from '../../../../utils/responsive/getImageUrl';
 
-const ListingCard = memo(({ listing, onNavigate, onFavorite, isFavorite }) => {
+const ListingCard = memo(({ listing, onNavigate, onFavorite, isFavorite, message }) => {
   // Sprawdzamy, czy ogłoszenie jest wyróżnione
   const isFeatured = listing.featured || listing.listingType === 'wyróżnione';
   
-  // Skracamy opis do 60 znaków + "..."
-  const shortDescription = listing.description
+  // Używamy subtitle z danych, tak jak w widoku listowym
+  const subtitle = listing.subtitle || (listing.description 
     ? listing.description.slice(0, 60) + (listing.description.length > 60 ? '...' : '')
-    : '(dane z tabelek), (+ krótki opis sprzedającego + nagłówka, max 60 znaków)';
+    : `${listing.year}, ${listing.mileage || 0} km`);
 
   return (
     <div
-      // Dodajemy zieloną ramkę, jeśli featured === true
-      className={`relative bg-white shadow-sm rounded-sm overflow-hidden flex flex-col h-full ${
-        isFeatured ? 'border-2 border-green-600' : ''
-      }`}
+      // Używamy tego samego stylu ramki co w widoku listowym
+      className={`relative bg-white shadow-md overflow-hidden flex flex-col h-full cursor-pointer 
+                 hover:shadow-lg transition-shadow
+                 ${isFeatured ? 'border-2 border-[#35530A]' : 'border border-gray-200'}
+                 rounded-sm sm:rounded-md`}
+      onClick={() => onNavigate(listing.id || listing._id)}
     >
-      {/* Badge wyróżnionej oferty */}
+      {/* Badge wyróżnionej oferty - używamy tego samego stylu co w widoku listowym */}
       {isFeatured && (
-        <div className="absolute top-2 left-2 bg-green-600 text-white py-1 px-3 rounded-sm z-10 flex items-center">
-          <span className="mr-1">★</span>
-          <span className="text-xs font-medium">WYRÓŻNIONE</span>
+        <div className="absolute top-2 left-2 bg-[#35530A] text-white py-1 px-2 text-xs font-semibold z-10 uppercase rounded-sm flex items-center gap-1.5">
+          <Medal className="w-3 h-3" />
+          WYRÓŻNIONE
         </div>
       )}
 
       {/* Zdjęcie */}
       <div className="relative">
         <img
-          src={listing.image}
+          src={listing.images && listing.images.length > 0 
+            ? getImageUrl(typeof listing.mainImageIndex === 'number' && 
+               listing.mainImageIndex >= 0 && 
+               listing.mainImageIndex < listing.images.length 
+                ? listing.images[listing.mainImageIndex] 
+                : listing.images[0])
+            : listing.image || '/images/auto-788747_1280.jpg'}
           alt={listing.title}
-          className="w-full h-48 object-cover cursor-pointer"
-          onClick={onNavigate}
+          className="w-full h-48 object-cover"
           onError={(e) => {
             e.target.onerror = null;
             e.target.src = '/images/auto-788747_1280.jpg';
@@ -42,7 +61,7 @@ const ListingCard = memo(({ listing, onNavigate, onFavorite, isFavorite }) => {
         <button
           onClick={(e) => {
             e.stopPropagation();
-            onFavorite(listing.id);
+            onFavorite(listing.id || listing._id);
           }}
           className="absolute top-2 right-2 p-1 bg-white rounded-full"
         >
@@ -56,89 +75,123 @@ const ListingCard = memo(({ listing, onNavigate, onFavorite, isFavorite }) => {
 
       {/* Treść karty */}
       <div className="p-4 flex-grow">
-        {/* Tytuł */}
-        <h3 className="font-bold text-lg text-gray-900 mb-1">
-          {listing.title}
-        </h3>
+        {/* Tytuł i podtytuł - tak jak w widoku listowym */}
+        <div className="mb-2">
+          <h3 className="font-bold text-lg text-gray-900 mb-0.5 line-clamp-1">
+            {listing.title}
+          </h3>
+          <p className="text-sm text-gray-600 line-clamp-1">
+            {subtitle}
+          </p>
+        </div>
 
-        {/* Podtytuł/opis (maks. 60 znaków) */}
-        <p className="text-xs text-gray-500 mb-4">
-          {shortDescription}
-        </p>
-
-        {/* Parametry w jednym poziomym rzędzie z zawijaniem */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-          {/* Paliwo */}
-          <div className="flex items-start">
-            <span className="mr-2 text-lg">⛽</span>
-            <div>
-              <div className="text-sm sm:text-xs text-gray-500">Paliwo</div>
-              <div className="text-base font-medium">{listing.fuel}</div>
+        {/* Parametry w siatce 3x2 - podobnie jak w widoku listowym */}
+        <div className="grid grid-cols-3 gap-x-2 gap-y-2 mb-3">
+          {/* Kolumna 1 */}
+          <div className="space-y-2">
+            {/* Paliwo */}
+            <div className="flex items-center gap-1.5 text-gray-700">
+              <Fuel className="w-4 h-4 text-black" />
+              <div>
+                <div className="text-xs text-gray-500">Paliwo</div>
+                <div className="text-sm font-medium">{listing.fuel || listing.fuelType || 'Nie podano'}</div>
+              </div>
+            </div>
+            
+            {/* Przebieg */}
+            <div className="flex items-center gap-1.5 text-gray-700">
+              <Gauge className="w-4 h-4 text-black" />
+              <div>
+                <div className="text-xs text-gray-500">Przebieg</div>
+                <div className="text-sm font-medium">{listing.mileage} km</div>
+              </div>
             </div>
           </div>
 
-          {/* Przebieg */}
-          <div className="flex items-start">
-            <span className="mr-2 text-lg">🛣️</span>
-            <div>
-              <div className="text-sm sm:text-xs text-gray-500">Przebieg</div>
-              <div className="text-base font-medium">{listing.mileage} km</div>
+          {/* Kolumna 2 */}
+          <div className="space-y-2">
+            {/* Pojemność */}
+            <div className="flex items-center gap-1.5 text-gray-700">
+              <Box className="w-4 h-4 text-black" />
+              <div>
+                <div className="text-xs text-gray-500">Pojemność</div>
+                <div className="text-sm font-medium">{listing.engineCapacity}</div>
+              </div>
+            </div>
+
+            {/* Rok */}
+            <div className="flex items-center gap-1.5 text-gray-700">
+              <Calendar className="w-4 h-4 text-black" />
+              <div>
+                <div className="text-xs text-gray-500">Rok</div>
+                <div className="text-sm font-medium">{listing.year}</div>
+              </div>
             </div>
           </div>
 
-          {/* Rok */}
-          <div className="flex items-start">
-            <span className="mr-2 text-lg">📅</span>
-            <div>
-              <div className="text-sm sm:text-xs text-gray-500">Rok</div>
-              <div className="text-base font-medium">{listing.year}</div>
+          {/* Kolumna 3 */}
+          <div className="space-y-2">
+            {/* Moc */}
+            <div className="flex items-center gap-1.5 text-gray-700">
+              <Power className="w-4 h-4 text-black" />
+              <div>
+                <div className="text-xs text-gray-500">Moc</div>
+                <div className="text-sm font-medium">{listing.power}</div>
+              </div>
+            </div>
+            
+            {/* Napęd */}
+            <div className="flex items-center gap-1.5 text-gray-700">
+              <Car className="w-4 h-4 text-black" />
+              <div>
+                <div className="text-xs text-gray-500">Napęd</div>
+                <div className="text-sm font-medium">{listing.drive || 'Nie podano'}</div>
+              </div>
             </div>
           </div>
 
-          {/* Moc */}
-          <div className="flex items-start">
-            <span className="mr-2 text-lg">⚡</span>
-            <div>
-              <div className="text-sm sm:text-xs text-gray-500">Moc</div>
-              <div className="text-base font-medium">{listing.power} KM</div>
+          {/* Match score label */}
+          {listing.matchLabel && listing.matchLabel !== 'Pozostałe ogłoszenia' && (
+            <div className="bg-black bg-opacity-60 text-white text-xs px-2 py-0.5 rounded-sm mt-2">
+              {listing.matchLabel}
             </div>
-          </div>
+          )}
+          
+          {/* Message (e.g. "Added to favorites") */}
+          {message && (
+            <div className="bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded-sm mt-2">
+              {message}
+            </div>
+          )}
+        </div>
+      </div>
 
-          {/* Napęd */}
-          <div className="flex items-start">
-            <span className="mr-2 text-lg">🚗</span>
-            <div>
-              <div className="text-sm sm:text-xs text-gray-500">Napęd</div>
-              <div className="text-base font-medium">{listing.drive}</div>
+      {/* Stopka karty - sprzedawca, lokalizacja i cena */}
+      <div className="mt-auto">
+        {/* Sprzedawca i lokalizacja */}
+        <div className="flex justify-between mb-3 px-3">
+          {/* Sprzedawca */}
+          <div className="flex items-center">
+            <User className="w-4 h-4 mr-1 text-gray-700" />
+            <div className="text-sm font-medium text-[#35530A]">
+              {listing.sellerType === 'prywatny' ? 'Prywatny' : listing.sellerType}
             </div>
           </div>
 
           {/* Lokalizacja */}
-          <div className="flex items-start">
-            <span className="mr-2 text-lg">📍</span>
-            <div>
-              <div className="text-sm sm:text-xs text-gray-500">Lokalizacja</div>
-              <div className="text-base font-medium">{listing.city}</div>
-              <div className="text-sm sm:text-xs text-gray-500">({listing.region})</div>
+          <div className="flex items-center">
+            <MapPin className="w-4 h-4 mr-1 text-gray-700" />
+            <div className="text-sm font-medium">
+              {listing.city}
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Stopka karty */}
-      <div className="mt-auto p-3 flex justify-between items-center">
-        {/* Miasto */}
-        <div className="flex items-center">
-          <span className="text-red-500 mr-1">📍</span>
-          <span className="text-sm text-gray-700">{listing.city}</span>
-        </div>
-
-        {/* Cena */}
-        <div className="bg-gray-900 text-white px-4 py-1 rounded-sm flex items-center">
-          <span className="mr-1">💰</span>
-          <span className="text-sm font-bold">
-            {listing.price.toLocaleString()} zł
-          </span>
+        {/* Cena - w stylu widoku listowego */}
+        <div className="bg-[#35530A] py-3 text-center">
+          <div className="text-xl font-bold text-white">
+            {listing.price.toLocaleString('pl-PL')} zł
+          </div>
         </div>
       </div>
     </div>

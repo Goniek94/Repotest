@@ -25,11 +25,23 @@ const SmallListingCard = ({ listing, showHotOffer = false }) => {
   
   // Bezpieczny dostęp do obrazu (główne zdjęcie ustawione przez użytkownika)
   let imageUrl = null;
+  
+  console.log('SmallListingCard - listing:', listing);
+  console.log('SmallListingCard - listing.images:', listing.images);
+  console.log('SmallListingCard - listing.mainImageIndex:', listing.mainImageIndex);
+  
   if (listing.images && listing.images.length > 0) {
-    const mainIdx = typeof listing.mainImageIndex === 'number' && listing.mainImageIndex >= 0 && listing.mainImageIndex < listing.images.length
-      ? listing.mainImageIndex
-      : 0;
-    imageUrl = getImageUrl(listing.images[mainIdx]);
+    const mainIdx = typeof listing.mainImageIndex === 'number' && 
+                    listing.mainImageIndex >= 0 && 
+                    listing.mainImageIndex < listing.images.length
+                      ? listing.mainImageIndex
+                      : 0;
+    
+    const selectedImage = listing.images[mainIdx];
+    console.log('SmallListingCard - selectedImage:', selectedImage);
+    
+    imageUrl = getImageUrl(selectedImage);
+    console.log('SmallListingCard - imageUrl:', imageUrl);
   }
 
   // Dodatkowy opis (jeśli jest)

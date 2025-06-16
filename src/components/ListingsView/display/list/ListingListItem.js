@@ -34,7 +34,13 @@ const ListingListItem = memo(({
       {/* Zdjęcie */}
       <div className="w-full sm:w-[300px] lg:w-[336px] h-48 sm:h-full relative overflow-hidden flex-shrink-0">
         <img
-          src={getImageUrl(listing.image)}
+          src={getImageUrl(listing.images && listing.images.length > 0 
+            ? (typeof listing.mainImageIndex === 'number' && 
+               listing.mainImageIndex >= 0 && 
+               listing.mainImageIndex < listing.images.length 
+                ? listing.images[listing.mainImageIndex] 
+                : listing.images[0])
+            : listing.image)}
           alt={listing.title}
           className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
           loading="lazy"
@@ -178,7 +184,6 @@ const ListingListItem = memo(({
                   <div className="text-sm sm:text-xs lg:text-sm text-gray-500">Lokalizacja</div>
                   <div className="text-base sm:text-base lg:text-base font-medium">
                     {listing.city}
-                    <div className="text-sm text-gray-500 hidden sm:block lg:block">({listing.location})</div>
                   </div>
                 </div>
               </div>

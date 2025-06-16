@@ -1,5 +1,5 @@
 import React from "react";
-import GridListingCard from "../../../listings/GridListingCard";
+import ListingCard from "../grid/ListingCard";
 
 /**
  * GridListingListView - wyświetla ogłoszenia jako karty w siatce
@@ -24,11 +24,12 @@ const GridListingListView = ({
         
         return (
           <div key={listing.id || listing._id} className="relative">
-            <GridListingCard
+            <ListingCard
               listing={listing}
               onNavigate={() => onNavigate(listing.id || listing._id)}
               onFavorite={() => onFavorite(listing.id || listing._id)}
               isFavorite={isFavorite}
+              message={favMessages[listing.id || listing._id]}
             />
             
             {/* Komunikat o ulubionych */}

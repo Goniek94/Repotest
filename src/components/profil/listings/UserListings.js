@@ -142,12 +142,12 @@ const UserListings = () => {
 
   // Usunięcie ogłoszenia
   const handleDelete = (id) => {
-    if (window.confirm('Czy na pewno chcesz usunąć to ogłoszenie?')) {
+    if (window.confirm('Czy na pewno chcesz usunąć to ogłoszenie? Ta operacja jest nieodwracalna!')) {
       setDeletingId(id);
-      ListingsService.delete(id)
+      ListingsService.delete(id, true) // Przekazujemy confirmed=true
         .then(() => {
           setAllListings(prev => prev.filter(listing => listing._id !== id));
-          toast.success('Ogłoszenie zostało usunięte.');
+          toast.success('Ogłoszenie zostało trwale usunięte.');
           setDeletingId(null);
         })
         .catch(err => {
@@ -159,14 +159,10 @@ const UserListings = () => {
 
   // Zakończenie ogłoszenia (zmiana statusu na archiwalny)
   const handleEnd = (id) => {
-    if (window.confirm('Czy na pewno chcesz zakończyć to ogłoszenie? Zostanie ono przeniesione do archiwalnych.')) {
+    if (window.confirm('Czy na pewno chcesz zakończyć to ogłoszenie? Zostanie ono przeniesione do archiwalnych. Możesz je przywrócić w ciągu 30 dni za opłatą.')) {
       setEndingId(id);
       
-      // Tworzymy FormData z aktualizacją statusu
-      const formData = new FormData();
-      formData.append('status', 'archiwalne');
-      
-      ListingsService.update(id, formData)
+      ListingsService.finishListing(id)
         .then(() => {
           // Aktualizacja lokalnej listy ogłoszeń
           setAllListings(prev =>
@@ -178,7 +174,7 @@ const UserListings = () => {
             })
           );
           
-          toast.success('Ogłoszenie zostało zakończone i przeniesione do archiwalnych.');
+          toast.success('Ogłoszenie zostało zakończone i przeniesione do archiwalnych. Możesz je przywrócić w ciągu 30 dni za opłatą.');
           setEndingId(null);
         })
         .catch(err => {
@@ -307,7 +303,9 @@ const UserListings = () => {
                     listing={{
                       id: listing._id,
                       _id: listing._id, // Dodajemy również _id dla pewności
-                      // Ensure we pass the best available image with proper backend URL, respecting mainImageIndex when available
+                      // Przekazujemy pełną tablicę obrazów i mainImageIndex
+                      images: listing.images || [],
+                      mainImageIndex: typeof listing.mainImageIndex === 'number' ? listing.mainImageIndex : 0,
                       image: (listing.images && listing.images.length > 0) 
                         ? getImageUrl(listing.images[typeof listing.mainImageIndex === 'number' && listing.mainImageIndex >= 0 && listing.mainImageIndex < listing.images.length 
                             ? listing.mainImageIndex 

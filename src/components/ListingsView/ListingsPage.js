@@ -3,9 +3,9 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import SearchForm from '../../components/search/SearchFormUpdated';
 import ListingControls from './controls/ListingControls';
-import ListingListView from './display/list/ListingListView';
-// Import prawidłowego komponentu GridListingCard
-import ListingCard from '../listings/GridListingCard';
+import ListingListItem from './display/list/ListingListItem';
+// Import komponentu ListingCard z katalogu display/grid
+import ListingCard from './display/grid/ListingCard';
 import AdsService from '../../services/ads';
 import getImageUrl from '../../utils/responsive/getImageUrl';
 
@@ -68,6 +68,7 @@ function ListingsPage() {
   const fetchListings = useCallback(async () => {
     try {
       setLoading(true);
+      console.log('Rozpoczynam pobieranie ogłoszeń...');
 
       let sortBy = 'createdAt';
       let order = 'desc';
@@ -91,6 +92,12 @@ function ListingsPage() {
       }
 
       // Użyj endpointu z systemem punktowym
+      console.log('Parametry zapytania:', {
+        ...requestFilters,
+        page: currentPage,
+        limit: itemsPerPage
+      });
+      
       const result = await AdsService.search({
         ...requestFilters,
         page: currentPage,
@@ -98,7 +105,9 @@ function ListingsPage() {
       });
 
       const response = result.data;
-      debug('DEBUG: First ad from API:', response.ads && response.ads.length > 0 ? response.ads[0] : 'No ads');
+      console.log('Odpowiedź z API:', response);
+      console.log('Liczba ogłoszeń:', response.ads ? response.ads.length : 0);
+      console.log('Pierwsze ogłoszenie z API:', response.ads && response.ads.length > 0 ? response.ads[0] : 'Brak ogłoszeń');
 
       // Funkcja do generowania oznaczenia dopasowania
       function getMatchLabel(ad) {
@@ -140,8 +149,9 @@ function ListingsPage() {
           transmission: ad.transmission || 'Nie podano',
           gearbox: ad.transmission || 'Nie podano',
           sellerType: ad.sellerType || (ad.owner ? 'Prywatny' : 'Firma'),
+          // Poprawiona obsługa obrazów
           images: ad.images || [],
-          mainImageIndex: ad.mainImageIndex,
+          mainImageIndex: typeof ad.mainImageIndex === 'number' ? ad.mainImageIndex : 0,
           image: ad.images && ad.images.length > 0
             ? getImageUrl(
                 typeof ad.mainImageIndex === 'number' &&
@@ -176,10 +186,13 @@ function ListingsPage() {
         }
       });
 
-      setListings([...exact, ...similar, ...remaining]);
+      const finalListings = [...exact, ...similar, ...remaining];
+      console.log('Finalna lista ogłoszeń:', finalListings);
+      setListings(finalListings);
       setTotalPages(response.totalPages || 1);
       setError(null);
     } catch (err) {
+      console.error('Błąd podczas pobierania ogłoszeń:', err);
       setError('Wystąpił błąd podczas ładowania ogłoszeń. Spróbuj odświeżyć stronę.');
     } finally {
       setLoading(false);
@@ -301,8 +314,11 @@ function ListingsPage() {
                     : 'space-y-4 mt-6'
                 }
               >
-                {listings.map((listing) =>
-                  finalViewMode === 'grid' ? (
+                {listings.map((listing) => {
+                  console.log('Renderowanie ogłoszenia:', listing);
+                  console.log('Tryb widoku:', finalViewMode);
+                  
+                  return finalViewMode === 'grid' ? (
                     <ListingCard
                       key={listing.id}
                       listing={listing}
@@ -312,16 +328,16 @@ function ListingsPage() {
                       message={favMessages[listing.id]}
                     />
                   ) : (
-                    <ListingListView
+                    <ListingListItem
                       key={listing.id}
-                      listings={[listing]}
+                      listing={listing}
                       onNavigate={() => navigateToListing(listing.id)}
                       onFavorite={() => toggleFavorite(listing.id)}
-                      favorites={favorites}
-                      favMessages={favMessages}
+                      isFavorite={favorites.includes(listing.id)}
+                      message={favMessages[listing.id]}
                     />
-                  )
-                )}
+                  );
+                })}
               </div>
             )}
 

@@ -57,10 +57,30 @@ const ListingsService = {
   /**
    * Usuwanie ogłoszenia
    * @param {string} id - ID ogłoszenia
+   * @param {boolean} confirmed - Czy potwierdzono usunięcie
    * @returns {Promise} - Promise rozwiązywane danymi odpowiedzi
    */
-  delete: (id) => 
-    apiClient.delete(`/ads/${id}`)
+  delete: (id, confirmed = false) => 
+    apiClient.delete(`/ads/${id}${confirmed ? '?confirmed=true' : ''}`)
+      .then(response => response.data),
+      
+  /**
+   * Zakończenie ogłoszenia (przeniesienie do zakończonych)
+   * @param {string} id - ID ogłoszenia
+   * @returns {Promise} - Promise rozwiązywane danymi odpowiedzi
+   */
+  finishListing: (id) => 
+    apiClient.put(`/ads/${id}/finish`)
+      .then(response => response.data),
+      
+  /**
+   * Usuwanie zdjęcia z ogłoszenia
+   * @param {string} adId - ID ogłoszenia
+   * @param {number} imageIndex - Indeks zdjęcia do usunięcia
+   * @returns {Promise} - Promise rozwiązywane danymi odpowiedzi
+   */
+  deleteImage: (adId, imageIndex) => 
+    apiClient.delete(`/ads/${adId}/images/${imageIndex}`)
       .then(response => response.data),
 
   /**

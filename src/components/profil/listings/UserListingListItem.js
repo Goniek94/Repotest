@@ -62,7 +62,6 @@ const UserListingListItem = memo(({
     <div
       className={`bg-white rounded-sm shadow-md overflow-hidden cursor-pointer hover:shadow-xl transition-all duration-300 relative group ${isFeatured ? 'border-2 border-[#35530A]' : 'border border-gray-200'} flex flex-col sm:flex-row h-auto`}
       onClick={() => {
-        debug('Navigating to listing:', listing.id || listing._id);
         onNavigate && onNavigate(listing.id || listing._id);
       }}
       tabIndex={0}
@@ -73,7 +72,13 @@ const UserListingListItem = memo(({
       <div className="w-full sm:w-[300px] lg:w-[336px] relative overflow-hidden flex-shrink-0 bg-gray-200" 
            style={{ aspectRatio: '3/2' }}>
         <img
-          src={getImageUrl(listing.image)}
+          src={getImageUrl(listing.images && listing.images.length > 0 
+            ? (typeof listing.mainImageIndex === 'number' && 
+               listing.mainImageIndex >= 0 && 
+               listing.mainImageIndex < listing.images.length 
+                ? listing.images[listing.mainImageIndex] 
+                : listing.images[0])
+            : listing.image)}
           alt={listing.title}
           className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
           style={{ 
@@ -175,7 +180,7 @@ const UserListingListItem = memo(({
         {/* Actions section */}
         <div className="flex flex-col items-stretch justify-start gap-2 p-3 min-w-[120px] bg-gray-50 border-l border-gray-100">
           <button
-            onClick={e => { e.stopPropagation(); onEdit && onEdit(listing.id || listing._id); }}
+            onClick={e => { e.stopPropagation(); onEditNew ? onEditNew(listing.id || listing._id) : onEdit && onEdit(listing.id || listing._id); }}
             className="flex items-center justify-center gap-2 px-4 py-2 rounded bg-gradient-to-r from-[#6B8E23] to-[#556B2F] hover:from-[#556B2F] hover:to-[#4A5D28] text-white font-semibold text-sm transition-all duration-300 shadow-md"
             title="Edytuj"
           >

@@ -19,16 +19,27 @@ const GridListingCard = memo(({ listing, onFavorite, isFavorite }) => {
   // Create title from brand/make and model
   const title = `${listing.brand || listing.make || ''} ${listing.model || ''}`.trim();
   
-  // Extract listing details with fallbacks
+  // Używamy danych bezpośrednio z API bez statycznych wartości domyślnych
   const price = listing.price || 0;
   const year = listing.year || new Date().getFullYear();
   const mileage = listing.mileage || 0;
-  const fuelType = listing.fuelType || 'benzyna';
-  const power = listing.power || '150';
-  const capacity = listing.capacity || '2000';
-  const transmission = listing.transmission || 'manualna';
-  const sellerType = listing.sellerType || 'prywatny';
+  const fuelType = listing.fuelType || listing.fuel || 'Nie podano';
+  const power = listing.power || 'Nie podano';
+  const engineCapacity = listing.engineCapacity || 'Nie podano';
+  const transmission = listing.transmission || listing.gearbox || 'Nie podano';
+  const sellerType = listing.sellerType || 'Nie podano';
   const location = listing.city || listing.location || 'Polska';
+  
+  console.log('GridListingCard - dane ogłoszenia:', {
+    id: listing.id || listing._id,
+    price,
+    year,
+    mileage,
+    fuelType,
+    power,
+    engineCapacity,
+    transmission
+  });
   
   // Handle navigation to listing details
   const handleNavigate = () => {
@@ -37,11 +48,28 @@ const GridListingCard = memo(({ listing, onFavorite, isFavorite }) => {
   
   // Safe image URL handling with proper backend URL prefix
   const getListingImage = () => {
+    console.log('GridListingCard - listing:', listing);
+    console.log('GridListingCard - listing.images:', listing.images);
+    console.log('GridListingCard - listing.mainImageIndex:', listing.mainImageIndex);
+    
     if (listing.images && listing.images.length > 0) {
-      const selectedImage = listing.images[typeof listing.mainImageIndex === 'number' ? listing.mainImageIndex : 0];
-      return getImageUrl(selectedImage);
+      const mainIndex = typeof listing.mainImageIndex === 'number' && 
+                        listing.mainImageIndex >= 0 && 
+                        listing.mainImageIndex < listing.images.length 
+                          ? listing.mainImageIndex 
+                          : 0;
+      
+      const selectedImage = listing.images[mainIndex];
+      console.log('GridListingCard - selectedImage:', selectedImage);
+      
+      const imageUrl = getImageUrl(selectedImage);
+      console.log('GridListingCard - imageUrl:', imageUrl);
+      
+      return imageUrl;
     }
-    return listing.image ? getImageUrl(listing.image) : '/images/auto-788747_1280.jpg';
+    
+    // Fallback do statycznego obrazka
+    return '/images/auto-788747_1280.jpg';
   };
   
   const imageUrl = getListingImage();
@@ -118,12 +146,12 @@ const GridListingCard = memo(({ listing, onFavorite, isFavorite }) => {
             <div className="text-sm font-medium text-[#35530A]">{sellerType}</div>
           </div>
 
-          {/* Location */}
+          {/* Location - tylko miasto bez województwa */}
           <div className="flex items-center">
             <div className="mr-2 text-gray-700">
               <MapPin className="w-5 h-5" />
             </div>
-            <div className="text-sm font-medium">{location}</div>
+            <div className="text-sm font-medium">{listing.city || location.split('(')[0].trim()}</div>
           </div>
         </div>
 
@@ -142,7 +170,7 @@ const GridListingCard = memo(({ listing, onFavorite, isFavorite }) => {
             <div className="mr-2 text-gray-700">
               <CapacityIcon className="w-4 h-4" />
             </div>
-            <div className="text-xs font-medium overflow-hidden text-ellipsis whitespace-nowrap">{capacity} cm³</div>
+            <div className="text-xs font-medium overflow-hidden text-ellipsis whitespace-nowrap">{engineCapacity}</div>
           </div>
 
           {/* 3 kolumna */}
@@ -166,7 +194,7 @@ const GridListingCard = memo(({ listing, onFavorite, isFavorite }) => {
             <div className="mr-2 text-gray-700">
               <PowerIcon className="w-4 h-4" />
             </div>
-            <div className="text-xs font-medium overflow-hidden text-ellipsis whitespace-nowrap">{power} KM</div>
+            <div className="text-xs font-medium overflow-hidden text-ellipsis whitespace-nowrap">{power}</div>
           </div>
 
           {/* 3 kolumna */}

@@ -127,10 +127,10 @@ const CardGridItem = ({ listing, onNavigate, onFavorite, isFavorite }) => {
       
       {/* Stopka karty */}
       <div className="px-3 py-2 mt-auto flex justify-between items-center border-t border-gray-100">
-        {/* Lokalizacja */}
+        {/* Lokalizacja - tylko miasto bez województwa */}
         <div className="flex items-center">
           <span className="text-[#35530A] mr-1 text-sm">📍</span>
-          <span className="text-sm text-gray-700">{listing.city || listing.location}</span>
+          <span className="text-sm text-gray-700">{listing.city || (listing.location ? listing.location.split('(')[0].trim() : '')}</span>
         </div>
         
         {/* Cena */}
