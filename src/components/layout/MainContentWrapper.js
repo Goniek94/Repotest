@@ -1,14 +1,15 @@
 import React from 'react';
-import useBreakpoint from '../../utils/responsive/useBreakpoint';
 import { useSidebar } from '../../contexts/SidebarContext';
+import useBreakpoint from '../../utils/responsive/useBreakpoint';
 
 const MainContentWrapper = ({ children }) => {
+  const { isExpanded } = useSidebar();
   const breakpoint = useBreakpoint();
-  const { profileRef } = useSidebar();
-  const isMobile = breakpoint === 'mobile' || breakpoint === 'tablet';
+  const isMobileOrTablet = breakpoint === 'mobile' || breakpoint === 'tablet';
+  const marginClass = isMobileOrTablet ? (isExpanded ? 'ml-48' : 'ml-12') : '';
 
   return (
-    <div ref={isMobile ? profileRef : null} className="relative">
+    <div className={`transition-[margin] duration-300 ${marginClass}`}>
       {children}
     </div>
   );
