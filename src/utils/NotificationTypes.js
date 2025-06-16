@@ -334,4 +334,53 @@ export const getNotificationTypeName = (type) => {
   return NOTIFICATION_TYPE_NAMES[type] || 'Powiadomienie';
 };
 
+/**
+ * Zwraca obiekt z grupami powiadomień
+ * w uproszczonym formacie wykorzystywanym w interfejsie.
+ * @returns {Object<string, string[]>}
+ */
+export const getNotificationGroups = () => {
+  const groups = {};
+  Object.entries(NOTIFICATION_GROUPS).forEach(([key, value]) => {
+    groups[key.toLowerCase()] = value.types;
+  });
+  return groups;
+};
+
+/**
+ * Zwraca mapę identyfikatorów grup na ich czytelne nazwy.
+ * @returns {Object<string, string>}
+ */
+export const getNotificationGroupNames = () => {
+  const names = {};
+  Object.entries(NOTIFICATION_GROUPS).forEach(([key, value]) => {
+    names[key.toLowerCase()] = value.name;
+  });
+  return names;
+};
+
+/**
+ * Generuje domyślne preferencje powiadomień
+ * posortowane według kanałów powiadomień.
+ * @returns {Object}
+ */
+export const getDefaultNotificationPreferences = () => {
+  const preferences = { email: {}, push: {}, sms: {} };
+
+  Object.entries(DEFAULT_NOTIFICATION_PREFERENCES).forEach(([type, pref]) => {
+    const parts = type.split('_');
+    const key = parts
+      .map((part, index) =>
+        index === 0 ? part.toLowerCase() : part.charAt(0) + part.slice(1).toLowerCase()
+      )
+      .join('');
+
+    preferences.email[key] = pref.email;
+    preferences.push[key] = pref.app;
+    preferences.sms[key] = pref.sms;
+  });
+
+  return preferences;
+};
+
 export default NOTIFICATION_TYPES;
