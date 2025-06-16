@@ -16,7 +16,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { useNotifications } from '../../../contexts/NotificationContext';
 import { useSidebar } from '../../../contexts/SidebarContext';
 
-const NAV_ITEMS = [
+const BASE_ITEMS = [
   { id: 'panel', name: 'Panel', path: '/profil', icon: Eye },
   { id: 'messages', name: 'Wiadomości', path: '/profil/messages', icon: Mail, badgeKey: 'messages' },
   { id: 'listings', name: 'Moje ogłoszenia', path: '/profil/listings', icon: FileText },
@@ -44,15 +44,23 @@ const ProfileNavigation = React.forwardRef(
   const { isAdmin } = useAuth();
   const { unreadCount = { messages: 0, alerts: 0 } } = useNotifications();
   const { isExpanded } = useSidebar();
-    const location = useLocation();
-    const navigate = useNavigate();
+  const location = useLocation();
+  const navigate = useNavigate();
 
-    const counts = notifications || unreadCount;
-    const activeTab = NAV_ITEMS.find(
-      (item) =>
-        location.pathname === item.path ||
-        location.pathname.startsWith(item.path + '/')
-    )?.id;
+  const navItems = React.useMemo(() => {
+    const items = [...BASE_ITEMS];
+    if (isAdmin && isAdmin()) {
+      items.push({ id: 'admin', name: 'Admin', path: '/admin', icon: Sliders });
+    }
+    return items;
+  }, [isAdmin]);
+
+  const counts = notifications || unreadCount;
+  const activeTab = navItems.find(
+    (item) =>
+      location.pathname === item.path ||
+      location.pathname.startsWith(item.path + '/')
+  )?.id;
 
     const isMobile = breakpoint === 'mobile' || breakpoint === 'tablet';
 
@@ -86,7 +94,7 @@ const ProfileNavigation = React.forwardRef(
                     Panel Administratora
                   </Link>
                 )}
-                {NAV_ITEMS.map((item) => (
+                {navItems.map((item) => (
                   <Link
                     key={item.id}
                     to={item.path}
@@ -124,7 +132,7 @@ const ProfileNavigation = React.forwardRef(
     if (isMobile) {
       return (
         <nav ref={ref} className="flex flex-col mt-2 space-y-1">
-          {NAV_ITEMS.map((item) => (
+          {navItems.map((item) => (
             <Link
               key={item.id}
               to={item.path}
@@ -148,7 +156,7 @@ const ProfileNavigation = React.forwardRef(
     return (
       <div ref={ref} className="w-full border-b border-gray-200 mb-6 bg-white relative">
         <div className="flex justify-between flex-wrap">
-          {NAV_ITEMS.map((item) => (
+          {navItems.map((item) => (
             <button
               key={item.id}
               onClick={() => navigate(item.path)}
