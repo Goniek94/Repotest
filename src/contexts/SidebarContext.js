@@ -1,12 +1,16 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 
 const SidebarContext = createContext(null);
 
 export const SidebarProvider = ({ children }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const toggleSidebar = useCallback(
+    () => setIsExpanded((prev) => !prev),
+    []
+  );
 
   return (
-    <SidebarContext.Provider value={{ isExpanded, setIsExpanded }}>
+    <SidebarContext.Provider value={{ isExpanded, setIsExpanded, toggleSidebar }}>
       {children}
     </SidebarContext.Provider>
   );
