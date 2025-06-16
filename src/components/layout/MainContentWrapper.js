@@ -6,7 +6,7 @@ const MainContentWrapper = ({ children }) => {
   const { isExpanded } = useSidebar();
   const breakpoint = useBreakpoint();
   const isMobileOrTablet = breakpoint === 'mobile' || breakpoint === 'tablet';
-  const marginClass = isMobileOrTablet ? (isExpanded ? 'ml-48' : 'ml-0') : '';
+  const marginClass = isMobileOrTablet ? (isExpanded ? 'ml-16' : 'ml-0') : '';
 
   return (
     <div className={`transition-[margin] duration-300 ${marginClass}`}>

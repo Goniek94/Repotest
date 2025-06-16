@@ -136,12 +136,11 @@ const ProfileNavigation = React.forwardRef(
             <Link
               key={item.id}
               to={item.path}
-              className={`flex items-center gap-3 px-3 py-2 text-white hover:bg-[#4a6b2a] ${
+              className={`flex items-center justify-center gap-3 px-3 py-2 text-white hover:bg-[#4a6b2a] ${
                 activeTab === item.id ? 'bg-[#4a6b2a]' : ''
               }`}
             >
               <item.icon className="w-5 h-5" />
-              {isExpanded && <span className="text-sm">{item.name}</span>}
               {item.badgeKey && counts[item.badgeKey] > 0 && (
                 <span className="ml-auto text-[#35530A] bg-white rounded-full text-[10px] w-5 h-5 flex items-center justify-center font-bold">
                   {counts[item.badgeKey] > 99 ? '99+' : counts[item.badgeKey]}
