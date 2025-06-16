@@ -2,14 +2,30 @@ import React from 'react';
 import { useSidebar } from '../../contexts/SidebarContext';
 import useBreakpoint from '../../utils/responsive/useBreakpoint';
 
-const MainContentWrapper = ({ children }) => {
+/**
+ * Wrapper dla głównej zawartości strony
+ * Automatycznie dostosowuje marginesy w zależności od stanu sidebara i rozmiaru ekranu
+ * 
+ * @param {Object} props
+ * @param {React.ReactNode} props.children - Zawartość wrappera
+ * @param {string} props.className - Dodatkowe klasy CSS
+ * @returns {JSX.Element}
+ */
+const MainContentWrapper = ({ children, className = "" }) => {
   const { isExpanded } = useSidebar();
-  const breakpoint = useBreakpoint();
-  const isMobileOrTablet = breakpoint === 'mobile' || breakpoint === 'tablet';
-  const marginClass = isMobileOrTablet ? (isExpanded ? 'ml-16' : 'ml-0') : '';
+  const { isMobileOrTablet } = useBreakpoint();
+  
+  // Dynamiczne marginesy w zależności od stanu sidebara i rozmiaru ekranu
+  const marginClass = isMobileOrTablet ? (isExpanded ? 'ml-10' : 'ml-3') : '';
 
   return (
-    <div className={`transition-[margin] duration-300 ${marginClass}`}>
+    <div className={`
+      transition-all 
+      duration-300 
+      ${marginClass} 
+      mt-0
+      ${className}
+    `}>
       {children}
     </div>
   );

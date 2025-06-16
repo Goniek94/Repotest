@@ -4,6 +4,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { SidebarProvider } from './contexts/SidebarContext';
 import { ListingFormProvider } from './contexts/ListingFormContext';
+import { SocketProvider } from './contexts/SocketContext';
 import { ToastContainer } from 'react-toastify';
 import ToastNotification from './components/notifications/ToastNotification';
 import 'react-toastify/dist/ReactToastify.css';
@@ -130,9 +131,10 @@ const App = () => {
 
   return (
     <AuthProvider>
-      <NotificationProvider>
-        <FavoritesProvider>
-          <SidebarProvider>
+      <SocketProvider>
+        <NotificationProvider>
+          <FavoritesProvider>
+            <SidebarProvider>
           <Router>
             <ScrollToTop />
             <ToastNotification />
@@ -235,9 +237,10 @@ const App = () => {
             <Footer />
           </div>
           </Router>
-          </SidebarProvider>
-        </FavoritesProvider>
-      </NotificationProvider>
+            </SidebarProvider>
+          </FavoritesProvider>
+        </NotificationProvider>
+      </SocketProvider>
     </AuthProvider>
   );
 };

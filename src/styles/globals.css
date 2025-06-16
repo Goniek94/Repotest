@@ -67,3 +67,20 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Style dla podniesionego panelu użytkownika */
+.panel-raised .max-w-7xl {
+  transform: translateY(-20px);
+  transition: transform 0.3s ease;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border-radius: 0 0 8px 8px;
+  z-index: 10;
+  position: relative;
+}
+
+/* Dodatkowe style dla wersji mobilnej */
+@media (max-width: 768px) {
+  .panel-raised .max-w-7xl {
+    transform: translateY(-15px);
+  }
+}

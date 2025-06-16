@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 
 /**
- * Hook do wykrywania aktualnego breakpointa (mobile/tablet/desktop)
+ * Hook do wykrywania aktualnego breakpointa (mobile/tablet/laptop/desktop)
  * Przykład użycia:
- *   const bp = useBreakpoint();
- *   if (bp === 'mobile') ...
+ *   const { breakpoint, isMobile, isTablet } = useBreakpoint();
+ *   if (isMobile) ...
  */
 const breakpoints = {
   mobile: 0,
@@ -24,16 +24,43 @@ const useBreakpoint = () => {
   const [breakpoint, setBreakpoint] = useState(() =>
     typeof window !== "undefined" ? getBreakpoint(window.innerWidth) : "desktop"
   );
+  
+  const [dimensions, setDimensions] = useState(() => ({
+    width: typeof window !== "undefined" ? window.innerWidth : 1280,
+    height: typeof window !== "undefined" ? window.innerHeight : 800
+  }));
 
   useEffect(() => {
     const handleResize = () => {
       setBreakpoint(getBreakpoint(window.innerWidth));
+      setDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight
+      });
     };
+    
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  return breakpoint;
+  // Pomocnicze właściwości dla łatwiejszego użycia
+  const isMobile = breakpoint === "mobile";
+  const isTablet = breakpoint === "tablet";
+  const isLaptop = breakpoint === "laptop";
+  const isDesktop = breakpoint === "desktop";
+  const isMobileOrTablet = isMobile || isTablet;
+  const isLaptopOrDesktop = isLaptop || isDesktop;
+
+  return {
+    breakpoint,
+    dimensions,
+    isMobile,
+    isTablet,
+    isLaptop,
+    isDesktop,
+    isMobileOrTablet,
+    isLaptopOrDesktop
+  };
 };
 
 export default useBreakpoint;

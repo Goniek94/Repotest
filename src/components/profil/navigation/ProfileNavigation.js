@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Eye,
@@ -10,6 +10,7 @@ import {
   LogOut,
   Settings as SettingsIcon,
   Sliders,
+  ArrowUp,
 } from 'lucide-react';
 import useBreakpoint from '../../../utils/responsive/useBreakpoint';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -37,6 +38,8 @@ const ProfileNavigation = React.forwardRef(
       isOpen,
       setIsOpen,
       user,
+      handleRaisePanel,
+      isPanelRaised,
     },
     ref
   ) => {
@@ -46,6 +49,29 @@ const ProfileNavigation = React.forwardRef(
   const { isExpanded } = useSidebar();
   const location = useLocation();
   const navigate = useNavigate();
+  
+  // Jeśli nie przekazano handleRaisePanel i isPanelRaised, używamy lokalnego stanu
+  const [localIsPanelRaised, setLocalIsPanelRaised] = useState(false);
+  
+  // Funkcja do podnoszenia panelu użytkownika
+  const handleRaisePanelLocal = () => {
+    if (handleRaisePanel) {
+      // Używamy funkcji przekazanej przez props
+      handleRaisePanel();
+    } else {
+      // Używamy lokalnego stanu
+      setLocalIsPanelRaised(!localIsPanelRaised);
+      // Dodajemy lub usuwamy klasę do body, która podnosi panel
+      if (!localIsPanelRaised) {
+        document.body.classList.add('panel-raised');
+      } else {
+        document.body.classList.remove('panel-raised');
+      }
+    }
+  };
+  
+  // Używamy albo przekazanego stanu, albo lokalnego
+  const isRaised = isPanelRaised !== undefined ? isPanelRaised : localIsPanelRaised;
 
   const navItems = React.useMemo(() => {
     const items = [...BASE_ITEMS];
@@ -131,16 +157,16 @@ const ProfileNavigation = React.forwardRef(
 
     if (isMobile) {
       return (
-        <nav ref={ref} className="flex flex-col mt-2 space-y-1">
+        <nav ref={ref} className="flex flex-col mt-4 space-y-4">
           {navItems.map((item) => (
             <Link
               key={item.id}
               to={item.path}
-              className={`flex items-center justify-center gap-3 px-3 py-2 text-white hover:bg-[#4a6b2a] ${
+              className={`flex items-center justify-center gap-3 px-3 py-3 text-white hover:bg-[#4a6b2a] rounded-md ${
                 activeTab === item.id ? 'bg-[#4a6b2a]' : ''
               }`}
             >
-              <item.icon className="w-5 h-5" />
+              <item.icon className="w-6 h-6" />
               {item.badgeKey && counts[item.badgeKey] > 0 && (
                 <span className="ml-auto text-[#35530A] bg-white rounded-full text-[10px] w-5 h-5 flex items-center justify-center font-bold">
                   {counts[item.badgeKey] > 99 ? '99+' : counts[item.badgeKey]}
@@ -148,6 +174,15 @@ const ProfileNavigation = React.forwardRef(
               )}
             </Link>
           ))}
+          {/* Przycisk do podnoszenia panelu użytkownika */}
+          <button
+            onClick={handleRaisePanelLocal}
+            className={`flex items-center justify-center gap-3 px-3 py-3 text-white hover:bg-[#4a6b2a] rounded-md ${
+              isRaised ? 'bg-[#4a6b2a]' : ''
+            }`}
+          >
+            <ArrowUp className="w-6 h-6" />
+          </button>
         </nav>
       );
     }
