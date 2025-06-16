@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { SidebarProvider } from './contexts/SidebarContext';
 import { ListingFormProvider } from './contexts/ListingFormContext';
 import { ToastContainer } from 'react-toastify';
 import ToastNotification from './components/notifications/ToastNotification';
@@ -131,6 +132,7 @@ const App = () => {
     <AuthProvider>
       <NotificationProvider>
         <FavoritesProvider>
+          <SidebarProvider>
           <Router>
             <ScrollToTop />
             <ToastNotification />
@@ -232,7 +234,8 @@ const App = () => {
             </main>
             <Footer />
           </div>
-        </Router>
+          </Router>
+          </SidebarProvider>
         </FavoritesProvider>
       </NotificationProvider>
     </AuthProvider>
