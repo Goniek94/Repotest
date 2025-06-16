@@ -1,6 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Eye, Mail, FileText, Bell, History, PhoneCall, Settings as SettingsIcon, Sliders, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  Eye,
+  Mail,
+  FileText,
+  Bell,
+  History,
+  PhoneCall,
+  Settings as SettingsIcon,
+  Sliders,
+  ChevronRight,
+  X,
+} from 'lucide-react';
 import { useNotifications } from '../../../contexts/NotificationContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import useBreakpoint from '../../../utils/responsive/useBreakpoint';
@@ -84,67 +95,84 @@ const MobileSidebar = () => {
     return null;
   }
   
-  // Funkcja do przełączania stanu sidebara
-  const toggleSidebar = () => {
-    setIsExpanded(!isExpanded);
-  };
+  // Funkcje sterujące widocznością sidebara
+  const toggleSidebar = () => setIsExpanded(!isExpanded);
+  const closeSidebar = () => setIsExpanded(false);
   
   return (
     <>
+      {/* Toggle button - visible only when sidebar is closed */}
+      {!isExpanded && (
+        <button
+          onClick={toggleSidebar}
+          className="fixed top-4 left-4 z-50 bg-[#5A7834] text-white p-3 rounded-full shadow-lg hover:bg-[#4a6b2a] transition-all duration-200 hover:scale-105"
+          aria-label="Otwórz menu"
+        >
+          <ChevronRight className="w-6 h-6" />
+        </button>
+      )}
+
+      {/* Overlay */}
+      {isExpanded && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300"
+          onClick={closeSidebar}
+        />
+      )}
+
       {/* Sidebar */}
-      <div className={`fixed left-0 top-0 h-full flex flex-col bg-[#5A7834] text-white shadow-lg z-40 overflow-hidden transition-all duration-300 ease-in-out ${
-        isExpanded ? 'w-64' : 'w-12'
-      }`}>
-        
-        {/* Przycisk do zwijania/rozwijania na górze */}
-        <div className="flex justify-end p-2 border-b border-white border-opacity-20">
+      <div
+        className={`fixed top-0 left-0 h-full w-40 bg-[#5A7834] text-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out ${
+          isExpanded ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        {/* Header with close button */}
+        <div className="flex items-center justify-between p-6 border-b border-white border-opacity-20">
+          <h2 className="text-xl font-bold text-white">Menu</h2>
           <button
-            onClick={toggleSidebar}
-            className="text-white hover:bg-white hover:bg-opacity-10 p-1 rounded transition-colors"
-            aria-label={isExpanded ? "Zwiń menu" : "Rozwiń menu"}
+            onClick={closeSidebar}
+            className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-full transition-colors"
+            aria-label="Zamknij menu"
           >
-            {isExpanded ? <ChevronLeft className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+            <X className="w-6 h-6" />
           </button>
         </div>
-        
-        {/* Nawigacja */}
-        <nav className={`flex flex-col h-full ${isExpanded ? 'justify-start space-y-2 p-4' : 'justify-center space-y-6 py-4'}`}>
-          {/* Admin Panel link - widoczny tylko dla administratorów */}
+
+        {/* Navigation */}
+        <nav className="flex flex-col p-6 space-y-2 overflow-y-auto h-full pb-20">
           {isAdmin() && (
             <Link
               to="/admin"
-              className={`flex ${isExpanded ? 'flex-row items-center space-x-3 p-3' : 'flex-col items-center justify-center p-2'} rounded-md transition-colors hover:bg-white hover:bg-opacity-10`}
-              title="Panel Administratora"
+              onClick={closeSidebar}
+              className="flex items-center space-x-3 p-4 rounded-lg transition-colors text-yellow-300 hover:bg-white hover:bg-opacity-10 hover:text-yellow-200 mb-4 border-b border-white border-opacity-20 pb-4"
             >
-              <Sliders className="w-6 h-6 text-yellow-300 flex-shrink-0" />
-              {isExpanded && <span className="text-sm whitespace-nowrap">Panel Administratora</span>}
+              <Sliders className="w-6 h-6 flex-shrink-0" />
+              <span className="text-base font-medium">Panel Administratora</span>
             </Link>
           )}
-          
+
           {NAV_ITEMS.map((item) => {
             const isActive = activeTab === item.id;
             return (
               <Link
                 key={item.id}
                 to={item.path}
-                className={`flex ${isExpanded ? 'flex-row items-center space-x-3 p-3' : 'flex-col items-center justify-center p-2'} rounded-md transition-colors ${
+                onClick={closeSidebar}
+                className={`flex items-center space-x-3 p-4 rounded-lg transition-colors ${
                   isActive
-                    ? 'bg-white bg-opacity-20'
-                    : 'hover:bg-white hover:bg-opacity-10'
+                    ? 'bg-white bg-opacity-20 text-white'
+                    : 'text-gray-200 hover:bg-white hover:bg-opacity-10 hover:text-white'
                 }`}
-                title={item.name}
               >
                 <div className="relative flex-shrink-0">
-                  <item.icon className={`w-6 h-6 ${isActive ? 'text-white' : 'text-gray-200'}`} />
+                  <item.icon className="w-6 h-6" />
                   {item.badgeKey && unreadCount[item.badgeKey] > 0 && (
-                    <span
-                      className={`${isExpanded ? 'absolute -top-2 -right-2' : 'absolute -top-1 -right-1'} bg-white text-[#5A7834] rounded-full min-w-[16px] h-4 flex items-center justify-center text-xs font-bold px-1`}
-                    >
+                    <span className="absolute -top-2 -right-2 bg-white text-[#5A7834] rounded-full min-w-[18px] h-[18px] flex items-center justify-center text-xs font-bold px-1">
                       {unreadCount[item.badgeKey] > 99 ? '99+' : unreadCount[item.badgeKey]}
                     </span>
                   )}
                 </div>
-                {isExpanded && <span className="text-sm whitespace-nowrap overflow-hidden">{item.name}</span>}
+                <span className="text-base font-medium">{item.name}</span>
               </Link>
             );
           })}
