@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, Sliders } from 'lucide-react';
 import useBreakpoint from '../../utils/responsive/useBreakpoint';
 import { useSidebar } from '../../contexts/SidebarContext';
 import { useAuth } from '../../contexts/AuthContext';
-import ProfileNavigation from '../profil/navigation/ProfileNavigation';
+import ProfileNavigation from './ProfileNavigation'; // Dodaj brakujący import
 
 const MobileSidebar = ({ children }) => {
   const { isExpanded, toggleSidebar } = useSidebar();
@@ -21,7 +21,7 @@ const MobileSidebar = ({ children }) => {
         <button
           onClick={toggleSidebar}
           className="fixed top-1/2 left-0 -translate-y-1/2 bg-[#35530A] text-white p-3 rounded-r-lg shadow-lg z-50 hover:bg-[#4a6b2a]"
-          aria-label="Otw\u00f3rz menu"
+          aria-label="Otwórz menu"
         >
           <ChevronRight className="w-5 h-5" />
         </button>
