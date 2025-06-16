@@ -2,6 +2,18 @@
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+## Local Development
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+2. Copy `env.example` to `.env.local` and adjust values as needed.
+3. Start the development server:
+   ```bash
+   npm start
+   ```
+
 ## Available Scripts
 
 In the project directory, you can run:
