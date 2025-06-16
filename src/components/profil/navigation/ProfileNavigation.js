@@ -14,6 +14,7 @@ import {
 import useBreakpoint from '../../../utils/responsive/useBreakpoint';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useNotifications } from '../../../contexts/NotificationContext';
+import { useSidebar } from '../../../contexts/SidebarContext';
 
 const NAV_ITEMS = [
   { id: 'panel', name: 'Panel', path: '/profil', icon: Eye },
@@ -39,9 +40,10 @@ const ProfileNavigation = React.forwardRef(
     },
     ref
   ) => {
-    const breakpoint = useBreakpoint();
-    const { isAdmin } = useAuth();
-    const { unreadCount = { messages: 0, alerts: 0 } } = useNotifications();
+  const breakpoint = useBreakpoint();
+  const { isAdmin } = useAuth();
+  const { unreadCount = { messages: 0, alerts: 0 } } = useNotifications();
+  const { isExpanded } = useSidebar();
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -120,7 +122,27 @@ const ProfileNavigation = React.forwardRef(
     }
 
     if (isMobile) {
-      return <div ref={ref} />;
+      return (
+        <nav ref={ref} className="flex flex-col mt-2 space-y-1">
+          {NAV_ITEMS.map((item) => (
+            <Link
+              key={item.id}
+              to={item.path}
+              className={`flex items-center gap-3 px-3 py-2 text-white hover:bg-[#4a6b2a] ${
+                activeTab === item.id ? 'bg-[#4a6b2a]' : ''
+              }`}
+            >
+              <item.icon className="w-5 h-5" />
+              {isExpanded && <span className="text-sm">{item.name}</span>}
+              {item.badgeKey && counts[item.badgeKey] > 0 && (
+                <span className="ml-auto text-[#35530A] bg-white rounded-full text-[10px] w-5 h-5 flex items-center justify-center font-bold">
+                  {counts[item.badgeKey] > 99 ? '99+' : counts[item.badgeKey]}
+                </span>
+              )}
+            </Link>
+          ))}
+        </nav>
+      );
     }
 
     return (
