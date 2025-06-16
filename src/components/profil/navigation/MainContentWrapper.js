@@ -36,7 +36,7 @@ export const MainContentWrapper = ({ children }) => {
   }
   
   return (
-    <div className={`transition-all duration-300 ease-in-out ${isExpanded ? 'ml-64' : 'ml-12'} min-h-screen`}>
+    <div className="min-h-screen">
       {children}
     </div>
   );
