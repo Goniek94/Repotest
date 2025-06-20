@@ -46,8 +46,7 @@ const FeaturedListings = () => {
         setLoading(true);
         
         // Pobieranie ogłoszeń z dedykowanego endpointu rotacji
-        const response = await fetch(`http://localhost:5000/api/ads/rotated?t=${Date.now()}`);
-        const data = await response.json();
+        const data = await api.getRotatedListings();
 
         if (!data || !data.featured || !data.hot || !data.regular) {
           throw new Error('Nieprawidłowa odpowiedź API');
@@ -64,9 +63,14 @@ const FeaturedListings = () => {
         // Fallback do mockowanych danych w przypadku błędu
         try {
           const mockedData = await api.getListings();
-          
+
+          // API.getListings może zwrócić obiekt z polem 'ads'
+          const listingsArray = Array.isArray(mockedData)
+            ? mockedData
+            : mockedData.ads || [];
+
           // Tasujemy mockowane dane
-          const allMocked = shuffleArray(mockedData);
+          const allMocked = shuffleArray(listingsArray);
           const mainFeatured = allMocked.filter(ad => ad.featured).slice(0, 2);
           const hotOffers = allMocked.filter(ad => ad.featured).slice(2, 6);
           const normalOnes = allMocked.filter(ad => !ad.featured).slice(0, 6);
@@ -74,6 +78,7 @@ const FeaturedListings = () => {
           setFeaturedListings(mainFeatured);
           setHotListings(hotOffers);
           setNormalListings(normalOnes);
+          setError(null); // pomyślnie wczytano dane zapasowe
         } catch (fallbackErr) {
           console.error('Również błąd z danymi zapasowymi:', fallbackErr);
         }
