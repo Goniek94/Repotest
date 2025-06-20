@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import CarDataService from '../../../../../autosellfront/src/services/carDataService';
+import CarDataService from '../../../services/carDataService';
 import { carData as staticCarData } from '../SearchFormConstants';
 import { generationsData, getGenerationsForModel as getStaticGenerations } from '../GenerationsData';
 

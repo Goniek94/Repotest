@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { carData, bodyTypes, advancedOptions, regions } from './SearchFormConstants';
-import AdsService from '../../../../autosellfront/src/services/ads';
+import AdsService from '../../services/ads';
 import useCarData from './hooks/useCarData';
 
 /**

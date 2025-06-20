@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import TransactionFilters from "./transactions/TransactionFilters";
 import TransactionTable from "./transactions/TransactionTable";
-import { TransactionsService } from "../../services/api";
+import { getTransactionHistory } from "../../services/api";
 
 // Prosta funkcja powiadomień zamiast react-toastify
 const showNotification = (message, type = 'info') => {
@@ -31,7 +31,7 @@ const TransactionHistory = () => {
     const fetchTransactionHistory = async () => {
       try {
         setLoading(true);
-        const response = await TransactionsService.getHistory();
+        const response = await getTransactionHistory();
         
         // Formatowanie transakcji do odpowiedniego formatu
         const formattedTransactions = response.map(transaction => ({
