@@ -32,10 +32,9 @@ export const NotificationProvider = ({ children }) => {
 
     setIsLoading(true);
     try {
+      // Używamy apiClient zamiast axios bezpośrednio, aby korzystać z interceptorów i ciasteczek
       const response = await axios.get(`${API_URL}/notifications`, {
-        headers: {
-          Authorization: `Bearer ${user.token}`
-        }
+        withCredentials: true // Ważne - przesyłanie ciasteczek
       });
 
       const notificationsData = response.data.notifications || [];
@@ -59,6 +58,7 @@ export const NotificationProvider = ({ children }) => {
       setUnreadCount(unread);
     } catch (error) {
       console.error('Błąd podczas pobierania powiadomień:', error);
+      // Nie wylogowujemy użytkownika automatycznie przy błędzie pobierania powiadomień
     } finally {
       setIsLoading(false);
     }
@@ -98,9 +98,7 @@ export const NotificationProvider = ({ children }) => {
 
     try {
       await axios.put(`${API_URL}/notifications/${notificationId}/read`, {}, {
-        headers: {
-          Authorization: `Bearer ${user.token}`
-        }
+        withCredentials: true // Ważne - przesyłanie ciasteczek
       });
 
       // Aktualizacja lokalnego stanu
@@ -125,9 +123,7 @@ export const NotificationProvider = ({ children }) => {
 
     try {
       await axios.put(`${API_URL}/notifications/read-all`, {}, {
-        headers: {
-          Authorization: `Bearer ${user.token}`
-        }
+        withCredentials: true // Ważne - przesyłanie ciasteczek
       });
 
       // Aktualizacja lokalnego stanu
@@ -148,9 +144,7 @@ export const NotificationProvider = ({ children }) => {
 
     try {
       await axios.delete(`${API_URL}/notifications/${notificationId}`, {
-        headers: {
-          Authorization: `Bearer ${user.token}`
-        }
+        withCredentials: true // Ważne - przesyłanie ciasteczek
       });
 
       // Aktualizacja lokalnego stanu

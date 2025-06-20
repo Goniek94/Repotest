@@ -211,7 +211,7 @@ const CreateListingForm = () => {
             )}
           </div>
           
-          <div className="bg-white p-6 rounded-[2px] shadow-md sticky bottom-4 z-10 border border-gray-200 mt-6">
+          <div className="bg-white p-6 rounded-[2px] shadow-md border border-gray-200 mt-6">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
               <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-[2px] w-full md:w-auto">
                 <div className="font-medium mb-1">Przed kontynuacją upewnij się, że:</div>
@@ -220,6 +220,10 @@ const CreateListingForm = () => {
                   <li>Dodałeś/aś minimum jedno zdjęcie pojazdu</li>
                   <li>Podane informacje są dokładne i zgodne ze stanem faktycznym</li>
                 </ul>
+                <p className="text-xs text-gray-500 mt-2">
+                  Backend pobiera tylko podstawowe dane lokalizacyjne: województwo i miasto. 
+                  Kod pocztowy, dzielnica i opcje odbioru nie są przechowywane w bazie danych.
+                </p>
               </div>
               <button
                 type="submit"

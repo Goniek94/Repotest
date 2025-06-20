@@ -28,16 +28,10 @@ const generateYearRanges = () => [
 ];
 
 /**
- * Generowanie przedziałów cenowych
- * @returns {Array} lista przedziałów cenowych
+ * Generowanie pustej listy przedziałów cenowych
+ * @returns {Array} pusta lista przedziałów cenowych
  */
-const generatePriceRanges = () => [
-  { label: 'do 10 000 zł', value: 'up_to_10k', from: 0, to: 10000 },
-  { label: '10 000 - 20 000 zł', value: '10k_20k', from: 10000, to: 20000 },
-  { label: '20 000 - 50 000 zł', value: '20k_50k', from: 20000, to: 50000 },
-  { label: '50 000 - 100 000 zł', value: '50k_100k', from: 50000, to: 100000 },
-  { label: 'powyżej 100 000 zł', value: 'above_100k', from: 100000, to: null }
-];
+const generatePriceRanges = () => [];
 
 /**
  * Konwersja tablicy wartości na format opcji
@@ -81,7 +75,7 @@ export const filterGroups = {
   },
   price: {
     label: 'Cena',
-    options: generatePriceRanges(),
+    options: [],
     customInput: {
       type: 'range',
       fromName: 'priceFrom',

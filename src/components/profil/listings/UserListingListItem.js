@@ -71,28 +71,101 @@ const UserListingListItem = memo(({
       {/* Image section - fixed aspect ratio container */}
       <div className="w-full sm:w-[300px] lg:w-[336px] relative overflow-hidden flex-shrink-0 bg-gray-200" 
            style={{ aspectRatio: '3/2' }}>
-        <img
-          src={getImageUrl(listing.images && listing.images.length > 0 
-            ? (typeof listing.mainImageIndex === 'number' && 
-               listing.mainImageIndex >= 0 && 
-               listing.mainImageIndex < listing.images.length 
-                ? listing.images[listing.mainImageIndex] 
-                : listing.images[0])
-            : listing.image)}
-          alt={listing.title}
-          className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
-          style={{ 
-            objectFit: 'cover', 
-            objectPosition: 'center',
-            width: '100%',
-            height: '100%'
-          }}
-          loading="lazy"
-          onError={e => {
-            e.target.onerror = null;
-            e.target.src = '/images/auto-788747_1280.jpg';
-          }}
-        />
+        {/* Renderowanie zdjęcia tylko jeśli jest dostępne */}
+        {(() => {
+          // Pobierz URL zdjęcia
+          let imageUrl = null;
+          
+          // Dodatkowe logowanie dla debugowania
+          console.log('Renderowanie zdjęcia dla ogłoszenia:', listing.id || listing._id);
+          console.log('Dane zdjęć:', {
+            images: listing.images,
+            mainImageIndex: listing.mainImageIndex,
+            image: listing.image
+          });
+          
+          // Sprawdź, czy mamy tablicę zdjęć
+          if (listing.images && Array.isArray(listing.images) && listing.images.length > 0) {
+            // Wybierz główne zdjęcie lub pierwsze dostępne
+            const mainIndex = typeof listing.mainImageIndex === 'number' && 
+                             listing.mainImageIndex >= 0 && 
+                             listing.mainImageIndex < listing.images.length 
+                              ? listing.mainImageIndex 
+                              : 0;
+            
+            console.log(`Używam zdjęcia z indeksem ${mainIndex} z ${listing.images.length} dostępnych`);
+            const selectedImage = listing.images[mainIndex];
+            
+            // Użyj getImageUrl do przetworzenia URL-a
+            imageUrl = getImageUrl(selectedImage);
+            
+            // Jeśli getImageUrl zwróciło null, spróbuj użyć oryginalnego URL-a
+            if (!imageUrl && selectedImage) {
+              console.log('getImageUrl zwróciło null dla:', selectedImage);
+              imageUrl = selectedImage;
+            }
+          } 
+          // Jeśli nie mamy tablicy zdjęć, sprawdź czy jest pojedyncze zdjęcie
+          else if (listing.image) {
+            console.log('Brak tablicy zdjęć, używam pojedynczego zdjęcia:', listing.image);
+            imageUrl = getImageUrl(listing.image);
+          }
+          
+          // Logowanie dla debugowania
+          console.log('Listing ID:', listing.id || listing._id);
+          console.log('Ostateczny URL zdjęcia:', imageUrl);
+          
+          // Jeśli jest URL zdjęcia, renderuj zdjęcie
+          if (imageUrl) {
+            return (
+              <img
+                src={imageUrl}
+                alt={listing.title || 'Zdjęcie ogłoszenia'}
+                className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                style={{ 
+                  objectFit: 'cover', 
+                  objectPosition: 'center',
+                  width: '100%',
+                  height: '100%'
+                }}
+                loading="lazy"
+                onError={e => {
+                  console.error('Błąd ładowania zdjęcia dla ogłoszenia:', listing.id || listing._id);
+                  
+                  // Próba załadowania innego zdjęcia z tablicy, jeśli istnieje
+                  if (listing.images && Array.isArray(listing.images) && listing.images.length > 1) {
+                    // Znajdź indeks aktualnego zdjęcia
+                    const currentSrc = e.target.src;
+                    const currentIndex = listing.images.findIndex(img => {
+                      const imgUrl = getImageUrl(img);
+                      return imgUrl && (currentSrc.includes(img) || imgUrl === currentSrc);
+                    });
+                    
+                    // Jeśli znaleziono indeks i istnieją inne zdjęcia, spróbuj załadować następne
+                    if (currentIndex !== -1 && listing.images.length > currentIndex + 1) {
+                      console.log('Próba załadowania alternatywnego zdjęcia:', currentIndex + 1);
+                      const nextImageUrl = getImageUrl(listing.images[currentIndex + 1]);
+                      if (nextImageUrl) {
+                        e.target.src = nextImageUrl;
+                        return;
+                      }
+                    }
+                  }
+                  
+                  // Jeśli nie udało się znaleźć alternatywnego zdjęcia, ukryj element
+                  e.target.style.display = 'none';
+                }}
+              />
+            );
+          } else {
+            // Jeśli nie ma URL zdjęcia, renderuj placeholder
+            return (
+              <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-gray-200">
+                <span className="text-gray-400 text-lg">Brak zdjęcia</span>
+              </div>
+            );
+          }
+        })()}
         {/* Price badge */}
         <div className="absolute top-2 left-2 bg-[#35530A] text-white px-4 py-2 rounded-sm font-bold text-lg shadow-lg z-10">
           {listing.price?.toLocaleString('pl-PL')} zł
@@ -180,7 +253,19 @@ const UserListingListItem = memo(({
         {/* Actions section */}
         <div className="flex flex-col items-stretch justify-start gap-2 p-3 min-w-[120px] bg-gray-50 border-l border-gray-100">
           <button
-            onClick={e => { e.stopPropagation(); onEditNew ? onEditNew(listing.id || listing._id) : onEdit && onEdit(listing.id || listing._id); }}
+            onClick={e => { 
+              e.stopPropagation(); 
+              console.log('Edit button clicked for listing:', listing.id || listing._id);
+              console.log('onEditNew exists:', !!onEditNew);
+              console.log('onEdit exists:', !!onEdit);
+              if (onEditNew) {
+                console.log('Calling onEditNew...');
+                onEditNew(listing.id || listing._id);
+              } else if (onEdit) {
+                console.log('Calling onEdit...');
+                onEdit(listing.id || listing._id);
+              }
+            }}
             className="flex items-center justify-center gap-2 px-4 py-2 rounded bg-gradient-to-r from-[#6B8E23] to-[#556B2F] hover:from-[#556B2F] hover:to-[#4A5D28] text-white font-semibold text-sm transition-all duration-300 shadow-md"
             title="Edytuj"
           >

@@ -38,6 +38,7 @@ const EditListing = () => {
         setLoading(true);
         const data = await ListingsService.getById(id);
         
+        // Ustawienie danych ogłoszenia
         setListing(data);
         setFormData({
           title: `${data.brand} ${data.model}`,
@@ -47,9 +48,13 @@ const EditListing = () => {
           mainImageIndex: data.mainImageIndex || 0
         });
         
-        // Przygotowanie tablicy zdjęć
-        if (data.images && data.images.length > 0) {
-          setImages(data.images.map(img => ({ url: img, isExisting: true })));
+        // Przygotowanie tablicy zdjęć - bezpieczne przetwarzanie
+        if (data.images && Array.isArray(data.images) && data.images.length > 0) {
+          // Filtrujemy puste lub nieprawidłowe ścieżki
+          const validImages = data.images.filter(img => img && typeof img === 'string');
+          setImages(validImages);
+        } else {
+          setImages([]);
         }
         
         setLoading(false);
@@ -128,6 +133,8 @@ const EditListing = () => {
     }
   };
 
+  // Usunięto zbędny efekt debugowania, który mógł powodować pętlę renderowania
+
   // Zapisywanie zmian
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -172,6 +179,7 @@ const EditListing = () => {
     }
     
     try {
+      console.log(`Usuwanie zdjęcia o indeksie ${index}:`, images[index]);
       await ListingsService.deleteImage(id, index);
       
       // Aktualizacja lokalnego stanu
@@ -187,10 +195,10 @@ const EditListing = () => {
   // Renderowanie stanu ładowania
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12">
+      <div className="min-h-screen bg-white py-12">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-white shadow-md rounded-lg p-8 flex flex-col items-center justify-center">
-            <div className="animate-spin w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full mb-4"></div>
+            <div className="animate-spin w-12 h-12 border-4 border-[#35530A] border-t-transparent rounded-full mb-4"></div>
             <p className="text-gray-600 text-lg">Ładowanie danych ogłoszenia...</p>
           </div>
         </div>
@@ -201,7 +209,7 @@ const EditListing = () => {
   // Renderowanie błędu
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12">
+      <div className="min-h-screen bg-white py-12">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-white shadow-md rounded-lg p-8">
             <div className="flex items-center justify-center flex-col">
@@ -210,7 +218,7 @@ const EditListing = () => {
               <p className="text-gray-600 mb-4">{error}</p>
               <button
                 onClick={() => navigate('/profil/listings')}
-                className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+                className="flex items-center px-4 py-2 bg-[#35530A] text-white rounded-md hover:bg-[#2A4208] transition-colors"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" /> Wróć do listy ogłoszeń
               </button>
@@ -222,45 +230,166 @@ const EditListing = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-white py-8">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Nagłówek */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center">
-            <button
-              onClick={() => navigate('/profil/listings')}
-              className="mr-4 p-2 rounded-full hover:bg-gray-200 transition-colors"
-              title="Wróć do listy ogłoszeń"
-            >
-              <ArrowLeft className="w-5 h-5 text-gray-600" />
-            </button>
-            <h1 className="text-2xl font-bold text-gray-800">Edycja ogłoszenia</h1>
-          </div>
-          <button
-            onClick={handleSubmit}
-            disabled={saving}
-            className={`flex items-center px-5 py-2.5 rounded-md text-white font-medium ${
-              saving ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
-            } transition-colors shadow-md`}
-          >
-            {saving ? (
-              <>
-                <RefreshCw className="w-5 h-5 mr-2 animate-spin" /> Zapisywanie...
-              </>
-            ) : (
-              <>
-                <Save className="w-5 h-5 mr-2" /> Zapisz zmiany
-              </>
-            )}
-          </button>
-        </div>
+        {/* Usunięto nagłówek i strzałkę powrotu, ponieważ są już dostępne w panelu nawigacyjnym */}
 
         {/* Główny formularz */}
-        <div className="bg-white shadow-md rounded-lg overflow-hidden">
+        <div className="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-100 transition-all hover:shadow-xl">
           <form onSubmit={handleSubmit}>
-            {/* Informacje podstawowe */}
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Informacje podstawowe</h2>
+            {/* Zarządzanie zdjęciami - teraz jako pierwsze */}
+            <div className="p-6 border-b border-gray-200 bg-gray-50/30">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center justify-center">
+                <ImageIcon className="w-5 h-5 mr-2 text-[#35530A]" /> Zdjęcia
+              </h2>
+              
+              {/* Zdjęcia */}
+              <div className="mb-6">
+                <h3 className="text-lg font-medium text-gray-700 mb-3">Zdjęcia</h3>
+                
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {images.length === 0 ? (
+                    // Jeśli nie ma zdjęć, pokaż tylko kafelek "Dodaj zdjęcie"
+                    <button
+                      type="button"
+                      onClick={() => document.getElementById('file-upload').click()}
+                      className="relative rounded-lg overflow-hidden border-2 border-dashed border-gray-300 h-32 flex flex-col items-center justify-center cursor-pointer hover:border-[#35530A]/50 hover:bg-[#35530A]/5 transition-all transform hover:-translate-y-1 duration-200"
+                    >
+                      <Upload className="w-6 h-6 text-gray-400 mb-2" />
+                      <span className="text-sm text-gray-500 font-medium">Dodaj zdjęcie</span>
+                    </button>
+                  ) : (
+                    // Jeśli są zdjęcia, pokaż je wraz z kafelkiem "Dodaj zdjęcie" na końcu (jeśli jest mniej niż 10 zdjęć)
+                    <>
+                      {images.map((image, index) => (
+                        <div 
+                          key={index} 
+                          className={`relative rounded-lg overflow-hidden border-2 shadow-sm hover:shadow-md transition-all transform hover:-translate-y-1 duration-200 ${
+                            index === formData.mainImageIndex 
+                              ? 'border-[#35530A] ring-2 ring-[#35530A]/30' 
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <img 
+                            src={getImageUrl(image)} 
+                            alt={`Zdjęcie ${index + 1}`}
+                            className="w-full h-32 object-cover"
+                            onError={(e) => {
+                              console.error(`Błąd ładowania zdjęcia ${index}:`, image);
+                              e.target.onerror = null;
+                              e.target.src = "/images/placeholder.jpg";
+                              // Pokaż toast z informacją o błędzie
+                              toast.error(`Nie udało się załadować zdjęcia ${index + 1}. Spróbuj odświeżyć stronę.`);
+                            }}
+                          />
+                          
+                          {/* Ikona gwiazdki dla zdjęcia głównego */}
+                          {index === formData.mainImageIndex ? (
+                            <div className="absolute top-2 left-2 bg-[#35530A] text-white rounded-full p-1.5 shadow-md">
+                              <CheckCircle className="w-4 h-4" />
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleSetMainImage(index);
+                              }}
+                              className="absolute top-2 left-2 bg-white/80 hover:bg-white text-[#35530A] rounded-full p-1.5 shadow-sm hover:shadow-md transition-all"
+                              title="Ustaw jako główne zdjęcie"
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                            </button>
+                          )}
+                          
+                          {/* Przycisk usuwania */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleDeleteImage(index);
+                            }}
+                            className="absolute top-2 right-2 bg-white/80 hover:bg-red-500 text-red-500 hover:text-white rounded-full p-1.5 shadow-sm hover:shadow-md transition-all"
+                            title="Usuń zdjęcie"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                      
+                      {/* Kafelek "Dodaj zdjęcie" - widoczny tylko gdy jest mniej niż 10 zdjęć */}
+                      {images.length < 10 && (
+                        <button
+                          type="button"
+                          onClick={() => document.getElementById('file-upload').click()}
+                          className="relative rounded-lg overflow-hidden border-2 border-dashed border-gray-300 h-32 flex flex-col items-center justify-center cursor-pointer hover:border-[#35530A]/50 hover:bg-[#35530A]/5 transition-all transform hover:-translate-y-1 duration-200"
+                        >
+                          <Upload className="w-6 h-6 text-gray-400 mb-2" />
+                          <span className="text-sm text-gray-500 font-medium">Dodaj zdjęcie</span>
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+                
+                <input 
+                  id="file-upload"
+                  type="file" 
+                  className="hidden" 
+                  accept="image/*" 
+                  multiple 
+                  onChange={handleImageChange}
+                />
+                
+                <p className="text-sm text-gray-500 mt-2">
+                  Możesz dodać maksymalnie {10 - images.length} nowych zdjęć (łącznie max. 10). 
+                  Maksymalny rozmiar pliku: 5MB.
+                </p>
+              </div>
+              
+              {/* Podgląd nowych zdjęć */}
+              {newImages.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-medium text-gray-700 mb-3">Nowe zdjęcia do dodania</h3>
+                  
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    {newImages.map((file, index) => (
+                      <div key={index} className="relative rounded-lg overflow-hidden border-2 border-gray-200 shadow-sm hover:shadow-md transition-all transform hover:-translate-y-1 duration-200">
+                        <img 
+                          src={URL.createObjectURL(file)} 
+                          alt={`Nowe zdjęcie ${index + 1}`}
+                          className="w-full h-32 object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleRemoveImage(index, true);
+                          }}
+                          className="absolute top-2 right-2 bg-white/80 hover:bg-red-500 text-red-500 hover:text-white rounded-full p-1.5 shadow-sm hover:shadow-md transition-all"
+                          title="Usuń zdjęcie"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {/* Informacje podstawowe - teraz jako drugie */}
+            <div className="p-6 bg-white">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 mr-2 text-[#35530A]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                  <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+                Informacje podstawowe
+              </h2>
               
               <div className="mb-4">
                 <label className="block text-gray-700 font-medium mb-2">
@@ -287,7 +416,7 @@ const EditListing = () => {
                   name="headline"
                   value={formData.headline}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#35530A] transition-all duration-200"
                   placeholder="Krótki opis, np. 'Pierwszy właściciel, bezwypadkowy'"
                   maxLength={100}
                 />
@@ -306,7 +435,7 @@ const EditListing = () => {
                   value={formData.description}
                   onChange={handleChange}
                   rows={6}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#35530A] transition-all duration-200"
                   placeholder="Szczegółowy opis pojazdu..."
                 ></textarea>
               </div>
@@ -321,7 +450,7 @@ const EditListing = () => {
                   name="price"
                   value={formData.price}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#35530A] transition-all duration-200"
                   placeholder="Cena w złotych"
                   min="0"
                   step="1"
@@ -329,139 +458,24 @@ const EditListing = () => {
               </div>
             </div>
             
-            {/* Zarządzanie zdjęciami */}
-            <div className="p-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Zdjęcia</h2>
-              
-              {/* Istniejące zdjęcia */}
-              <div className="mb-6">
-                <h3 className="text-lg font-medium text-gray-700 mb-3">Obecne zdjęcia</h3>
-                
-                {images.length === 0 ? (
-                  <p className="text-gray-500 italic">Brak zdjęć</p>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                    {images.map((image, index) => (
-                      <div 
-                        key={index} 
-                        className={`relative rounded-lg overflow-hidden border-2 ${
-                          index === formData.mainImageIndex 
-                            ? 'border-blue-500 ring-2 ring-blue-300' 
-                            : 'border-gray-200'
-                        }`}
-                      >
-                        <img 
-                          src={getImageUrl(image.url)} 
-                          alt={`Zdjęcie ${index + 1}`}
-                          className="w-full h-32 object-cover"
-                        />
-                        
-                        <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-40 transition-all flex items-center justify-center opacity-0 hover:opacity-100">
-                          {index === formData.mainImageIndex ? (
-                            <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full absolute top-2 left-2">
-                              Główne
-                            </span>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                handleSetMainImage(index);
-                              }}
-                              className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full absolute top-2 left-2"
-                            >
-                              Ustaw jako główne
-                            </button>
-                          )}
-                          
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              handleDeleteImage(index);
-                            }}
-                            className="bg-red-500 text-white p-2 rounded-full absolute bottom-2 right-2"
-                            title="Usuń zdjęcie"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              
-              {/* Dodawanie nowych zdjęć */}
-              <div className="mb-6">
-                <h3 className="text-lg font-medium text-gray-700 mb-3">Dodaj nowe zdjęcia</h3>
-                
-                <div className="flex flex-wrap gap-4">
-                  {/* Przycisk dodawania zdjęć */}
-                  <label className="flex flex-col items-center justify-center w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <Upload className="w-8 h-8 text-gray-400 mb-2" />
-                      <p className="text-xs text-gray-500 text-center">
-                        <span className="font-medium">Kliknij</span> lub przeciągnij
-                      </p>
-                    </div>
-                    <input 
-                      type="file" 
-                      className="hidden" 
-                      accept="image/*" 
-                      multiple 
-                      onChange={handleImageChange}
-                    />
-                  </label>
-                  
-                  {/* Podgląd nowych zdjęć */}
-                  {newImages.map((file, index) => (
-                    <div key={index} className="relative w-32 h-32 border border-gray-200 rounded-lg overflow-hidden">
-                      <img 
-                        src={URL.createObjectURL(file)} 
-                        alt={`Nowe zdjęcie ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleRemoveImage(index, true);
-                        }}
-                        className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full"
-                        title="Usuń zdjęcie"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-                
-                <p className="text-sm text-gray-500 mt-2">
-                  Możesz dodać maksymalnie {10 - images.length} nowych zdjęć (łącznie max. 10). 
-                  Maksymalny rozmiar pliku: 5MB.
-                </p>
-              </div>
-            </div>
-            
             {/* Przyciski akcji */}
-            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-between">
-              <button
-                type="button"
-                onClick={() => navigate('/profil/listings')}
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 transition-colors"
-              >
-                Anuluj
-              </button>
-              
+            <div className="px-6 py-6 bg-gray-50/30 border-t border-gray-200 flex justify-center">
               <button
                 type="submit"
                 disabled={saving}
-                className={`px-6 py-2 rounded-md text-white font-medium ${
-                  saving ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
-                } transition-colors shadow-md`}
+                className={`px-8 py-3 rounded-md text-white font-medium text-lg flex items-center justify-center min-w-[200px] ${
+                  saving ? 'bg-[#4A6B2A]' : 'bg-[#35530A] hover:bg-[#2A4208]'
+                } transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-1`}
               >
-                {saving ? 'Zapisywanie...' : 'Zapisz zmiany'}
+                {saving ? (
+                  <>
+                    <RefreshCw className="w-5 h-5 mr-2 animate-spin" /> Zapisywanie...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-5 h-5 mr-2" /> Zapisz zmiany
+                  </>
+                )}
               </button>
             </div>
           </form>

@@ -1,72 +1,124 @@
-import React, { createContext, useState, useEffect } from 'react';
-import io from 'socket.io-client';
+import React, { createContext, useState, useEffect, useContext } from 'react';
 import { useAuth } from './AuthContext';
+import notificationService from '../services/notifications';
+import { io } from 'socket.io-client';
 
-/**
- * Kontekst do zarządzania połączeniem WebSocket
- * @type {React.Context}
- */
+// Tworzenie kontekstu
 export const SocketContext = createContext(null);
 
-/**
- * Provider dla kontekstu WebSocket
- * Zarządza połączeniem z serwerem WebSocket i udostępnia je w całej aplikacji
- * 
- * @param {Object} props
- * @param {React.ReactNode} props.children - Komponenty potomne
- * @returns {JSX.Element}
- */
+// Provider dla kontekstu Socket
 export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
-  const { isAuthenticated, user, token } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const [isConnected, setIsConnected] = useState(false);
   
-  // Inicjalizacja połączenia WebSocket
+  // Inicjalizacja socketa po zalogowaniu
   useEffect(() => {
-    // Tworzenie połączenia tylko dla zalogowanych użytkowników
-    if (isAuthenticated && user && token) {
-      // Określenie adresu serwera WebSocket
-      const socketUrl = process.env.REACT_APP_SOCKET_URL || window.location.origin;
-      
-      // Inicjalizacja połączenia z przekazaniem tokenu autoryzacyjnego
-      const socketInstance = io(socketUrl, {
-        auth: {
-          token
-        },
-        transports: ['websocket', 'polling'],
-        reconnection: true,
-        reconnectionAttempts: 5,
-        reconnectionDelay: 1000
-      });
-      
-      // Obsługa zdarzeń połączenia
-      socketInstance.on('connect', () => {
-        console.log('WebSocket połączony');
-      });
-      
-      socketInstance.on('connect_error', (error) => {
-        console.error('Błąd połączenia WebSocket:', error);
-      });
-      
-      socketInstance.on('disconnect', (reason) => {
-        console.log('WebSocket rozłączony:', reason);
-      });
-      
-      // Zapisanie instancji socketu w stanie
-      setSocket(socketInstance);
-      
-      // Czyszczenie przy odmontowaniu komponentu
-      return () => {
-        socketInstance.disconnect();
+    let socketInstance = null;
+    
+    const initializeSocket = async () => {
+      try {
+        if (isAuthenticated && user) {
+          // Pobierz token z localStorage lub cookies
+          const token = document.cookie.match(/(?:^|; )token=([^;]*)/)?.[1] || null;
+          
+          if (!token) {
+            console.warn('Brak tokenu JWT, nie można nawiązać połączenia WebSocket');
+            return;
+          }
+          
+          // Inicjalizacja socketa
+          const serverUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+          socketInstance = io(serverUrl, {
+            auth: { token },
+            reconnection: true,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 3000
+          });
+          
+          // Obsługa zdarzeń
+          socketInstance.on('connect', () => {
+            console.log('Socket.io połączony');
+            setIsConnected(true);
+            
+            // Emituj zdarzenia dla komponentów
+            socketInstance.emit = function(originalEmit) {
+              return function(...args) {
+                if (this.connected) {
+                  return originalEmit.apply(this, args);
+                }
+                console.warn('Próba emitowania zdarzenia bez połączenia:', args[0]);
+                return this;
+              };
+            }(socketInstance.emit);
+          });
+          
+          socketInstance.on('disconnect', () => {
+            console.log('Socket.io rozłączony');
+            setIsConnected(false);
+          });
+          
+          socketInstance.on('connect_error', (error) => {
+            console.error('Błąd połączenia Socket.io:', error);
+            setIsConnected(false);
+          });
+          
+          // Mapowanie zdarzeń z serwisu powiadomień na zdarzenia socketa
+          // Dzięki temu komponenty mogą używać socket.on('notification:new', ...)
+          notificationService.on('notification', (notification) => {
+            if (socketInstance) {
+              socketInstance.emit('notification:new', notification);
+            }
+          });
+          
+          notificationService.on('notification_updated', (data) => {
+            if (socketInstance) {
+              socketInstance.emit('notification:read', data);
+            }
+          });
+          
+          notificationService.on('all_notifications_read', () => {
+            if (socketInstance) {
+              socketInstance.emit('notification:read-all');
+            }
+          });
+          
+          notificationService.on('notification_deleted', (data) => {
+            if (socketInstance) {
+              socketInstance.emit('notification:deleted', data);
+            }
+          });
+          
+          // Ustawienie socketa w stanie
+          setSocket(socketInstance);
+          
+          // Połącz z serwerem powiadomień
+          await notificationService.connect(token);
+        }
+      } catch (error) {
+        console.error('Błąd inicjalizacji Socket.io:', error);
+      }
+    };
+    
+    if (isAuthenticated && user) {
+      initializeSocket();
+    } else {
+      // Rozłącz socket jeśli użytkownik nie jest zalogowany
+      if (socket) {
+        socket.disconnect();
         setSocket(null);
-      };
+        setIsConnected(false);
+      }
+      notificationService.disconnect();
     }
     
-    // Jeśli użytkownik nie jest zalogowany, upewnij się, że socket jest null
-    if (!isAuthenticated && socket) {
-      socket.disconnect();
-      setSocket(null);
-    }
-  }, [isAuthenticated, user, token]);
+    // Czyszczenie przy odmontowaniu
+    return () => {
+      if (socketInstance) {
+        socketInstance.disconnect();
+      }
+    };
+  }, [isAuthenticated, user]);
   
   return (
     <SocketContext.Provider value={socket}>
@@ -75,11 +127,7 @@ export const SocketProvider = ({ children }) => {
   );
 };
 
-/**
- * Hook do korzystania z kontekstu WebSocket
- * @returns {Socket|null} Instancja socket.io lub null, jeśli nie ma połączenia
- */
-export const useSocket = () => {
-  const socket = React.useContext(SocketContext);
-  return socket;
-};
+// Hook do łatwego dostępu do kontekstu
+export const useSocket = () => useContext(SocketContext);
+
+export default SocketContext;

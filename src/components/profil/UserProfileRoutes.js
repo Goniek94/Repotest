@@ -4,6 +4,7 @@ import ProfileLayout from './layout/ProfileLayout';
 import UserPanel from './dashboard/UserPanel';
 import Messages from './messages/Messages';
 import UserListings from './listings/UserListings';
+import EditListing from './listings/EditListing';
 import Notifications from './notifications/Notifications';
 import TransactionHistory from './TransactionHistory';
 import UserSettings from './settings/UserSettings';
@@ -24,6 +25,7 @@ const UserProfileRoutes = () => {
         <Route path="dashboard" element={<UserPanel />} />
         <Route path="messages/*" element={<Messages />} />
         <Route path="listings/*" element={<UserListings />} />
+        <Route path="edytuj-ogloszenie/:id" element={<EditListing />} />
         <Route path="notifications" element={<Notifications />} />
         <Route path="history" element={<ViewHistoryPage />} />
         <Route path="transactions" element={<TransactionHistory />} />

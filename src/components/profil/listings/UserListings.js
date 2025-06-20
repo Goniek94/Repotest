@@ -24,14 +24,47 @@ const UserListings = () => {
   // Pobieranie ogłoszeń użytkownika
   const fetchListings = () => {
     setLoading(true);
+    setError(null); // Resetowanie błędu przed nowym zapytaniem
+    
     ListingsService.getUserListings()
       .then((ads) => {
-        setAllListings(ads);
+        // Dodatkowe logowanie dla debugowania
+        console.log('Otrzymane dane ogłoszeń:', ads);
+        
+        // Sprawdzenie, czy dane są poprawne
+        if (!ads || !Array.isArray(ads)) {
+          console.error('Nieprawidłowe dane ogłoszeń:', ads);
+          setError('Otrzymano nieprawidłowe dane ogłoszeń. Spróbuj odświeżyć stronę.');
+          setLoading(false);
+          return;
+        }
+        
+        // Przetwarzanie danych ogłoszeń - upewnienie się, że wszystkie pola są poprawne
+        const processedAds = ads.map(ad => {
+          console.log('Przetwarzanie ogłoszenia:', ad._id, 'images:', ad.images);
+          
+          // Upewnienie się, że images jest tablicą
+          if (!ad.images || !Array.isArray(ad.images)) {
+            console.warn(`Ogłoszenie ${ad._id}: brak tablicy images lub nieprawidłowy format`);
+            ad.images = [];
+          }
+          
+          // Sprawdzenie mainImageIndex
+          if (typeof ad.mainImageIndex !== 'number' || ad.mainImageIndex < 0 || ad.mainImageIndex >= ad.images.length) {
+            console.warn(`Ogłoszenie ${ad._id}: nieprawidłowy mainImageIndex, ustawiam na 0`);
+            ad.mainImageIndex = 0;
+          }
+          
+          return ad;
+        });
+        
+        console.log('Przetworzone ogłoszenia:', processedAds.length);
+        setAllListings(processedAds);
 
         // Generowanie powiadomień dla ogłoszeń, które wygasają wkrótce (tylko dla użytkownika, nie admina)
-        const expiringAds = ads.filter(ad => {
+        const expiringAds = processedAds.filter(ad => {
           // expiresAt null = ogłoszenie admina, nie wygasa
-          if (!ad.expiresAt || ad.status !== 'opublikowane') return false;
+          if (!ad.expiresAt || ad.status !== 'active') return false;
           const days = calculateDaysRemaining(ad.expiresAt);
           return days > 0 && days <= 3;
         });
@@ -40,7 +73,8 @@ const UserListings = () => {
         setLoading(false);
       })
       .catch((err) => {
-        setError('Błąd podczas pobierania ogłoszeń użytkownika.');
+        console.error('Błąd podczas pobierania ogłoszeń:', err);
+        setError('Błąd podczas pobierania ogłoszeń użytkownika. Spróbuj odświeżyć stronę.');
         setLoading(false);
       });
   };
@@ -73,13 +107,13 @@ const UserListings = () => {
   const getFilteredListings = () => {
     switch(activeTab) {
       case 'active':
-        return allListings.filter(listing => listing.status === 'opublikowane');
+        return allListings.filter(listing => listing.status === 'active');
       case 'drafts':
         return allListings.filter(listing => 
-          listing.status === 'wersja robocza' || listing.isVersionRobocza
+          listing.status === 'pending' || listing.status === 'needs_changes' || listing.isVersionRobocza
         );
       case 'completed':
-        return allListings.filter(listing => listing.status === 'archiwalne');
+        return allListings.filter(listing => listing.status === 'archived' || listing.status === 'sold');
       case 'favorites':
         return allListings.filter(listing => listing.isFavorite);
       default:
@@ -168,7 +202,7 @@ const UserListings = () => {
           setAllListings(prev =>
             prev.map(listing => {
               if (listing._id === id) {
-                return { ...listing, status: 'archiwalne' };
+                return { ...listing, status: 'archived' };
               }
               return listing;
             })
@@ -187,7 +221,13 @@ const UserListings = () => {
   // Przekierowanie do edycji ogłoszenia
   const handleEdit = (id) => {
     console.log(`Navigating to edit listing with ID: ${id}`);
-    navigate(`/profil/edytuj-ogloszenie/${id}`);
+    console.log(`Full path: /profil/edytuj-ogloszenie/${id}`);
+    // Dodajemy timeout, aby zobaczyć logi przed przekierowaniem
+    setTimeout(() => {
+      console.log('Executing navigation...');
+      navigate(`/profil/edytuj-ogloszenie/${id}`);
+      console.log('Navigation executed');
+    }, 100);
   };
   
 
@@ -197,7 +237,7 @@ const UserListings = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20">
+    <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Sekcja powiadomień */}
         {notifications.length > 0 && (
@@ -257,9 +297,9 @@ const UserListings = () => {
               activeTab={activeTab} 
               setActiveTab={setActiveTab} 
               counts={{
-                active: allListings.filter(listing => listing.status === 'opublikowane').length,
-                drafts: allListings.filter(listing => listing.status === 'wersja robocza' || listing.isVersionRobocza).length,
-                completed: allListings.filter(listing => listing.status === 'archiwalne').length,
+                active: allListings.filter(listing => listing.status === 'active').length,
+                drafts: allListings.filter(listing => listing.status === 'pending' || listing.status === 'needs_changes' || listing.isVersionRobocza).length,
+                completed: allListings.filter(listing => listing.status === 'archived' || listing.status === 'sold').length,
                 favorites: allListings.filter(listing => listing.isFavorite).length
               }}
             />
@@ -279,6 +319,12 @@ const UserListings = () => {
                   <AlertTriangle className="w-8 h-8 text-red-500" />
                 </div>
                 <p className="text-red-600 font-medium">{error}</p>
+                <button 
+                  onClick={() => fetchListings()}
+                  className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+                >
+                  Spróbuj ponownie
+                </button>
               </div>
             ) : listings.length === 0 ? (
               <div className="py-16 text-center">
@@ -303,34 +349,36 @@ const UserListings = () => {
                     listing={{
                       id: listing._id,
                       _id: listing._id, // Dodajemy również _id dla pewności
-                      // Przekazujemy pełną tablicę obrazów i mainImageIndex
-                      images: listing.images || [],
-                      mainImageIndex: typeof listing.mainImageIndex === 'number' ? listing.mainImageIndex : 0,
-                      image: (listing.images && listing.images.length > 0) 
-                        ? getImageUrl(listing.images[typeof listing.mainImageIndex === 'number' && listing.mainImageIndex >= 0 && listing.mainImageIndex < listing.images.length 
-                            ? listing.mainImageIndex 
-                            : 0])
-                        : listing.image ? getImageUrl(listing.image) : '/images/auto-788747_1280.jpg',
+                      // Przekazujemy pełną tablicę obrazów i mainImageIndex - uproszczona i bezpieczna logika
+                      images: Array.isArray(listing.images) ? listing.images : [],
+                      mainImageIndex: typeof listing.mainImageIndex === 'number' && 
+                                     listing.mainImageIndex >= 0 && 
+                                     Array.isArray(listing.images) && 
+                                     listing.mainImageIndex < listing.images.length 
+                                        ? listing.mainImageIndex 
+                                        : 0,
+                      // Dodajemy również pojedyncze zdjęcie jako fallback
+                      image: listing.image || (Array.isArray(listing.images) && listing.images.length > 0 ? listing.images[0] : null),
                       featured: listing.listingType === 'wyróżnione' || listing.listingType === 'featured',
-                      title: `${listing.brand} ${listing.model}`,
+                      title: `${listing.brand || ''} ${listing.model || ''}`.trim() || 'Brak tytułu',
                       subtitle: listing.headline || listing.shortDescription || '',
                       price: listing.price || 0,
-                      year: listing.year,
-                      mileage: listing.mileage,
-                      fuel: listing.fuelType,
-                      power: listing.power,
-                      engineCapacity: listing.engineSize,
-                      drive: listing.drive,
-                      sellerType: listing.sellerType,
-                      city: listing.city,
-                      location: listing.voivodeship,
-                      status: listing.status,
+                      year: listing.year || 'N/A',
+                      mileage: listing.mileage || 0,
+                      fuel: listing.fuelType || 'N/A',
+                      power: listing.power || 'N/A',
+                      engineCapacity: listing.engineSize || 'N/A',
+                      drive: listing.drive || 'N/A',
+                      sellerType: listing.sellerType || 'N/A',
+                      city: listing.city || 'N/A',
+                      location: listing.voivodeship || 'N/A',
+                      status: listing.status || 'N/A',
                       views: listing.views || 0,
                       likes: listing.likes || 0,
-                      createdAt: listing.createdAt,
+                      createdAt: listing.createdAt || new Date().toISOString(),
                       expiresAt: listing.expiresAt,
-                      brand: listing.brand,
-                      model: listing.model,
+                      brand: listing.brand || '',
+                      model: listing.model || '',
                     }}
                     onNavigate={handleNavigate}
                     onEdit={handleEdit}

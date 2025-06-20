@@ -188,7 +188,7 @@ const ProfileNavigation = React.forwardRef(
     }
 
     return (
-      <div ref={ref} className="w-full border-b border-gray-200 mb-6 bg-white relative">
+      <div ref={ref} className="w-full border-b border-gray-200 mb-6 mt-8 bg-white relative">
         <div className="flex justify-between flex-wrap">
           {navItems.map((item) => (
             <button

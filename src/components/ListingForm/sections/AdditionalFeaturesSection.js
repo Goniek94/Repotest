@@ -39,18 +39,6 @@ const AdditionalFeaturesSection = ({ formData, setFormData, errors }) => {
     });
   }
 
-  // Inicjalizacja formData.deliveryOptions jeśli nie istnieje
-  if (!formData.deliveryOptions) {
-    setFormData({
-      ...formData,
-      deliveryOptions: {
-        personalPickup: 'Tak',
-        transport: 'Nie',
-        transportCost: null,
-        transportDistance: null
-      }
-    });
-  }
 
   // Obsługa otwierania/zamykania listy rozwijanej
   const toggleDropdown = (name) => {
@@ -267,89 +255,6 @@ const AdditionalFeaturesSection = ({ formData, setFormData, errors }) => {
         )}
       </div>
       
-      {/* Opcje dostawy/odbioru */}
-      <div>
-        <h3 className="text-lg font-semibold mb-4">Opcje dostawy/odbioru</h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          {/* Odbiór osobisty */}
-          <div className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
-            formData.deliveryOptions && formData.deliveryOptions.personalPickup === 'Tak' 
-              ? 'border-[#35530A] bg-green-50' 
-              : 'border-gray-300'
-          }`}>
-            <SelectField 
-              name="deliveryOptions.personalPickup" 
-              label="Odbiór osobisty" 
-              options={['Tak', 'Nie']}
-              required={false} 
-            />
-          </div>
-          
-          {/* Transport */}
-          <div className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
-            formData.deliveryOptions && formData.deliveryOptions.transport === 'Tak' 
-              ? 'border-[#35530A] bg-green-50' 
-              : 'border-gray-300'
-          }`}>
-            <SelectField 
-              name="deliveryOptions.transport" 
-              label="Możliwość transportu" 
-              options={['Tak', 'Nie']}
-              required={false} 
-            />
-          </div>
-        </div>
-        
-        {/* Dodatkowe pola dla transportu */}
-        {formData.deliveryOptions && formData.deliveryOptions.transport === 'Tak' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            {/* Koszt transportu */}
-            <div className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
-              formData.deliveryOptions && formData.deliveryOptions.transportCost 
-                ? 'border-[#35530A] bg-green-50' 
-                : 'border-gray-300'
-            }`}>
-              <label className="block font-semibold mb-3 text-gray-800">
-                Koszt transportu (PLN)
-              </label>
-              <div className="relative h-10">
-                <input
-                  type="number"
-                  name="deliveryOptions.transportCost"
-                  value={formData.deliveryOptions && formData.deliveryOptions.transportCost !== null ? formData.deliveryOptions.transportCost : ''}
-                  onChange={(e) => handleNumberChange('deliveryOptions.transportCost', e.target.value)}
-                  min="0"
-                  placeholder="np. 500"
-                  className="w-full h-full text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
-                />
-              </div>
-            </div>
-            
-            {/* Maksymalny dystans transportu */}
-            <div className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
-              formData.deliveryOptions && formData.deliveryOptions.transportDistance 
-                ? 'border-[#35530A] bg-green-50' 
-                : 'border-gray-300'
-            }`}>
-              <label className="block font-semibold mb-3 text-gray-800">
-                Maksymalny dystans (km)
-              </label>
-              <div className="relative h-10">
-                <input
-                  type="number"
-                  name="deliveryOptions.transportDistance"
-                  value={formData.deliveryOptions && formData.deliveryOptions.transportDistance !== null ? formData.deliveryOptions.transportDistance : ''}
-                  onChange={(e) => handleNumberChange('deliveryOptions.transportDistance', e.target.value)}
-                  min="0"
-                  placeholder="np. 100"
-                  className="w-full h-full text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
-                />
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
       
       {/* Informacja pomocnicza */}
       <div className="bg-[#F5FAF5] border-l-4 border-[#35530A] p-4 rounded-[2px]">

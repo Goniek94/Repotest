@@ -32,10 +32,10 @@ const FormField = ({
     if (!label) return null;
     
     return (
-      <label className="block mb-1 font-bold">
-        {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
-        {error && <span className="text-red-500 ml-1 text-sm">({error})</span>}
+      <label className="block mb-1 font-bold flex items-center">
+        <span>{label}</span>
+        {required && <span className="text-red-500 ml-1 inline-flex items-center">*</span>}
+        {error && <span className="text-red-500 ml-1 text-sm inline-flex items-center">({error})</span>}
       </label>
     );
   };

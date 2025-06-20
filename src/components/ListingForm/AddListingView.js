@@ -93,7 +93,7 @@ const AddListingView = () => {
     
     try {
       // Aktualizacja statusu ogłoszenia po płatności
-      await api.updateAdStatus(adId, 'opublikowane');
+      await AdsService.updateStatus(adId, 'active');
       
       setSuccess('Ogłoszenie zostało pomyślnie opublikowane!');
       setTimeout(() => {
@@ -189,7 +189,7 @@ const AddListingView = () => {
       formData.append('transmission', normalizedTransmission);
       formData.append('purchaseOptions', listingData.purchaseOption === 'sprzedaz' ? 'umowa kupna-sprzedaży' : listingData.purchaseOption || 'umowa kupna-sprzedaży');
       formData.append('listingType', listingType);
-      formData.append('status', 'w toku');
+      formData.append('status', 'pending');
       
       // Nowe pola
       formData.append('headline', listingData.headline || '');
@@ -206,21 +206,22 @@ const AddListingView = () => {
         formData.append('sellerType', normalizedSellerType);
       }
       
-      // Opcjonalne pola (dodaj tylko jeśli są wypełnione)
-      if (listingData.generation) formData.append('generation', listingData.generation);
-      if (listingData.version) formData.append('version', listingData.version);
-      if (listingData.vin) formData.append('vin', listingData.vin);
-      if (listingData.registrationNumber) formData.append('registrationNumber', listingData.registrationNumber);
-      if (normalizedCondition) formData.append('condition', normalizedCondition);
-      if (listingData.accidentStatus) formData.append('accidentStatus', listingData.accidentStatus);
-      if (listingData.damageStatus) formData.append('damageStatus', listingData.damageStatus);
-      if (listingData.tuning) formData.append('tuning', listingData.tuning);
-      if (listingData.imported) formData.append('imported', listingData.imported);
-      if (listingData.registeredInPL) formData.append('registeredInPL', listingData.registeredInPL);
-      if (listingData.firstOwner) formData.append('firstOwner', listingData.firstOwner);
-      if (listingData.disabledAdapted) formData.append('disabledAdapted', listingData.disabledAdapted);
-      if (listingData.bodyType) formData.append('bodyType', listingData.bodyType);
-      if (listingData.color) formData.append('color', listingData.color);
+      // Wszystkie pola są przesyłane do backendu, nawet jeśli wartość to "NIE"
+      formData.append('generation', listingData.generation || '');
+      formData.append('version', listingData.version || '');
+      formData.append('vin', listingData.vin || '');
+      formData.append('registrationNumber', listingData.registrationNumber || '');
+      formData.append('condition', normalizedCondition || '');
+      formData.append('accidentStatus', listingData.accidentStatus || '');
+      formData.append('damageStatus', listingData.damageStatus || '');
+      formData.append('tuning', listingData.tuning || '');
+      formData.append('imported', listingData.imported || '');
+      formData.append('registeredInPL', listingData.registeredInPL || '');
+      formData.append('firstOwner', listingData.firstOwner || '');
+      formData.append('disabledAdapted', listingData.disabledAdapted || '');
+      formData.append('bodyType', listingData.bodyType || '');
+      formData.append('color', listingData.color || '');
+      formData.append('countryOfOrigin', listingData.countryOfOrigin || '');
       
       // Konwersja danych liczbowych
       if (listingData.lastOfficialMileage) {
@@ -260,16 +261,10 @@ const AddListingView = () => {
         }
       }
       
-      if (listingData.voivodeship) formData.append('voivodeship', listingData.voivodeship);
-      if (listingData.city) formData.append('city', listingData.city);
-      
-      // Dodatkowe cechy nadwozia
-      if (listingData.hasSunroof === 'Tak') formData.append('hasSunroof', 'Tak');
-      if (listingData.hasAlloyWheels === 'Tak') formData.append('hasAlloyWheels', 'Tak');
-      if (listingData.hasRoofRails === 'Tak') formData.append('hasRoofRails', 'Tak');
-      if (listingData.hasParkingSensors === 'Tak') formData.append('hasParkingSensors', 'Tak');
-      
-      // Przygotowanie zdjęć
+  if (listingData.voivodeship) formData.append('voivodeship', listingData.voivodeship);
+  if (listingData.city) formData.append('city', listingData.city);
+  
+  // Przygotowanie zdjęć
       setUploadProgress(20);
       let processedImages = 0;
       const totalImages = listingData.photos.filter(photo => photo instanceof File).length;
@@ -518,20 +513,6 @@ const AddListingView = () => {
                   <InfoRow label="Kraj pochodzenia" value={listingData.countryOfOrigin} />
                   {listingData.vin && (
                     <InfoRow label="VIN" value={listingData.vin} />
-                  )}
-                  
-                  {/* Dodatkowe cechy nadwozia */}
-                  {listingData.hasSunroof === 'Tak' && (
-                    <InfoRow label="Szyberdach" value="Tak" />
-                  )}
-                  {listingData.hasAlloyWheels === 'Tak' && (
-                    <InfoRow label="Alufelgi" value="Tak" />
-                  )}
-                  {listingData.hasRoofRails === 'Tak' && (
-                    <InfoRow label="Relingi dachowe" value="Tak" />
-                  )}
-                  {listingData.hasParkingSensors === 'Tak' && (
-                    <InfoRow label="Czujniki parkowania" value="Tak" />
                   )}
                 </div>
               </div>

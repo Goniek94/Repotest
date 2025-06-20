@@ -36,9 +36,10 @@ const TechnicalDataSection = ({ formData, handleChange, errors }) => {
         <div className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
           formData.mileage ? 'border-[#35530A] bg-green-50' : 'border-gray-300'
         }`}>
-          <label className="block font-semibold mb-3 text-gray-800">
-            Przebieg (km){errors.mileage ? <span className="text-red-500 ml-1">*</span> : '*'}
-            {errors.mileage && <span className="text-red-500 ml-1 text-sm">({errors.mileage})</span>}
+          <label className="block font-semibold mb-3 text-gray-800 flex items-center">
+            <span>Przebieg (km)</span>
+            <span className="text-red-500 ml-1 inline-flex items-center">*</span>
+            {errors.mileage && <span className="text-red-500 ml-1 text-sm inline-flex items-center">({errors.mileage})</span>}
           </label>
           <div className="relative h-10"> {/* Stała wysokość dla dopasowania do SelectField */}
             <input
@@ -55,9 +56,7 @@ const TechnicalDataSection = ({ formData, handleChange, errors }) => {
         </div>
         
         {/* Ostatni przebieg CEPiK - jako input numeryczny w ujednoliconym kontenerze */}
-        <div className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
-          formData.lastOfficialMileage ? 'border-[#35530A] bg-green-50' : 'border-gray-300'
-        }`}>
+        <div className="border rounded-lg p-4 transition-all duration-200 hover:shadow-md border-gray-300">
           <label className="block font-semibold mb-3 text-gray-800">
             Ostatni przebieg (CEPiK)
           </label>
@@ -79,9 +78,7 @@ const TechnicalDataSection = ({ formData, handleChange, errors }) => {
         </div>
         
         {/* Rodzaj paliwa - jako SelectField */}
-        <div className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
-          formData.fuelType ? 'border-[#35530A] bg-green-50' : 'border-gray-300'
-        }`}>
+        <div className="border rounded-lg p-4 transition-all duration-200 hover:shadow-md border-gray-300">
           <SelectField
             name="fuelType"
             label="Rodzaj paliwa"
@@ -97,9 +94,7 @@ const TechnicalDataSection = ({ formData, handleChange, errors }) => {
         </div>
         
         {/* Skrzynia biegów - jako SelectField */}
-        <div className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
-          formData.transmission ? 'border-[#35530A] bg-green-50' : 'border-gray-300'
-        }`}>
+        <div className="border rounded-lg p-4 transition-all duration-200 hover:shadow-md border-gray-300">
           <SelectField
             name="transmission"
             label="Skrzynia biegów"
@@ -115,9 +110,7 @@ const TechnicalDataSection = ({ formData, handleChange, errors }) => {
         </div>
         
         {/* Napęd - jako SelectField */}
-        <div className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
-          formData.drive ? 'border-[#35530A] bg-green-50' : 'border-gray-300'
-        }`}>
+        <div className="border rounded-lg p-4 transition-all duration-200 hover:shadow-md border-gray-300">
           <SelectField
             name="drive"
             label="Napęd"
@@ -133,9 +126,7 @@ const TechnicalDataSection = ({ formData, handleChange, errors }) => {
         </div>
         
         {/* Kraj pochodzenia - jako SelectField */}
-        <div className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
-          formData.countryOfOrigin ? 'border-[#35530A] bg-green-50' : 'border-gray-300'
-        }`}>
+        <div className="border rounded-lg p-4 transition-all duration-200 hover:shadow-md border-gray-300">
           <SelectField
             name="countryOfOrigin"
             label="Kraj pochodzenia"

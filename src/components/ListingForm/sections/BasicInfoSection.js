@@ -178,10 +178,11 @@ const BasicInfoSection = ({ formData, handleChange, errors, showToast }) => {
   // Pomocnicza funkcja do renderowania etykiety pola z ikoną blokady
   const renderFieldLabel = (label, fieldName, required = false) => {
     return (
-      <div className="flex items-center gap-1">
-        {label}{required && '*'}
+      <div className="flex items-center">
+        <span>{label}</span>
+        {required && <span className="text-red-500 ml-1 inline-flex items-center">*</span>}
         {isFieldLocked(fieldName) && (
-          <span title="Pole zablokowane - dane z CEPiK" className="text-yellow-600 ml-1">
+          <span title="Pole zablokowane - dane z CEPiK" className="text-yellow-600 ml-1 inline-flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
@@ -194,7 +195,9 @@ const BasicInfoSection = ({ formData, handleChange, errors, showToast }) => {
   return (
     <div className="space-y-6">
       {/* Nagłówek ogłoszenia */}
-      <div className="border rounded-lg p-4 transition-all duration-200 hover:shadow-md border-gray-300">
+      <div className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
+        formData.headline ? 'border-[#35530A] bg-green-50' : 'border-gray-300'
+      }`}>
         <FormField
           type="text"
           label="Nagłówek ogłoszenia*"
@@ -214,7 +217,9 @@ const BasicInfoSection = ({ formData, handleChange, errors, showToast }) => {
       </div>
 
       {/* Kto sprzedaje - jako dropdown select */}
-      <div className="border rounded-lg p-4 transition-all duration-200 hover:shadow-md border-gray-300">
+      <div className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
+        formData.sellerType ? 'border-[#35530A] bg-green-50' : 'border-gray-300'
+      }`}>
         <SelectField
           name="sellerType"
           label="Kto sprzedaje?"

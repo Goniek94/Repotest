@@ -10,12 +10,6 @@ const LocationSection = ({ formData, handleChange, errors }) => {
     'Wielkopolskie', 'Zachodniopomorskie'
   ];
   
-  // Możliwości odbioru
-  const pickupOptions = [
-    { value: 'osobisty', label: 'Odbiór osobisty' },
-    { value: 'transport', label: 'Możliwość transportu' },
-    { value: 'wysylka', label: 'Wysyłka' }
-  ];
 
   return (
     <div className="bg-white p-6 rounded-[2px] shadow-md">
@@ -47,46 +41,8 @@ const LocationSection = ({ formData, handleChange, errors }) => {
             placeholder="np. Warszawa"
           />
           
-          {/* Kod pocztowy */}
-          <FormField
-            type="text"
-            label="Kod pocztowy"
-            name="postalCode"
-            value={formData.postalCode || ''}
-            onChange={(e) => handleChange('postalCode', e.target.value)}
-            error={errors.postalCode}
-            placeholder="np. 00-001"
-            maxLength={6}
-          />
-          
-          {/* Dzielnica/część miasta */}
-          <FormField
-            type="text"
-            label="Dzielnica/Osiedle"
-            name="district"
-            value={formData.district || ''}
-            onChange={(e) => handleChange('district', e.target.value)}
-            placeholder="np. Mokotów"
-          />
         </div>
         
-        {/* Opcje odbioru pojazdu */}
-        <div className="mt-8">
-          <h4 className="font-semibold mb-3">Opcje odbioru pojazdu:</h4>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {pickupOptions.map(option => (
-              <label key={option.value} className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={formData[`pickup_${option.value}`] === 'Tak'}
-                  onChange={(e) => handleChange(`pickup_${option.value}`, e.target.checked ? 'Tak' : 'Nie')}
-                  style={{ accentColor: '#35530A' }}
-                />
-                <span>{option.label}</span>
-              </label>
-            ))}
-          </div>
-        </div>
       </div>
       
       {/* Informacje pomocnicze */}

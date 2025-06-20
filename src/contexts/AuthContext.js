@@ -74,7 +74,7 @@ export const AuthProvider = ({ children }) => {
   // Inicjalizacja stanu autoryzacji przy montowaniu komponentu
   useEffect(() => {
     // Sprawdzenie czy użytkownik jest zalogowany
-    const initAuth = () => {
+    const initAuth = async () => {
       setIsLoading(true);
       try {
         const currentUser = AuthService.getCurrentUser();
@@ -92,6 +92,15 @@ export const AuthProvider = ({ children }) => {
         // Zainicjuj timer nieaktywności jeśli użytkownik jest zalogowany
         if (authenticated) {
           resetInactivityTimer();
+          
+          // Sprawdź stan sesji na serwerze i odśwież dane użytkownika
+          try {
+            await AuthService.refreshUserData();
+            debug('Dane użytkownika odświeżone pomyślnie');
+          } catch (refreshError) {
+            console.error('Błąd odświeżania danych użytkownika:', refreshError);
+            // Nie wylogowujemy użytkownika automatycznie przy błędzie odświeżania
+          }
         }
       } catch (error) {
         console.error('Błąd inicjalizacji autoryzacji:', error);
@@ -211,4 +220,3 @@ export const AuthProvider = ({ children }) => {
 };
 
 export default AuthContext;
-

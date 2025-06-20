@@ -32,10 +32,10 @@ const SelectField = ({
 }) => {
   return (
     <div className="relative">
-      <label className="block font-semibold mb-3 text-gray-800">
-        {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
-        {error && <span className="text-red-500 ml-1 text-sm">({error})</span>}
+      <label className="block font-semibold mb-3 text-gray-800 flex items-center">
+        <span>{label}</span>
+        {required && <span className="text-red-500 ml-1 inline-flex items-center">*</span>}
+        {error && <span className="text-red-500 ml-1 text-sm inline-flex items-center">({error})</span>}
       </label>
       <div className="relative">
         <button

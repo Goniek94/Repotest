@@ -66,9 +66,7 @@ const BodyInfoSection = ({ formData, handleChange, errors }) => {
         </div>
         
         {/* Kolor - jako dropdown select */}
-        <div className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
-          formData.color ? 'border-[#35530A] bg-green-50' : 'border-gray-300'
-        }`}>
+        <div className="border rounded-lg p-4 transition-all duration-200 hover:shadow-md border-gray-300">
           <SelectField
             name="color"
             label="Kolor"
@@ -84,9 +82,7 @@ const BodyInfoSection = ({ formData, handleChange, errors }) => {
         </div>
         
         {/* Liczba drzwi - jako dropdown select */}
-        <div className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
-          formData.doors ? 'border-[#35530A] bg-green-50' : 'border-gray-300'
-        }`}>
+        <div className="border rounded-lg p-4 transition-all duration-200 hover:shadow-md border-gray-300">
           <SelectField
             name="doors"
             label="Liczba drzwi"
@@ -106,9 +102,7 @@ const BodyInfoSection = ({ formData, handleChange, errors }) => {
         </div>
         
         {/* Wykończenie - jako dropdown select */}
-        <div className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
-          formData.finish ? 'border-[#35530A] bg-green-50' : 'border-gray-300'
-        }`}>
+        <div className="border rounded-lg p-4 transition-all duration-200 hover:shadow-md border-gray-300">
           <SelectField
             name="finish"
             label="Wykończenie"
@@ -122,75 +116,6 @@ const BodyInfoSection = ({ formData, handleChange, errors }) => {
         </div>
       </div>
       
-      {/* Dodatkowe cechy nadwozia - teraz jako dropdown selects */}
-      <div className="mt-6">
-        <h4 className="text-sm font-semibold text-gray-700 mb-3">Dodatkowe cechy nadwozia:</h4>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-          {/* Szyberdach */}
-          <div className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
-            formData.hasSunroof === 'Tak' ? 'border-[#35530A] bg-green-50' : 'border-gray-300'
-          }`}>
-            <SelectField
-              name="hasSunroof"
-              label="Szyberdach"
-              options={booleanOptions}
-              value={formData.hasSunroof || ''}
-              onChange={handleOptionChange}
-              openDropdowns={openDropdowns}
-              toggleDropdown={toggleDropdown}
-              placeholder="Wybierz"
-            />
-          </div>
-          
-          {/* Alufelgi */}
-          <div className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
-            formData.hasAlloyWheels === 'Tak' ? 'border-[#35530A] bg-green-50' : 'border-gray-300'
-          }`}>
-            <SelectField
-              name="hasAlloyWheels"
-              label="Alufelgi"
-              options={booleanOptions}
-              value={formData.hasAlloyWheels || ''}
-              onChange={handleOptionChange}
-              openDropdowns={openDropdowns}
-              toggleDropdown={toggleDropdown}
-              placeholder="Wybierz"
-            />
-          </div>
-          
-          {/* Relingi dachowe */}
-          <div className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
-            formData.hasRoofRails === 'Tak' ? 'border-[#35530A] bg-green-50' : 'border-gray-300'
-          }`}>
-            <SelectField
-              name="hasRoofRails"
-              label="Relingi dachowe"
-              options={booleanOptions}
-              value={formData.hasRoofRails || ''}
-              onChange={handleOptionChange}
-              openDropdowns={openDropdowns}
-              toggleDropdown={toggleDropdown}
-              placeholder="Wybierz"
-            />
-          </div>
-          
-          {/* Czujniki parkowania */}
-          <div className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
-            formData.hasParkingSensors === 'Tak' ? 'border-[#35530A] bg-green-50' : 'border-gray-300'
-          }`}>
-            <SelectField
-              name="hasParkingSensors"
-              label="Czujniki parkowania"
-              options={booleanOptions}
-              value={formData.hasParkingSensors || ''}
-              onChange={handleOptionChange}
-              openDropdowns={openDropdowns}
-              toggleDropdown={toggleDropdown}
-              placeholder="Wybierz"
-            />
-          </div>
-        </div>
-      </div>
       
       {/* Informacje pomocnicze */}
       <div className="bg-[#F5FAF5] border-l-4 border-[#35530A] p-4 rounded-[2px]">

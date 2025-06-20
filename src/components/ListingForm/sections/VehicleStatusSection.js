@@ -40,10 +40,10 @@ const VehicleStatusSection = ({ formData, handleChange, errors }) => {
     
     return (
       <div className="relative">
-        <label className="block font-semibold mb-3 text-gray-800">
-          {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
-          {errors[name] && <span className="text-red-500 ml-1 text-sm">({errors[name]})</span>}
+        <label className="block font-semibold mb-3 text-gray-800 flex items-center">
+          <span>{label}</span>
+          {required && <span className="text-red-500 ml-1 inline-flex items-center">*</span>}
+          {errors[name] && <span className="text-red-500 ml-1 text-sm inline-flex items-center">({errors[name]})</span>}
         </label>
         <div className="relative">
           <button
@@ -113,9 +113,7 @@ const VehicleStatusSection = ({ formData, handleChange, errors }) => {
           {statusOptions.slice(4).map((option) => (
             <div 
               key={option.name} 
-              className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
-                formData[option.name] === 'Tak' ? 'border-[#35530A] bg-green-50' : 'border-gray-300'
-              }`}
+              className="border rounded-lg p-4 transition-all duration-200 hover:shadow-md border-gray-300"
             >
               <SelectField 
                 name={option.name} 

@@ -29,13 +29,6 @@ const DescriptionPriceSection = ({ formData, handleChange, errors }) => {
     }
   ];
   
-  // Przedziały cenowe (do filtrowania)
-  const priceRanges = [
-    { value: 'budget', label: 'Do 15 000 zł', description: 'Pojazdy ekonomiczne' },
-    { value: 'standard', label: '15 000 - 50 000 zł', description: 'Standardowy przedział cenowy' },
-    { value: 'premium', label: '50 000 - 100 000 zł', description: 'Pojazdy o wyższym standardzie' },
-    { value: 'luxury', label: 'Powyżej 100 000 zł', description: 'Pojazdy luksusowe' }
-  ];
   
   // Walidacja wartości liczbowych - zapobiega wprowadzaniu wartości ujemnych
   const handleNumberChange = (field, value) => {
@@ -201,40 +194,6 @@ const DescriptionPriceSection = ({ formData, handleChange, errors }) => {
           </div>
         </div>
         
-        {/* Przedział cenowy - pomagający kupującym w wyszukiwaniu */}
-        <div className="mb-6">
-          <label className="block text-gray-700 text-sm font-bold mb-3">
-            Kategoria cenowa (pomaga w filtrowaniu)
-          </label>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {priceRanges.map(range => (
-              <div 
-                key={range.value}
-                className={`
-                  border p-3 rounded-[2px] cursor-pointer transition-all hover:shadow-md
-                  ${formData.priceRange === range.value 
-                    ? 'border-[#35530A] bg-[#F5FAF5]' 
-                    : 'border-gray-300'
-                  }
-                `}
-                onClick={() => handleChange('priceRange', range.value)}
-              >
-                <div className="flex items-center mb-1">
-                  <input
-                    type="radio"
-                    name="priceRange"
-                    value={range.value}
-                    checked={formData.priceRange === range.value}
-                    onChange={() => handleChange('priceRange', range.value)}
-                    className="mr-2 accent-[#35530A]"
-                  />
-                  <span className="font-semibold">{range.label}</span>
-                </div>
-                <p className="text-xs text-gray-600">{range.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
       
       {/* Informacja końcowa */}

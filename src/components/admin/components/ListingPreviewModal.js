@@ -44,6 +44,11 @@ const ListingPreviewModal = ({ listing, isOpen, onClose, onApprove, onReject }) 
                   src={listing.images[0]}
                   alt={listing.title}
                   className="w-full h-64 object-cover"
+                  onError={(e) => {
+                    console.error('Błąd ładowania zdjęcia dla ogłoszenia:', listing._id);
+                    e.target.style.display = 'none';
+                    e.target.parentNode.innerHTML = `<div class="w-full h-64 flex items-center justify-center bg-gray-200"><p class="text-gray-500">Nie udało się załadować zdjęcia</p></div>`;
+                  }}
                 />
                 {listing.images.length > 1 && (
                   <div className="flex overflow-x-auto p-2 space-x-2">
@@ -53,6 +58,11 @@ const ListingPreviewModal = ({ listing, isOpen, onClose, onApprove, onReject }) 
                         src={image}
                         alt={`${listing.title} - zdjęcie ${index + 2}`}
                         className="w-20 h-20 object-cover rounded"
+                        onError={(e) => {
+                          console.error('Błąd ładowania zdjęcia dla ogłoszenia:', listing._id, 'indeks:', index + 1);
+                          e.target.style.display = 'none';
+                          e.target.parentNode.innerHTML = `<div class="w-20 h-20 flex items-center justify-center bg-gray-200 rounded"><span class="text-xs text-gray-500">Błąd</span></div>`;
+                        }}
                       />
                     ))}
                   </div>
