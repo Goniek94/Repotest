@@ -8,38 +8,42 @@ import apiClient from './client';
 const FavoritesService = {
   /**
    * Pobieranie wszystkich ulubionych ogłoszeń użytkownika
-   * @returns {Promise} - Promise rozwiązywane danymi odpowiedzi
+   * @returns {Promise<[]>}
    */
-  getAll: () => 
-    apiClient.get('/favorites')
-      .then(response => response.data),
+  async getAll() {
+    const response = await apiClient.get('/favorites');
+    return response.data;
+  },
 
   /**
    * Dodawanie ogłoszenia do ulubionych
    * @param {string} adId - ID ogłoszenia
    * @returns {Promise} - Promise rozwiązywane danymi odpowiedzi
    */
-  addToFavorites: (adId) => 
-    apiClient.post(`/favorites/add/${adId}`)
-      .then(response => response.data),
+  async addToFavorites(adId) {
+    const response = await apiClient.post(`/favorites/add/${adId}`);
+    return response.data;
+  },
 
   /**
    * Usuwanie ogłoszenia z ulubionych
    * @param {string} adId - ID ogłoszenia
    * @returns {Promise} - Promise rozwiązywane danymi odpowiedzi
    */
-  removeFromFavorites: (adId) => 
-    apiClient.delete(`/favorites/remove/${adId}`)
-      .then(response => response.data),
+  async removeFromFavorites(adId) {
+    const response = await apiClient.delete(`/favorites/remove/${adId}`);
+    return response.data;
+  },
 
   /**
    * Sprawdzanie, czy ogłoszenie jest w ulubionych
    * @param {string} adId - ID ogłoszenia
    * @returns {Promise<{isFavorite: boolean}>} - Promise rozwiązywane statusem
    */
-  checkIsFavorite: (adId) => 
-    apiClient.get(`/favorites/check/${adId}`)
-      .then(response => response.data)
+  async checkIsFavorite(adId) {
+    const response = await apiClient.get(`/favorites/check/${adId}`);
+    return response.data;
+  }
 };
 
 export default FavoritesService;
