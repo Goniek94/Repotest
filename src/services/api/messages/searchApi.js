@@ -111,8 +111,20 @@ const searchUsers = (query) => {
         console.warn('Odpowiedź z wyszukiwania użytkowników nie jest tablicą');
         return [];
       }
-      
-      return response.data;
+
+      // Usunięcie potencjalnych duplikatów po _id/id/email
+      const seen = new Set();
+      const uniqueUsers = [];
+
+      response.data.forEach(user => {
+        const identifier = user._id || user.id || user.email;
+        if (!seen.has(identifier)) {
+          seen.add(identifier);
+          uniqueUsers.push(user);
+        }
+      });
+
+      return uniqueUsers;
     })
   );
 };
