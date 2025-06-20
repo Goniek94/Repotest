@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext } from 'react';
 import { useAuth } from '../../../../contexts/AuthContext';
-import { getUserDashboard, ListingsService } from '../../../../services/api';
+import { getUserDashboard, getListing } from '../../../../services/api';
 import NotificationsService from '../../../../services/api/notificationsApi';
 import NotificationContext from '../../../../contexts/NotificationContext';
 import ViewHistoryService from '../../../../services/viewHistoryService';
@@ -91,7 +91,7 @@ const useUserDashboardData = (refreshTrigger = 0) => {
         const localAds = [];
         for (const id of historyIds) {
           try {
-            const ad = await ListingsService.getById(id);
+            const ad = await getListing(id);
             let image = ad.mainImage;
             if (ad.images && ad.images.length > 0) {
               const idx =
