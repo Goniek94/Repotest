@@ -46,8 +46,7 @@ const FeaturedListings = () => {
         setLoading(true);
         
         // Pobieranie ogłoszeń z dedykowanego endpointu rotacji
-        const response = await fetch(`http://localhost:5000/api/ads/rotated?t=${Date.now()}`);
-        const data = await response.json();
+        const data = await api.getRotatedListings();
 
         if (!data || !data.featured || !data.hot || !data.regular) {
           throw new Error('Nieprawidłowa odpowiedź API');
