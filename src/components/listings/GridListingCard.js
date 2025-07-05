@@ -30,16 +30,7 @@ const GridListingCard = memo(({ listing, onFavorite, isFavorite }) => {
   const sellerType = listing.sellerType || 'Nie podano';
   const location = listing.city || listing.location || 'Polska';
   
-  console.log('GridListingCard - dane ogłoszenia:', {
-    id: listing.id || listing._id,
-    price,
-    year,
-    mileage,
-    fuelType,
-    power,
-    engineCapacity,
-    transmission
-  });
+  // Przygotowanie danych do wyświetlenia
   
   // Handle navigation to listing details
   const handleNavigate = () => {
@@ -48,10 +39,6 @@ const GridListingCard = memo(({ listing, onFavorite, isFavorite }) => {
   
   // Safe image URL handling with proper backend URL prefix
   const getListingImage = () => {
-    console.log('GridListingCard - listing:', listing);
-    console.log('GridListingCard - listing.images:', listing.images);
-    console.log('GridListingCard - listing.mainImageIndex:', listing.mainImageIndex);
-    
     if (listing.images && listing.images.length > 0) {
       const mainIndex = typeof listing.mainImageIndex === 'number' && 
                         listing.mainImageIndex >= 0 && 
@@ -60,12 +47,7 @@ const GridListingCard = memo(({ listing, onFavorite, isFavorite }) => {
                           : 0;
       
       const selectedImage = listing.images[mainIndex];
-      console.log('GridListingCard - selectedImage:', selectedImage);
-      
-      const imageUrl = getImageUrl(selectedImage);
-      console.log('GridListingCard - imageUrl:', imageUrl);
-      
-      return imageUrl;
+      return getImageUrl(selectedImage);
     }
     
     // Fallback do statycznego obrazka

@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AlertCircle, Upload, X, Plus } from 'lucide-react';
 import AdsService from '../../services/ads';
+import { safeConsole } from '../../utils/debug';
 import PaymentModal from '../payment/PaymentModal';
 
 const EditListingView = () => {
@@ -52,7 +53,7 @@ const EditListingView = () => {
           setError('Nie znaleziono ogłoszenia');
         }
       } catch (err) {
-        console.error('Błąd podczas pobierania ogłoszenia:', err);
+        safeConsole.error('Błąd podczas pobierania ogłoszenia:', err);
         setError('Nie udało się pobrać ogłoszenia. Spróbuj ponownie później.');
       } finally {
         setLoading(false);
@@ -93,7 +94,7 @@ const EditListingView = () => {
         setSuccess('');
       }, 3000);
     } catch (err) {
-      console.error('Błąd podczas ustawiania głównego zdjęcia:', err);
+      safeConsole.error('Błąd podczas ustawiania głównego zdjęcia:', err);
       setError('Nie udało się zaktualizować głównego zdjęcia. Spróbuj ponownie później.');
     } finally {
       setIsSubmitting(false);
@@ -143,7 +144,7 @@ const EditListingView = () => {
         fileInputRef.current.value = '';
       }
     } catch (err) {
-      console.error('Błąd podczas dodawania zdjęć:', err);
+      safeConsole.error('Błąd podczas dodawania zdjęć:', err);
       setError('Nie udało się dodać zdjęć. Spróbuj ponownie później.');
     } finally {
       setUploadingImages(false);
@@ -204,7 +205,7 @@ const EditListingView = () => {
         setSuccess('');
       }, 3000);
     } catch (err) {
-      console.error('Błąd podczas aktualizacji ogłoszenia:', err);
+      safeConsole.error('Błąd podczas aktualizacji ogłoszenia:', err);
       setError('Nie udało się zaktualizować ogłoszenia. Spróbuj ponownie później.');
     } finally {
       setIsSubmitting(false);
@@ -235,7 +236,7 @@ const EditListingView = () => {
         navigate('/profil/listings');
       }, 2000);
     } catch (err) {
-      console.error('Błąd podczas usuwania ogłoszenia:', err);
+      safeConsole.error('Błąd podczas usuwania ogłoszenia:', err);
       setError('Nie udało się usunąć ogłoszenia. Spróbuj ponownie później.');
     } finally {
       setIsSubmitting(false);
@@ -252,7 +253,7 @@ const EditListingView = () => {
         setSuccess('');
       }, 2000);
     } catch (error) {
-      console.error('Błąd podczas obsługi zakończenia płatności:', error);
+      safeConsole.error('Błąd podczas obsługi zakończenia płatności:', error);
       setError('Wystąpił błąd podczas przedłużania ważności ogłoszenia. Skontaktuj się z obsługą serwisu.');
     }
   };

@@ -33,14 +33,16 @@ const initialFormData = {
   weight: '',
   voivodeship: '',
   city: '',
-  photos: [],
-  mainPhotoIndex: 0,
+  images: [],
+  mainImage: '',
   description: '',
   price: '',
   rentalPrice: '',
   purchaseOption: 'sprzedaz',
   sellerType: 'prywatny',
-  headline: ''
+  headline: '',
+  listingType: 'standardowe',
+  negotiable: 'Tak'
 };
 
 export default function useListingForm() {
@@ -73,7 +75,17 @@ export default function useListingForm() {
       // Musimy usunąć zdjęcia z obiektu przed zapisem, ponieważ
       // obiekty File nie mogą być serializowane
       const dataToSave = { ...formData };
-      delete dataToSave.photos;
+      
+      // Usuwamy obiekty File z tablicy images
+      if (dataToSave.images && Array.isArray(dataToSave.images)) {
+        dataToSave.images = dataToSave.images.map(img => {
+          if (img && typeof img === 'object') {
+            // Zachowujemy tylko URL, jeśli istnieje
+            return { url: img.url || '' };
+          }
+          return img;
+        });
+      }
       
       localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
     } catch (error) {
@@ -82,23 +94,28 @@ export default function useListingForm() {
   }, [formData]);
 
   const handleChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    // Używamy setTimeout, aby zapewnić, że React zaktualizuje stan przed kolejnym renderowaniem
+    setTimeout(() => {
+      setFormData(prev => ({
+        ...prev,
+        [field]: value
+      }));
 
-    if (errors[field]) {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[field];
-        return newErrors;
-      });
-    }
+      if (errors[field]) {
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors[field];
+          return newErrors;
+        });
+      }
+    }, 0);
   };
 
   const validateForm = () => {
     const newErrors = FormValidator.validateForm(formData);
     setErrors(newErrors);
+    
+    
     return Object.keys(newErrors).length === 0;
   };
 

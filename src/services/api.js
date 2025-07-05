@@ -145,8 +145,23 @@ export const changePassword = async (passwordData) => {
 
 // Pobieranie wyróżnionych ogłoszeń (rotacja)
 export const getRotatedListings = async () => {
-  const response = await apiClient.get('/ads/rotated');
-  return response.data;
+  try {
+    console.log('Wywołuję endpoint /ads/rotated...');
+    const response = await apiClient.get('/ads/rotated');
+    console.log('Odpowiedź z /ads/rotated:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Błąd podczas pobierania rotowanych ogłoszeń:', error);
+    if (error.response) {
+      console.error('Status błędu:', error.response.status);
+      console.error('Dane odpowiedzi:', error.response.data);
+    } else if (error.request) {
+      console.error('Nie otrzymano odpowiedzi, problem z połączeniem:', error.request);
+    } else {
+      console.error('Błąd konfiguracji zapytania:', error.message);
+    }
+    throw error;
+  }
 };
 
 // Pobieranie marek

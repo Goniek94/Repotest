@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
@@ -8,31 +8,33 @@ import { SocketProvider } from './contexts/SocketContext';
 import { ToastContainer } from 'react-toastify';
 import ToastNotification from './components/notifications/ToastNotification';
 import 'react-toastify/dist/ReactToastify.css';
+import { safeConsole } from './utils/debug';
+// Komponenty główne, które zawsze ładujemy
 import Navigation from './components/Navigation/Navigation';
 import Footer from './components/Footer';
 import SearchForm from './components/search/SearchFormUpdated';
 import FeaturedListings from './components/FeaturedListings/FeaturedListings';
-import ListingsPage from './components/ListingsView/ListingsPage';
-import CreateListingForm from './components/ListingForm/CreateListingForm';
-import AddListingView from './components/ListingForm/AddListingView';
-import Register from './components/auth/Register';
 import LoginModal from './components/auth/LoginModal';
-import Contact from './components/Contact';
-import Profile from './components/Profile';
-import FavoritesPage from './components/FavoritesPage';
-import AboutCompany from './components/Aboutcompany';
-import FAQ from './components/FAQ';
+
 import { FavoritesProvider } from './FavoritesContext';
 import ScrollToTop from './ScrollToTop';
-import ListingDetails from './components/listings/details/ListingDetails';
 import { clearAuthData } from './services/api/config';
-
-// Komponenty admina
-import AdminPanel from './components/admin/AdminPanel';
-
-// Komponenty profilu użytkownika
-import UserProfileRoutes from './components/profil/UserProfileRoutes';
+import ErrorBoundary from './components/ErrorBoundary';
 import { useAuth } from './contexts/AuthContext';
+
+// Komponenty ładowane leniwie dla optymalizacji
+const ListingsPage = lazy(() => import('./components/ListingsView/ListingsPage'));
+const CreateListingForm = lazy(() => import('./components/ListingForm/CreateListingForm'));
+const AddListingView = lazy(() => import('./components/ListingForm/AddListingView'));
+const Register = lazy(() => import('./components/auth/Register'));
+const Contact = lazy(() => import('./components/Contact'));
+const Profile = lazy(() => import('./components/Profile'));
+const FavoritesPage = lazy(() => import('./components/FavoritesPage'));
+const AboutCompany = lazy(() => import('./components/Aboutcompany'));
+const FAQ = lazy(() => import('./components/FAQ'));
+const ListingDetails = lazy(() => import('./components/listings/details/ListingDetails'));
+const AdminPanel = lazy(() => import('./components/admin/AdminPanel'));
+const UserProfileRoutes = lazy(() => import('./components/profil/UserProfileRoutes'));
 
 // Ulepszony komponent dla tras chronionych z ograniczeniem zapętlenia
 const ProtectedRoute = ({ children, requireAdmin = false }) => {
@@ -62,7 +64,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
     };
     
     // Logowanie tylko gdy faktycznie zmieniła się autentykacja lub ścieżka
-      debug('ProtectedRoute sprawdzanie:', {
+      safeConsole.log('ProtectedRoute sprawdzanie:', {
       isAuthenticated,
       user: !!user,
       path: location.pathname
@@ -81,7 +83,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
   }
 
   if (!isAuthenticated || !user) {
-    debug('Przekierowanie do logowania z:', location.pathname);
+    safeConsole.log('Przekierowanie do logowania z:', location.pathname);
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
@@ -138,10 +140,19 @@ const App = () => {
           <Router>
             <ScrollToTop />
             <ToastNotification />
-            <div className="flex flex-col min-h-screen">
-            <Navigation />
-            <main className="flex-grow">
-              <Routes>
+            <ErrorBoundary>
+              <div className="flex flex-col min-h-screen">
+              <Navigation />
+              <main className="flex-grow">
+                <Suspense fallback={
+                  <div className="flex items-center justify-center min-h-screen">
+                    <div className="text-center">
+                      <div className="w-16 h-16 border-4 border-t-[#35530A] border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin mx-auto"></div>
+                      <p className="mt-4 text-gray-600">Ładowanie...</p>
+                    </div>
+                  </div>
+                }>
+                <Routes>
                 {/* Strona główna */}
                 <Route path="/" element={<HomePageContent />} />
 
@@ -232,10 +243,12 @@ const App = () => {
                   path="/user/:subpage" 
                   element={<Navigate to="/profil/:subpage" replace />} 
                 />
-              </Routes>
-            </main>
-            <Footer />
-          </div>
+                </Routes>
+                </Suspense>
+              </main>
+              <Footer />
+            </div>
+            </ErrorBoundary>
           </Router>
             </SidebarProvider>
           </FavoritesProvider>

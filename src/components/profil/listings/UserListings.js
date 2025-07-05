@@ -28,12 +28,8 @@ const UserListings = () => {
     
     ListingsService.getUserListings()
       .then((ads) => {
-        // Dodatkowe logowanie dla debugowania
-        console.log('Otrzymane dane ogłoszeń:', ads);
-        
         // Sprawdzenie, czy dane są poprawne
         if (!ads || !Array.isArray(ads)) {
-          console.error('Nieprawidłowe dane ogłoszeń:', ads);
           setError('Otrzymano nieprawidłowe dane ogłoszeń. Spróbuj odświeżyć stronę.');
           setLoading(false);
           return;
@@ -41,24 +37,19 @@ const UserListings = () => {
         
         // Przetwarzanie danych ogłoszeń - upewnienie się, że wszystkie pola są poprawne
         const processedAds = ads.map(ad => {
-          console.log('Przetwarzanie ogłoszenia:', ad._id, 'images:', ad.images);
-          
           // Upewnienie się, że images jest tablicą
           if (!ad.images || !Array.isArray(ad.images)) {
-            console.warn(`Ogłoszenie ${ad._id}: brak tablicy images lub nieprawidłowy format`);
             ad.images = [];
           }
           
           // Sprawdzenie mainImageIndex
           if (typeof ad.mainImageIndex !== 'number' || ad.mainImageIndex < 0 || ad.mainImageIndex >= ad.images.length) {
-            console.warn(`Ogłoszenie ${ad._id}: nieprawidłowy mainImageIndex, ustawiam na 0`);
             ad.mainImageIndex = 0;
           }
           
           return ad;
         });
         
-        console.log('Przetworzone ogłoszenia:', processedAds.length);
         setAllListings(processedAds);
 
         // Generowanie powiadomień dla ogłoszeń, które wygasają wkrótce (tylko dla użytkownika, nie admina)
@@ -220,14 +211,7 @@ const UserListings = () => {
 
   // Przekierowanie do edycji ogłoszenia
   const handleEdit = (id) => {
-    console.log(`Navigating to edit listing with ID: ${id}`);
-    console.log(`Full path: /profil/edytuj-ogloszenie/${id}`);
-    // Dodajemy timeout, aby zobaczyć logi przed przekierowaniem
-    setTimeout(() => {
-      console.log('Executing navigation...');
-      navigate(`/profil/edytuj-ogloszenie/${id}`);
-      console.log('Navigation executed');
-    }, 100);
+    navigate(`/profil/edytuj-ogloszenie/${id}`);
   };
   
 

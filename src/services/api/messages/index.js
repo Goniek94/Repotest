@@ -67,6 +67,7 @@ const MessagesService = {
   replyToConversation: ConversationsAPI.replyToConversation,
   sendToUser: SendAPI.sendToUser,
   sendToAd: SendAPI.sendToAd,
+  send: SendAPI.send,
   
   // Wyszukiwanie
   searchConversations: SearchAPI.searchConversations,

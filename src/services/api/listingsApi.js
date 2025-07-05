@@ -87,9 +87,51 @@ const ListingsService = {
    * Pobieranie wyróżnionych ogłoszeń (rotacja)
    * @returns {Promise} - Promise rozwiązywane danymi odpowiedzi
    */
-  getRotated: () => 
-    apiClient.get('/ads/rotated')
-      .then(response => response.data),
+  getRotated: () => {
+    console.log('ListingsService.getRotated: Wywołuję endpoint /ads/rotated...');
+    return apiClient.get('/ads/rotated')
+      .then(response => {
+        console.log('ListingsService.getRotated: Odpowiedź z /ads/rotated:', response.data);
+        return response.data;
+      })
+      .catch(error => {
+        console.error('ListingsService.getRotated: Błąd podczas pobierania rotowanych ogłoszeń:', error);
+        if (error.response) {
+          console.error('Status błędu:', error.response.status);
+          console.error('Dane odpowiedzi:', error.response.data);
+        } else if (error.request) {
+          console.error('Nie otrzymano odpowiedzi, problem z połączeniem:', error.request);
+        } else {
+          console.error('Błąd konfiguracji zapytania:', error.message);
+        }
+        throw error;
+      });
+  },
+      
+  /**
+   * Pobieranie wyróżnionych ogłoszeń (rotacja) - alias dla getRotated
+   * @returns {Promise} - Promise rozwiązywane danymi odpowiedzi
+   */
+  getRotatedListings: () => {
+    console.log('ListingsService.getRotatedListings: Wywołuję endpoint /ads/rotated...');
+    return apiClient.get('/ads/rotated')
+      .then(response => {
+        console.log('ListingsService.getRotatedListings: Odpowiedź z /ads/rotated:', response.data);
+        return response.data;
+      })
+      .catch(error => {
+        console.error('ListingsService.getRotatedListings: Błąd podczas pobierania rotowanych ogłoszeń:', error);
+        if (error.response) {
+          console.error('Status błędu:', error.response.status);
+          console.error('Dane odpowiedzi:', error.response.data);
+        } else if (error.request) {
+          console.error('Nie otrzymano odpowiedzi, problem z połączeniem:', error.request);
+        } else {
+          console.error('Błąd konfiguracji zapytania:', error.message);
+        }
+        throw error;
+      });
+  },
 
   /**
    * Pobieranie marek

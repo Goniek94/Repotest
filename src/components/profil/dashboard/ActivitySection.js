@@ -35,20 +35,20 @@ const ActivitySection = ({ recentAds = [], activities = [], onDismissActivity })
   
   return (
     <div className="mb-8">
-      <div className="flex flex-col md:flex-row w-full gap-4">
+      <div className="flex flex-col md:flex-row w-full gap-4 sm:gap-5">
         {/* Sekcja Ostatnio oglądane */}
         <div className="w-full md:w-1/2">
-          <div className="bg-[#35530A] p-3 flex items-center">
+          <div className="bg-[#35530A] p-3 sm:p-4 flex items-center rounded-t-md">
             <Eye className="w-5 h-5 mr-2 text-white" />
             <h2 className="text-lg font-bold text-white">Ostatnio oglądane</h2>
           </div>
           
           {recentAds.length === 0 ? (
-            <div className="bg-gray-50 p-4 text-sm text-gray-600 text-center">
+            <div className="bg-gray-50 p-4 text-sm text-gray-600 text-center rounded-b-md">
               Brak danych
             </div>
           ) : (
-            <div className="flex flex-col gap-2 p-3 bg-white">
+            <div className="flex flex-col gap-2 p-3 sm:p-4 bg-white rounded-b-md">
               {recentAds.map((ad) => (
                 <RecentListingItem
                   key={ad.id}
@@ -64,13 +64,13 @@ const ActivitySection = ({ recentAds = [], activities = [], onDismissActivity })
         
         {/* Sekcja Ostatnia aktywność */}
         <div className="w-full md:w-1/2">
-          <div className="bg-[#35530A] p-3 flex items-center">
+          <div className="bg-[#35530A] p-3 sm:p-4 flex items-center rounded-t-md">
             <BellRing className="w-5 h-5 mr-2 text-white" />
             <h2 className="text-lg font-bold text-white">Ostatnia aktywność</h2>
           </div>
           
           {filteredActivities.length === 0 ? (
-            <div className="bg-gray-50 p-4 flex flex-col items-center justify-center">
+            <div className="bg-gray-50 p-4 flex flex-col items-center justify-center rounded-b-md">
               <div className="bg-gray-100 p-2 rounded-full mb-3">
                 <BellRing className="h-6 w-6 text-gray-600" />
               </div>
@@ -111,7 +111,7 @@ const ActivitySection = ({ recentAds = [], activities = [], onDismissActivity })
               ))}
               
               {/* Przycisk "Zobacz wszystkie" */}
-              <div className="bg-gray-50 p-3 text-center">
+              <div className="bg-gray-50 p-3 sm:p-4 text-center rounded-b-md">
                 <button 
                   onClick={goToNotifications}
                   className="text-sm font-medium text-green-800 hover:text-green-700"

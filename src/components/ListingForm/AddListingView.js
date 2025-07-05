@@ -1,45 +1,31 @@
 // src/components/listings/AddListingView.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-
-import { MapPin, ChevronLeft, ChevronRight, Medal } from 'lucide-react';
-import api from '../../services/api';
-import AdsService from '../../services/ads'; // Dodaj import AdsService
+import { MapPin, Medal, Image, Star, Upload } from 'lucide-react';
+import AdsService from '../../services/ads';
 import PaymentModal from '../payment/PaymentModal';
-import PhotoModal from '../ui/PhotoModal';
 import InfoRow from './preview/InfoRow';
+import { useImageUpload } from '../../hooks/useImageUpload';
 
 const AddListingView = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { listingData } = location.state || {};
-
-  // Sprawdzenie, czy użytkownik jest zalogowany (cookie-based)
-  useEffect(() => {
-    fetch('/api/users/check-auth', { method: 'GET', credentials: 'include' })
-      .then(res => {
-        if (!res.ok) {
-          navigate('/login', { state: { returnUrl: '/create-listing' } });
-        }
-      })
-      .catch(() => {
-        navigate('/login', { state: { returnUrl: '/create-listing' } });
-      });
-  }, [navigate]);
+  const { uploadImages, isUploading, uploadProgress, error: uploadError } = useImageUpload();
+  
+  // Uproszczona inicjalizacja - pobieramy dane bezpośrednio z location.state
+  const [listingData, setListingData] = useState(() => {
+    const data = location.state?.listingData || {};
+    return data;
+  });
 
   // Jeśli nie ma danych, wróć do formularza
   useEffect(() => {
-    if (!listingData) {
+    if (!location.state?.listingData || Object.keys(location.state.listingData).length === 0) {
       navigate('/create-listing');
     }
-  }, [listingData, navigate]);
+  }, [location.state, navigate, listingData]);
 
-  // Podstawowe stany
-  const [selectedImage, setSelectedImage] = useState(0);
-  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
-  const [photoIndex, setPhotoIndex] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
 
   // Stany dla ogłoszenia
   const [listingType, setListingType] = useState('standardowe');
@@ -52,276 +38,205 @@ const AddListingView = () => {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [adId, setAdId] = useState(null);
   const [paymentCompleted, setPaymentCompleted] = useState(false);
-
-  // Funkcje obsługi zdjęć
-  const handlePrevImage = () => {
-    setSelectedImage((prev) =>
-      prev > 0 ? prev - 1 : listingData.photos.length - 1
-    );
-  };
-
-  const handleNextImage = () => {
-    setSelectedImage((prev) =>
-      prev < listingData.photos.length - 1 ? prev + 1 : 0
-    );
-  };
-
-  const openPhotoModal = (index) => {
-    setPhotoIndex(index);
-    setIsPhotoModalOpen(true);
-  };
-
-  const closePhotoModal = () => {
-    setIsPhotoModalOpen(false);
-  };
-
-  const nextPhoto = () => {
-    setPhotoIndex((prev) =>
-      prev < listingData.photos.length - 1 ? prev + 1 : 0
-    );
-  };
-
-  const prevPhoto = () => {
-    setPhotoIndex((prev) =>
-      prev > 0 ? prev - 1 : listingData.photos.length - 1
-    );
+  
+  // Stan dla aktywnego zdjęcia w galerii
+  const [activePhotoIndex, setActivePhotoIndex] = useState(0);
+  
+  // Funkcja do zmiany aktywnego zdjęcia
+  const handleThumbnailClick = (index) => {
+    setActivePhotoIndex(index);
   };
   
   // Funkcja do obsługi płatności
   const handlePaymentComplete = async () => {
     setPaymentCompleted(true);
+    setIsPaymentModalOpen(false);
     
     try {
       // Aktualizacja statusu ogłoszenia po płatności
-      await AdsService.updateStatus(adId, 'active');
+      if (adId) {
+        await AdsService.updateStatus(adId, 'active');
+      }
       
-      setSuccess('Ogłoszenie zostało pomyślnie opublikowane!');
+      setSuccess('Ogłoszenie zostało pomyślnie opublikowane! Za chwilę nastąpi przekierowanie...');
+      
+      // Przekierowanie po 3 sekundach
       setTimeout(() => {
-        navigate(`/listing/${adId}`);
-      }, 2000);
+        if (adId) {
+          navigate(`/listing/${adId}`);
+        } else {
+          navigate('/');
+        }
+      }, 3000);
     } catch (error) {
       console.error('Błąd podczas aktualizacji statusu ogłoszenia:', error);
       setError(error.response?.data?.message || 'Wystąpił błąd podczas publikacji ogłoszenia.');
+      
+      // Nawet jeśli aktualizacja statusu się nie powiodła, przekieruj po 3 sekundach
+      setTimeout(() => {
+        navigate('/');
+      }, 3000);
     }
+  };
+
+  // Funkcja mapująca dane z formularza na format backendu
+  const mapFormDataToBackend = (formData) => {
+    return {
+      // Podstawowe informacje
+      brand: formData.brand || '',
+      model: formData.model || '',
+      generation: formData.generation || '',
+      version: formData.version || '',
+      year: parseInt(formData.productionYear || formData.year || '2010'),
+      price: parseFloat(formData.price || '10000'),
+      mileage: parseInt(formData.mileage || '100000'),
+      fuelType: formData.fuelType || 'Benzyna',
+      transmission: formData.transmission || 'Manualna',
+      vin: formData.vin || '',
+      registrationNumber: formData.registrationNumber || '',
+      headline: formData.headline || `${formData.brand || ''} ${formData.model || ''}`.trim(),
+      description: formData.description || 'Brak opisu',
+      
+      // Opcje zakupu
+      purchaseOptions: formData.purchaseOption || formData.purchaseOptions || 'sprzedaz',
+      rentalPrice: formData.rentalPrice ? parseFloat(formData.rentalPrice) : undefined,
+      negotiable: formData.negotiable || 'Nie',
+      
+      // Typ ogłoszenia i sprzedawcy
+      listingType,
+      sellerType: formData.sellerType || 'prywatny',
+      
+      // Stan pojazdu
+      condition: formData.condition || 'Używany',
+      accidentStatus: formData.accidentStatus || 'Nie',
+      damageStatus: formData.damageStatus || 'Nie',
+      tuning: formData.tuning || 'Nie',
+      imported: formData.imported || 'Nie',
+      registeredInPL: formData.registeredInPL || 'Tak',
+      firstOwner: formData.firstOwner || 'Nie',
+      disabledAdapted: formData.disabledAdapted || 'Nie',
+      
+      // Nadwozie i wygląd
+      bodyType: formData.bodyType || '',
+      color: formData.color || '',
+      doors: formData.doors ? parseInt(formData.doors) : undefined,
+      
+      // Dane techniczne
+      lastOfficialMileage: formData.lastOfficialMileage ? parseInt(formData.lastOfficialMileage) : undefined,
+      power: formData.power ? parseInt(formData.power) : 100,
+      engineSize: formData.engineSize ? parseInt(formData.engineSize) : undefined,
+      drive: formData.drive || 'Przedni',
+      weight: formData.weight ? parseInt(formData.weight) : undefined,
+      countryOfOrigin: formData.countryOfOrigin || '',
+      
+      // Lokalizacja
+      voivodeship: formData.voivodeship || '',
+      city: formData.city || '',
+      
+      // Zdjęcia
+      images: formData.images || [],
+      mainImage: formData.mainImage || (formData.images && formData.images.length > 0 ? formData.images[0] : ''),
+      
+      // Status
+      status: 'pending'
+    };
   };
 
   // Funkcja wysyłająca ogłoszenie do API
   const publishListing = async () => {
-    // Sprawdzenie wymaganych zgód
     if (!acceptedTerms || !carConditionConfirmed) {
       setError('Proszę zaznaczyć wymagane zgody (regulamin i stan auta).');
       return;
     }
+    
+    setIsSubmitting(true);
+    setError('');
 
     try {
-      setIsSubmitting(true);
-      setError('');
-      setUploadProgress(10);
+      let finalListingData = { ...listingData };
       
-      // Tworzymy FormData z optymalizacją przesyłania
-      const formData = new FormData();
-      
-      // Mapowanie paliwa na właściwe wartości (normalizacja)
-      let normalizedFuelType = 'benzyna';
-      if (listingData.fuelType === 'Benzyna') normalizedFuelType = 'benzyna';
-      else if (listingData.fuelType === 'Diesel') normalizedFuelType = 'diesel';
-      else if (listingData.fuelType === 'Benzyna+LPG' || listingData.fuelType === 'benzyna+LPG') normalizedFuelType = 'benzyna+LPG';
-      else if (listingData.fuelType === 'Elektryczny') normalizedFuelType = 'elektryczny';
-      else if (listingData.fuelType === 'Hybryda') normalizedFuelType = 'hybryda';
-      else normalizedFuelType = 'inne';
-      
-      // Mapowanie skrzyni biegów na właściwe wartości (normalizacja)
-      let normalizedTransmission = 'manualna';
-      if (listingData.transmission === 'Manualna') normalizedTransmission = 'manualna';
-      else if (listingData.transmission === 'Automatyczna') normalizedTransmission = 'automatyczna';
-      else if (listingData.transmission === 'Półautomatyczna') normalizedTransmission = 'półautomatyczna';
-      else normalizedTransmission = 'manualna';
-      
-      // Mapowanie condition (stanu) na właściwe wartości
-      let normalizedCondition = '';
-      if (listingData.condition === 'Nowy') normalizedCondition = 'Nowy';
-      else if (listingData.condition === 'Używany') normalizedCondition = 'Używany';
-      else normalizedCondition = listingData.condition;
-      
-      // Walidacja ceny przed wysłaniem (zapobieganie błędom)
-      const price = parseFloat(listingData.price);
-      if (isNaN(price) || price <= 0) {
-        setError('Nieprawidłowa cena pojazdu. Podaj poprawną wartość.');
-        setIsSubmitting(false);
-        setUploadProgress(0);
-        return;
-      }
-      
-      // Walidacja przebiegu przed wysłaniem (zapobieganie błędom)
-      const mileage = parseInt(listingData.mileage);
-      if (isNaN(mileage) || mileage < 0) {
-        setError('Nieprawidłowy przebieg pojazdu. Podaj poprawną wartość.');
-        setIsSubmitting(false);
-        setUploadProgress(0);
-        return;
-      }
-      
-      // Walidacja roku produkcji przed wysłaniem
-      const year = parseInt(listingData.productionYear);
-      if (isNaN(year) || year < 1900 || year > new Date().getFullYear() + 1) {
-        setError('Nieprawidłowy rok produkcji pojazdu. Podaj poprawną wartość.');
-        setIsSubmitting(false);
-        setUploadProgress(0);
-        return;
-      }
-      
-      // Sprawdzenie, czy są zdjęcia
-      if (!listingData.photos || listingData.photos.length === 0) {
-        setError('Dodaj przynajmniej jedno zdjęcie pojazdu.');
-        setIsSubmitting(false);
-        setUploadProgress(0);
-        return;
-      }
-      
-      // Podstawowe pola (wymagane)
-      formData.append('brand', listingData.brand || '');
-      formData.append('model', listingData.model || '');
-      formData.append('year', year.toString()); // Mapowanie productionYear na year
-      formData.append('price', price.toString());
-      formData.append('mileage', mileage.toString());
-      formData.append('description', listingData.description || '');
-      formData.append('fuelType', normalizedFuelType);
-      formData.append('transmission', normalizedTransmission);
-      formData.append('purchaseOptions', listingData.purchaseOption === 'sprzedaz' ? 'umowa kupna-sprzedaży' : listingData.purchaseOption || 'umowa kupna-sprzedaży');
-      formData.append('listingType', listingType);
-      formData.append('status', 'pending');
-      
-      // Nowe pola
-      formData.append('headline', listingData.headline || '');
-      
-      // Dodanie pola sellerType z walidacją poprawnych wartości
-      if (listingData.sellerType) {
-        // Upewnij się, że wartość jest zgodna z oczekiwaniami backendu
-        let normalizedSellerType = 'prywatny'; // domyślna wartość
-        if (listingData.sellerType === 'Prywatny' || listingData.sellerType === 'prywatny') {
-          normalizedSellerType = 'prywatny';
-        } else if (listingData.sellerType === 'Firma' || listingData.sellerType === 'firma') {
-          normalizedSellerType = 'firma';
-        }
-        formData.append('sellerType', normalizedSellerType);
-      }
-      
-      // Wszystkie pola są przesyłane do backendu, nawet jeśli wartość to "NIE"
-      formData.append('generation', listingData.generation || '');
-      formData.append('version', listingData.version || '');
-      formData.append('vin', listingData.vin || '');
-      formData.append('registrationNumber', listingData.registrationNumber || '');
-      formData.append('condition', normalizedCondition || '');
-      formData.append('accidentStatus', listingData.accidentStatus || '');
-      formData.append('damageStatus', listingData.damageStatus || '');
-      formData.append('tuning', listingData.tuning || '');
-      formData.append('imported', listingData.imported || '');
-      formData.append('registeredInPL', listingData.registeredInPL || '');
-      formData.append('firstOwner', listingData.firstOwner || '');
-      formData.append('disabledAdapted', listingData.disabledAdapted || '');
-      formData.append('bodyType', listingData.bodyType || '');
-      formData.append('color', listingData.color || '');
-      formData.append('countryOfOrigin', listingData.countryOfOrigin || '');
-      
-      // Konwersja danych liczbowych
-      if (listingData.lastOfficialMileage) {
-        const lastOfficialMileage = parseInt(listingData.lastOfficialMileage);
-        if (!isNaN(lastOfficialMileage)) {
-          formData.append('lastOfficialMileage', lastOfficialMileage.toString());
-        }
-      }
-      
-      if (listingData.power) {
-        const power = parseInt(listingData.power);
-        if (!isNaN(power)) {
-          formData.append('power', power.toString());
-        }
-      }
-      
-      if (listingData.engineSize) {
-        const engineSize = parseInt(listingData.engineSize);
-        if (!isNaN(engineSize)) {
-          formData.append('engineSize', engineSize.toString());
-        }
-      }
-      
-      if (listingData.drive) formData.append('drive', listingData.drive);
-      
-      if (listingData.doors) {
-        const doors = parseInt(listingData.doors);
-        if (!isNaN(doors)) {
-          formData.append('doors', doors.toString());
-        }
-      }
-      
-      if (listingData.weight) {
-        const weight = parseInt(listingData.weight);
-        if (!isNaN(weight)) {
-          formData.append('weight', weight.toString());
-        }
-      }
-      
-  if (listingData.voivodeship) formData.append('voivodeship', listingData.voivodeship);
-  if (listingData.city) formData.append('city', listingData.city);
-  
-  // Przygotowanie zdjęć
-      setUploadProgress(20);
-      let processedImages = 0;
-      const totalImages = listingData.photos.filter(photo => photo instanceof File).length;
-      
-      // Zdjęcia (dodaj tylko pliki, które są instancjami File)
-      if (totalImages > 0) {
-        for (const photo of listingData.photos) {
-          if (photo instanceof File) {
-            // Dodanie zdjęcia do formData
-            formData.append('images', photo);
-            
-            // Aktualizacja postępu przesyłania (20% - 70%)
-            processedImages++;
-            const imageProgress = Math.floor(20 + (processedImages / totalImages) * 50);
-            setUploadProgress(imageProgress);
-            
-            // Dodajemy małe opóźnienie, aby użytkownik widział postęp
-            await new Promise(resolve => setTimeout(resolve, 50));
+      // Sprawdzamy czy mamy zdjęcia do przesłania
+      if (listingData.photos && listingData.photos.length > 0) {
+        // Wyciągamy pliki File z photos
+        const filesToUpload = listingData.photos
+          .filter(photo => photo.file && photo.file instanceof File)
+          .map(photo => photo.file);
+        
+        // Znajdź główne zdjęcie
+        const mainPhotoIndex = listingData.mainPhotoIndex || 0;
+        const mainImageFile = listingData.photos[mainPhotoIndex]?.file;
+        
+        if (filesToUpload.length > 0) {
+          // Generujemy tymczasowe ID dla ogłoszenia (będzie zastąpione przez prawdziwe ID z API)
+          const tempCarId = `temp_${Date.now()}`;
+          
+          // Przesyłamy zdjęcia do Supabase
+          const uploadedImages = await uploadImages(filesToUpload, tempCarId, mainImageFile);
+          
+          if (uploadedImages && uploadedImages.length > 0) {
+            // Aktualizujemy dane ogłoszenia z URL-ami z Supabase
+            finalListingData.images = uploadedImages.map(img => img.url);
+            finalListingData.mainImage = uploadedImages.find(img => img.isMain)?.url || uploadedImages[0]?.url;
           }
         }
       }
       
-      setUploadProgress(70);
+      // Mapowanie danych formularza na format backendu
+      const backendData = mapFormDataToBackend(finalListingData);
       
-      // Debugowanie zawartości formData przed wysłaniem
-      debug('Zawartość formData przed wysłaniem:');
-      for (let [key, value] of formData.entries()) {
-        debug(`${key}: ${value instanceof File ? `File: ${value.name}` : value}`);
-      }
+      // Wywołanie prawdziwego API
+      const response = await AdsService.addListing(backendData);
       
-      // Użycie AdsService zamiast bezpośredniego fetch
-      try {
-        const response = await AdsService.addListing(formData);
-        
-        setUploadProgress(100);
-        
-        // Zapisujemy ID ogłoszenia i otwieramy modal płatności
-        setAdId(response.data._id);
-        setIsPaymentModalOpen(true);
-      } catch (apiError) {
-        throw apiError;
-      }
-      
+      // Ustawienie ID ogłoszenia i otwarcie modala płatności
+      setAdId(response.data._id);
+      setIsPaymentModalOpen(true);
+
     } catch (error) {
       console.error('Błąd podczas publikowania ogłoszenia:', error);
-      setError(error.response?.data?.message || error.message || 'Wystąpił błąd podczas publikowania ogłoszenia. Spróbuj ponownie później.');
-      setUploadProgress(0);
+      
+      // Obsługa różnych typów błędów
+      if (error.response) {
+        // Błąd z serwera
+        const errorMessage = error.response.data?.message || 'Wystąpił błąd podczas publikacji ogłoszenia.';
+        setError(errorMessage);
+      } else if (error.request) {
+        // Brak połączenia z serwerem
+        setError('Brak połączenia z serwerem. Sprawdź połączenie internetowe.');
+      } else {
+        // Inny błąd
+        setError('Wystąpił nieoczekiwany błąd. Spróbuj ponownie.');
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Jeśli listingData jest wczytywany asynchronicznie, wstaw loader
-  if (!listingData) {
+  // Sprawdzamy czy mamy wystarczające dane do wyświetlenia podglądu
+  const hasMinimalData = listingData && (
+    listingData.brand || 
+    listingData.model || 
+    listingData.price || 
+    listingData.description ||
+    Object.keys(listingData).length > 5
+  );
+
+  // Jeśli nie mamy minimalnych danych, pokazujemy loader przez krótki czas
+  // a następnie przekierowujemy do formularza
+  if (!hasMinimalData) {
+    // Ustawiamy timeout do przekierowania, jeśli dane nie zostaną załadowane
+    setTimeout(() => {
+      if (!hasMinimalData) {
+        navigate('/create-listing');
+      }
+    }, 2000);
+
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#35530A]"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#35530A] mx-auto"></div>
+          <p className="mt-4 text-gray-600">Ładowanie podglądu ogłoszenia...</p>
+          <p className="mt-2 text-sm text-gray-500">Jeśli ładowanie trwa zbyt długo, zostaniesz przekierowany do formularza</p>
+        </div>
       </div>
     );
   }
@@ -329,9 +244,9 @@ const AddListingView = () => {
   return (
     <div className="bg-[#FCFCFC] py-8 px-4 lg:px-[15%]">
       {/* Informacja o podglądzie */}
-      <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-6">
-        <p className="text-yellow-700 font-medium">
-          Podgląd ogłoszenia - zobacz jak będzie wyglądało Twoje ogłoszenie po publikacji
+      <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+        <p className="text-blue-700 font-medium">
+          Podsumowanie formularza - sprawdź poprawność wprowadzonych danych przed kontynuacją
         </p>
       </div>
 
@@ -342,43 +257,37 @@ const AddListingView = () => {
         </div>
       )}
       
+      {uploadError && (
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+          <p className="text-red-700 font-medium">Błąd przesyłania zdjęć: {uploadError}</p>
+        </div>
+      )}
+      
       {success && (
         <div className="bg-green-50 border-l-4 border-green-500 p-4 mb-6">
           <p className="text-green-700 font-medium">{success}</p>
         </div>
       )}
-      
-      {/* Pasek postępu przesyłania */}
-      {isSubmitting && uploadProgress > 0 && (
-        <div className="mb-6">
-          <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-[#35530A] transition-all duration-300 ease-in-out" 
-              style={{ width: `${uploadProgress}%` }}
-            ></div>
+
+      {/* Wskaźnik postępu przesyłania zdjęć */}
+      {isUploading && (
+        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+          <div className="flex items-center gap-3">
+            <Upload className="h-5 w-5 text-blue-600 animate-pulse" />
+            <div className="flex-1">
+              <p className="text-blue-700 font-medium">Przesyłanie zdjęć do Supabase...</p>
+              <div className="mt-2 bg-blue-200 rounded-full h-2 overflow-hidden">
+                <div 
+                  className="bg-blue-600 h-full rounded-full transition-all duration-300"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+              <p className="text-sm text-blue-600 mt-1">{uploadProgress}% ukończone</p>
+            </div>
           </div>
-          <p className="text-sm text-gray-600 mt-1">
-            {uploadProgress < 50 
-              ? 'Przesyłanie zdjęć...' 
-              : uploadProgress < 100 
-                ? 'Przesyłanie ogłoszenia...' 
-                : 'Zakończono przesyłanie.'}
-            {' '}{uploadProgress}%
-          </p>
         </div>
       )}
 
-      {/* Modal ze zdjęciami */}
-      <PhotoModal
-        isOpen={isPhotoModalOpen}
-        photos={listingData.photos.map(photo =>
-          typeof photo === 'string' ? photo : URL.createObjectURL(photo)
-        )}
-        photoIndex={photoIndex}
-        onClose={closePhotoModal}
-        prevPhoto={prevPhoto}
-        nextPhoto={nextPhoto}
-      />
 
       {/* Główna zawartość - PODGLĄD OGŁOSZENIA */}
       <div className="max-w-6xl mx-auto">
@@ -403,60 +312,111 @@ const AddListingView = () => {
           <div className="flex flex-col lg:flex-row">
             {/* Lewa strona */}
             <div className="w-full lg:w-[60%] p-4 space-y-6">
-              {/* Galeria zdjęć */}
-              <div className="relative aspect-video mb-4">
-                <img
-                  src={typeof listingData.photos[selectedImage] === 'string'
-                    ? listingData.photos[selectedImage]
-                    : URL.createObjectURL(listingData.photos[selectedImage])}
-                  alt={`Główne zdjęcie ${selectedImage + 1}`}
-                  className="w-full h-full object-cover rounded-[2px] cursor-pointer"
-                  onClick={() => openPhotoModal(selectedImage)}
-                />
-                <div className="absolute top-1/2 -translate-y-1/2 flex justify-between w-full px-4">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handlePrevImage();
-                    }}
-                    className="bg-white/80 p-2 hover:bg-white transition-colors rounded-[2px]"
-                    title="Poprzednie"
-                  >
-                    <ChevronLeft className="w-6 h-6 text-black" />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleNextImage();
-                    }}
-                    className="bg-white/80 p-2 hover:bg-white transition-colors rounded-[2px]"
-                    title="Następne"
-                  >
-                    <ChevronRight className="w-6 h-6 text-black" />
-                  </button>
-                </div>
-                <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-1 rounded-[2px] text-sm">
-                  {selectedImage + 1} / {listingData.photos.length}
-                </div>
-              </div>
+              {/* Galeria zdjęć - tylko podgląd */}
+              <div className="mb-6">
+                <h2 className="text-xl font-bold mb-4 text-black flex items-center gap-2">
+                  <Image className="h-5 w-5 text-[#35530A]" />
+                  Zdjęcia pojazdu
+                </h2>
+                
+              {/* Główne zdjęcie */}
+              <div className="mb-4 bg-gray-900 rounded-lg overflow-hidden">
+                {(() => {
+                  // Ujednolicona logika wyświetlania zdjęć
+                  const getImageData = () => {
+                    // Priorytet 1: photos z PhotoUploadSection (base64)
+                    if (listingData.photos && listingData.photos.length > 0) {
+                      const currentPhoto = listingData.photos[activePhotoIndex] || listingData.photos[0];
+                      return {
+                        src: currentPhoto?.src,
+                        name: currentPhoto?.name || `Zdjęcie ${activePhotoIndex + 1}`,
+                        source: 'photos'
+                      };
+                    }
+                    
+                    // Priorytet 2: images z API/Supabase
+                    if (listingData.images && listingData.images.length > 0) {
+                      const currentImage = listingData.images[activePhotoIndex] || listingData.images[0];
+                      return {
+                        src: currentImage?.url || currentImage,
+                        name: `Zdjęcie ${activePhotoIndex + 1}`,
+                        source: 'images'
+                      };
+                    }
+                    
+                    // Priorytet 3: mainImage fallback
+                    if (listingData.mainImage) {
+                      return {
+                        src: listingData.mainImage,
+                        name: 'Główne zdjęcie',
+                        source: 'mainImage'
+                      };
+                    }
+                    
+                    return null;
+                  };
 
-              <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
-                {listingData.photos.map((img, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setSelectedImage(index)}
-                    className={`
-                      relative aspect-video overflow-hidden rounded-[2px]
-                      ${selectedImage === index ? 'ring-2 ring-black' : ''}
-                    `}
-                  >
-                    <img
-                      src={typeof img === 'string' ? img : URL.createObjectURL(img)}
-                      alt={`Miniatura ${index + 1}`}
-                      className="w-full h-full object-cover hover:opacity-90 transition-opacity"
+                  const imageData = getImageData();
+                  
+                  if (!imageData || !imageData.src) {
+                    return (
+                      <div className="w-full h-64 bg-gray-200 flex items-center justify-center">
+                        <div className="text-center text-gray-500">
+                          <div className="text-4xl mb-2">📷</div>
+                          <p>Brak zdjęcia</p>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <img 
+                      src={imageData.src}
+                      alt={`${listingData.brand || ''} ${listingData.model || ''} - ${imageData.name}`}
+                      className="w-full h-64 object-cover"
+                      onError={(e) => {
+                        e.target.src = 'https://via.placeholder.com/800x600/f0f0f0/666666?text=Błąd+ładowania+zdjęcia';
+                      }}
                     />
-                  </button>
-                ))}
+                  );
+                })()}
+                  
+                  {/* Informacja o zdjęciu */}
+                  <div className="bg-black/80 p-3">
+                    <div className="flex items-center gap-2 text-white">
+                      <Star className="h-4 w-4 text-yellow-400 fill-current" />
+                      <span className="font-medium">
+                        {activePhotoIndex === 0 ? 'Zdjęcie główne' : `Zdjęcie ${activePhotoIndex + 1}`}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Miniatury zdjęć */}
+                {((listingData.photos && listingData.photos.length > 1) || (listingData.images && listingData.images.length > 1)) && (
+                  <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
+                    {(listingData.photos || listingData.images || []).map((item, index) => (
+                      <div 
+                        key={index}
+                        onClick={() => handleThumbnailClick(index)}
+                        className={`cursor-pointer border rounded-md overflow-hidden relative ${
+                          index === activePhotoIndex ? 'border-[#35530A] ring-2 ring-[#35530A]' : 'border-gray-300'
+                        }`}
+                      >
+                        <img 
+                          src={item.src || item.url || item} 
+                          alt={`Miniatura ${index + 1}`}
+                          className="w-full h-16 object-cover"
+                        />
+                        {index === 0 && (
+                          <div className="absolute top-0 left-0 bg-[#35530A] text-white px-1 py-0.5 text-xs rounded-br-md">
+                            Główne
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Opis */}
@@ -477,8 +437,8 @@ const AddListingView = () => {
                 <h1 className="text-2xl font-bold text-black mb-2">
                   {listingData.brand} {listingData.model} {listingData.generation} {listingData.version}
                 </h1>
-                <div className="text-3xl font-black text-[#35530A]">
-                  {listingData.purchaseOption === 'najem'
+<div className="text-3xl font-black text-[#35530A]">
+                  {listingData.purchaseOptions === 'inne' || listingData.purchaseOption === 'najem'
                     ? `${listingData.rentalPrice} PLN/mc`
                     : `${listingData.price} PLN`}
                 </div>

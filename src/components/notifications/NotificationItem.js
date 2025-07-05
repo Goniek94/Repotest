@@ -77,7 +77,7 @@ const NotificationItem = ({ notification, onMarkAsRead, onDelete }) => {
       elevation={1}
       sx={{
         mb: 2,
-        p: 2,
+        p: { xs: 2, sm: 2 },
         borderLeft: `4px solid ${color}`,
         backgroundColor: notification.read ? 'background.paper' : alpha(color, 0.05),
         cursor: notification.actionUrl ? 'pointer' : 'default',
@@ -89,15 +89,78 @@ const NotificationItem = ({ notification, onMarkAsRead, onDelete }) => {
       }}
       onClick={handleClick}
     >
-      <Box display="flex" alignItems="flex-start">
-        {/* Ikona powiadomienia */}
+      <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'stretch', sm: 'flex-start' }}>
+        {/* Nagłówek powiadomienia dla urządzeń mobilnych */}
+        <Box 
+          sx={{ 
+            display: { xs: 'flex', sm: 'none' },
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            mb: 2
+          }}
+        >
+          <Box display="flex" alignItems="center">
+            <Box
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: '50%',
+                backgroundColor: alpha(color, 0.1),
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mr: 2,
+                color: color
+              }}
+            >
+              <span className="material-icons">{icon}</span>
+            </Box>
+            <Typography variant="subtitle1" fontWeight="bold" component="h3" noWrap sx={{ maxWidth: '150px' }}>
+              {notification.title}
+            </Typography>
+          </Box>
+          
+          <Box display="flex" alignItems="center">
+            {/* Przycisk oznaczania jako przeczytane - większy na mobile */}
+            {!notification.read && (
+              <IconButton
+                size="medium"
+                color="primary"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onMarkAsRead();
+                }}
+                title="Oznacz jako przeczytane"
+                sx={{ padding: '8px' }}
+              >
+                <CheckCircleIcon />
+              </IconButton>
+            )}
+            
+            {/* Przycisk usuwania - większy na mobile */}
+            <IconButton
+              size="medium"
+              color="error"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+              title="Usuń powiadomienie"
+              sx={{ padding: '8px' }}
+            >
+              <DeleteIcon />
+            </IconButton>
+          </Box>
+        </Box>
+        
+        {/* Ikona powiadomienia - widoczna tylko na desktop */}
         <Box
           sx={{
             width: 40,
             height: 40,
             borderRadius: '50%',
             backgroundColor: alpha(color, 0.1),
-            display: 'flex',
+            display: { xs: 'none', sm: 'flex' },
             alignItems: 'center',
             justifyContent: 'center',
             mr: 2,
@@ -109,7 +172,12 @@ const NotificationItem = ({ notification, onMarkAsRead, onDelete }) => {
         
         {/* Treść powiadomienia */}
         <Box flex={1}>
-          <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+          {/* Nagłówek powiadomienia dla desktop */}
+          <Box 
+            display={{ xs: 'none', sm: 'flex' }} 
+            justifyContent="space-between" 
+            alignItems="flex-start"
+          >
             <Typography variant="subtitle1" fontWeight="bold" component="h3">
               {notification.title}
             </Typography>
@@ -156,13 +224,31 @@ const NotificationItem = ({ notification, onMarkAsRead, onDelete }) => {
             </Box>
           </Box>
           
+          {/* Chip z typem powiadomienia - widoczny tylko na mobile */}
+          <Box sx={{ display: { xs: 'block', sm: 'none' }, mb: 1 }}>
+            <Chip
+              label={typeName}
+              size="small"
+              sx={{
+                backgroundColor: alpha(color, 0.1),
+                color: color
+              }}
+            />
+          </Box>
+          
           {/* Treść wiadomości */}
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 2 }}>
             {notification.message}
           </Typography>
           
           {/* Stopka powiadomienia */}
-          <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Box 
+            display="flex" 
+            flexDirection={{ xs: 'column', sm: 'row' }} 
+            justifyContent={{ xs: 'flex-start', sm: 'space-between' }} 
+            alignItems={{ xs: 'flex-start', sm: 'center' }}
+            gap={{ xs: 1, sm: 0 }}
+          >
             <Typography variant="caption" color="text.secondary">
               {formattedDate}
             </Typography>
@@ -170,11 +256,16 @@ const NotificationItem = ({ notification, onMarkAsRead, onDelete }) => {
             {/* Przycisk akcji */}
             {notification.actionUrl && notification.actionText && (
               <Button
-                variant="text"
+                variant="contained"
                 size="small"
                 color="primary"
                 endIcon={<OpenInNewIcon fontSize="small" />}
                 onClick={handleActionClick}
+                sx={{ 
+                  mt: { xs: 1, sm: 0 },
+                  py: { xs: 1 },
+                  width: { xs: '100%', sm: 'auto' }
+                }}
               >
                 {notification.actionText}
               </Button>

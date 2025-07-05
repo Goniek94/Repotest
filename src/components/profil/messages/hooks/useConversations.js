@@ -268,10 +268,11 @@ const useConversations = (activeTab) => {
       
       setChatMessages(formattedChatMessages);
       
-      // Automatyczne oznaczenie jako przeczytane
-      if (conversation.unreadCount > 0) {
-        markConversationAsRead(conversation.id);
-      }
+      // Usunięto automatyczne oznaczanie jako przeczytane
+      // Teraz wiadomości będą oznaczane jako przeczytane dopiero po jawnym działaniu użytkownika
+      // if (conversation.unreadCount > 0) {
+      //   markConversationAsRead(conversation.id);
+      // }
     } catch (err) {
       if (err.name === 'AbortError') {
         console.log('Request was aborted');
@@ -559,7 +560,8 @@ const useConversations = (activeTab) => {
     deleteMessage,
     archiveMessage,
     sendReply,
-    showNotification
+    showNotification,
+    markConversationAsRead
   }), [
     activeTab,
     filteredConversations,

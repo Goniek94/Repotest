@@ -40,15 +40,24 @@ const MessagesTabs = ({ activeTab, onTabChange, unreadCount = {} }) => {
             key={folder.id}
             onClick={() => onTabChange(folder.id)}
             className={`
-              flex items-center px-4 py-3 text-sm font-medium ${isMobile ? 'flex-1 justify-center' : ''}
+              relative flex items-center px-4 py-3 text-sm font-medium ${isMobile ? 'flex-1 justify-center' : ''}
               ${activeTab === folder.id 
                 ? 'text-[#35530A] border-b-2 border-[#35530A]' 
                 : 'text-gray-500 hover:text-[#35530A] hover:border-b-2 hover:border-gray-300'}
             `}
           >
+            {/* Dymek/chmurka nad zakładką "Odebrane" */}
+            {folder.id === 'odebrane' && folder.count > 0 && (
+              <span className="absolute -top-4 -right-2 bg-red-600 text-white text-sm font-bold px-2.5 py-1.5 rounded-full min-w-[24px] text-center shadow-md z-10">
+                {folder.count}
+              </span>
+            )}
+            
             <span className="mr-2">{folder.icon}</span>
             {!isMobile && folder.label}
-            {folder.count > 0 && (
+            
+            {/* Standardowy licznik dla pozostałych zakładek */}
+            {folder.id !== 'odebrane' && folder.count > 0 && (
               <span className="ml-1.5 px-2 py-0.5 text-xs rounded-full bg-[#35530A] text-white">
                 {folder.count}
               </span>

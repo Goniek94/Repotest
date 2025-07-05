@@ -6,6 +6,7 @@ import {
 } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext';
 import api from '../../services/api'; // Zmieniono import z axiosInstance na api
+import { debug } from '../../utils/debug';
 
 // Komponent modalu z powiadomieniem o sukcesie
 const SuccessModal = ({ onClose }) => (

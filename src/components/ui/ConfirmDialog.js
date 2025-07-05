@@ -30,16 +30,58 @@ const ConfirmDialog = ({
   cancelText = 'Anuluj',
   confirmColor = 'primary'
 }) => (
-  <Dialog open={open} onClose={onClose}>
-    {title && <DialogTitle>{title}</DialogTitle>}
+  <Dialog 
+    open={open} 
+    onClose={onClose}
+    PaperProps={{
+      sx: {
+        width: { xs: '90%', sm: 'auto' },
+        maxWidth: { xs: '90%', sm: 500 }
+      }
+    }}
+  >
+    {title && (
+      <DialogTitle sx={{ 
+        fontSize: { xs: '1.2rem', sm: '1.5rem' },
+        py: { xs: 2, sm: 2 }
+      }}>
+        {title}
+      </DialogTitle>
+    )}
     {content && (
-      <DialogContent>
-        <DialogContentText>{content}</DialogContentText>
+      <DialogContent sx={{ py: { xs: 2, sm: 2 } }}>
+        <DialogContentText sx={{ 
+          fontSize: { xs: '1rem', sm: '1rem' }
+        }}>
+          {content}
+        </DialogContentText>
       </DialogContent>
     )}
-    <DialogActions>
-      <Button onClick={onClose}>{cancelText}</Button>
-      <Button onClick={onConfirm} color={confirmColor} variant="contained">
+    <DialogActions sx={{ 
+      px: { xs: 3, sm: 3 },
+      py: { xs: 2, sm: 2 },
+      justifyContent: 'space-between'
+    }}>
+      <Button 
+        onClick={onClose}
+        sx={{ 
+          fontSize: { xs: '0.9rem', sm: '0.9rem' },
+          py: { xs: 1 },
+          px: { xs: 3 }
+        }}
+      >
+        {cancelText}
+      </Button>
+      <Button 
+        onClick={onConfirm} 
+        color={confirmColor} 
+        variant="contained"
+        sx={{ 
+          fontSize: { xs: '0.9rem', sm: '0.9rem' },
+          py: { xs: 1 },
+          px: { xs: 3 }
+        }}
+      >
         {confirmText}
       </Button>
     </DialogActions>

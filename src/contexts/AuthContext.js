@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, useEffect, useRef, useCallb
 import AuthService from '../services/auth';
 import { getAuthToken } from '../services/api/config';
 import ActivityLogService from '../services/activityLogService';
+import { debug, safeConsole } from '../utils/debug';
 
 // Tworzenie kontekstu autoryzacji
 const AuthContext = createContext();
@@ -98,12 +99,12 @@ export const AuthProvider = ({ children }) => {
             await AuthService.refreshUserData();
             debug('Dane użytkownika odświeżone pomyślnie');
           } catch (refreshError) {
-            console.error('Błąd odświeżania danych użytkownika:', refreshError);
+            safeConsole.error('Błąd odświeżania danych użytkownika:', refreshError);
             // Nie wylogowujemy użytkownika automatycznie przy błędzie odświeżania
           }
         }
       } catch (error) {
-        console.error('Błąd inicjalizacji autoryzacji:', error);
+        safeConsole.error('Błąd inicjalizacji autoryzacji:', error);
         // Czyszczenie danych w przypadku błędu
         AuthService.logout();
         setUser(null);
@@ -127,7 +128,7 @@ export const AuthProvider = ({ children }) => {
       ActivityLogService.logLogin(data.user);
       return data;
     } catch (error) {
-      console.error('Błąd logowania:', error);
+      safeConsole.error('Błąd logowania:', error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -144,7 +145,7 @@ export const AuthProvider = ({ children }) => {
       resetInactivityTimer(); // Reset timera po rejestracji
       return data;
     } catch (error) {
-      console.error('Błąd rejestracji:', error);
+      safeConsole.error('Błąd rejestracji:', error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -164,7 +165,7 @@ export const AuthProvider = ({ children }) => {
       // Przekierowanie na stronę główną
       window.location.href = redirectTo;
     } catch (error) {
-      console.error('Błąd wylogowania:', error);
+      safeConsole.error('Błąd wylogowania:', error);
       
       // Nawet w przypadku błędu, czyścimy dane użytkownika lokalnie
       setUser(null);
@@ -185,7 +186,7 @@ export const AuthProvider = ({ children }) => {
       resetInactivityTimer(); // Reset timera po odświeżeniu danych
       return updatedUser;
     } catch (error) {
-      console.error('Błąd odświeżania danych użytkownika:', error);
+      safeConsole.error('Błąd odświeżania danych użytkownika:', error);
       throw error;
     } finally {
       setIsLoading(false);

@@ -1,6 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Tabs, Tab, Divider, Button, IconButton, useTheme, CircularProgress } from '@mui/material';
-import { Delete as DeleteIcon, CheckCircle as CheckCircleIcon } from '@mui/icons-material';
+import { Box, Typography, Button, IconButton, useTheme, CircularProgress, Paper } from '@mui/material';
+import { 
+  Delete as DeleteIcon, 
+  CheckCircle as CheckCircleIcon,
+  Notifications as NotificationsIcon,
+  NotificationsActive as NotificationsActiveIcon,
+  DirectionsCar as DirectionsCarIcon,
+  Message as MessageIcon,
+  Comment as CommentIcon,
+  Payment as PaymentIcon,
+  Announcement as AnnouncementIcon,
+  Settings as SettingsIcon
+} from '@mui/icons-material';
 import axios from 'axios';
 import { useSnackbar } from 'notistack';
 
@@ -173,7 +184,7 @@ const NotificationsPage = () => {
     }
     
     if (showPreferences) {
-      return <NotificationPreferences onBack={() => setShowPreferences(false)} />;
+      return <NotificationPreferences />;
     }
     
     if (filteredNotifications.length === 0) {
@@ -205,68 +216,203 @@ const NotificationsPage = () => {
     );
   };
   
+  // Mapowanie ikon dla zakładek
+  const tabIcons = {
+    all: NotificationsIcon,
+    unread: NotificationsActiveIcon,
+    listings: DirectionsCarIcon,
+    messages: MessageIcon,
+    comments: CommentIcon,
+    payments: PaymentIcon,
+    system: AnnouncementIcon
+  };
+
+  // Lista zakładek
+  const tabs = [
+    { id: 'all', label: 'Wszystkie' },
+    { id: 'unread', label: `Nieprzeczytane (${unreadCount})` },
+    { id: 'listings', label: groupNames.listings },
+    { id: 'messages', label: groupNames.messages },
+    { id: 'comments', label: groupNames.comments },
+    { id: 'payments', label: groupNames.payments },
+    { id: 'system', label: groupNames.system }
+  ];
+
   return (
     <Box>
       {/* Nagłówek */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+      <Box 
+        display="flex" 
+        flexDirection={{ xs: 'column', sm: 'row' }} 
+        justifyContent="space-between" 
+        alignItems={{ xs: 'flex-start', sm: 'center' }} 
+        mb={3}
+        gap={2}
+      >
         <Typography variant="h5" component="h1" fontWeight="bold">
           Powiadomienia {unreadCount > 0 && `(${unreadCount})`}
         </Typography>
         
-        <Box>
-          {!showPreferences && notifications.length > 0 && (
-            <>
-              <IconButton 
-                color="primary" 
-                onClick={() => openConfirmDialog('markAllAsRead')}
-                disabled={unreadCount === 0}
-                title="Oznacz wszystkie jako przeczytane"
-              >
-                <CheckCircleIcon />
-              </IconButton>
-              
-              <IconButton 
-                color="error" 
-                onClick={() => openConfirmDialog('deleteAll')}
-                title="Usuń wszystkie powiadomienia"
-              >
-                <DeleteIcon />
-              </IconButton>
-            </>
-          )}
-          
-          <Button 
-            variant="outlined" 
-            color="primary" 
-            onClick={() => setShowPreferences(!showPreferences)}
-            sx={{ ml: 1 }}
+        {!showPreferences && notifications.length > 0 && (
+          <Box 
+            display="flex" 
+            flexDirection={{ xs: 'row' }} 
+            justifyContent={{ xs: 'flex-end' }}
+            width={{ xs: '100%', sm: 'auto' }}
+            gap={1}
           >
-            {showPreferences ? 'Powrót do powiadomień' : 'Preferencje powiadomień'}
-          </Button>
-        </Box>
+            <Button 
+              variant="outlined" 
+              color="primary" 
+              onClick={() => openConfirmDialog('markAllAsRead')}
+              disabled={unreadCount === 0}
+              startIcon={<CheckCircleIcon />}
+              sx={{ 
+                py: { xs: 1 },
+                flex: { xs: 1, sm: 'none' }
+              }}
+            >
+              Oznacz jako przeczytane
+            </Button>
+            
+            <Button 
+              variant="outlined" 
+              color="error" 
+              onClick={() => openConfirmDialog('deleteAll')}
+              startIcon={<DeleteIcon />}
+              sx={{ 
+                py: { xs: 1 },
+                flex: { xs: 1, sm: 'none' }
+              }}
+            >
+              Usuń wszystkie
+            </Button>
+          </Box>
+        )}
       </Box>
       
-      {/* Zakładki */}
-      {!showPreferences && (
-        <Tabs
-          value={activeTab}
-          onChange={handleTabChange}
-          variant="scrollable"
-          scrollButtons="auto"
-          sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}
-        >
-          <Tab label="Wszystkie" value="all" />
-          <Tab label={`Nieprzeczytane (${unreadCount})`} value="unread" />
-          <Tab label={groupNames.listings} value="listings" />
-          <Tab label={groupNames.messages} value="messages" />
-          <Tab label={groupNames.comments} value="comments" />
-          <Tab label={groupNames.payments} value="payments" />
-          <Tab label={groupNames.system} value="system" />
-        </Tabs>
+      {/* Główna zawartość */}
+      {showPreferences ? (
+        <NotificationPreferences />
+      ) : (
+        <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={3}>
+          {/* Nawigacja zakładek */}
+          <Box width={{ xs: '100%', md: '250px' }}>
+            <Paper 
+              sx={{ 
+                borderRadius: '12px', 
+                overflow: 'hidden',
+                border: '1px solid',
+                borderColor: 'divider'
+              }}
+            >
+              <Box 
+                display="flex" 
+                flexDirection={{ xs: 'row', md: 'column' }}
+                sx={{ 
+                  overflowX: { xs: 'auto', md: 'visible' },
+                  flexWrap: { xs: 'nowrap', md: 'wrap' }
+                }}
+              >
+                {tabs.map((tab) => {
+                  const TabIcon = tabIcons[tab.id];
+                  return (
+                    <Button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: { xs: 'center', md: 'flex-start' },
+                        px: { xs: 2, md: 3 },
+                        py: { xs: 1.5, md: 2 },
+                        borderRadius: { xs: 0, md: 0 },
+                        borderBottom: { xs: activeTab === tab.id ? '2px solid' : '2px solid transparent', md: 'none' },
+                        borderRight: { xs: 'none', md: activeTab === tab.id ? '4px solid' : '4px solid transparent' },
+                        borderColor: activeTab === tab.id ? 'primary.main' : 'transparent',
+                        backgroundColor: activeTab === tab.id ? { xs: 'rgba(53, 83, 10, 0.08)', md: 'rgba(53, 83, 10, 0.12)' } : 'transparent',
+                        color: activeTab === tab.id ? 'primary.main' : 'text.primary',
+                        '&:hover': {
+                          backgroundColor: 'rgba(53, 83, 10, 0.08)',
+                        },
+                        width: { xs: 'auto', md: '100%' },
+                        minWidth: { xs: '120px', md: 'auto' },
+                        textAlign: 'left',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      <TabIcon sx={{ mr: { xs: 1, md: 2 }, fontSize: '1.25rem' }} />
+                      <span>{tab.label}</span>
+                    </Button>
+                  );
+                })}
+                
+                <Button
+                  onClick={() => setShowPreferences(true)}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: { xs: 'center', md: 'flex-start' },
+                    px: { xs: 2, md: 3 },
+                    py: { xs: 1.5, md: 2 },
+                    borderRadius: 0,
+                    color: 'text.primary',
+                    '&:hover': {
+                      backgroundColor: 'rgba(53, 83, 10, 0.08)',
+                    },
+                    width: { xs: 'auto', md: '100%' },
+                    minWidth: { xs: '120px', md: 'auto' },
+                    textAlign: 'left',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  <SettingsIcon sx={{ mr: { xs: 1, md: 2 }, fontSize: '1.25rem' }} />
+                  <span>Preferencje</span>
+                </Button>
+              </Box>
+            </Paper>
+          </Box>
+          
+          {/* Zawartość zakładki */}
+          <Box flex="1">
+            {loading ? (
+              <Box display="flex" justifyContent="center" alignItems="center" minHeight="300px">
+                <CircularProgress />
+              </Box>
+            ) : error ? (
+              <EmptyState
+                icon="error"
+                title="Wystąpił błąd"
+                description={error}
+                actionText="Spróbuj ponownie"
+                onAction={fetchNotifications}
+              />
+            ) : filteredNotifications.length === 0 ? (
+              <EmptyState
+                icon="notifications_off"
+                title="Brak powiadomień"
+                description={activeTab === 'all' 
+                  ? 'Nie masz żadnych powiadomień' 
+                  : activeTab === 'unread' 
+                    ? 'Nie masz nieprzeczytanych powiadomień' 
+                    : `Nie masz powiadomień w kategorii ${groupNames[activeTab] || activeTab}`
+                }
+              />
+            ) : (
+              <Box>
+                {filteredNotifications.map(notification => (
+                  <NotificationItem
+                    key={notification._id}
+                    notification={notification}
+                    onMarkAsRead={() => handleMarkAsRead(notification._id)}
+                    onDelete={() => handleDeleteNotification(notification._id)}
+                  />
+                ))}
+              </Box>
+            )}
+          </Box>
+        </Box>
       )}
-      
-      {/* Zawartość */}
-      {renderContent()}
       
       {/* Dialog potwierdzenia */}
       <ConfirmDialog

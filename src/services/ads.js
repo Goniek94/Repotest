@@ -22,8 +22,7 @@ const AdsService = {
   // Dodanie ogłoszenia ze zdjęciami (FormData)
   addListing: (formData) => 
     apiClient.post('/ads/add', formData, {
-      // Nie ustawiaj Content-Type dla FormData - axios zrobi to automatycznie
-      withCredentials: true // Upewnij się, że przesyłasz ciasteczka
+      withCredentials: true
     }),
 
   // Aktualizacja ogłoszenia
@@ -35,8 +34,11 @@ const AdsService = {
   // Przeszukiwanie ogłoszeń (przekazuje wszystkie filtry jako params)
   search: (params = {}) => apiClient.get('/ads/search', { params }),
 
-  // Pobieranie ogłoszeń użytkownika
-  getUserAds: () => apiClient.get('/ads/user'),
+  // ✅ POPRAWKA: Używaj endpointu z Twojego backendu
+  getUserAds: () => apiClient.get('/ads/user/listings'),
+
+  // ✅ DODANE: Rotowane ogłoszenia dla strony głównej
+  getRotatedListings: () => apiClient.get('/ads/rotated'),
 
   // Pobieranie wyróżnionych ogłoszeń
   getFeatured: () => apiClient.get('/ads/featured'),
@@ -48,6 +50,14 @@ const AdsService = {
   uploadImages: (id, formData) =>
     apiClient.post(`/ads/${id}/images`, formData),
 
+  // ✅ DODANE: Usuwanie zdjęcia z ogłoszenia
+  deleteImage: (id, index) => 
+    apiClient.delete(`/ads/${id}/images/${index}`),
+
+  // ✅ DODANE: Ustawienie głównego zdjęcia
+  setMainImage: (id, mainImageIndex) =>
+    apiClient.put(`/ads/${id}/main-image`, { mainImageIndex }),
+
   // Dodawanie ogłoszenia do ulubionych
   addToFavorites: (id) => apiClient.post(`/favorites/add/${id}`),
 
@@ -56,6 +66,12 @@ const AdsService = {
   
   // Aktualizacja statusu ogłoszenia
   updateStatus: (id, status) => apiClient.put(`/ads/${id}/status`, { status }),
+
+  // ✅ ZAKTUALIZOWANE: Przedłużenie ogłoszenia używające dedykowanego endpointu
+  extendListing: (id) => apiClient.post(`/ads/${id}/renew`),
+
+  // ✅ DODANE: Zakończenie ogłoszenia
+  finishListing: (id) => apiClient.put(`/ads/${id}/status`, { status: 'archived' }),
 };
 
 export default AdsService;

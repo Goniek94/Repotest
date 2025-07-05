@@ -1,31 +1,27 @@
 import React from 'react';
 import FormField from '../components/FormField';
+import { FileText } from 'lucide-react';
 
 const DescriptionPriceSection = ({ formData, handleChange, errors }) => {
   // Maksymalna długość opisu
   const maxDescriptionLength = 2000;
   
-  // Opcje zakupu z ikonami i opisami
+  // Opcje zakupu z ikonami i opisami - dostosowane do wartości oczekiwanych przez backend
   const purchaseOptions = [
     { 
-      value: 'sprzedaz', 
+      value: 'umowa kupna-sprzedaży', 
       label: 'Sprzedaż',
       description: 'Umowa kupna-sprzedaży'
     },
     { 
-      value: 'cesja', 
-      label: 'Cesja',
-      description: 'Przejęcie leasingu'
+      value: 'faktura VAT', 
+      label: 'Faktura VAT',
+      description: 'Sprzedaż z fakturą VAT'
     },
     { 
-      value: 'zamiana', 
-      label: 'Zamiana',
-      description: 'Zamiana za inny pojazd'
-    },
-    { 
-      value: 'najem', 
-      label: 'Najem',
-      description: 'Długoterminowy wynajem'
+      value: 'inne', 
+      label: 'Inne',
+      description: 'Inna forma zakupu (np. cesja, zamiana, najem)'
     }
   ];
   
@@ -38,32 +34,36 @@ const DescriptionPriceSection = ({ formData, handleChange, errors }) => {
     }
   };
   
-  // Sprawdzenie czy opcja zakupu jest wybrana
-  const isPurchaseOptionSelected = (optionValue) => {
-    if (!formData.purchaseOptions) return false;
-    return formData.purchaseOptions.includes(optionValue);
-  };
-  
-  // Obsługa zmiany opcji zakupu (checkbox)
+  // Obsługa zmiany opcji zakupu (radio button)
   const handlePurchaseOptionChange = (option) => {
-    // Inicjalizacja tablicy, jeśli nie istnieje
-    const currentOptions = formData.purchaseOptions || [];
+    // Aktualizacja stanu - pojedyncza wartość zamiast tablicy
+    handleChange('purchaseOptions', option);
     
-    // Dodanie lub usunięcie opcji z tablicy
-    const newOptions = currentOptions.includes(option)
-      ? currentOptions.filter(opt => opt !== option)
-      : [...currentOptions, option];
-    
-    // Aktualizacja stanu
-    handleChange('purchaseOptions', newOptions);
+    // Jeśli wybrano opcję "inne", dodajemy też pole purchaseOption dla kompatybilności
+    handleChange('purchaseOption', option === 'inne' ? 'najem' : 'sprzedaz');
   };
   
   // Sprawdzamy czy wybrano opcję najmu (dla wyświetlenia odpowiedniego pola ceny)
-  const hasRentalOption = isPurchaseOptionSelected('najem');
+  const hasRentalOption = formData.purchaseOption === 'najem' || formData.purchaseOptions === 'inne';
 
   return (
-    <div className="bg-white p-6 rounded-[2px] shadow-md">
-      {/* Nagłówek główny przeniesiony do komponentu CreateListingForm */}
+    <div className="max-w-6xl mx-auto p-4 bg-white">
+      {/* Jedna główna karta - kompaktowa */}
+      <div className="bg-white rounded-lg shadow-lg border border-gray-100 overflow-hidden">
+        
+        {/* Header karty */}
+        <div className="bg-gradient-to-r from-[#35530A] to-[#2D4A06] text-white p-4">
+          <div className="flex items-center">
+            <FileText className="h-6 w-6 mr-3" />
+            <div>
+              <h2 className="text-xl font-bold">Opis i cena</h2>
+              <p className="text-green-100 text-sm">Szczegóły i warunki sprzedaży</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Zawartość karty */}
+        <div className="p-6 space-y-6">
       
       {/* Sekcja opisu */}
       <div className="mb-8">
@@ -71,33 +71,20 @@ const DescriptionPriceSection = ({ formData, handleChange, errors }) => {
           Opis pojazdu
         </h3>
         
-        {/* Wskazówki dla opisu */}
-        <div className="bg-[#F5FAF5] border-l-4 border-[#35530A] text-[#35530A] p-4 rounded-[2px] mb-4">
-          <p className="text-sm">
-            W opisie powinny znaleźć się najważniejsze informacje o pojeździe:
-          </p>
-          <ul className="list-disc list-inside mt-2 text-sm">
-            <li>Stan techniczny</li>
-            <li>Historia serwisowa</li>
-            <li>Wyposażenie dodatkowe</li>
-            <li>Ostatnie naprawy</li>
-            <li>Informacje o usterkach</li>
-          </ul>
-        </div>
-        
-        {/* Pole opisu */}
+        {/* Pole opisu - zwiększone */}
         <div className={`relative ${errors.description ? 'mb-1' : 'mb-0'}`}>
           <textarea
-            rows="8"
+            rows="20"
             maxLength={maxDescriptionLength}
             value={formData.description || ''}
             onChange={(e) => handleChange('description', e.target.value)}
             placeholder="Wpisz opis pojazdu..."
             className={`
-              w-full border rounded-[2px] p-4 text-gray-700
+              w-full border rounded-[2px] p-6 text-gray-700 text-base
               focus:outline-none focus:ring-2 focus:ring-[#35530A] focus:border-[#35530A]
               ${errors.description ? 'border-red-500' : 'border-gray-300'}
             `}
+            style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minHeight: '400px', fontSize: '16px', lineHeight: '1.6' }}
           ></textarea>
           {errors.description && (
             <p className="text-red-500 text-sm mt-1">{errors.description}</p>
@@ -109,23 +96,23 @@ const DescriptionPriceSection = ({ formData, handleChange, errors }) => {
       </div>
       
       {/* Sekcja ceny */}
-      <div className="mb-8">
+      <div className="mb-10">
         <h3 className="text-white p-2 rounded-[2px] mb-4 bg-[#35530A]">
           Cena i opcje zakupu
         </h3>
         
-        {/* Opcje zakupu jako karty wyboru z checkboxami */}
+        {/* Opcje zakupu jako karty wyboru z radio buttonami */}
         <div className="mb-6">
           <label className="block text-gray-700 text-sm font-bold mb-3">
-            Opcje zakupu* (możesz wybrać kilka)
+            Opcja zakupu*
           </label>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {purchaseOptions.map(option => (
               <div 
                 key={option.value}
                 className={`
                   border p-4 rounded-[2px] cursor-pointer transition-all hover:shadow-md
-                  ${isPurchaseOptionSelected(option.value) 
+                  ${formData.purchaseOptions === option.value 
                     ? 'border-[#35530A] bg-[#F5FAF5]' 
                     : 'border-gray-300'
                   }
@@ -134,8 +121,8 @@ const DescriptionPriceSection = ({ formData, handleChange, errors }) => {
               >
                 <div className="flex items-center mb-2">
                   <input
-                    type="checkbox"
-                    checked={isPurchaseOptionSelected(option.value)}
+                    type="radio"
+                    checked={formData.purchaseOptions === option.value}
                     onChange={() => handlePurchaseOptionChange(option.value)}
                     className="mr-2 accent-[#35530A]"
                   />
@@ -196,15 +183,17 @@ const DescriptionPriceSection = ({ formData, handleChange, errors }) => {
         
       </div>
       
-      {/* Informacja końcowa */}
-      <div className="bg-[#F5FAF5] border-l-4 border-[#35530A] p-4 rounded-[2px] mt-6">
-        <p className="text-[#35530A] text-sm font-medium mb-2">
-          To ostatni krok przed podglądem ogłoszenia!
-        </p>
-        <p className="text-[#35530A] text-sm">
-          Po kliknięciu "Przejdź do podglądu" będziesz mógł zobaczyć, jak będzie wyglądało Twoje ogłoszenie.
-          Twoje dane są automatycznie zapisywane, więc możesz bezpiecznie przejść do podglądu i wrócić do edycji.
-        </p>
+          {/* Informacja końcowa */}
+          <div className="bg-[#F5FAF5] border-l-4 border-[#35530A] p-4 rounded-md">
+            <p className="text-[#35530A] text-sm font-medium mb-2">
+              To ostatni krok przed podglądem ogłoszenia!
+            </p>
+            <p className="text-[#35530A] text-sm">
+              Po kliknięciu "Przejdź do podglądu" będziesz mógł zobaczyć, jak będzie wyglądało Twoje ogłoszenie.
+              Twoje dane są automatycznie zapisywane, więc możesz bezpiecznie przejść do podglądu i wrócić do edycji.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

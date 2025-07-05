@@ -19,7 +19,7 @@ import { useSidebar } from '../../../contexts/SidebarContext';
 
 const BASE_ITEMS = [
   { id: 'panel', name: 'Panel', path: '/profil', icon: Eye },
-  { id: 'messages', name: 'Wiadomości', path: '/profil/messages', icon: Mail, badgeKey: 'messages' },
+  { id: 'messages', name: 'Wiadomości', path: '/profil/messages', search: '?folder=odebrane', icon: Mail, badgeKey: 'messages' },
   { id: 'listings', name: 'Moje ogłoszenia', path: '/profil/listings', icon: FileText },
   { id: 'notifications', name: 'Powiadomienia', path: '/profil/notifications', icon: Bell, badgeKey: 'alerts' },
   { id: 'transactions', name: 'Historia Transakcji', path: '/profil/transactions', icon: History },
@@ -40,6 +40,7 @@ const ProfileNavigation = React.forwardRef(
       user,
       handleRaisePanel,
       isPanelRaised,
+      activeTab: propActiveTab,
     },
     ref
   ) => {
@@ -74,15 +75,13 @@ const ProfileNavigation = React.forwardRef(
   const isRaised = isPanelRaised !== undefined ? isPanelRaised : localIsPanelRaised;
 
   const navItems = React.useMemo(() => {
-    const items = [...BASE_ITEMS];
-    if (isAdmin && isAdmin()) {
-      items.push({ id: 'admin', name: 'Admin', path: '/admin', icon: Sliders });
-    }
-    return items;
-  }, [isAdmin]);
+    // Usuwamy opcję Admin z nawigacji na desktopach
+    return [...BASE_ITEMS];
+  }, []);
 
   const counts = notifications || unreadCount;
-  const activeTab = navItems.find(
+  // Używamy activeTab z props, jeśli jest dostępny, w przeciwnym razie określamy go na podstawie ścieżki
+  const activeTab = propActiveTab || navItems.find(
     (item) =>
       location.pathname === item.path ||
       location.pathname.startsWith(item.path + '/')
@@ -123,7 +122,10 @@ const ProfileNavigation = React.forwardRef(
                 {navItems.map((item) => (
                   <Link
                     key={item.id}
-                    to={item.path}
+                    to={{
+                      pathname: item.path,
+                      search: item.search || ''
+                    }}
                     className={`block px-4 py-2 text-gray-800 hover:bg-gray-100 uppercase font-bold transition ${
                       activeTab === item.id ? 'text-[#35530A] font-bold border-b-2 border-[#35530A] bg-[#F3F4F6]' : ''
                     } flex items-center gap-2`}
@@ -161,7 +163,10 @@ const ProfileNavigation = React.forwardRef(
           {navItems.map((item) => (
             <Link
               key={item.id}
-              to={item.path}
+              to={{
+                pathname: item.path,
+                search: item.search || ''
+              }}
               className={`flex items-center justify-center gap-3 px-3 py-3 text-white hover:bg-[#4a6b2a] rounded-md ${
                 activeTab === item.id ? 'bg-[#4a6b2a]' : ''
               }`}
@@ -189,12 +194,21 @@ const ProfileNavigation = React.forwardRef(
 
     return (
       <div ref={ref} className="w-full border-b border-gray-200 mb-6 mt-8 bg-white relative">
-        <div className="flex justify-between flex-wrap">
+        <div className="flex justify-between flex-wrap gap-1">
           {navItems.map((item) => (
             <button
               key={item.id}
-              onClick={() => navigate(item.path)}
-              className={`whitespace-nowrap py-3 px-4 md:px-5 flex items-center transition-colors ${
+              onClick={() => {
+                if (item.search) {
+                  navigate({
+                    pathname: item.path,
+                    search: item.search
+                  });
+                } else {
+                  navigate(item.path);
+                }
+              }}
+              className={`whitespace-nowrap py-3 px-3 md:px-4 flex items-center transition-colors ${
                 activeTab === item.id
                   ? 'border-b-3 text-[#35530A] border-[#35530A] font-medium bg-[#f5f8f0] -mb-[1px]'
                   : 'text-gray-600 hover:text-green-800 hover:border-b-2 hover:border-gray-300'

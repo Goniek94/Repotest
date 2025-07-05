@@ -35,11 +35,9 @@ import {
 
 /**
  * Komponent preferencji powiadomień
- * @param {Object} props - Właściwości komponentu
- * @param {Function} props.onBack - Funkcja wywoływana po kliknięciu przycisku powrotu
  * @returns {JSX.Element}
  */
-const NotificationPreferences = ({ onBack }) => {
+const NotificationPreferences = () => {
   const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
   
@@ -186,20 +184,22 @@ const NotificationPreferences = ({ onBack }) => {
   return (
     <Box>
       {/* Nagłówek */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Box display="flex" alignItems="center">
-          <Button
-            startIcon={<ArrowBackIcon />}
-            onClick={onBack}
-            sx={{ mr: 2 }}
-          >
-            Powrót
-          </Button>
-          
-          <Typography variant="h5" component="h1" fontWeight="bold">
-            Preferencje powiadomień
-          </Typography>
-        </Box>
+      <Box 
+        display="flex" 
+        flexDirection={{ xs: 'column', sm: 'row' }} 
+        justifyContent="space-between" 
+        alignItems={{ xs: 'flex-start', sm: 'center' }} 
+        mb={3}
+        gap={2}
+      >
+        <Typography 
+          variant="h5" 
+          component="h1" 
+          fontWeight="bold"
+          sx={{ fontSize: { xs: '1.3rem', sm: '1.5rem' } }}
+        >
+          Preferencje powiadomień
+        </Typography>
         
         <Button
           variant="contained"
@@ -207,6 +207,12 @@ const NotificationPreferences = ({ onBack }) => {
           startIcon={<SaveIcon />}
           onClick={savePreferences}
           disabled={saving}
+          sx={{ 
+            py: { xs: 1.5 },
+            px: { xs: 3 },
+            width: { xs: '100%', sm: 'auto' }
+          }}
+          size="large"
         >
           {saving ? 'Zapisywanie...' : 'Zapisz preferencje'}
         </Button>
@@ -220,8 +226,11 @@ const NotificationPreferences = ({ onBack }) => {
       )}
       
       {/* Opis */}
-      <Paper sx={{ p: 2, mb: 3 }}>
-        <Typography variant="body1">
+      <Paper sx={{ p: { xs: 3, sm: 2 }, mb: 3 }}>
+        <Typography 
+          variant="body1"
+          sx={{ fontSize: { xs: '1rem', sm: '1rem' } }}
+        >
           Dostosuj swoje preferencje powiadomień poniżej. Możesz wybrać, które powiadomienia chcesz otrzymywać i w jakiej formie.
         </Typography>
       </Paper>
@@ -230,15 +239,25 @@ const NotificationPreferences = ({ onBack }) => {
       <Grid container spacing={3}>
         {/* Email */}
         <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 2, height: '100%' }}>
-            <Typography variant="h6" fontWeight="bold" gutterBottom>
-              <span className="material-icons" style={{ verticalAlign: 'middle', marginRight: 8 }}>
+          <Paper sx={{ p: { xs: 3, sm: 2 }, height: '100%' }}>
+            <Typography 
+              variant="h6" 
+              fontWeight="bold" 
+              gutterBottom
+              sx={{ fontSize: { xs: '1.2rem', sm: '1.25rem' } }}
+            >
+              <span className="material-icons" style={{ verticalAlign: 'middle', marginRight: 8, fontSize: '1.5rem' }}>
                 email
               </span>
               Powiadomienia email
             </Typography>
             
-            <Typography variant="body2" color="text.secondary" paragraph>
+            <Typography 
+              variant="body2" 
+              color="text.secondary" 
+              paragraph
+              sx={{ fontSize: { xs: '1rem', sm: '0.875rem' } }}
+            >
               Powiadomienia wysyłane na Twój adres email. Idealne dla ważnych informacji, które nie wymagają natychmiastowej reakcji.
             </Typography>
             
@@ -251,9 +270,17 @@ const NotificationPreferences = ({ onBack }) => {
                 onChange={handleAccordionChange(`email-${group}`)}
                 sx={{ mb: 1 }}
               >
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <AccordionSummary 
+                  expandIcon={<ExpandMoreIcon sx={{ fontSize: { xs: '1.5rem', sm: '1.25rem' } }} />}
+                  sx={{ 
+                    minHeight: { xs: 56, sm: 48 },
+                    py: { xs: 0.5, sm: 0 }
+                  }}
+                >
                   <Box display="flex" alignItems="center" justifyContent="space-between" width="100%" pr={2}>
-                    <Typography>{groupNames[group]}</Typography>
+                    <Typography sx={{ fontSize: { xs: '1rem', sm: '0.875rem' } }}>
+                      {groupNames[group]}
+                    </Typography>
                     
                     <FormControlLabel
                       control={
@@ -263,6 +290,16 @@ const NotificationPreferences = ({ onBack }) => {
                           onChange={(e) => handleGroupSwitchChange('email', group, e.target.checked)}
                           onClick={(e) => e.stopPropagation()}
                           onFocus={(e) => e.stopPropagation()}
+                          sx={{ 
+                            '& .MuiSwitch-thumb': { 
+                              width: { xs: 20, sm: 16 },
+                              height: { xs: 20, sm: 16 }
+                            },
+                            '& .MuiSwitch-track': {
+                              width: { xs: 40, sm: 32 },
+                              height: { xs: 24, sm: 20 }
+                            }
+                          }}
                         />
                       }
                       label=""
@@ -271,7 +308,7 @@ const NotificationPreferences = ({ onBack }) => {
                   </Box>
                 </AccordionSummary>
                 
-                <AccordionDetails>
+                <AccordionDetails sx={{ pt: { xs: 1, sm: 0 }, pb: { xs: 2, sm: 1 } }}>
                   <FormGroup>
                     {notificationGroups[group].map(type => {
                       const preferenceKey = typeToPreferenceKey(type);
@@ -282,9 +319,25 @@ const NotificationPreferences = ({ onBack }) => {
                             <Switch
                               checked={preferences.email[preferenceKey] || false}
                               onChange={(e) => handleSwitchChange('email', preferenceKey, e.target.checked)}
+                              sx={{ 
+                                '& .MuiSwitch-thumb': { 
+                                  width: { xs: 20, sm: 16 },
+                                  height: { xs: 20, sm: 16 }
+                                },
+                                '& .MuiSwitch-track': {
+                                  width: { xs: 40, sm: 32 },
+                                  height: { xs: 24, sm: 20 }
+                                }
+                              }}
                             />
                           }
                           label={getNotificationTypeName(type)}
+                          sx={{ 
+                            '& .MuiFormControlLabel-label': { 
+                              fontSize: { xs: '1rem', sm: '0.875rem' } 
+                            },
+                            my: { xs: 0.5, sm: 0 }
+                          }}
                         />
                       );
                     })}
@@ -297,15 +350,25 @@ const NotificationPreferences = ({ onBack }) => {
         
         {/* Push */}
         <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 2, height: '100%' }}>
-            <Typography variant="h6" fontWeight="bold" gutterBottom>
-              <span className="material-icons" style={{ verticalAlign: 'middle', marginRight: 8 }}>
+          <Paper sx={{ p: { xs: 3, sm: 2 }, height: '100%' }}>
+            <Typography 
+              variant="h6" 
+              fontWeight="bold" 
+              gutterBottom
+              sx={{ fontSize: { xs: '1.2rem', sm: '1.25rem' } }}
+            >
+              <span className="material-icons" style={{ verticalAlign: 'middle', marginRight: 8, fontSize: '1.5rem' }}>
                 notifications
               </span>
               Powiadomienia w aplikacji
             </Typography>
             
-            <Typography variant="body2" color="text.secondary" paragraph>
+            <Typography 
+              variant="body2" 
+              color="text.secondary" 
+              paragraph
+              sx={{ fontSize: { xs: '1rem', sm: '0.875rem' } }}
+            >
               Powiadomienia wyświetlane w aplikacji. Idealne dla bieżących informacji, które chcesz zobaczyć podczas korzystania z serwisu.
             </Typography>
             
@@ -318,9 +381,17 @@ const NotificationPreferences = ({ onBack }) => {
                 onChange={handleAccordionChange(`push-${group}`)}
                 sx={{ mb: 1 }}
               >
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <AccordionSummary 
+                  expandIcon={<ExpandMoreIcon sx={{ fontSize: { xs: '1.5rem', sm: '1.25rem' } }} />}
+                  sx={{ 
+                    minHeight: { xs: 56, sm: 48 },
+                    py: { xs: 0.5, sm: 0 }
+                  }}
+                >
                   <Box display="flex" alignItems="center" justifyContent="space-between" width="100%" pr={2}>
-                    <Typography>{groupNames[group]}</Typography>
+                    <Typography sx={{ fontSize: { xs: '1rem', sm: '0.875rem' } }}>
+                      {groupNames[group]}
+                    </Typography>
                     
                     <FormControlLabel
                       control={
@@ -330,6 +401,16 @@ const NotificationPreferences = ({ onBack }) => {
                           onChange={(e) => handleGroupSwitchChange('push', group, e.target.checked)}
                           onClick={(e) => e.stopPropagation()}
                           onFocus={(e) => e.stopPropagation()}
+                          sx={{ 
+                            '& .MuiSwitch-thumb': { 
+                              width: { xs: 20, sm: 16 },
+                              height: { xs: 20, sm: 16 }
+                            },
+                            '& .MuiSwitch-track': {
+                              width: { xs: 40, sm: 32 },
+                              height: { xs: 24, sm: 20 }
+                            }
+                          }}
                         />
                       }
                       label=""
@@ -338,7 +419,7 @@ const NotificationPreferences = ({ onBack }) => {
                   </Box>
                 </AccordionSummary>
                 
-                <AccordionDetails>
+                <AccordionDetails sx={{ pt: { xs: 1, sm: 0 }, pb: { xs: 2, sm: 1 } }}>
                   <FormGroup>
                     {notificationGroups[group].map(type => {
                       const preferenceKey = typeToPreferenceKey(type);
@@ -349,9 +430,25 @@ const NotificationPreferences = ({ onBack }) => {
                             <Switch
                               checked={preferences.push[preferenceKey] || false}
                               onChange={(e) => handleSwitchChange('push', preferenceKey, e.target.checked)}
+                              sx={{ 
+                                '& .MuiSwitch-thumb': { 
+                                  width: { xs: 20, sm: 16 },
+                                  height: { xs: 20, sm: 16 }
+                                },
+                                '& .MuiSwitch-track': {
+                                  width: { xs: 40, sm: 32 },
+                                  height: { xs: 24, sm: 20 }
+                                }
+                              }}
                             />
                           }
                           label={getNotificationTypeName(type)}
+                          sx={{ 
+                            '& .MuiFormControlLabel-label': { 
+                              fontSize: { xs: '1rem', sm: '0.875rem' } 
+                            },
+                            my: { xs: 0.5, sm: 0 }
+                          }}
                         />
                       );
                     })}
@@ -364,15 +461,25 @@ const NotificationPreferences = ({ onBack }) => {
         
         {/* SMS */}
         <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 2, height: '100%' }}>
-            <Typography variant="h6" fontWeight="bold" gutterBottom>
-              <span className="material-icons" style={{ verticalAlign: 'middle', marginRight: 8 }}>
+          <Paper sx={{ p: { xs: 3, sm: 2 }, height: '100%' }}>
+            <Typography 
+              variant="h6" 
+              fontWeight="bold" 
+              gutterBottom
+              sx={{ fontSize: { xs: '1.2rem', sm: '1.25rem' } }}
+            >
+              <span className="material-icons" style={{ verticalAlign: 'middle', marginRight: 8, fontSize: '1.5rem' }}>
                 sms
               </span>
               Powiadomienia SMS
             </Typography>
             
-            <Typography variant="body2" color="text.secondary" paragraph>
+            <Typography 
+              variant="body2" 
+              color="text.secondary" 
+              paragraph
+              sx={{ fontSize: { xs: '1rem', sm: '0.875rem' } }}
+            >
               Powiadomienia wysyłane jako wiadomości SMS. Idealne dla krytycznych informacji, które wymagają natychmiastowej uwagi.
             </Typography>
             
@@ -385,9 +492,17 @@ const NotificationPreferences = ({ onBack }) => {
                 onChange={handleAccordionChange(`sms-${group}`)}
                 sx={{ mb: 1 }}
               >
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <AccordionSummary 
+                  expandIcon={<ExpandMoreIcon sx={{ fontSize: { xs: '1.5rem', sm: '1.25rem' } }} />}
+                  sx={{ 
+                    minHeight: { xs: 56, sm: 48 },
+                    py: { xs: 0.5, sm: 0 }
+                  }}
+                >
                   <Box display="flex" alignItems="center" justifyContent="space-between" width="100%" pr={2}>
-                    <Typography>{groupNames[group]}</Typography>
+                    <Typography sx={{ fontSize: { xs: '1rem', sm: '0.875rem' } }}>
+                      {groupNames[group]}
+                    </Typography>
                     
                     <FormControlLabel
                       control={
@@ -397,6 +512,16 @@ const NotificationPreferences = ({ onBack }) => {
                           onChange={(e) => handleGroupSwitchChange('sms', group, e.target.checked)}
                           onClick={(e) => e.stopPropagation()}
                           onFocus={(e) => e.stopPropagation()}
+                          sx={{ 
+                            '& .MuiSwitch-thumb': { 
+                              width: { xs: 20, sm: 16 },
+                              height: { xs: 20, sm: 16 }
+                            },
+                            '& .MuiSwitch-track': {
+                              width: { xs: 40, sm: 32 },
+                              height: { xs: 24, sm: 20 }
+                            }
+                          }}
                         />
                       }
                       label=""
@@ -405,7 +530,7 @@ const NotificationPreferences = ({ onBack }) => {
                   </Box>
                 </AccordionSummary>
                 
-                <AccordionDetails>
+                <AccordionDetails sx={{ pt: { xs: 1, sm: 0 }, pb: { xs: 2, sm: 1 } }}>
                   <FormGroup>
                     {notificationGroups[group].map(type => {
                       const preferenceKey = typeToPreferenceKey(type);
@@ -416,9 +541,25 @@ const NotificationPreferences = ({ onBack }) => {
                             <Switch
                               checked={preferences.sms[preferenceKey] || false}
                               onChange={(e) => handleSwitchChange('sms', preferenceKey, e.target.checked)}
+                              sx={{ 
+                                '& .MuiSwitch-thumb': { 
+                                  width: { xs: 20, sm: 16 },
+                                  height: { xs: 20, sm: 16 }
+                                },
+                                '& .MuiSwitch-track': {
+                                  width: { xs: 40, sm: 32 },
+                                  height: { xs: 24, sm: 20 }
+                                }
+                              }}
                             />
                           }
                           label={getNotificationTypeName(type)}
+                          sx={{ 
+                            '& .MuiFormControlLabel-label': { 
+                              fontSize: { xs: '1rem', sm: '0.875rem' } 
+                            },
+                            my: { xs: 0.5, sm: 0 }
+                          }}
                         />
                       );
                     })}
@@ -431,7 +572,12 @@ const NotificationPreferences = ({ onBack }) => {
       </Grid>
       
       {/* Przycisk zapisz */}
-      <Box display="flex" justifyContent="flex-end" mt={3}>
+      <Box 
+        display="flex" 
+        justifyContent={{ xs: 'center', sm: 'flex-end' }} 
+        mt={4}
+        mb={{ xs: 4, sm: 2 }}
+      >
         <Button
           variant="contained"
           color="primary"
@@ -439,6 +585,12 @@ const NotificationPreferences = ({ onBack }) => {
           onClick={savePreferences}
           disabled={saving}
           size="large"
+          sx={{ 
+            py: { xs: 1.5, sm: 1 },
+            px: { xs: 4, sm: 3 },
+            width: { xs: '100%', sm: 'auto' },
+            fontSize: { xs: '1rem', sm: '0.9rem' }
+          }}
         >
           {saving ? 'Zapisywanie...' : 'Zapisz preferencje'}
         </Button>

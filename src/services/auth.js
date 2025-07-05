@@ -1,5 +1,6 @@
 import apiClient from './api/client';
 import { setAuthData, clearAuthData, getUserData } from './api/config';
+import { debug } from '../utils/debug';
 
 const AuthService = {
   // Logowanie użytkownika - usunięto podwójny prefix /api/

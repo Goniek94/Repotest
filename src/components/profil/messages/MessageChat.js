@@ -15,13 +15,18 @@ const MessageChat = memo(({
   currentUser,
   loading,
   onDeleteMessage,
-  onArchiveMessage
+  onArchiveMessage,
+  onReplyToMessage
 }) => {
   const { user } = useAuth();
   const messagesEndRef = useRef(null);
   
-  // Przewijanie do najnowszej wiadomości zostało świadomie wyłączone,
-  // aby użytkownik zachował pełną kontrolę nad pozycją scrolla.
+  // Automatyczne przewijanie do najnowszej wiadomości
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
   
   // Memoizacja funkcji formatowania czasu - zapobiega niepotrzebnym re-renderom
   const formatMessageTime = useCallback((dateString) => {
@@ -105,6 +110,12 @@ const MessageChat = memo(({
       onArchiveMessage(messageId);
     }
   }, [onArchiveMessage]);
+  
+  const handleReplyToMessage = useCallback((message) => {
+    if (onReplyToMessage) {
+      onReplyToMessage(message);
+    }
+  }, [onReplyToMessage]);
 
   // Komponent LoadingSpinner - wyodrębniony dla lepszej czytelności
   const LoadingSpinner = useCallback(() => (
@@ -182,29 +193,50 @@ const MessageChat = memo(({
                 : 'bg-white text-gray-800 rounded-bl-none'
             }`}
           >
-            {/* Przyciski akcji dla wiadomości użytkownika */}
-            {isCurrentUser && (
-              <div className="absolute -top-2 right-0 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                {onArchiveMessage && (
-                  <button
-                    onClick={() => handleArchiveMessage(message.id)}
-                    className="p-1 rounded-full bg-white bg-opacity-20 hover:bg-opacity-40 text-white transition-all"
-                    aria-label="Archiwizuj wiadomość"
-                  >
-                    <Archive className="w-3 h-3" />
-                  </button>
-                )}
-                {onDeleteMessage && (
-                  <button
-                    onClick={() => handleDeleteMessage(message.id)}
-                    className="p-1 rounded-full bg-white bg-opacity-20 hover:bg-opacity-40 text-white transition-all"
-                    aria-label="Usuń wiadomość"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                )}
-              </div>
-            )}
+            {/* Przyciski akcji dla wiadomości */}
+            <div className={`absolute -top-2 ${isCurrentUser ? 'right-0' : 'left-0'} flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity`}>
+              {/* Przycisk odpowiedzi - dla wszystkich wiadomości */}
+              {onReplyToMessage && (
+                <button
+                  onClick={() => handleReplyToMessage(message)}
+                  className={`p-1 rounded-full ${
+                    isCurrentUser 
+                      ? 'bg-white bg-opacity-20 hover:bg-opacity-40 text-white' 
+                      : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                  } transition-all`}
+                  aria-label="Odpowiedz na wiadomość"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 17 4 12 9 7"></polyline>
+                    <path d="M20 18v-2a4 4 0 0 0-4-4H4"></path>
+                  </svg>
+                </button>
+              )}
+              
+              {/* Przyciski tylko dla wiadomości użytkownika */}
+              {isCurrentUser && (
+                <>
+                  {onArchiveMessage && (
+                    <button
+                      onClick={() => handleArchiveMessage(message.id)}
+                      className="p-1 rounded-full bg-white bg-opacity-20 hover:bg-opacity-40 text-white transition-all"
+                      aria-label="Archiwizuj wiadomość"
+                    >
+                      <Archive className="w-3 h-3" />
+                    </button>
+                  )}
+                  {onDeleteMessage && (
+                    <button
+                      onClick={() => handleDeleteMessage(message.id)}
+                      className="p-1 rounded-full bg-white bg-opacity-20 hover:bg-opacity-40 text-white transition-all"
+                      aria-label="Usuń wiadomość"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
             
             {/* Treść wiadomości */}
             <div className="whitespace-pre-wrap break-words">{message.content}</div>

@@ -2,6 +2,7 @@
 
 import apiClient from '../client';
 import { getAuthToken } from '../config';
+import { debug } from '../../../utils/debug';
 
 // Maksymalna liczba prób ponownego wykonania zapytania
 const MAX_RETRIES = 3;
@@ -43,8 +44,9 @@ const send = (messageData) => {
   
   debug('Wysyłanie nowej wiadomości:', messageData instanceof FormData ? '[FormData]' : messageData);
   
+  // Dla FormData nie ustawiamy Content-Type - axios zrobi to automatycznie z boundary
   const config = messageData instanceof FormData 
-    ? { headers: { 'Content-Type': 'multipart/form-data' } }
+    ? {} 
     : {};
   
   return executeWithRetry(() => 
@@ -75,8 +77,9 @@ const sendToUser = (userId, messageData) => {
   
   debug(`Wysyłanie wiadomości do użytkownika ${userId}:`, messageData instanceof FormData ? '[FormData]' : messageData);
   
+  // Dla FormData nie ustawiamy Content-Type - axios zrobi to automatycznie z boundary
   const config = messageData instanceof FormData 
-    ? { headers: { 'Content-Type': 'multipart/form-data' } }
+    ? {} 
     : {};
   
   return executeWithRetry(() => 
@@ -107,8 +110,9 @@ const sendToAd = (adId, messageData) => {
   
   debug(`Wysyłanie wiadomości do właściciela ogłoszenia ${adId}:`, messageData instanceof FormData ? '[FormData]' : messageData);
   
+  // Dla FormData nie ustawiamy Content-Type - axios zrobi to automatycznie z boundary
   const config = messageData instanceof FormData 
-    ? { headers: { 'Content-Type': 'multipart/form-data' } }
+    ? {} 
     : {};
   
   return executeWithRetry(() => 
@@ -139,8 +143,9 @@ const replyToMessage = (messageId, messageData) => {
   
   debug(`Odpowiadanie na wiadomość ${messageId}:`, messageData instanceof FormData ? '[FormData]' : messageData);
   
+  // Dla FormData nie ustawiamy Content-Type - axios zrobi to automatycznie z boundary
   const config = messageData instanceof FormData 
-    ? { headers: { 'Content-Type': 'multipart/form-data' } }
+    ? {} 
     : {};
   
   return executeWithRetry(() => 

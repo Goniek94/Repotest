@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+79i0 t React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BasicInfoSection from './sections/BasicInfoSection';
 import VehicleStatusSection from './sections/VehicleStatusSection';
@@ -34,11 +34,17 @@ const CreateListingForm = () => {
     description: false
   });
 
+  // Stan do kontrolowania widoku podsumowania
+  const [showSummary, setShowSummary] = useState(false);
+
   // Obsługa submitu formularza
   const handleSubmit = (e) => {
     e.preventDefault();
 
+
     if (validateForm()) {
+      
+      // Przekierowanie bezpośrednio do AddListingView z danymi formularza
       navigate('/add-listing-view', { state: { listingData: formData } });
     } else {
       showToast('Proszę poprawić błędy w formularzu', 'error');
@@ -49,6 +55,16 @@ const CreateListingForm = () => {
         element.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     }
+  };
+
+  // Funkcja do powrotu z podsumowania do formularza
+  const handleBackFromSummary = () => {
+    setShowSummary(false);
+  };
+
+  // Funkcja do przejścia do płatności
+  const handleContinueToPayment = () => {
+    navigate('/add-listing-view', { state: { listingData: formData } });
   };
 
   // Obsługa przełączania sekcji
@@ -69,6 +85,8 @@ const CreateListingForm = () => {
       <span className={`transform transition-transform ${isOpen ? 'rotate-180' : ''}`}>▼</span>
     </div>
   );
+
+  // Usunięto renderowanie komponentu ListingSummary
 
   return (
     <div className="min-h-screen bg-gray-50 py-6">

@@ -13,6 +13,11 @@ import getImageUrl from '../../utils/responsive/getImageUrl';
 const MainFeatureListing = ({ listing }) => {
   const navigate = useNavigate();
 
+  // Sprawdzenie czy listing istnieje
+  if (!listing) {
+    return null;
+  }
+
   // Tworzenie tytułu z brand/make i model
   const title = `${listing.brand || listing.make || ''} ${listing.model || ''}`.trim();
   
@@ -25,14 +30,20 @@ const MainFeatureListing = ({ listing }) => {
   const power = listing.power || '150 KM';
   const transmission = listing.transmission || 'Automatyczna';
   const capacity = listing.capacity || 2000;
-  
+  const drive = listing.drive || 'Na przednie koła';
+
   // Bezpieczny dostęp do obrazu (główne zdjęcie ustawione przez użytkownika)
   let imageUrl = null;
+
   if (listing.images && listing.images.length > 0) {
-    const mainIdx = typeof listing.mainImageIndex === 'number' && listing.mainImageIndex >= 0 && listing.mainImageIndex < listing.images.length
+    const mainIdx = typeof listing.mainImageIndex === 'number' &&
+                    listing.mainImageIndex >= 0 &&
+                    listing.mainImageIndex < listing.images.length
       ? listing.mainImageIndex
       : 0;
     imageUrl = getImageUrl(listing.images[mainIdx]);
+  } else {
+    imageUrl = getImageUrl(null);
   }
 
   return (
@@ -73,7 +84,7 @@ const MainFeatureListing = ({ listing }) => {
           <SpecItem icon={<MileageIcon className="w-4 h-4" />} label="Przebieg" value={`${mileage} km`} />
           <SpecItem icon={<PowerIcon className="w-4 h-4" />} label="Moc" value={power} />
           <SpecItem icon={<GearboxIcon className="w-4 h-4" />} label="Skrzynia" value={transmission} />
-          <SpecItem icon={<CapacityIcon className="w-4 h-4" />} label="Pojemność" value={`${capacity} cm³`} />
+          <SpecItem icon={<DriveIcon className="w-4 h-4" />} label="Napęd" value={drive} />
         </div>
       </div>
 

@@ -9,6 +9,7 @@ import Notifications from './notifications/Notifications';
 import TransactionHistory from './TransactionHistory';
 import UserSettings from './settings/UserSettings';
 import ViewHistoryPage from './ViewHistoryPage';
+import ContactPage from './contact/ContactPage';
 
 /**
  * Komponent obsługujący routing w panelu użytkownika
@@ -29,6 +30,7 @@ const UserProfileRoutes = () => {
         <Route path="notifications" element={<Notifications />} />
         <Route path="history" element={<ViewHistoryPage />} />
         <Route path="transactions" element={<TransactionHistory />} />
+        <Route path="contact" element={<ContactPage />} />
         <Route path="settings/*" element={<UserSettings />} />
         
         {/* Przekierowanie nieznanych ścieżek do dashboardu */}

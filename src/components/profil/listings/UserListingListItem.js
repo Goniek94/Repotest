@@ -76,14 +76,6 @@ const UserListingListItem = memo(({
           // Pobierz URL zdjęcia
           let imageUrl = null;
           
-          // Dodatkowe logowanie dla debugowania
-          console.log('Renderowanie zdjęcia dla ogłoszenia:', listing.id || listing._id);
-          console.log('Dane zdjęć:', {
-            images: listing.images,
-            mainImageIndex: listing.mainImageIndex,
-            image: listing.image
-          });
-          
           // Sprawdź, czy mamy tablicę zdjęć
           if (listing.images && Array.isArray(listing.images) && listing.images.length > 0) {
             // Wybierz główne zdjęcie lub pierwsze dostępne
@@ -93,27 +85,15 @@ const UserListingListItem = memo(({
                               ? listing.mainImageIndex 
                               : 0;
             
-            console.log(`Używam zdjęcia z indeksem ${mainIndex} z ${listing.images.length} dostępnych`);
             const selectedImage = listing.images[mainIndex];
             
             // Użyj getImageUrl do przetworzenia URL-a
             imageUrl = getImageUrl(selectedImage);
-            
-            // Jeśli getImageUrl zwróciło null, spróbuj użyć oryginalnego URL-a
-            if (!imageUrl && selectedImage) {
-              console.log('getImageUrl zwróciło null dla:', selectedImage);
-              imageUrl = selectedImage;
-            }
           } 
           // Jeśli nie mamy tablicy zdjęć, sprawdź czy jest pojedyncze zdjęcie
           else if (listing.image) {
-            console.log('Brak tablicy zdjęć, używam pojedynczego zdjęcia:', listing.image);
             imageUrl = getImageUrl(listing.image);
           }
-          
-          // Logowanie dla debugowania
-          console.log('Listing ID:', listing.id || listing._id);
-          console.log('Ostateczny URL zdjęcia:', imageUrl);
           
           // Jeśli jest URL zdjęcia, renderuj zdjęcie
           if (imageUrl) {
@@ -130,30 +110,9 @@ const UserListingListItem = memo(({
                 }}
                 loading="lazy"
                 onError={e => {
-                  console.error('Błąd ładowania zdjęcia dla ogłoszenia:', listing.id || listing._id);
-                  
-                  // Próba załadowania innego zdjęcia z tablicy, jeśli istnieje
-                  if (listing.images && Array.isArray(listing.images) && listing.images.length > 1) {
-                    // Znajdź indeks aktualnego zdjęcia
-                    const currentSrc = e.target.src;
-                    const currentIndex = listing.images.findIndex(img => {
-                      const imgUrl = getImageUrl(img);
-                      return imgUrl && (currentSrc.includes(img) || imgUrl === currentSrc);
-                    });
-                    
-                    // Jeśli znaleziono indeks i istnieją inne zdjęcia, spróbuj załadować następne
-                    if (currentIndex !== -1 && listing.images.length > currentIndex + 1) {
-                      console.log('Próba załadowania alternatywnego zdjęcia:', currentIndex + 1);
-                      const nextImageUrl = getImageUrl(listing.images[currentIndex + 1]);
-                      if (nextImageUrl) {
-                        e.target.src = nextImageUrl;
-                        return;
-                      }
-                    }
-                  }
-                  
-                  // Jeśli nie udało się znaleźć alternatywnego zdjęcia, ukryj element
-                  e.target.style.display = 'none';
+                  // Ustaw domyślne zdjęcie w przypadku błędu
+                  e.target.onerror = null;
+                  e.target.src = '/images/auto-788747_1280.jpg';
                 }}
               />
             );
@@ -255,14 +214,9 @@ const UserListingListItem = memo(({
           <button
             onClick={e => { 
               e.stopPropagation(); 
-              console.log('Edit button clicked for listing:', listing.id || listing._id);
-              console.log('onEditNew exists:', !!onEditNew);
-              console.log('onEdit exists:', !!onEdit);
               if (onEditNew) {
-                console.log('Calling onEditNew...');
                 onEditNew(listing.id || listing._id);
               } else if (onEdit) {
-                console.log('Calling onEdit...');
                 onEdit(listing.id || listing._id);
               }
             }}

@@ -20,16 +20,16 @@ const EmptyState = ({ icon, title, description, actionText, onAction }) => {
       alignItems="center"
       justifyContent="center"
       textAlign="center"
-      py={4}
-      px={2}
+      py={{ xs: 6, sm: 4 }}
+      px={{ xs: 3, sm: 2 }}
     >
       {/* Ikona */}
       {icon && (
         <Box
           sx={{
-            fontSize: 64,
+            fontSize: { xs: 80, sm: 64 },
             color: 'text.secondary',
-            mb: 2
+            mb: { xs: 3, sm: 2 }
           }}
           className="material-icons"
         >
@@ -39,14 +39,31 @@ const EmptyState = ({ icon, title, description, actionText, onAction }) => {
       
       {/* Tytuł */}
       {title && (
-        <Typography variant="h6" gutterBottom>
+        <Typography 
+          variant="h6" 
+          gutterBottom
+          sx={{ 
+            fontSize: { xs: '1.3rem', sm: '1.25rem' },
+            fontWeight: { xs: 600, sm: 500 },
+            mb: { xs: 2, sm: 1 }
+          }}
+        >
           {title}
         </Typography>
       )}
       
       {/* Opis */}
       {description && (
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+        <Typography 
+          variant="body2" 
+          color="text.secondary" 
+          sx={{ 
+            mb: { xs: 4, sm: 3 },
+            fontSize: { xs: '1rem', sm: '0.875rem' },
+            maxWidth: { xs: '90%', sm: '80%' },
+            mx: 'auto'
+          }}
+        >
           {description}
         </Typography>
       )}
@@ -57,6 +74,11 @@ const EmptyState = ({ icon, title, description, actionText, onAction }) => {
           variant="outlined"
           color="primary"
           onClick={onAction}
+          sx={{ 
+            py: { xs: 1.5, sm: 1 },
+            px: { xs: 4, sm: 3 },
+            fontSize: { xs: '1rem', sm: '0.875rem' }
+          }}
         >
           {actionText}
         </Button>

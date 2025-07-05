@@ -7,6 +7,7 @@ import SearchFormButtons from "./SearchFormButtons";
 import { bodyTypes, advancedOptions, regions } from "./SearchFormConstants";
 import AdsService from "../../services/ads";
 import useCarData from './hooks/useCarData';
+import { safeConsole } from '../../utils/debug';
 
 /**
  * Zaktualizowany komponent formularza wyszukiwania
@@ -221,7 +222,7 @@ export default function SearchFormUpdated({ initialValues = {}, onFilterChange }
         const res = await AdsService.getCount(params);
         if (!ignore) setMatchingResults(res.data.count || 0);
       } catch (e) {
-        console.error('Błąd podczas pobierania liczby wyników:', e);
+        safeConsole.error('Błąd podczas pobierania liczby wyników:', e);
         if (!ignore) setMatchingResults(0);
       }
     };

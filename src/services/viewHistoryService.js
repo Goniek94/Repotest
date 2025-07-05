@@ -2,6 +2,7 @@
  * Serwis do zarządzania historią przeglądania ogłoszeń
  * Przechowuje tylko ID ogłoszeń w localStorage
  */
+import { debug } from '../utils/debug';
 
 const STORAGE_KEY = 'viewHistory';
 const MAX_HISTORY_LENGTH = 4; // Maksymalna liczba przechowywanych ID ogłoszeń

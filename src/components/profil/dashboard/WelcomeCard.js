@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
+import useBreakpoint from '../../../utils/responsive/useBreakpoint';
 import { 
   Settings, 
   PlusCircle, 
@@ -9,7 +10,8 @@ import {
   Eye, 
   UserCheck, 
   ChevronRight,
-  Star 
+  Star,
+  UserCog
 } from 'lucide-react';
 
 // Główny kolor
@@ -27,6 +29,7 @@ const PRIMARY_COLOR = '#35530A';
 const WelcomeCard = ({ user, userStats, isMobile, recentAds = [], activities = [] }) => {
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
+  const { isMobileOrTablet } = useBreakpoint();
   
   // Liczniki nieprzeczytanych wiadomości i powiadomień
   // W rzeczywistej implementacji te wartości powinny być pobierane z API
@@ -80,14 +83,6 @@ const WelcomeCard = ({ user, userStats, isMobile, recentAds = [], activities = [
     setProfileCompleteness(calculateProfileCompleteness());
   }, [user]);
 
-  // Inicjał użytkownika
-  const getInitial = () => {
-    if (user && user.name && user.name.length > 0) {
-      return user.name.charAt(0).toUpperCase();
-    }
-    return 'U';
-  };
-  
   // Imię użytkownika
   const userName = user && user.name ? user.name : 'Użytkowniku';
   
@@ -95,7 +90,7 @@ const WelcomeCard = ({ user, userStats, isMobile, recentAds = [], activities = [
   // Szybkie akcje
   const quickActions = [
     { icon: <Eye size={16} />, label: 'Ostatnio oglądane', path: '/profil/history' },
-    { icon: <MessageSquare size={16} />, label: 'Wiadomości', path: '/profil/messages' },
+    { icon: <MessageSquare size={16} />, label: 'Wiadomości', path: '/profil/messages?folder=odebrane' },
     { icon: <Bell size={16} />, label: 'Powiadomienia', path: '/profil/notifications' }
   ];
   
@@ -123,45 +118,37 @@ const WelcomeCard = ({ user, userStats, isMobile, recentAds = [], activities = [
          style={{ background: PRIMARY_COLOR, borderRadius: '12px' }}>
          
       {/* Przypięte etykiety - nieodczytane powiadomienia/wiadomości */}
-      {(unreadMessages > 0 || newNotifications > 0) && (
-        <div className="absolute top-0 right-0 flex space-x-2 m-2 sm:m-3">
-          {unreadMessages > 0 && (
-            <div className="bg-blue-600 px-2 py-1 rounded-full text-xs font-semibold flex items-center">
-              <MessageSquare size={12} className="mr-1" />
-              {unreadMessages}
-            </div>
-          )}
-          {newNotifications > 0 && (
-            <div className="bg-amber-500 px-2 py-1 rounded-full text-xs font-semibold flex items-center">
-              <Bell size={12} className="mr-1" />
-              {newNotifications}
-            </div>
-          )}
-        </div>
-      )}
-      
-      {/* Górna część z avatarem i powitaniem */}
-      <div className="p-4 sm:p-5 md:p-6 lg:p-8 relative">
-        {/* Przycisk Panel Administratora - widoczny tylko dla administratorów */}
-        {isAdmin() && (
+      <div className="absolute top-0 right-0 flex space-x-2 m-2 sm:m-3">
+        {/* Przycisk panelu administratora - widoczny tylko na desktopach */}
+        {isAdmin && !isMobileOrTablet && (
           <button 
-            className="absolute top-4 right-4 sm:top-5 sm:right-5 md:top-6 md:right-6 lg:top-8 lg:right-8 bg-yellow-500 hover:bg-yellow-600 text-green-800 font-bold py-1.5 px-3 rounded-md shadow-md text-xs sm:text-sm transition-colors duration-200 flex items-center"
             onClick={() => navigate('/admin')}
+            className="hidden lg:flex bg-amber-500 hover:bg-amber-600 px-3 py-1.5 rounded-md text-xs font-semibold items-center transition-colors"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-            </svg>
+            <UserCog size={14} className="mr-1.5" />
             Panel Administratora
           </button>
         )}
-        <div className="flex items-center">
-          {/* Avatar z inicjałem - zwiększone rozmiary */}
-          <div className="bg-opacity-30 bg-white h-14 w-14 sm:h-16 sm:w-16 md:h-20 md:w-20 lg:h-24 lg:w-24 rounded-full flex items-center justify-center mr-4 sm:mr-5 md:mr-6 border-2 border-opacity-20 border-white shadow-lg">
-            <span className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold">{getInitial()}</span>
+        
+        {unreadMessages > 0 && (
+          <div className="bg-blue-600 px-2 py-1 rounded-full text-xs font-semibold flex items-center">
+            <MessageSquare size={12} className="mr-1" />
+            {unreadMessages}
           </div>
-          
+        )}
+        {newNotifications > 0 && (
+          <div className="bg-amber-500 px-2 py-1 rounded-full text-xs font-semibold flex items-center">
+            <Bell size={12} className="mr-1" />
+            {newNotifications}
+          </div>
+        )}
+      </div>
+      
+      {/* Górna część z avatarem i powitaniem */}
+      <div className="p-4 sm:p-5 md:p-6 lg:p-8 relative">
+        <div className="flex flex-col">
           {/* Powitanie i ostatnie logowanie */}
-          <div className="flex-1">
+          <div className="w-full">
             <h2 className="text-xl sm:text-2xl md:text-3xl font-bold">Witaj, {userName}!</h2>
             <div className="flex items-center text-sm sm:text-base opacity-90 mt-1 sm:mt-2">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
@@ -198,12 +185,15 @@ const WelcomeCard = ({ user, userStats, isMobile, recentAds = [], activities = [
             </div>
             
             {/* Status konta */}
-            <div className="mt-2 flex items-center">
-              <UserCheck size={14} className="mr-1.5" />
-              <span className="text-xs sm:text-sm">Konto zweryfikowane</span>
-              <span className="mx-2 text-xs opacity-50">•</span>
-              <Star size={14} className="mr-1.5" />
-              <span className="text-xs sm:text-sm">{getUserSinceText()}</span>
+            <div className="mt-2 flex flex-wrap items-center">
+              <div className="flex items-center mr-3 mb-1">
+                <UserCheck size={14} className="mr-1.5" />
+                <span className="text-xs sm:text-sm">Konto zweryfikowane</span>
+              </div>
+              <div className="flex items-center">
+                <Star size={14} className="mr-1.5" />
+                <span className="text-xs sm:text-sm">{getUserSinceText()}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -247,8 +237,8 @@ const WelcomeCard = ({ user, userStats, isMobile, recentAds = [], activities = [
       </div>
       
       {/* Dolna sekcja ze statystykami */}
-      <div className="grid grid-cols-3 text-white border-t border-opacity-20 border-white">
-        <div className="py-3 sm:py-4 md:py-5 px-3 sm:px-4 text-center border-r border-opacity-20 border-white">
+      <div className={`grid ${isMobile ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-3'} text-white border-t border-opacity-20 border-white`}>
+        <div className={`py-3 sm:py-4 md:py-5 px-3 sm:px-4 text-center ${isMobile ? 'border-b sm:border-b-0 sm:border-r' : 'border-r'} border-opacity-20 border-white`}>
           <div className="text-xs xs:text-sm sm:text-base text-opacity-80 text-white">
             Aktywne ogłoszenia
           </div>
@@ -257,7 +247,7 @@ const WelcomeCard = ({ user, userStats, isMobile, recentAds = [], activities = [
           </div>
         </div>
         
-        <div className="py-3 sm:py-4 md:py-5 px-3 sm:px-4 text-center border-r border-opacity-20 border-white">
+        <div className={`py-3 sm:py-4 md:py-5 px-3 sm:px-4 text-center ${isMobile ? 'border-b sm:border-b-0 sm:border-r' : 'border-r'} border-opacity-20 border-white`}>
           <div className="text-xs xs:text-sm sm:text-base text-opacity-80 text-white">
             Zakończone transakcje
           </div>

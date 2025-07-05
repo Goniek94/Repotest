@@ -1,6 +1,16 @@
 // src/services/api/client.js
 import axios from 'axios';
-import { API_URL, API_TIMEOUT, getAuthToken, clearAuthData } from './config';
+import { 
+  API_URL, 
+  API_TIMEOUT, 
+  getAuthToken, 
+  clearAuthData, 
+  IS_PRODUCTION,
+  CACHE_TTL,
+  MAX_RETRIES,
+  THROTTLE_REQUESTS
+} from './config';
+import { safeConsole } from '../../utils/debug';
 
 // Globalna instancja cache
 const apiCache = new Map();
@@ -32,7 +42,7 @@ apiClient.interceptors.request.use(
     return config;
   },
   error => {
-    console.error('Błąd w request interceptor:', error);
+    safeConsole.error('Błąd w request interceptor:', error);
     return Promise.reject(error);
   }
 );
@@ -44,12 +54,12 @@ apiClient.interceptors.response.use(
     if (error.response) {
       // Obsługa błędu 401 Unauthorized
       if (error.response.status === 401) {
-        console.log('Wykryto błąd 401 Unauthorized');
+        safeConsole.warn('Wykryto błąd 401 Unauthorized');
         clearAuthData();
       }
       
-      // Obsługa błędu 429 Too Many Requests
-      if (error.response.status === 429 && !error.config._isRetry) {
+      // Obsługa błędu 429 Too Many Requests - throttling
+      if (error.response.status === 429 && !error.config._isRetry && THROTTLE_REQUESTS) {
         // Ustawiamy flagę, że to jest ponowna próba
         error.config._isRetry = true;
         
@@ -58,14 +68,14 @@ apiClient.interceptors.response.use(
           ? parseInt(error.response.headers['retry-after']) * 1000 
           : 1000;
         
-        console.log(`Zbyt wiele zapytań (429). Ponowna próba za ${retryAfter}ms...`);
+        safeConsole.warn(`Zbyt wiele zapytań (429). Ponowna próba za ${retryAfter}ms...`);
         
         try {
           // Czekamy określony czas i ponawiamy żądanie
           await new Promise(resolve => setTimeout(resolve, retryAfter));
           return await axios(error.config);
         } catch (retryError) {
-          console.error('Błąd podczas ponownej próby:', retryError);
+          safeConsole.error('Błąd podczas ponownej próby:', retryError);
           return Promise.reject(retryError);
         }
       }
@@ -89,7 +99,7 @@ apiClient.getCache = (key) => {
   return cached.data;
 };
 
-apiClient.setCache = (key, data, ttl = 60000) => {
+apiClient.setCache = (key, data, ttl = CACHE_TTL) => {
   apiCache.set(key, {
     data,
     expiry: ttl ? Date.now() + ttl : null
@@ -107,7 +117,7 @@ apiClient.clearCache = (key) => {
 // Funkcje rozszerzające API client
 
 // GET z obsługą cache
-apiClient.getCached = async (url, params = {}, ttl = 60000) => {
+apiClient.getCached = async (url, params = {}, ttl = CACHE_TTL) => {
   const cacheKey = `${url}${JSON.stringify(params)}`;
   const cached = apiClient.getCache(cacheKey);
   
@@ -120,13 +130,13 @@ apiClient.getCached = async (url, params = {}, ttl = 60000) => {
     apiClient.setCache(cacheKey, response.data, ttl);
     return response;
   } catch (error) {
-    console.error(`Błąd podczas pobierania ${url}:`, error);
+    safeConsole.error(`Błąd podczas pobierania ${url}:`, error);
     throw error;
   }
 };
 
 // GET z obsługą retry i błędów
-apiClient.getSafe = async (url, params = {}, retries = 2) => {
+apiClient.getSafe = async (url, params = {}, retries = MAX_RETRIES) => {
   let lastError = null;
   
   for (let i = 0; i <= retries; i++) {
@@ -143,13 +153,13 @@ apiClient.getSafe = async (url, params = {}, retries = 2) => {
       
       // Czekamy coraz dłużej przed kolejną próbą
       const delay = Math.pow(2, i) * 1000;
-      console.log(`Próba ${i+1}/${retries+1} nie powiodła się. Kolejna próba za ${delay}ms...`);
+      safeConsole.warn(`Próba ${i+1}/${retries+1} nie powiodła się. Kolejna próba za ${delay}ms...`);
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
   
   // Jeśli wszystkie próby zawiodły, zwracamy null jako dane i załączamy błąd
-  console.error(`Wszystkie próby pobrania ${url} zawiodły.`);
+  safeConsole.error(`Wszystkie próby pobrania ${url} zawiodły.`);
   return { data: null, error: lastError };
 };
 

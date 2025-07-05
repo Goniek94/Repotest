@@ -35,6 +35,7 @@ const Messages = memo(() => {
   const [replyContent, setReplyContent] = useState('');
   const [attachments, setAttachments] = useState([]);
   const [sendingReply, setSendingReply] = useState(false);
+  const [replyToMessage, setReplyToMessage] = useState(null);
   
   // Stan dla widoku mobilnego
   const [mobileView, setMobileView] = useState('list'); // 'list' lub 'chat'
@@ -64,7 +65,8 @@ const Messages = memo(() => {
     deleteMessage,
     archiveMessage,
     sendReply,
-    showNotification
+    showNotification,
+    markConversationAsRead
   } = useConversations(activeTab);
 
   // Memoizacja danych unread count dla MessagesTabs
@@ -142,6 +144,19 @@ const Messages = memo(() => {
     }
   }, [selectConversation]);
 
+  // Obsługa odpowiadania na konkretną wiadomość
+  const handleReplyToMessage = useCallback((message) => {
+    setReplyToMessage(message);
+    // Automatycznie dodaj cytowanie do pola tekstowego
+    setReplyContent(`> ${message.content.split('\n').join('\n> ')}\n\n`);
+  }, []);
+  
+  // Anulowanie odpowiedzi na konkretną wiadomość
+  const handleCancelReply = useCallback(() => {
+    setReplyToMessage(null);
+    setReplyContent('');
+  }, []);
+  
   // Obsługa wysyłania odpowiedzi
   const handleSendReply = useCallback(async (e) => {
     if (e) {
@@ -153,16 +168,19 @@ const Messages = memo(() => {
     
     setSendingReply(true);
     try {
-      await sendReply(replyContent, attachments);
+      // Dodaj informację o wiadomości, na którą odpowiadamy
+      const replyMetadata = replyToMessage ? { replyTo: replyToMessage.id } : undefined;
+      await sendReply(replyContent, attachments, replyMetadata);
       setReplyContent('');
       setAttachments([]);
+      setReplyToMessage(null);
     } catch (error) {
       console.error('Błąd podczas wysyłania wiadomości:', error);
       showNotification('Nie udało się wysłać wiadomości', 'error');
     } finally {
       setSendingReply(false);
     }
-  }, [replyContent, attachments, selectedConversation, sendReply, showNotification]);
+  }, [replyContent, attachments, selectedConversation, sendReply, showNotification, replyToMessage]);
 
   // Obsługa dodawania załączników
   const handleAttachmentClick = useCallback((e) => {
@@ -244,7 +262,7 @@ const Messages = memo(() => {
   }, [sendingReply, replyContent, attachments.length, selectedConversation]);
 
   // Komponent mobilnego nagłówka czatu
-  const MobileChatHeader = memo(({ conversation, onBack, onStar, onDelete, onArchive }) => (
+  const MobileChatHeader = memo(({ conversation, onBack, onStar, onDelete, onArchive, onMarkAsRead }) => (
     <div className="md:hidden bg-white border-b border-gray-200 p-4 flex items-center justify-between">
       <div className="flex items-center gap-3">
         <button
@@ -285,6 +303,20 @@ const Messages = memo(() => {
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
+            onMarkAsRead();
+          }}
+          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          aria-label="Oznacz jako przeczytane"
+        >
+          <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+        </button>
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
             onArchive();
           }}
           className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -301,6 +333,27 @@ const Messages = memo(() => {
   // Komponent pola odpowiedzi (wspólny dla desktop i mobile)
   const ReplyField = useMemo(() => (
     <div className="p-3 sm:p-4 border-t border-gray-200 bg-white">
+      {/* Informacja o wiadomości, na którą odpowiadamy */}
+      {replyToMessage && (
+        <div className="mb-2 bg-gray-100 p-2 rounded-lg border-l-4 border-[#35530A] relative">
+          <button 
+            className="absolute top-1 right-1 text-gray-500 hover:text-red-500"
+            onClick={handleCancelReply}
+            aria-label="Anuluj odpowiedź"
+          >
+            <X className="h-4 w-4" />
+          </button>
+          <div className="text-xs text-gray-500 mb-1">
+            Odpowiedź do: {replyToMessage.senderName || 'Nieznany użytkownik'}
+          </div>
+          <div className="text-sm text-gray-700 truncate">
+            {replyToMessage.content.length > 100 
+              ? `${replyToMessage.content.substring(0, 100)}...` 
+              : replyToMessage.content}
+          </div>
+        </div>
+      )}
+      
       {/* Lista załączników */}
       {attachments.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-2">
@@ -487,6 +540,7 @@ const Messages = memo(() => {
                       onDelete={() => handleDelete(selectedConversation.id)}
                       onArchive={() => handleArchive(selectedConversation.id)}
                       onBack={handleBack}
+                      onMarkAsRead={() => markConversationAsRead(selectedConversation.id)}
                     />
                     
                     {/* Wiadomości w konwersacji */}
@@ -496,6 +550,7 @@ const Messages = memo(() => {
                       loading={loading}
                       onDeleteMessage={deleteMessage}
                       onArchiveMessage={archiveMessage}
+                      onReplyToMessage={handleReplyToMessage}
                     />
                     
                     {/* Pole odpowiedzi */}
@@ -557,6 +612,7 @@ const Messages = memo(() => {
                       onStar={() => handleStar(selectedConversation.id)}
                       onDelete={() => handleDelete(selectedConversation.id)}
                       onArchive={() => handleArchive(selectedConversation.id)}
+                      onMarkAsRead={() => markConversationAsRead(selectedConversation.id)}
                     />
                   )}
                   
@@ -569,6 +625,7 @@ const Messages = memo(() => {
                         loading={loading}
                         onDeleteMessage={deleteMessage}
                         onArchiveMessage={archiveMessage}
+                        onReplyToMessage={handleReplyToMessage}
                       />
                     ) : (
                       <EmptyChat onNewMessage={handleNewMessage} />
