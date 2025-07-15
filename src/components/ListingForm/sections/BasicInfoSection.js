@@ -1,15 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, Lock, Upload, CheckCircle, AlertCircle, Star } from 'lucide-react';
+import { carData } from '../../search/SearchFormConstants';
+import { getGenerationsForModel } from '../../search/GenerationsData';
 
 const BasicInfoSection = ({ formData, handleChange, errors }) => {
   const [openDropdowns, setOpenDropdowns] = useState({});
   const [lockedFields, setLockedFields] = useState([]);
   const [isLoadingVin, setIsLoadingVin] = useState(false);
+  const [availableModels, setAvailableModels] = useState([]);
+  const [availableGenerations, setAvailableGenerations] = useState([]);
 
-  const brands = ['Audi', 'BMW', 'Mercedes-Benz', 'Volkswagen', 'Toyota', 'Honda', 'Ford', 'Opel', 'Skoda', 'Nissan'];
-  const models = ['A3', 'A4', 'A6', 'Q3', 'Q5', 'Q7', 'TT'];
-  const generations = ['8Y (2020-)', '8V (2012-2020)', '8P (2003-2012)'];
+  // Używamy statycznych danych z SearchFormConstants
+  const brands = Object.keys(carData).sort();
   const years = Array.from({length: 30}, (_, i) => (2024 - i).toString());
+
+  // Funkcja do pobierania modeli dla marki
+  const getModelsForBrand = (brand) => {
+    return carData[brand] || [];
+  };
 
   const toggleDropdown = (name) => {
     setOpenDropdowns(prev => ({
@@ -44,6 +52,46 @@ const BasicInfoSection = ({ formData, handleChange, errors }) => {
       setIsLoadingVin(false);
     }, 2000);
   };
+
+  // Efekt do ładowania modeli gdy zmieni się marka
+  useEffect(() => {
+    if (formData.brand && !isFieldLocked('model')) {
+      const models = getModelsForBrand(formData.brand);
+      setAvailableModels(models);
+      
+      // Jeśli aktualnie wybrany model nie jest dostępny dla nowej marki, wyczyść go
+      if (formData.model && !models.includes(formData.model)) {
+        handleChange('model', '');
+        handleChange('generation', '');
+        setAvailableGenerations([]);
+      }
+    } else {
+      setAvailableModels([]);
+      if (!isFieldLocked('model')) {
+        handleChange('model', '');
+        handleChange('generation', '');
+        setAvailableGenerations([]);
+      }
+    }
+  }, [formData.brand]);
+
+  // Efekt do ładowania generacji gdy zmieni się model
+  useEffect(() => {
+    if (formData.brand && formData.model && !isFieldLocked('generation')) {
+      const generations = getGenerationsForModel(formData.brand, formData.model);
+      setAvailableGenerations(generations);
+      
+      // Jeśli aktualnie wybrana generacja nie jest dostępna dla nowego modelu, wyczyść ją
+      if (formData.generation && !generations.includes(formData.generation)) {
+        handleChange('generation', '');
+      }
+    } else {
+      setAvailableGenerations([]);
+      if (!isFieldLocked('generation')) {
+        handleChange('generation', '');
+      }
+    }
+  }, [formData.brand, formData.model]);
 
   // Efekt odblokowujący pola, gdy użytkownik usunie numer VIN
   useEffect(() => {
@@ -85,8 +133,8 @@ const BasicInfoSection = ({ formData, handleChange, errors }) => {
             <ChevronDown className={`h-4 w-4 flex-shrink-0 transition-transform ${openDropdowns[name] ? 'rotate-180' : ''} ${isLocked ? 'text-yellow-600' : 'text-gray-400'}`} />
           </button>
           
-          {openDropdowns[name] && !isLocked && (
-            <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
+          {openDropdowns[name] && !isLocked && options && options.length > 0 && (
+            <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
               {options.map((option) => (
                 <div 
                   key={option} 
@@ -150,24 +198,7 @@ const BasicInfoSection = ({ formData, handleChange, errors }) => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-4 bg-white">
-      
-      {/* Jedna główna karta - kompaktowa */}
-      <div className="bg-white rounded-lg shadow-lg border border-gray-100 overflow-hidden">
-        
-        {/* Header karty bez postępu */}
-        <div className="bg-gradient-to-r from-[#35530A] to-[#2D4A06] text-white p-4">
-          <div className="flex items-center">
-            <Star className="h-6 w-6 mr-3" />
-            <div>
-              <h2 className="text-xl font-bold">Podstawowe informacje</h2>
-              <p className="text-green-100 text-sm">Wypełnij dane swojego pojazdu</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Zawartość karty */}
-        <div className="p-6 space-y-6">
+    <div className="space-y-6">
           
           {/* Sekcja 1: Nagłówek i typ sprzedawcy */}
           <div>
@@ -187,7 +218,7 @@ const BasicInfoSection = ({ formData, handleChange, errors }) => {
               <SelectField
                 name="sellerType"
                 label="Typ sprzedawcy"
-                options={['Osoba prywatna', 'Firma']}
+                options={['Prywatny', 'Firma']}
                 value={formData.sellerType}
                 required={true}
                 placeholder="Wybierz typ"
@@ -265,7 +296,7 @@ const BasicInfoSection = ({ formData, handleChange, errors }) => {
               <SelectField
                 name="model"
                 label="Model"
-                options={models}
+                options={availableModels}
                 value={formData.model}
                 required={true}
                 placeholder="Wybierz model"
@@ -274,7 +305,7 @@ const BasicInfoSection = ({ formData, handleChange, errors }) => {
               <SelectField
                 name="generation"
                 label="Generacja"
-                options={generations}
+                options={availableGenerations}
                 value={formData.generation}
                 placeholder="Wybierz generację"
                 disabled={!formData.model}
@@ -310,8 +341,6 @@ const BasicInfoSection = ({ formData, handleChange, errors }) => {
               Wszystkie dane będą weryfikowane podczas oględzin pojazdu.
             </p>
           </div>
-        </div>
-      </div>
     </div>
   );
 };

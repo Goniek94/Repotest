@@ -3,6 +3,7 @@ import { BellRing, Eye, X } from 'lucide-react';
 import ActivityItem from '../components/ActivityItem';
 import RecentListingItem from '../components/RecentListingItem';
 import { useNavigate } from 'react-router-dom';
+import getActivityIcon from '../../../utils/getActivityIcon';
 
 /**
  * Komponent sekcji aktywności użytkownika
@@ -86,7 +87,7 @@ const ActivitySection = ({ recentAds = [], activities = [], onDismissActivity })
                   <div className="p-3 bg-white">
                     <div className="flex items-start relative">
                       <div className="w-7 h-7 bg-gray-100 rounded-full flex items-center justify-center mr-2 flex-shrink-0">
-                        {item.icon}
+                        {item.iconType ? getActivityIcon(item.iconType) : item.icon}
                       </div>
                       <div className="flex-grow min-w-0">
                         <h4 className="font-bold text-gray-800 text-sm">{item.title}</h4>

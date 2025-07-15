@@ -1,24 +1,8 @@
 import React from 'react';
-import { 
-  Box, 
-  Typography, 
-  Paper, 
-  IconButton, 
-  Chip, 
-  Divider, 
-  Button, 
-  useTheme, 
-  alpha 
-} from '@mui/material';
-import { 
-  Delete as DeleteIcon, 
-  CheckCircle as CheckCircleIcon, 
-  OpenInNew as OpenInNewIcon 
-} from '@mui/icons-material';
+import { Trash2, CheckCircle, ExternalLink, Eye } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
-
 import { getNotificationIcon, getNotificationColor, getNotificationTypeName } from '../../utils/NotificationTypes';
 
 /**
@@ -30,7 +14,6 @@ import { getNotificationIcon, getNotificationColor, getNotificationTypeName } fr
  * @returns {JSX.Element}
  */
 const NotificationItem = ({ notification, onMarkAsRead, onDelete }) => {
-  const theme = useTheme();
   const navigate = useNavigate();
   
   // Formatowanie daty
@@ -40,16 +23,40 @@ const NotificationItem = ({ notification, onMarkAsRead, onDelete }) => {
   });
   
   // Ikona i kolor powiadomienia
-  const icon = getNotificationIcon(notification.type);
+  const iconName = getNotificationIcon(notification.type);
   const color = getNotificationColor(notification.type);
   const typeName = getNotificationTypeName(notification.type);
+  
+  // Mapowanie ikon Material Icons na emoji
+  const getIconComponent = (iconName) => {
+    const iconMap = {
+      'announcement': '📢',
+      'build': '🔧',
+      'post_add': '📝',
+      'timer': '⏰',
+      'timer_off': '⏰',
+      'update': '🔄',
+      'favorite': '❤️',
+      'visibility': '👁️',
+      'message': '💬',
+      'comment': '💭',
+      'reply': '↩️',
+      'payments': '💳',
+      'error': '❌',
+      'money_off': '💰',
+      'account_circle': '👤',
+      'person': '👤',
+      'notifications': '🔔'
+    };
+    return iconMap[iconName] || '🔔';
+  };
   
   // Obsługa kliknięcia w akcję
   const handleActionClick = (e) => {
     e.stopPropagation();
     
     // Jeśli powiadomienie nie jest przeczytane, oznaczamy je jako przeczytane
-    if (!notification.read) {
+    if (!notification.isRead) {
       onMarkAsRead();
     }
     
@@ -61,219 +68,156 @@ const NotificationItem = ({ notification, onMarkAsRead, onDelete }) => {
   
   // Obsługa kliknięcia w powiadomienie
   const handleClick = () => {
-    // Jeśli powiadomienie nie jest przeczytane, oznaczamy je jako przeczytane
-    if (!notification.read) {
-      onMarkAsRead();
-    }
-    
-    // Jeśli powiadomienie ma URL akcji, przekierowujemy na tę stronę
-    if (notification.actionUrl) {
-      navigate(notification.actionUrl);
-    }
+    // Przekierowujemy do strony szczegółów powiadomienia
+    navigate(`/profil/notification/${notification.id}`);
+  };
+
+  // Obsługa przejścia do szczegółów powiadomienia
+  const handleViewDetails = (e) => {
+    e.stopPropagation();
+    navigate(`/profil/notification/${notification.id}`);
   };
   
   return (
-    <Paper
-      elevation={1}
-      sx={{
-        mb: 2,
-        p: { xs: 2, sm: 2 },
-        borderLeft: `4px solid ${color}`,
-        backgroundColor: notification.read ? 'background.paper' : alpha(color, 0.05),
-        cursor: notification.actionUrl ? 'pointer' : 'default',
-        transition: 'all 0.2s ease-in-out',
-        '&:hover': {
-          boxShadow: notification.actionUrl ? 3 : 1,
-          transform: notification.actionUrl ? 'translateY(-2px)' : 'none'
-        }
-      }}
+    <div
+      className={`bg-white rounded-lg shadow border-l-4 p-4 mb-4 transition-all duration-200 hover:shadow-md ${
+        notification.actionUrl ? 'cursor-pointer hover:-translate-y-1' : 'cursor-default'
+      } ${!notification.isRead ? 'bg-blue-50' : ''}`}
+      style={{ borderLeftColor: color }}
       onClick={handleClick}
     >
-      <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'stretch', sm: 'flex-start' }}>
+      <div className="flex flex-col sm:flex-row sm:items-start">
         {/* Nagłówek powiadomienia dla urządzeń mobilnych */}
-        <Box 
-          sx={{ 
-            display: { xs: 'flex', sm: 'none' },
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            mb: 2
-          }}
-        >
-          <Box display="flex" alignItems="center">
-            <Box
-              sx={{
-                width: 36,
-                height: 36,
-                borderRadius: '50%',
-                backgroundColor: alpha(color, 0.1),
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                mr: 2,
-                color: color
-              }}
+        <div className="flex sm:hidden items-center justify-between mb-4">
+          <div className="flex items-center">
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center mr-3 text-lg"
+              style={{ backgroundColor: `${color}20`, color: color }}
             >
-              <span className="material-icons">{icon}</span>
-            </Box>
-            <Typography variant="subtitle1" fontWeight="bold" component="h3" noWrap sx={{ maxWidth: '150px' }}>
+              {getIconComponent(iconName)}
+            </div>
+            <h3 className="font-bold text-gray-900 truncate max-w-[150px]">
               {notification.title}
-            </Typography>
-          </Box>
+            </h3>
+          </div>
           
-          <Box display="flex" alignItems="center">
+          <div className="flex items-center space-x-2">
             {/* Przycisk oznaczania jako przeczytane - większy na mobile */}
-            {!notification.read && (
-              <IconButton
-                size="medium"
-                color="primary"
+            {!notification.isRead && (
+              <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onMarkAsRead();
                 }}
+                className="p-2 text-green-600 hover:bg-green-50 rounded-full transition-colors"
                 title="Oznacz jako przeczytane"
-                sx={{ padding: '8px' }}
               >
-                <CheckCircleIcon />
-              </IconButton>
+                <CheckCircle className="w-5 h-5" />
+              </button>
             )}
             
             {/* Przycisk usuwania - większy na mobile */}
-            <IconButton
-              size="medium"
-              color="error"
+            <button
               onClick={(e) => {
                 e.stopPropagation();
                 onDelete();
               }}
+              className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
               title="Usuń powiadomienie"
-              sx={{ padding: '8px' }}
             >
-              <DeleteIcon />
-            </IconButton>
-          </Box>
-        </Box>
+              <Trash2 className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
         
         {/* Ikona powiadomienia - widoczna tylko na desktop */}
-        <Box
-          sx={{
-            width: 40,
-            height: 40,
-            borderRadius: '50%',
-            backgroundColor: alpha(color, 0.1),
-            display: { xs: 'none', sm: 'flex' },
-            alignItems: 'center',
-            justifyContent: 'center',
-            mr: 2,
-            color: color
-          }}
+        <div
+          className="hidden sm:flex w-10 h-10 rounded-full items-center justify-center mr-4 text-lg flex-shrink-0"
+          style={{ backgroundColor: `${color}20`, color: color }}
         >
-          <span className="material-icons">{icon}</span>
-        </Box>
+          {getIconComponent(iconName)}
+        </div>
         
         {/* Treść powiadomienia */}
-        <Box flex={1}>
+        <div className="flex-1">
           {/* Nagłówek powiadomienia dla desktop */}
-          <Box 
-            display={{ xs: 'none', sm: 'flex' }} 
-            justifyContent="space-between" 
-            alignItems="flex-start"
-          >
-            <Typography variant="subtitle1" fontWeight="bold" component="h3">
+          <div className="hidden sm:flex justify-between items-start">
+            <h3 className="font-bold text-gray-900">
               {notification.title}
-            </Typography>
+            </h3>
             
-            <Box display="flex" alignItems="center">
+            <div className="flex items-center space-x-2 ml-4">
               {/* Chip z typem powiadomienia */}
-              <Chip
-                label={typeName}
-                size="small"
-                sx={{
-                  backgroundColor: alpha(color, 0.1),
-                  color: color,
-                  mr: 1
-                }}
-              />
+              <span
+                className="px-2 py-1 text-xs font-medium rounded-full"
+                style={{ backgroundColor: `${color}20`, color: color }}
+              >
+                {typeName}
+              </span>
               
               {/* Przycisk oznaczania jako przeczytane */}
-              {!notification.read && (
-                <IconButton
-                  size="small"
-                  color="primary"
+              {!notification.isRead && (
+                <button
                   onClick={(e) => {
                     e.stopPropagation();
                     onMarkAsRead();
                   }}
+                  className="p-1 text-green-600 hover:bg-green-50 rounded-full transition-colors"
                   title="Oznacz jako przeczytane"
                 >
-                  <CheckCircleIcon fontSize="small" />
-                </IconButton>
+                  <CheckCircle className="w-4 h-4" />
+                </button>
               )}
               
               {/* Przycisk usuwania */}
-              <IconButton
-                size="small"
-                color="error"
+              <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onDelete();
                 }}
+                className="p-1 text-red-600 hover:bg-red-50 rounded-full transition-colors"
                 title="Usuń powiadomienie"
               >
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            </Box>
-          </Box>
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
           
           {/* Chip z typem powiadomienia - widoczny tylko na mobile */}
-          <Box sx={{ display: { xs: 'block', sm: 'none' }, mb: 1 }}>
-            <Chip
-              label={typeName}
-              size="small"
-              sx={{
-                backgroundColor: alpha(color, 0.1),
-                color: color
-              }}
-            />
-          </Box>
+          <div className="sm:hidden mb-2">
+            <span
+              className="px-2 py-1 text-xs font-medium rounded-full"
+              style={{ backgroundColor: `${color}20`, color: color }}
+            >
+              {typeName}
+            </span>
+          </div>
           
           {/* Treść wiadomości */}
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 2 }}>
+          <p className="text-gray-600 text-sm mt-2 mb-4">
             {notification.message}
-          </Typography>
+          </p>
           
           {/* Stopka powiadomienia */}
-          <Box 
-            display="flex" 
-            flexDirection={{ xs: 'column', sm: 'row' }} 
-            justifyContent={{ xs: 'flex-start', sm: 'space-between' }} 
-            alignItems={{ xs: 'flex-start', sm: 'center' }}
-            gap={{ xs: 1, sm: 0 }}
-          >
-            <Typography variant="caption" color="text.secondary">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-2 sm:space-y-0">
+            <span className="text-xs text-gray-500">
               {formattedDate}
-            </Typography>
+            </span>
             
             {/* Przycisk akcji */}
             {notification.actionUrl && notification.actionText && (
-              <Button
-                variant="contained"
-                size="small"
-                color="primary"
-                endIcon={<OpenInNewIcon fontSize="small" />}
+              <button
                 onClick={handleActionClick}
-                sx={{ 
-                  mt: { xs: 1, sm: 0 },
-                  py: { xs: 1 },
-                  width: { xs: '100%', sm: 'auto' }
-                }}
+                className="inline-flex items-center px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors w-full sm:w-auto justify-center sm:justify-start"
               >
                 {notification.actionText}
-              </Button>
+                <ExternalLink className="w-4 h-4 ml-2" />
+              </button>
             )}
-          </Box>
-        </Box>
-      </Box>
-    </Paper>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

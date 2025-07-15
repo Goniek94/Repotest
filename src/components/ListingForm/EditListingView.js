@@ -100,6 +100,45 @@ const EditListingView = () => {
       setIsSubmitting(false);
     }
   };
+
+  // Obsługa usuwania zdjęcia
+  const handleDeleteImage = async (index) => {
+    if (!window.confirm('Czy na pewno chcesz usunąć to zdjęcie?')) {
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      setError('');
+      
+      // Usuń zdjęcie z serwera
+      await AdsService.deleteImage(id, index);
+      
+      // Odświeżenie danych ogłoszenia
+      const response = await AdsService.getById(id);
+      if (response.data) {
+        setListing(response.data);
+        
+        // Jeśli usunięte zdjęcie było głównym, ustaw nowe główne
+        if (selectedImage === index) {
+          setSelectedImage(0);
+        } else if (selectedImage > index) {
+          setSelectedImage(selectedImage - 1);
+        }
+      }
+      
+      setSuccess('Zdjęcie zostało usunięte');
+      
+      setTimeout(() => {
+        setSuccess('');
+      }, 3000);
+    } catch (err) {
+      safeConsole.error('Błąd podczas usuwania zdjęcia:', err);
+      setError('Nie udało się usunąć zdjęcia. Spróbuj ponownie później.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   
   // Obsługa dodawania nowych zdjęć
   const handleAddImages = async (e) => {
@@ -403,14 +442,33 @@ const EditListingView = () => {
                     {listing.images && listing.images.map((img, index) => (
                       <div 
                         key={index}
-                        onClick={() => handleSetMainImage(index)}
-                        className={`cursor-pointer border-2 ${selectedImage === index ? 'border-[#35530A]' : 'border-gray-200'} rounded-sm overflow-hidden aspect-video`}
+                        className={`relative cursor-pointer border-2 ${selectedImage === index ? 'border-[#35530A]' : 'border-gray-200'} rounded-sm overflow-hidden aspect-video group`}
                       >
                         <img 
                           src={formatImageUrl(img)} 
                           alt={`Zdjęcie ${index + 1}`} 
                           className="w-full h-full object-cover"
+                          onClick={() => handleSetMainImage(index)}
                         />
+                        {/* Przycisk usuwania zdjęcia */}
+                        {listing.images.length > 1 && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteImage(index);
+                            }}
+                            className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Usuń zdjęcie"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        )}
+                        {/* Oznaczenie głównego zdjęcia */}
+                        {selectedImage === index && (
+                          <div className="absolute bottom-1 left-1 bg-[#35530A] text-white text-xs px-2 py-1 rounded">
+                            Główne
+                          </div>
+                        )}
                       </div>
                     ))}
                     

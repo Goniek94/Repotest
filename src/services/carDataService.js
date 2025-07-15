@@ -20,7 +20,7 @@ const CarDataService = {
     
     try {
       // Pobierz dane z backendu
-      const response = await apiClient.get('/ads/car-data');
+      const response = await apiClient.get('/api/ads/car-data');
       carDataCache = response.data;
       lastFetchTime = now;
       return carDataCache;
@@ -51,11 +51,21 @@ const CarDataService = {
   },
   
   /**
+   * Pobiera wszystkie marki i modele w jednym zapytaniu
+   * @returns {Promise<Object>} Obiekt z markami jako kluczami i tablicami modeli jako wartościami
+   */
+  getAllBrandsAndModels: async () => {
+    return await CarDataService.getCarData();
+  },
+
+  /**
    * Wyczyść cache (np. po dodaniu nowego ogłoszenia)
    */
   clearCache: () => {
     carDataCache = null;
     lastFetchTime = null;
+    // Wyczyść również localStorage
+    localStorage.removeItem('carData');
   }
 };
 

@@ -148,7 +148,7 @@ function ListingsPage() {
           city: ad.city || 'Nie podano',
           transmission: ad.transmission || 'Nie podano',
           gearbox: ad.transmission || 'Nie podano',
-          sellerType: ad.sellerType || (ad.owner ? 'Prywatny' : 'Firma'),
+          sellerType: ad.sellerType || 'Prywatny',
           // Poprawiona obsługa obrazów
           images: ad.images || [],
           mainImageIndex: typeof ad.mainImageIndex === 'number' ? ad.mainImageIndex : 0,

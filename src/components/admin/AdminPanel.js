@@ -1,86 +1,134 @@
-// src/components/admin/AdminPanel.js
-/**
- * Główny komponent panelu administratora
- * Main admin panel component
- */
-
-import React, { useState } from 'react';
-import { useNavigate, Routes, Route } from 'react-router-dom';
-import { FaUsers, FaCarAlt, FaChartBar, FaExclamationTriangle, FaCog } from 'react-icons/fa';
-
-// Sekcje panelu administratora
-import UserManagement from './sections/UserManagement';
-import ListingsManagement from './sections/ListingsManagement';
-import ReportsManagementSection from './sections/ReportsManagementSection';
-import Statistics from './sections/Statistics';
-import Settings from './sections/Settings';
+import React, { useState, useEffect } from 'react';
+import AdminLayout from './components/Layout/AdminLayout';
+import AdminDashboard from './sections/Dashboard/AdminDashboard';
+import AdminUsers from './sections/Users/AdminUsers';
+import AdminListings from './sections/Listings/AdminListings';
+import AdminPromotions from './sections/Promotions/AdminPromotions';
+import AdminReports from './sections/Reports/AdminReports';
+import AdminStatistics from './sections/Statistics/AdminStatistics';
+import AdminSettings from './sections/Settings/AdminSettings';
+import { useAuth } from '../../contexts/AuthContext';
 
 const AdminPanel = () => {
-  const [activeSection, setActiveSection] = useState('users');
-  const navigate = useNavigate();
+  const [activeSection, setActiveSection] = useState('dashboard');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const { user, logout, isAuthenticated, isLoading } = useAuth();
 
-  // Nawigacja do sekcji
-  const navigateToSection = (section) => {
+  // Initialize admin panel data
+  useEffect(() => {
+    const initializeAdmin = async () => {
+      try {
+        setLoading(true);
+        // Skip API initialization for now - panel will load directly
+        // In production, you would fetch initial admin data here
+        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate loading
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (isAuthenticated) {
+      initializeAdmin();
+    }
+  }, [isAuthenticated]);
+
+  const handleSectionChange = (section) => {
     setActiveSection(section);
-    navigate(`/admin/${section}`);
   };
 
-  // Elementy menu bocznego
-  const sidebarItems = [
-    { id: 'users', label: 'Użytkownicy', icon: <FaUsers />, path: '/admin/users' },
-    { id: 'listings', label: 'Ogłoszenia', icon: <FaCarAlt />, path: '/admin/listings' },
-    { id: 'reports', label: 'Zgłoszenia', icon: <FaExclamationTriangle />, path: '/admin/reports' },
-    { id: 'statistics', label: 'Statystyki', icon: <FaChartBar />, path: '/admin/statistics' },
-    { id: 'settings', label: 'Ustawienia', icon: <FaCog />, path: '/admin/settings' },
-  ];
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (err) {
+      console.error('Logout failed:', err);
+    }
+  };
 
-  return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
-      {/* Nagłówek */}
-      <header className="flex justify-between items-center px-8 py-4 bg-gray-800 text-white shadow-md">
-        <h1 className="text-xl font-semibold">Panel Administratora</h1>
-        <div className="flex items-center gap-4">
-          <span>Admin</span>
-          <button className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors">
-            Wyloguj
+  // Routing logic
+  const renderActiveSection = () => {
+    switch (activeSection) {
+      case 'dashboard':
+        return <AdminDashboard />;
+      case 'users':
+        return <AdminUsers />;
+      case 'listings':
+        return <AdminListings />;
+      case 'promotions':
+        return <AdminPromotions />;
+      case 'reports':
+        return <AdminReports />;
+      case 'statistics':
+        return <AdminStatistics />;
+      case 'settings':
+        return <AdminSettings />;
+      default:
+        return <AdminDashboard />;
+    }
+  };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-t-4 border-gray-300 border-t-green-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Ładowanie panelu administratora...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md">
+          <div className="text-red-600 text-6xl mb-4">⚠️</div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Błąd ładowania</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Odśwież stronę
           </button>
         </div>
-      </header>
-
-      <div className="flex flex-1">
-        {/* Menu boczne */}
-        <aside className="w-64 bg-gray-800 text-white">
-          <nav>
-            <ul>
-              {sidebarItems.map((item) => (
-                <li 
-                  key={item.id} 
-                  className={`flex items-center px-6 py-4 cursor-pointer transition-colors ${
-                    activeSection === item.id ? 'bg-blue-600' : 'hover:bg-gray-700'
-                  }`}
-                  onClick={() => navigateToSection(item.id)}
-                >
-                  <span className="mr-3 text-lg">{item.icon}</span>
-                  <span>{item.label}</span>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        </aside>
-
-        {/* Główna zawartość */}
-        <main className="flex-1 p-8 overflow-y-auto">
-          <Routes>
-            <Route path="/users" element={<UserManagement />} />
-            <Route path="/listings" element={<ListingsManagement />} />
-            <Route path="/reports" element={<ReportsManagementSection />} />
-            <Route path="/statistics" element={<Statistics />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/" element={<UserManagement />} />
-          </Routes>
-        </main>
       </div>
-    </div>
+    );
+  }
+
+  // Authentication check
+  if (!isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md">
+          <div className="text-yellow-600 text-6xl mb-4">🔒</div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Brak autoryzacji</h2>
+          <p className="text-gray-600 mb-4">Musisz się zalogować aby uzyskać dostęp do panelu administratora.</p>
+          <button 
+            onClick={() => window.location.href = '/login'}
+            className="px-4 py-2 text-white rounded-lg hover:opacity-90 transition-opacity"
+            style={{ backgroundColor: '#35530A' }}
+          >
+            Przejdź do logowania
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <AdminLayout
+      activeSection={activeSection}
+      onSectionChange={handleSectionChange}
+      onLogout={handleLogout}
+      user={user}
+    >
+      {renderActiveSection()}
+    </AdminLayout>
   );
 };
 

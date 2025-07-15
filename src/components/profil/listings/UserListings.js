@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiGrid, FiBarChart2, FiHeart, FiAlertCircle } from 'react-icons/fi';
-import { Heart, Eye, Edit, Trash, RefreshCw, AlertTriangle, CheckCircle, Plus, X } from 'lucide-react';
+import { Heart, Eye, Edit, Trash, RefreshCw, AlertTriangle, CheckCircle, Plus, X, FileText } from 'lucide-react';
 import { toast } from 'react-toastify';
 import ListingsService from '../../../services/api/listingsApi';
 import ListingListItem from '../../ListingsView/display/list/ListingListItem';
@@ -9,17 +9,72 @@ import UserListingListItem from './UserListingListItem';
 import ListingTabs from './ListingTabs';
 import getImageUrl from '../../../utils/responsive/getImageUrl';
 
+// Klucze localStorage dla wersji roboczych
+const DRAFT_STORAGE_KEY = 'auto_sell_draft_form';
+
 const UserListings = () => {
   // Stany komponentu
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('active');
   const [allListings, setAllListings] = useState([]);
+  const [localDrafts, setLocalDrafts] = useState([]); // Wersje robocze z localStorage
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [extendingId, setExtendingId] = useState(null); // ID ogłoszenia, które jest obecnie przedłużane
   const [deletingId, setDeletingId] = useState(null); // ID ogłoszenia, które jest obecnie usuwane
   const [endingId, setEndingId] = useState(null); // ID ogłoszenia, które jest obecnie archiwizowane
   const [notifications, setNotifications] = useState([]); // Powiadomienia o kończących się ogłoszeniach
+
+  // Funkcja do pobierania wersji roboczych z localStorage
+  const getLocalDrafts = () => {
+    try {
+      const drafts = localStorage.getItem(DRAFT_STORAGE_KEY);
+      return drafts ? JSON.parse(drafts) : [];
+    } catch (error) {
+      console.error('Błąd podczas pobierania wersji roboczych:', error);
+      return [];
+    }
+  };
+
+  // Funkcja do usuwania wersji roboczej z localStorage
+  const deleteLocalDraft = (draftIndex) => {
+    try {
+      const drafts = getLocalDrafts();
+      const updatedDrafts = drafts.filter((_, index) => index !== draftIndex);
+      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(updatedDrafts));
+      setLocalDrafts(updatedDrafts);
+      toast.success('Wersja robocza została usunięta.');
+      return true;
+    } catch (error) {
+      console.error('Błąd podczas usuwania wersji roboczej:', error);
+      toast.error('Błąd podczas usuwania wersji roboczej.');
+      return false;
+    }
+  };
+
+  // Funkcja do kontynuowania wersji roboczej - przekierowanie do formularza
+  const continueLocalDraft = (draftIndex) => {
+    try {
+      const drafts = getLocalDrafts();
+      if (drafts[draftIndex]) {
+        // Zapisz dane wersji roboczej jako tymczasowe dane formularza
+        const draftData = { ...drafts[draftIndex] };
+        delete draftData.draftName;
+        delete draftData.savedAt;
+        
+        // Zapisz jako tymczasowe dane do załadowania w formularzu
+        localStorage.setItem('auto_sell_temp_form', JSON.stringify(draftData));
+        
+        // Przekieruj do formularza z flagą, że to kontynuacja wersji roboczej
+        navigate('/dodaj-ogloszenie?from=draft');
+        
+        toast.success('Wersja robocza została załadowana do formularza.');
+      }
+    } catch (error) {
+      console.error('Błąd podczas ładowania wersji roboczej:', error);
+      toast.error('Błąd podczas ładowania wersji roboczej.');
+    }
+  };
 
   // Pobieranie ogłoszeń użytkownika
   const fetchListings = () => {
@@ -72,7 +127,16 @@ const UserListings = () => {
 
   useEffect(() => {
     fetchListings();
+    // Załaduj wersje robocze z localStorage
+    setLocalDrafts(getLocalDrafts());
   }, []);
+
+  // Odświeżanie wersji roboczych przy zmianie zakładki na drafts
+  useEffect(() => {
+    if (activeTab === 'drafts') {
+      setLocalDrafts(getLocalDrafts());
+    }
+  }, [activeTab]);
 
   // Wyświetlanie powiadomień o kończących się ogłoszeniach
   useEffect(() => {
@@ -282,7 +346,7 @@ const UserListings = () => {
               setActiveTab={setActiveTab} 
               counts={{
                 active: allListings.filter(listing => listing.status === 'active').length,
-                drafts: allListings.filter(listing => listing.status === 'pending' || listing.status === 'needs_changes' || listing.isVersionRobocza).length,
+                drafts: allListings.filter(listing => listing.status === 'pending' || listing.status === 'needs_changes' || listing.isVersionRobocza).length + localDrafts.length,
                 completed: allListings.filter(listing => listing.status === 'archived' || listing.status === 'sold').length,
                 favorites: allListings.filter(listing => listing.isFavorite).length
               }}
@@ -310,7 +374,7 @@ const UserListings = () => {
                   Spróbuj ponownie
                 </button>
               </div>
-            ) : listings.length === 0 ? (
+            ) : listings.length === 0 && (activeTab !== 'drafts' || localDrafts.length === 0) ? (
               <div className="py-16 text-center">
                 <div className="inline-flex items-center justify-center w-20 h-20 bg-slate-100 rounded-full mb-6">
                   <div className="text-4xl">📝</div>
@@ -327,6 +391,74 @@ const UserListings = () => {
               </div>
             ) : (
               <div className="space-y-6 mt-8">
+                {/* Wersje robocze z localStorage - tylko w zakładce drafts */}
+                {activeTab === 'drafts' && localDrafts.length > 0 && (
+                  <>
+                    <div className="mb-6">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                        <FileText className="w-5 h-5 text-[#35530A]" />
+                        Wersje robocze ({localDrafts.length})
+                      </h3>
+                      <div className="space-y-4">
+                        {localDrafts.map((draft, index) => (
+                          <div key={index} className="bg-white border border-gray-200 rounded-sm shadow-md p-4 hover:shadow-lg transition-shadow">
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-gray-900 mb-2">
+                                  {draft.draftName || `${draft.brand || 'Nieznana marka'} ${draft.model || 'Nieznany model'}`}
+                                </h4>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm text-gray-600 mb-3">
+                                  <div>
+                                    <span className="font-medium">Marka:</span> {draft.brand || 'Nie podano'}
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">Model:</span> {draft.model || 'Nie podano'}
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">Rok:</span> {draft.productionYear || 'Nie podano'}
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">Cena:</span> {draft.price ? `${draft.price} PLN` : 'Nie podano'}
+                                  </div>
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  Zapisano: {draft.savedAt ? new Date(draft.savedAt).toLocaleString('pl-PL') : 'Nieznana data'}
+                                </div>
+                              </div>
+                              <div className="flex gap-2 ml-4">
+                                <button
+                                  onClick={() => continueLocalDraft(index)}
+                                  className="bg-[#35530A] text-white px-4 py-2 rounded-sm text-sm hover:bg-[#2D4A06] transition-colors flex items-center gap-2"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                  Kontynuuj
+                                </button>
+                                <button
+                                  onClick={() => deleteLocalDraft(index)}
+                                  className="bg-red-500 text-white px-4 py-2 rounded-sm text-sm hover:bg-red-600 transition-colors flex items-center gap-2"
+                                >
+                                  <Trash className="w-4 h-4" />
+                                  Usuń
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Separator jeśli są też ogłoszenia z bazy danych */}
+                    {listings.length > 0 && (
+                      <div className="border-t border-gray-200 pt-6">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                          Ogłoszenia w trakcie weryfikacji
+                        </h3>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Ogłoszenia z bazy danych */}
                 {listings.map(listing => (
                   <UserListingListItem
                     key={listing._id}

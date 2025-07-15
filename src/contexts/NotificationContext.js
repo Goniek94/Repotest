@@ -1,10 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import ActivityLogService from '../services/activityLogService';
-import getActivityIcon from '../utils/getActivityIcon';
 import notificationService from '../services/notifications';
 import axios from 'axios';
 import { API_URL } from '../services/api/config';
+import { debug } from '../utils/debug';
 
 // Tworzenie kontekstu
 const NotificationContext = createContext();
@@ -22,7 +22,7 @@ export const useNotifications = () => {
 export const NotificationProvider = ({ children }) => {
   const { user, isAuthenticated } = useAuth();
   const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState({ messages: 0, alerts: 0 });
+  const [unreadCount, setUnreadCount] = useState({ notifications: 0, messages: 0 });
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -48,11 +48,11 @@ export const NotificationProvider = ({ children }) => {
           if (notification.type === 'new_message') {
             acc.messages += 1;
           } else {
-            acc.alerts += 1;
+            acc.notifications += 1;
           }
           return acc;
         },
-        { messages: 0, alerts: 0 }
+        { notifications: 0, messages: 0 }
       );
       
       setUnreadCount(unread);
@@ -73,11 +73,11 @@ export const NotificationProvider = ({ children }) => {
         if (notification.type === 'new_message') {
           acc.messages += 1;
         } else {
-          acc.alerts += 1;
+          acc.notifications += 1;
         }
         return acc;
       },
-      { messages: 0, alerts: 0 }
+      { notifications: 0, messages: 0 }
     );
 
     setUnreadCount(unread);
@@ -97,7 +97,7 @@ export const NotificationProvider = ({ children }) => {
     if (!isAuthenticated || !user) return;
 
     try {
-      await axios.put(`${API_URL}/notifications/${notificationId}/read`, {}, {
+      await axios.patch(`${API_URL}/notifications/${notificationId}/read`, {}, {
         withCredentials: true // Ważne - przesyłanie ciasteczek
       });
 
@@ -122,7 +122,7 @@ export const NotificationProvider = ({ children }) => {
     if (!isAuthenticated || !user) return;
 
     try {
-      await axios.put(`${API_URL}/notifications/read-all`, {}, {
+      await axios.patch(`${API_URL}/notifications/read-all`, {}, {
         withCredentials: true // Ważne - przesyłanie ciasteczek
       });
 
@@ -132,7 +132,7 @@ export const NotificationProvider = ({ children }) => {
       );
       
       // Aktualizacja licznika nieprzeczytanych
-      setUnreadCount({ messages: 0, alerts: 0 });
+      setUnreadCount({ notifications: 0, messages: 0 });
     } catch (error) {
       console.error('Błąd podczas oznaczania wszystkich powiadomień jako przeczytane:', error);
     }
@@ -206,7 +206,7 @@ export const NotificationProvider = ({ children }) => {
           if (notification.type === 'new_message') {
             newCount.messages = (newCount.messages || 0) + 1;
           } else {
-            newCount.alerts = (newCount.alerts || 0) + 1;
+            newCount.notifications = (newCount.notifications || 0) + 1;
           }
           return newCount;
         });
@@ -220,17 +220,17 @@ export const NotificationProvider = ({ children }) => {
         }
 
         if (user?.id) {
+          const iconType = notification.type === 'new_message'
+            ? 'mail'
+            : notification.type === 'message_reply'
+            ? 'reply'
+            : notification.type === 'message_liked'
+            ? 'heart'
+            : 'bell';
+            
           const activity = {
             id: notification._id || Date.now(),
-            icon: getActivityIcon(
-              notification.type === 'new_message'
-                ? 'mail'
-                : notification.type === 'message_reply'
-                ? 'reply'
-                : notification.type === 'message_liked'
-                ? 'heart'
-                : 'bell'
-            ),
+            iconType: iconType, // Przechowujemy typ ikony zamiast JSX elementu
             title: notification.title || 'Nowe powiadomienie',
             description: notification.content || '',
             time: new Date(notification.createdAt || Date.now()).toLocaleDateString('pl-PL', {
@@ -265,7 +265,7 @@ export const NotificationProvider = ({ children }) => {
         setNotifications(prev => 
           prev.map(notification => ({ ...notification, isRead: true }))
         );
-        setUnreadCount({ messages: 0, alerts: 0 });
+        setUnreadCount({ notifications: 0, messages: 0 });
       };
 
       // Nasłuchiwanie na usunięcie powiadomienia
@@ -308,7 +308,7 @@ export const NotificationProvider = ({ children }) => {
       notificationService.disconnect();
       setIsConnected(false);
       setNotifications([]);
-      setUnreadCount({ messages: 0, alerts: 0 });
+      setUnreadCount({ notifications: 0, messages: 0 });
     }
   }, [isAuthenticated, user, fetchNotifications]); // updateUnreadCount intentionally omitted to prevent re-render loops
 

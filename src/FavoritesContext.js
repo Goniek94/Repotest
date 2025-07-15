@@ -25,7 +25,7 @@ export const FavoritesProvider = ({ children }) => {
 
     const activity = {
       id: Date.now(),
-      icon: 'star',
+      iconType: 'star', // Zmieniono z 'icon' na 'iconType'
       title: car.title || `Ogłoszenie ${car.id}`,
       description: 'Dodano do ulubionych',
       time: new Date().toLocaleDateString('pl-PL', {

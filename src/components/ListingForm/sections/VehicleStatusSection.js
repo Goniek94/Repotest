@@ -1,18 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronDown, Shield, CheckCircle, X } from 'lucide-react';
 
-const VehicleStatusSection = () => {
-  const [formData, setFormData] = useState({
-    condition: '',
-    accidentStatus: '',
-    damageStatus: '',
-    tuning: '',
-    imported: '',
-    registeredInPL: '',
-    firstOwner: '',
-    disabledAdapted: ''
-  });
-
+const VehicleStatusSection = ({ formData, handleChange, errors }) => {
   const [openDropdowns, setOpenDropdowns] = useState({});
 
   const statusOptions = [
@@ -25,13 +14,6 @@ const VehicleStatusSection = () => {
     { name: 'firstOwner', label: 'Pierwszy właściciel', options: ['Tak', 'Nie'], required: false },
     { name: 'disabledAdapted', label: 'Dla niepełnosprawnych', options: ['Tak', 'Nie'], required: false }
   ];
-
-  const handleChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
 
   const toggleDropdown = (name) => {
     setOpenDropdowns(prev => ({
@@ -120,7 +102,7 @@ const VehicleStatusSection = () => {
           </button>
           
           {openDropdowns[name] && (
-            <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
+            <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
               {options.map((option) => (
                 <div 
                   key={option} 
@@ -137,95 +119,64 @@ const VehicleStatusSection = () => {
             </div>
           )}
         </div>
+        {errors && errors[name] && (
+          <p className="text-red-500 text-sm mt-1">{errors[name]}</p>
+        )}
       </div>
     );
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-4 bg-white">
-      
-      {/* Jedna główna karta - kompaktowa */}
-      <div className="bg-white rounded-lg shadow-lg border border-gray-100 overflow-hidden">
+    <div className="space-y-6">
+      {/* Kompaktowa siatka wszystkich pól */}
+      <div>
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-8 h-8 bg-[#35530A] text-white rounded-full flex items-center justify-center text-sm font-bold">1</div>
+          <h3 className="text-lg font-semibold text-gray-800">Stan i historia pojazdu</h3>
+        </div>
         
-        {/* Header karty z postępem */}
-        <div className="bg-gradient-to-r from-[#35530A] to-[#2D4A06] text-white p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Shield className="h-6 w-6" />
-              <div>
-                <h2 className="text-xl font-bold">Stan pojazdu</h2>
-                <p className="text-green-100 text-sm">Historia i kondycja pojazdu</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold">{progress}%</div>
-              <div className="text-green-100 text-sm">ukończone</div>
-            </div>
-          </div>
-          
-          {/* Pasek postępu */}
-          <div className="mt-3 bg-green-900/30 rounded-full h-2 overflow-hidden">
-            <div 
-              className="bg-white h-full rounded-full transition-all duration-500"
-              style={{ width: `${progress}%` }}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {statusOptions.map((option) => (
+            <SelectField
+              key={option.name}
+              name={option.name}
+              label={option.label}
+              options={option.options}
+              value={formData[option.name]}
+              required={option.required}
+              placeholder="Wybierz"
             />
-          </div>
+          ))}
         </div>
+      </div>
 
-        {/* Zawartość karty */}
-        <div className="p-6 space-y-6">
-          
-          {/* Kompaktowa siatka wszystkich pól */}
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-[#35530A] text-white rounded-full flex items-center justify-center text-sm font-bold">1</div>
-              <h3 className="text-lg font-semibold text-gray-800">Stan i historia pojazdu</h3>
-            </div>
+      {/* Podsumowanie statusów */}
+      <div className="bg-gray-50 rounded-lg p-4">
+        <h4 className="font-semibold text-gray-800 mb-3">Podsumowanie stanu:</h4>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+          {statusOptions.map((option) => {
+            const value = formData[option.name];
+            if (!value) return null;
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {statusOptions.map((option) => (
-                <SelectField
-                  key={option.name}
-                  name={option.name}
-                  label={option.label}
-                  options={option.options}
-                  value={formData[option.name]}
-                  required={option.required}
-                  placeholder="Wybierz"
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Podsumowanie statusów */}
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h4 className="font-semibold text-gray-800 mb-3">Podsumowanie stanu:</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-              {statusOptions.map((option) => {
-                const value = formData[option.name];
-                if (!value) return null;
-                
-                return (
-                  <div
-                    key={option.name}
-                    className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 ${getStatusColor(option.name, value)}`}
-                  >
-                    {getStatusIcon(option.name, value)}
-                    <span>{option.label}: {value}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Informacje pomocnicze */}
-          <div className="bg-[#F5FAF5] border-l-4 border-[#35530A] p-4 rounded-md">
-            <p className="text-[#35530A] text-sm">
-              <strong>Wskazówka:</strong> Dokładne informacje o stanie pojazdu zwiększają zaufanie do ogłoszenia. 
-              Zielone oznaczenia wskazują na pozytywne cechy pojazdu.
-            </p>
-          </div>
+            return (
+              <div
+                key={option.name}
+                className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 ${getStatusColor(option.name, value)}`}
+              >
+                {getStatusIcon(option.name, value)}
+                <span>{option.label}: {value}</span>
+              </div>
+            );
+          })}
         </div>
+      </div>
+
+      {/* Informacje pomocnicze */}
+      <div className="bg-[#F5FAF5] border-l-4 border-[#35530A] p-4 rounded-md">
+        <p className="text-[#35530A] text-sm">
+          <strong>Wskazówka:</strong> Dokładne informacje o stanie pojazdu zwiększają zaufanie do ogłoszenia. 
+          Zielone oznaczenia wskazują na pozytywne cechy pojazdu.
+        </p>
       </div>
     </div>
   );

@@ -428,7 +428,7 @@ const ResponsiveListingItem = ({
                 </div>
                 <div>
                   <div className="text-sm sm:text-xs text-gray-500">Sprzedawca</div>
-                  <div className="text-base font-medium">{listing.sellerType || 'Firma'}</div>
+                  <div className="text-base font-medium">{listing.sellerType || 'Prywatny'}</div>
                 </div>
               </div>
               
@@ -441,4 +441,15 @@ const ResponsiveListingItem = ({
                   <div className="text-sm sm:text-xs text-gray-500">Lokalizacja</div>
                   <div className="text-base font-medium">
                     {listing.city || listing.location || 'Kraków'}
-                    {listing.voivodeship && <span className="
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ResponsiveListingItem;

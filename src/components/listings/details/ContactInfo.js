@@ -159,7 +159,7 @@ const ContactInfo = ({ listing }) => {
                 </div>
                 <div className="flex flex-wrap items-center gap-2 mt-1.5">
                   <span className="bg-[#e9f5e1] text-[#35530A] px-3 py-1 rounded-full text-xs font-medium shadow-sm">
-                    {listing?.sellerType === "company" ? "Firma" : "Osoba prywatna"}
+                    {listing?.sellerType === "Firma" ? "Firma" : "Prywatny"}
                   </span>
                   <span className="text-xs text-gray-500 flex items-center bg-white px-2 py-1 rounded-full shadow-sm border border-gray-100">
                     <Clock className="w-3 h-3 mr-1" />

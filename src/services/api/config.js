@@ -1,5 +1,5 @@
 // Centralna konfiguracja API
-const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 export const API_URL = baseUrl; // Usunięto dodawanie '/api' - będzie dodawane przez serwer
 export const API_TIMEOUT = parseInt(process.env.REACT_APP_API_TIMEOUT || '30000', 10); // domyślnie 30 sekund
 

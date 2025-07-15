@@ -7,7 +7,6 @@ import ViewHistoryService from '../../../../services/viewHistoryService';
 import { useFavorites } from '../../../../FavoritesContext';
 import ActivityLogService from '../../../../services/activityLogService';
 import getImageUrl from '../../../../utils/responsive/getImageUrl';
-import getActivityIcon from '../../../../utils/getActivityIcon';
 
 /**
  * Hook do pobierania danych panelu użytkownika
@@ -150,7 +149,7 @@ const useUserDashboardData = (refreshTrigger = 0) => {
               
               return {
                 id: notification.id,
-                icon: getActivityIcon(icon),
+                iconType: icon, // Przechowujemy typ ikony zamiast JSX elementu
                 title: notification.message || notification.title || "Nowe powiadomienie",
                 description: notification.description || notification.content || "Brak treści",
                 time: new Date(notification.createdAt).toLocaleDateString('pl-PL', {
@@ -183,7 +182,7 @@ const useUserDashboardData = (refreshTrigger = 0) => {
               }
               return {
                 id: notification._id,
-                icon: getActivityIcon(icon),
+                iconType: icon, // Przechowujemy typ ikony zamiast JSX elementu
                 title: notification.title || "Nowe powiadomienie",
                 description: notification.content || "Brak treści",
                 time: new Date(notification.createdAt).toLocaleDateString('pl-PL', {
@@ -214,17 +213,14 @@ const useUserDashboardData = (refreshTrigger = 0) => {
           ),
           ...localLog,
           ...favoriteActivities
-        ].map(item => ({
-          ...item,
-          icon: typeof item.icon === 'string' ? getActivityIcon(item.icon) : item.icon
-        }));
+        ];
 
         if (!allActivities.length) {
           // Przykładowe różnorodne powiadomienia do wykorzystania gdy brak rzeczywistych danych
           setActivities([
             {
               id: 'sample-1',
-              icon: getActivityIcon('mail'),
+              iconType: 'mail', // Przechowujemy typ ikony zamiast JSX elementu
               title: "Nowa wiadomość od użytkownika",
               description: "Odpowiedz, aby kontynuować rozmowę",
               time: "dziś, 10:17",
@@ -233,7 +229,7 @@ const useUserDashboardData = (refreshTrigger = 0) => {
             },
             {
               id: 'sample-2',
-              icon: getActivityIcon('car'),
+              iconType: 'car', // Przechowujemy typ ikony zamiast JSX elementu
               title: "Dodano nowe ogłoszenie",
               description: "Sprawdź szczegóły swojego ogłoszenia",
               time: "wczoraj, 12:17",
@@ -242,7 +238,7 @@ const useUserDashboardData = (refreshTrigger = 0) => {
             },
             {
               id: 'sample-3',
-              icon: getActivityIcon('heart'),
+              iconType: 'heart', // Przechowujemy typ ikony zamiast JSX elementu
               title: "Polubiono Twoje ogłoszenie",
               description: "Twoje ogłoszenie BMW X5 zostało dodane do ulubionych",
               time: "wczoraj, 15:42",
@@ -251,7 +247,7 @@ const useUserDashboardData = (refreshTrigger = 0) => {
             },
             {
               id: 'sample-4',
-              icon: getActivityIcon('clock'),
+              iconType: 'clock', // Przechowujemy typ ikony zamiast JSX elementu
               title: "Ogłoszenie wkrótce wygaśnie",
               description: "Twoje ogłoszenie Audi A4 wygaśnie za 2 dni",
               time: "dziś, 08:30",
@@ -260,7 +256,7 @@ const useUserDashboardData = (refreshTrigger = 0) => {
             },
             {
               id: 'sample-5',
-              icon: getActivityIcon('bell'),
+              iconType: 'bell', // Przechowujemy typ ikony zamiast JSX elementu
               title: "Nowe powiadomienie systemowe",
               description: "Ważna aktualizacja regulaminu serwisu",
               time: "14.05.2025",
@@ -269,7 +265,7 @@ const useUserDashboardData = (refreshTrigger = 0) => {
             },
             {
               id: 'sample-6',
-              icon: getActivityIcon('tag'),
+              iconType: 'tag', // Przechowujemy typ ikony zamiast JSX elementu
               title: "Obniżono cenę ogłoszenia",
               description: "Cena ogłoszenia, które obserwujesz została obniżona o 5000 zł",
               time: "3 dni temu",

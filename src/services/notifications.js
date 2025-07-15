@@ -1,4 +1,5 @@
 import { io } from 'socket.io-client';
+import { debug } from '../utils/debug';
 
 /**
  * Serwis do obsługi powiadomień w czasie rzeczywistym

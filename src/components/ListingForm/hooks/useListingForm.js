@@ -1,137 +1,251 @@
 import { useState, useEffect } from 'react';
 import FormValidator from '../utils/FormValidator';
 
-const STORAGE_KEY = 'auto_sell_listing_form';
+const TEMP_STORAGE_KEY = 'auto_sell_temp_form'; // Tymczasowe dane tylko przy cofaniu z podglądu
+const DRAFT_STORAGE_KEY = 'auto_sell_draft_form'; // Wersje robocze
+const TEMP_DRAFT_KEY = 'auto_sell_temp_form'; // Tymczasowe dane wersji roboczej do załadowania
 
 const initialFormData = {
-  brand: '',
-  model: '',
-  generation: '',
-  version: '',
-  productionYear: '',
-  vin: '',
-  registrationNumber: '',
-  condition: '',
-  accidentStatus: '',
-  damageStatus: '',
-  tuning: 'Nie',
-  imported: 'Nie',
-  registeredInPL: 'Tak',
-  firstOwner: 'Nie',
-  disabledAdapted: 'Nie',
-  bodyType: '',
-  color: '',
-  doors: '',
-  mileage: '',
-  lastOfficialMileage: '',
-  countryOfOrigin: '',
-  fuelType: '',
-  power: '',
-  engineSize: '',
-  transmission: '',
-  drive: '',
-  weight: '',
-  voivodeship: '',
-  city: '',
-  images: [],
-  mainImage: '',
-  description: '',
-  price: '',
-  rentalPrice: '',
-  purchaseOption: 'sprzedaz',
-  sellerType: 'prywatny',
-  headline: '',
-  listingType: 'standardowe',
-  negotiable: 'Tak'
+ brand: '',
+ model: '',
+ generation: '',
+ version: '',
+ productionYear: '',
+ vin: '',
+ registrationNumber: '',
+ condition: '',
+ accidentStatus: '',
+ damageStatus: '',
+ tuning: 'Nie',
+ imported: 'Nie',
+ registeredInPL: 'Tak',
+ firstOwner: 'Nie',
+ disabledAdapted: 'Nie',
+ bodyType: '',
+ color: '',
+ doors: '',
+ mileage: '',
+ lastOfficialMileage: '',
+ countryOfOrigin: '',
+ fuelType: '',
+ power: '',
+ engineSize: '',
+ transmission: '',
+ drive: '',
+ weight: '',
+ voivodeship: '',
+ city: '',
+ images: [],
+ mainImage: '',
+ description: '',
+ price: '',
+ rentalPrice: '',
+ purchaseOption: 'sprzedaz',
+ sellerType: 'Prywatny',
+ headline: '',
+ listingType: 'standardowe',
+ negotiable: 'Tak'
 };
 
-export default function useListingForm() {
-  // Próba załadowania danych z localStorage przy inicjalizacji
-  const loadFormData = () => {
-    try {
-      const savedData = localStorage.getItem(STORAGE_KEY);
-      if (savedData) {
-        const parsedData = JSON.parse(savedData);
-        
-        // Odtwarzanie zdjęć - zdjęcia nie mogą być serializowane w localStorage
-        // więc musimy je specjalnie obsłużyć - w tym przypadku resetujemy je
-        return {
-          ...parsedData,
-          photos: [] // Resetujemy zdjęcia, ponieważ nie można ich zapisać w localStorage
-        };
-      }
-    } catch (error) {
-      console.error('Błąd podczas ładowania danych formularza:', error);
-    }
-    return initialFormData;
-  };
+export default function useListingForm(isReturningFromPreview = false) {
+ // Funkcja ładowania danych - obsługuje powrót z podglądu i ładowanie wersji roboczej
+ const loadFormData = () => {
+   // Sprawdź czy to powrót z podglądu
+   if (isReturningFromPreview) {
+     try {
+       const tempData = localStorage.getItem(TEMP_STORAGE_KEY);
+       if (tempData) {
+         const parsedData = JSON.parse(tempData);
+         // Usuń tymczasowe dane po załadowaniu
+         localStorage.removeItem(TEMP_STORAGE_KEY);
+         return {
+           ...parsedData,
+           photos: [] // Resetujemy zdjęcia, ponieważ nie można ich zapisać w localStorage
+         };
+       }
+     } catch (error) {
+       console.error('Błąd podczas ładowania tymczasowych danych formularza:', error);
+     }
+   }
+   
+   // Sprawdź czy to ładowanie wersji roboczej (z UserListings) - używamy tego samego klucza co TEMP_STORAGE_KEY
+   if (!isReturningFromPreview) {
+     try {
+       const draftData = localStorage.getItem(TEMP_STORAGE_KEY);
+       if (draftData) {
+         const parsedData = JSON.parse(draftData);
+         // Usuń tymczasowe dane wersji roboczej po załadowaniu
+         localStorage.removeItem(TEMP_STORAGE_KEY);
+         return {
+           ...parsedData,
+           photos: [] // Resetujemy zdjęcia, ponieważ nie można ich zapisać w localStorage
+         };
+       }
+     } catch (error) {
+       console.error('Błąd podczas ładowania wersji roboczej:', error);
+     }
+   }
+   
+   // Zawsze zwracaj czysty formularz, jeśli nie ma danych do załadowania
+   return initialFormData;
+ };
 
-  const [formData, setFormData] = useState(loadFormData);
-  const [errors, setErrors] = useState({});
+ const [formData, setFormData] = useState(loadFormData);
+ const [errors, setErrors] = useState({});
 
-  // Zapisanie danych formularza do localStorage przy każdej zmianie
-  useEffect(() => {
-    try {
-      // Musimy usunąć zdjęcia z obiektu przed zapisem, ponieważ
-      // obiekty File nie mogą być serializowane
-      const dataToSave = { ...formData };
-      
-      // Usuwamy obiekty File z tablicy images
-      if (dataToSave.images && Array.isArray(dataToSave.images)) {
-        dataToSave.images = dataToSave.images.map(img => {
-          if (img && typeof img === 'object') {
-            // Zachowujemy tylko URL, jeśli istnieje
-            return { url: img.url || '' };
-          }
-          return img;
-        });
-      }
-      
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
-    } catch (error) {
-      console.error('Błąd podczas zapisywania danych formularza:', error);
-    }
-  }, [formData]);
+ // Funkcja do zapisywania tymczasowych danych (tylko przy przejściu do podglądu)
+ const saveTemporaryData = (data) => {
+   try {
+     const dataToSave = { ...data };
+     
+     // Usuwamy obiekty File z tablicy images
+     if (dataToSave.images && Array.isArray(dataToSave.images)) {
+       dataToSave.images = dataToSave.images.map(img => {
+         if (img && typeof img === 'object') {
+           return { url: img.url || '' };
+         }
+         return img;
+       });
+     }
+     
+     localStorage.setItem(TEMP_STORAGE_KEY, JSON.stringify(dataToSave));
+   } catch (error) {
+     console.error('Błąd podczas zapisywania tymczasowych danych formularza:', error);
+   }
+ };
 
-  const handleChange = (field, value) => {
-    // Używamy setTimeout, aby zapewnić, że React zaktualizuje stan przed kolejnym renderowaniem
-    setTimeout(() => {
-      setFormData(prev => ({
-        ...prev,
-        [field]: value
-      }));
+ // Funkcja do zapisywania wersji roboczej
+ const saveDraft = (data, draftName) => {
+   try {
+     const dataToSave = { 
+       ...data,
+       draftName: draftName || `Wersja robocza ${new Date().toLocaleString()}`,
+       savedAt: new Date().toISOString()
+     };
+     
+     // Usuwamy obiekty File z tablicy images
+     if (dataToSave.images && Array.isArray(dataToSave.images)) {
+       dataToSave.images = dataToSave.images.map(img => {
+         if (img && typeof img === 'object') {
+           return { url: img.url || '' };
+         }
+         return img;
+       });
+     }
+     
+     // Pobierz istniejące drafty
+     const existingDrafts = JSON.parse(localStorage.getItem(DRAFT_STORAGE_KEY) || '[]');
+     
+     // Dodaj nowy draft
+     const newDrafts = [...existingDrafts, dataToSave];
+     
+     // Zachowaj maksymalnie 5 ostatnich draftów
+     const limitedDrafts = newDrafts.slice(-5);
+     
+     localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(limitedDrafts));
+     
+     return true;
+   } catch (error) {
+     console.error('Błąd podczas zapisywania wersji roboczej:', error);
+     return false;
+   }
+ };
 
-      if (errors[field]) {
-        setErrors(prev => {
-          const newErrors = { ...prev };
-          delete newErrors[field];
-          return newErrors;
-        });
-      }
-    }, 0);
-  };
+ // Funkcja do pobierania wersji roboczych
+ const getDrafts = () => {
+   try {
+     const drafts = localStorage.getItem(DRAFT_STORAGE_KEY);
+     return drafts ? JSON.parse(drafts) : [];
+   } catch (error) {
+     console.error('Błąd podczas pobierania wersji roboczych:', error);
+     return [];
+   }
+ };
 
-  const validateForm = () => {
-    const newErrors = FormValidator.validateForm(formData);
-    setErrors(newErrors);
-    
-    
-    return Object.keys(newErrors).length === 0;
-  };
+ // Funkcja do ładowania wersji roboczej
+ const loadDraft = (draftIndex) => {
+   try {
+     const drafts = getDrafts();
+     if (drafts[draftIndex]) {
+       const draftData = { ...drafts[draftIndex] };
+       delete draftData.draftName;
+       delete draftData.savedAt;
+       setFormData(draftData);
+       return true;
+     }
+   } catch (error) {
+     console.error('Błąd podczas ładowania wersji roboczej:', error);
+   }
+   return false;
+ };
 
-  const resetForm = () => {
-    localStorage.removeItem(STORAGE_KEY);
-    setFormData(initialFormData);
-    setErrors({});
-  };
+ // Funkcja do usuwania wersji roboczej
+ const deleteDraft = (draftIndex) => {
+   try {
+     const drafts = getDrafts();
+     const updatedDrafts = drafts.filter((_, index) => index !== draftIndex);
+     localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(updatedDrafts));
+     return true;
+   } catch (error) {
+     console.error('Błąd podczas usuwania wersji roboczej:', error);
+     return false;
+   }
+ };
 
-  return {
-    formData,
-    setFormData,
-    errors,
-    setErrors,
-    handleChange,
-    validateForm,
-    resetForm
-  };
+ const handleChange = (fieldOrEvent, value) => {
+   let field, val;
+   
+   // Sprawdź czy to event object czy bezpośrednie wartości
+   if (fieldOrEvent && fieldOrEvent.target) {
+     // To jest event object z input/select
+     field = fieldOrEvent.target.name;
+     val = fieldOrEvent.target.value;
+   } else {
+     // To są bezpośrednie wartości z custom dropdown
+     field = fieldOrEvent;
+     val = value;
+   }
+   
+   setFormData(prev => ({
+     ...prev,
+     [field]: val
+   }));
+
+   if (errors[field]) {
+     setErrors(prev => {
+       const newErrors = { ...prev };
+       delete newErrors[field];
+       return newErrors;
+     });
+   }
+ };
+
+ const validateForm = () => {
+   const newErrors = FormValidator.validateForm(formData);
+   setErrors(newErrors);
+   
+   return Object.keys(newErrors).length === 0;
+ };
+
+ const resetForm = () => {
+   localStorage.removeItem(TEMP_STORAGE_KEY);
+   localStorage.removeItem(DRAFT_STORAGE_KEY);
+   setFormData(initialFormData);
+   setErrors({});
+ };
+
+ return {
+   formData,
+   setFormData,
+   errors,
+   setErrors,
+   handleChange,
+   validateForm,
+   resetForm,
+   saveTemporaryData,
+   saveDraft,
+   getDrafts,
+   loadDraft,
+   deleteDraft
+ };
 }

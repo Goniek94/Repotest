@@ -33,17 +33,17 @@ const useCarData = () => {
 
     try {
       // Najpierw próbujemy pobrać modele z backendu
-      const response = await CarDataService.getModelsForBrand(brand);
+      const models = await CarDataService.getModelsForBrand(brand);
       
-      if (response && response.data && Array.isArray(response.data.models)) {
+      if (models && Array.isArray(models) && models.length > 0) {
         // Jeśli udało się pobrać modele z backendu, aktualizujemy cache i zwracamy je
-        const models = response.data.models.sort();
+        const sortedModels = models.sort();
         setModelsCache(prev => ({
           ...prev,
-          [brand]: models
+          [brand]: sortedModels
         }));
-        console.log(`Pobrano modele dla marki ${brand} z backendu`, models);
-        return models;
+        console.log(`Pobrano modele dla marki ${brand} z backendu`, sortedModels);
+        return sortedModels;
       }
     } catch (err) {
       console.warn(`Nie udało się pobrać modeli dla marki ${brand} z backendu, używam danych statycznych`, err);
@@ -127,22 +127,18 @@ const useCarData = () => {
         }
 
         // Jeśli nie ma danych w localStorage, pobierz z backendu
-        const response = await CarDataService.getAllBrandsAndModels();
+        const data = await CarDataService.getAllBrandsAndModels();
         
-        if (response && response.data && typeof response.data === 'object') {
-          const data = response.data;
+        if (data && typeof data === 'object' && Object.keys(data).length > 0) {
+          // Zapisz dane w localStorage dla przyszłego użycia
+          localStorage.setItem('carData', JSON.stringify(data));
           
-          if (Object.keys(data).length > 0) {
-            // Zapisz dane w localStorage dla przyszłego użycia
-            localStorage.setItem('carData', JSON.stringify(data));
-            
-            if (isMounted) {
-              console.log('Pobrano dane o markach i modelach z backendu', Object.keys(data).length);
-              setCarData(data);
-              setBrands(Object.keys(data).sort());
-              setLoading(false);
-              return;
-            }
+          if (isMounted) {
+            console.log('Pobrano dane o markach i modelach z backendu', Object.keys(data).length);
+            setCarData(data);
+            setBrands(Object.keys(data).sort());
+            setLoading(false);
+            return;
           }
         }
         

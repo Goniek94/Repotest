@@ -277,7 +277,7 @@ class FormValidator {
       
       // Ustawiamy domyślny typ sprzedawcy, jeśli nie jest określony
       if (!formData.sellerType) {
-        formData.sellerType = 'prywatny';
+        formData.sellerType = 'Prywatny';
       }
     }
   }

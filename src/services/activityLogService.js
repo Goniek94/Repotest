@@ -37,7 +37,7 @@ function logLogin(user) {
   
   const activity = {
     id: Date.now(),
-    icon: 'log-in',
+    iconType: 'log-in', // Zmieniono z 'icon' na 'iconType'
     title: 'Zalogowano do systemu',
     description: user?.email || 'Użytkownik zalogował się',
     time: new Date().toLocaleDateString('pl-PL', {

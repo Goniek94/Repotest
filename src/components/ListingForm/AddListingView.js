@@ -81,6 +81,39 @@ const AddListingView = () => {
 
   // Funkcja mapująca dane z formularza na format backendu
   const mapFormDataToBackend = (formData) => {
+    // Mapowania wartości z frontendu na backend
+    const fuelTypeMapping = {
+      'Benzyna': 'benzyna',
+      'Diesel': 'diesel', 
+      'Elektryczny': 'elektryczny',
+      'Hybryda': 'hybryda',
+      'Hybrydowy': 'hybrydowy',
+      'Benzyna+LPG': 'benzyna+LPG',
+      'Benzyna+CNG': 'benzyna+LPG', // mapujemy CNG na LPG jako najbliższe
+      'Etanol': 'inne'
+    };
+
+    const transmissionMapping = {
+      'Manualna': 'manualna',
+      'Automatyczna': 'automatyczna',
+      'Półautomatyczna': 'półautomatyczna',
+      'Bezstopniowa CVT': 'automatyczna' // CVT mapujemy na automatyczną
+    };
+
+    const conditionMapping = {
+      'Nowy': 'nowy',
+      'Używany': 'używany'
+    };
+
+    const booleanMapping = {
+      'Tak': 'tak',
+      'Nie': 'nie',
+      'Bezwypadkowy': 'nie',
+      'Powypadkowy': 'tak',
+      'Nieuszkodzony': 'nie',
+      'Uszkodzony': 'tak'
+    };
+
     return {
       // Podstawowe informacje
       brand: formData.brand || '',
@@ -88,33 +121,50 @@ const AddListingView = () => {
       generation: formData.generation || '',
       version: formData.version || '',
       year: parseInt(formData.productionYear || formData.year || '2010'),
+      productionYear: parseInt(formData.productionYear || formData.year || '2010'), // Dodajemy też productionYear dla kompatybilności
       price: parseFloat(formData.price || '10000'),
       mileage: parseInt(formData.mileage || '100000'),
-      fuelType: formData.fuelType || 'Benzyna',
-      transmission: formData.transmission || 'Manualna',
+      fuelType: fuelTypeMapping[formData.fuelType] || 'benzyna',
+      transmission: transmissionMapping[formData.transmission] || 'manualna',
       vin: formData.vin || '',
       registrationNumber: formData.registrationNumber || '',
       headline: formData.headline || `${formData.brand || ''} ${formData.model || ''}`.trim(),
       description: formData.description || 'Brak opisu',
       
-      // Opcje zakupu
-      purchaseOptions: formData.purchaseOption || formData.purchaseOptions || 'sprzedaz',
+      // Opcje zakupu - mapowanie z frontendu na backend
+      purchaseOptions: (() => {
+        const option = formData.purchaseOption || formData.purchaseOptions;
+        const mapping = {
+          'sprzedaz': 'Sprzedaż',
+          'faktura': 'Faktura VAT', 
+          'inne': 'Inne',
+          'najem': 'Inne',
+          'leasing': 'Inne'
+        };
+        return mapping[option] || 'Sprzedaż';
+      })(),
       rentalPrice: formData.rentalPrice ? parseFloat(formData.rentalPrice) : undefined,
       negotiable: formData.negotiable || 'Nie',
       
       // Typ ogłoszenia i sprzedawcy
       listingType,
-      sellerType: formData.sellerType || 'prywatny',
+      sellerType: (() => {
+        const sellerTypeMapping = {
+          'Prywatny': 'prywatny',
+          'Firma': 'firma'
+        };
+        return sellerTypeMapping[formData.sellerType] || 'prywatny';
+      })(),
       
       // Stan pojazdu
-      condition: formData.condition || 'Używany',
-      accidentStatus: formData.accidentStatus || 'Nie',
-      damageStatus: formData.damageStatus || 'Nie',
-      tuning: formData.tuning || 'Nie',
-      imported: formData.imported || 'Nie',
-      registeredInPL: formData.registeredInPL || 'Tak',
-      firstOwner: formData.firstOwner || 'Nie',
-      disabledAdapted: formData.disabledAdapted || 'Nie',
+      condition: conditionMapping[formData.condition] || 'używany',
+      accidentStatus: booleanMapping[formData.accidentStatus] || 'nie',
+      damageStatus: booleanMapping[formData.damageStatus] || 'nie',
+      tuning: booleanMapping[formData.tuning] || 'nie',
+      imported: booleanMapping[formData.imported] || 'nie',
+      registeredInPL: booleanMapping[formData.registeredInPL] || 'tak',
+      firstOwner: booleanMapping[formData.firstOwner] || 'nie',
+      disabledAdapted: booleanMapping[formData.disabledAdapted] || 'nie',
       
       // Nadwozie i wygląd
       bodyType: formData.bodyType || '',
@@ -133,9 +183,55 @@ const AddListingView = () => {
       voivodeship: formData.voivodeship || '',
       city: formData.city || '',
       
-      // Zdjęcia
-      images: formData.images || [],
-      mainImage: formData.mainImage || (formData.images && formData.images.length > 0 ? formData.images[0] : ''),
+      // Zdjęcia - konwersja na array stringów (URL-e z Supabase)
+      images: (() => {
+        // Priorytet 1: Sprawdź czy mamy już URL-e z Supabase w formData.images
+        if (formData.images && Array.isArray(formData.images) && formData.images.length > 0) {
+          // Jeśli to już są stringi (URL-e), zwróć je
+          if (typeof formData.images[0] === 'string') {
+            return formData.images;
+          }
+          // Jeśli to obiekty z url, wyciągnij URL-e
+          return formData.images.map(img => img.url || img.src || img).filter(Boolean);
+        }
+        
+        // Priorytet 2: Sprawdź photos (base64 - będą przesłane do Supabase później)
+        if (formData.photos && Array.isArray(formData.photos) && formData.photos.length > 0) {
+          // Zwróć puste - zdjęcia będą przesłane do Supabase po utworzeniu ogłoszenia
+          return [];
+        }
+        
+        return [];
+      })(),
+      mainImage: (() => {
+        // Priorytet 1: mainImage jako string (URL z Supabase)
+        if (formData.mainImage && typeof formData.mainImage === 'string') {
+          return formData.mainImage;
+        }
+        
+        // Priorytet 2: mainImage jako obiekt z url
+        if (formData.mainImage && typeof formData.mainImage === 'object') {
+          return formData.mainImage.url || formData.mainImage.src || '';
+        }
+        
+        // Priorytet 3: Pierwszy obraz z listy images
+        if (formData.images && formData.images.length > 0) {
+          const firstImage = formData.images[0];
+          if (typeof firstImage === 'string') {
+            return firstImage;
+          }
+          return firstImage.url || firstImage.src || '';
+        }
+        
+        // Priorytet 4: Pierwszy obraz z photos (base64 - tymczasowo)
+        if (formData.photos && formData.photos.length > 0) {
+          const mainPhotoIndex = formData.mainPhotoIndex || 0;
+          const mainPhoto = formData.photos[mainPhotoIndex];
+          return mainPhoto?.src || formData.photos[0]?.src || '';
+        }
+        
+        return '';
+      })(),
       
       // Status
       status: 'pending'
@@ -153,42 +249,70 @@ const AddListingView = () => {
     setError('');
 
     try {
-      let finalListingData = { ...listingData };
+      // Mapowanie danych formularza na format backendu (bez zdjęć)
+      const backendData = mapFormDataToBackend(listingData);
       
-      // Sprawdzamy czy mamy zdjęcia do przesłania
+      // KROK 1: Najpierw utwórz ogłoszenie bez zdjęć
+      const response = await AdsService.addListing(backendData);
+      const realCarId = response.data._id;
+      
+      // KROK 2: Jeśli mamy zdjęcia, prześlij je z prawdziwym ID ogłoszenia
       if (listingData.photos && listingData.photos.length > 0) {
-        // Wyciągamy pliki File z photos
         const filesToUpload = listingData.photos
           .filter(photo => photo.file && photo.file instanceof File)
           .map(photo => photo.file);
         
-        // Znajdź główne zdjęcie
         const mainPhotoIndex = listingData.mainPhotoIndex || 0;
         const mainImageFile = listingData.photos[mainPhotoIndex]?.file;
         
         if (filesToUpload.length > 0) {
-          // Generujemy tymczasowe ID dla ogłoszenia (będzie zastąpione przez prawdziwe ID z API)
-          const tempCarId = `temp_${Date.now()}`;
-          
-          // Przesyłamy zdjęcia do Supabase
-          const uploadedImages = await uploadImages(filesToUpload, tempCarId, mainImageFile);
-          
-          if (uploadedImages && uploadedImages.length > 0) {
-            // Aktualizujemy dane ogłoszenia z URL-ami z Supabase
-            finalListingData.images = uploadedImages.map(img => img.url);
-            finalListingData.mainImage = uploadedImages.find(img => img.isMain)?.url || uploadedImages[0]?.url;
+          try {
+            // Przesyłamy zdjęcia do Supabase z prawdziwym ID ogłoszenia
+            const uploadedImages = await uploadImages(filesToUpload, realCarId, mainImageFile);
+            
+            if (uploadedImages && uploadedImages.length > 0) {
+      // KROK 3: Zaktualizuj ogłoszenie z URL-ami zdjęć
+              const imageData = {
+                images: uploadedImages.map(img => img.url),
+                mainImage: uploadedImages.find(img => img.isMain)?.url || uploadedImages[0]?.url
+              };
+              
+              await AdsService.updateListingImages(realCarId, imageData);
+              
+              // KROK 4: Pobierz świeże dane ogłoszenia z API (z prawdziwymi URL-ami Supabase)
+              try {
+                const freshAdResponse = await AdsService.getById(realCarId);
+                const freshAdData = freshAdResponse.data;
+                
+                // Zaktualizuj dane w formularzu o prawdziwe URL-e zdjęć
+                setListingData(prev => ({
+                  ...prev,
+                  images: freshAdData.images || [],
+                  mainImage: freshAdData.mainImage || '',
+                  // Usuń stare photos (base64) i zastąp prawdziwymi URL-ami
+                  photos: freshAdData.images ? freshAdData.images.map((url, index) => ({
+                    id: Date.now() + index,
+                    src: url,
+                    name: `Zdjęcie ${index + 1}`,
+                    url: url
+                  })) : []
+                }));
+                
+                console.log('✅ Zaktualizowano dane ogłoszenia z prawdziwymi URL-ami Supabase:', freshAdData.images);
+              } catch (fetchError) {
+                console.error('Błąd podczas pobierania świeżych danych ogłoszenia:', fetchError);
+              }
+            }
+          } catch (imageError) {
+            console.error('Błąd przesyłania zdjęć:', imageError);
+            // Ogłoszenie już zostało utworzone, ale bez zdjęć
+            setError(`Ogłoszenie zostało utworzone, ale wystąpił błąd podczas przesyłania zdjęć: ${imageError.message}`);
           }
         }
       }
       
-      // Mapowanie danych formularza na format backendu
-      const backendData = mapFormDataToBackend(finalListingData);
-      
-      // Wywołanie prawdziwego API
-      const response = await AdsService.addListing(backendData);
-      
       // Ustawienie ID ogłoszenia i otwarcie modala płatności
-      setAdId(response.data._id);
+      setAdId(realCarId);
       setIsPaymentModalOpen(true);
 
     } catch (error) {
@@ -275,7 +399,7 @@ const AddListingView = () => {
           <div className="flex items-center gap-3">
             <Upload className="h-5 w-5 text-blue-600 animate-pulse" />
             <div className="flex-1">
-              <p className="text-blue-700 font-medium">Przesyłanie zdjęć do Supabase...</p>
+              <p className="text-blue-700 font-medium">Przetwarzanie zdjęć...</p>
               <div className="mt-2 bg-blue-200 rounded-full h-2 overflow-hidden">
                 <div 
                   className="bg-blue-600 h-full rounded-full transition-all duration-300"
@@ -419,6 +543,20 @@ const AddListingView = () => {
                 )}
               </div>
 
+              {/* Nagłówek ogłoszenia */}
+              {listingData.headline && (
+                <div className="mt-6">
+                  <h2 className="text-xl font-bold mb-4 text-black">
+                    Nagłówek ogłoszenia
+                  </h2>
+                  <div className="bg-gray-50 p-4 rounded-md border-l-4 border-[#35530A]">
+                    <p className="text-lg font-medium text-gray-800">
+                      {listingData.headline}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Opis */}
               <div className="mt-6">
                 <h2 className="text-xl font-bold mb-4 text-black">
@@ -450,30 +588,16 @@ const AddListingView = () => {
                   Dane techniczne
                 </h2>
                 <div className="grid grid-cols-2 gap-2 text-sm">  
-                  <InfoRow label="Stan" value={listingData.condition} />
-                  <InfoRow label="Wypadkowość" value={listingData.accidentStatus} />
-                  <InfoRow label="Uszkodzenia" value={listingData.damageStatus} />
-                  <InfoRow label="Rok produkcji" value={listingData.productionYear} />
-                  <InfoRow label="Przebieg" value={`${listingData.mileage} km`} />
-                  <InfoRow label="Ostatni przebieg (CEPiK)" value={listingData.lastOfficialMileage ? `${listingData.lastOfficialMileage} km` : 'Nie podano'} />
+                  {/* Podstawowe dane techniczne */}
+                  <InfoRow label="Marka" value={listingData.brand} />
+                  <InfoRow label="Model" value={listingData.model} />
+                  <InfoRow label="Rok produkcji" value={listingData.productionYear || listingData.year} />
+                  <InfoRow label="Przebieg" value={listingData.mileage ? `${listingData.mileage} km` : 'Nie podano'} />
                   <InfoRow label="Rodzaj paliwa" value={listingData.fuelType} />
-                  <InfoRow label="Moc" value={`${listingData.power} KM`} />
                   <InfoRow label="Pojemność silnika" value={listingData.engineSize ? `${listingData.engineSize} cm³` : 'Nie podano'} />
+                  <InfoRow label="Moc" value={listingData.power ? `${listingData.power} KM` : 'Nie podano'} />
                   <InfoRow label="Skrzynia biegów" value={listingData.transmission} />
                   <InfoRow label="Napęd" value={listingData.drive} />
-                  <InfoRow label="Typ nadwozia" value={listingData.bodyType} />
-                  <InfoRow label="Kolor" value={listingData.color} />
-                  <InfoRow label="Liczba drzwi" value={listingData.doors} />
-                  <InfoRow label="Waga" value={listingData.weight ? `${listingData.weight} kg` : 'Nie podano'} />
-                  <InfoRow label="Pierwszy właściciel" value={listingData.firstOwner} />
-                  <InfoRow label="Zarejestrowany w PL" value={listingData.registeredInPL} />
-                  <InfoRow label="Importowany" value={listingData.imported} />
-                  <InfoRow label="Tuning" value={listingData.tuning} />
-                  <InfoRow label="Dla niepełnosprawnych" value={listingData.disabledAdapted} />
-                  <InfoRow label="Kraj pochodzenia" value={listingData.countryOfOrigin} />
-                  {listingData.vin && (
-                    <InfoRow label="VIN" value={listingData.vin} />
-                  )}
                 </div>
               </div>
 
@@ -568,7 +692,12 @@ const AddListingView = () => {
         {/* Przyciski Akcji - na dole */}
         <div className="mt-6 flex justify-center gap-4">
           <button
-            onClick={() => navigate('/create-listing', { state: { listingData } })}
+            onClick={() => {
+              // Zapisz dane tymczasowo przed powrotem
+              const tempData = { ...listingData };
+              localStorage.setItem('auto_sell_temp_form', JSON.stringify(tempData));
+              navigate('/create-listing?from=preview');
+            }}
             className="
               bg-gray-100 text-gray-700
               px-6 py-3

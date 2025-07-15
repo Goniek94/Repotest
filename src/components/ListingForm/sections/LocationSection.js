@@ -104,24 +104,7 @@ const LocationSection = ({ formData, handleChange, errors }) => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-4 bg-white">
-      
-      {/* Jedna główna karta - kompaktowa */}
-      <div className="bg-white rounded-lg shadow-lg border border-gray-100 overflow-hidden">
-        
-        {/* Header karty bez postępu */}
-        <div className="bg-gradient-to-r from-[#35530A] to-[#2D4A06] text-white p-4">
-          <div className="flex items-center">
-            <MapPin className="h-6 w-6 mr-3" />
-            <div>
-              <h2 className="text-xl font-bold">Lokalizacja pojazdu</h2>
-              <p className="text-green-100 text-sm">Gdzie znajduje się pojazd</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Zawartość karty */}
-        <div className="p-6 space-y-6">
+    <div className="space-y-6">
           
           {/* Kompaktowa siatka pól lokalizacji */}
           <div>
@@ -174,9 +157,7 @@ const LocationSection = ({ formData, handleChange, errors }) => {
               <strong>Wskazówka:</strong> Precyzyjne podanie lokalizacji ułatwia kupującym oszacowanie odległości 
               i zaplanowanie oględzin pojazdu. Podaj przynajmniej województwo i miejscowość.
             </p>
-          </div>
-        </div>
-      </div>
+    </div>
     </div>
   );
 };

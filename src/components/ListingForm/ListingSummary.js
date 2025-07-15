@@ -156,37 +156,52 @@ const ListingSummary = ({ listingData, onBack, onContinue }) => {
                 </div>
               </div>
 
-              {/* Dane techniczne */}
+              {/* Dane pojazdu - podzielone na 2 kolumny */}
               <div className="bg-white p-4 shadow-sm rounded-[2px] mb-4">
-                <h2 className="text-lg font-bold mb-3 text-black px-2">
-                  Dane techniczne
-                </h2>
-                <div className="grid grid-cols-2 gap-2 text-sm">  
-                  <InfoRow label="Stan" value={listingData.condition} />
-                  <InfoRow label="Wypadkowość" value={listingData.accidentStatus} />
-                  <InfoRow label="Uszkodzenia" value={listingData.damageStatus} />
-                  <InfoRow label="Rok produkcji" value={listingData.productionYear} />
-                  <InfoRow label="Przebieg" value={`${listingData.mileage} km`} />
-                  <InfoRow label="Ostatni przebieg (CEPiK)" value={listingData.lastOfficialMileage ? `${listingData.lastOfficialMileage} km` : 'Nie podano'} />
-                  <InfoRow label="Rodzaj paliwa" value={listingData.fuelType} />
-                  <InfoRow label="Moc" value={`${listingData.power} KM`} />
-                  <InfoRow label="Pojemność silnika" value={listingData.engineSize ? `${listingData.engineSize} cm³` : 'Nie podano'} />
-                  <InfoRow label="Skrzynia biegów" value={listingData.transmission} />
-                  <InfoRow label="Napęd" value={listingData.drive} />
-                  <InfoRow label="Typ nadwozia" value={listingData.bodyType} />
-                  <InfoRow label="Kolor" value={listingData.color} />
-                  <InfoRow label="Liczba drzwi" value={listingData.doors} />
-                  <InfoRow label="Waga" value={listingData.weight ? `${listingData.weight} kg` : 'Nie podano'} />
-                  <InfoRow label="Pierwszy właściciel" value={listingData.firstOwner} />
-                  <InfoRow label="Zarejestrowany w PL" value={listingData.registeredInPL} />
-                  <InfoRow label="Importowany" value={listingData.imported} />
-                  <InfoRow label="Tuning" value={listingData.tuning} />
-                  <InfoRow label="Dla niepełnosprawnych" value={listingData.disabledAdapted} />
-                  <InfoRow label="Kraj pochodzenia" value={listingData.countryOfOrigin} />
-                  {listingData.vin && (
-                    <InfoRow label="VIN" value={listingData.vin} />
-                  )}
+                <div className="grid grid-cols-2 gap-4">
+                  {/* KOLUMNA 1 - PODSTAWOWE DANE */}
+                  <div className="space-y-2 text-sm">
+                    <InfoRow label="Marka" value={listingData.brand} />
+                    <InfoRow label="Model" value={listingData.model} />
+                    <InfoRow label="Generacja" value={listingData.generation} />
+                    <InfoRow label="Wersja silnika" value={listingData.version} />
+                    <InfoRow label="Rok produkcji" value={listingData.productionYear} />
+                    <InfoRow label="Stan" value={listingData.condition} />
+                    <InfoRow label="Wypadkowość" value={listingData.accidentStatus} />
+                    <InfoRow label="Uszkodzenia" value={listingData.damageStatus} />
+                    <InfoRow label="Tuning" value={listingData.tuning} />
+                    <InfoRow label="Importowany" value={listingData.imported} />
+                    <InfoRow label="Zarejestrowany w PL" value={listingData.registeredInPL} />
+                    <InfoRow label="Dla niepełnosprawnych" value={listingData.disabledAdapted} />
+                    <InfoRow label="Pierwszy właściciel" value={listingData.firstOwner} />
+                  </div>
+
+                  {/* KOLUMNA 2 - DANE TECHNICZNE */}
+                  <div className="space-y-2 text-sm">
+                    <InfoRow label="Ostatni przebieg (CEPiK)" value={listingData.lastOfficialMileage ? `${listingData.lastOfficialMileage} km` : 'Nie podano'} />
+                    <InfoRow label="Przebieg" value={listingData.mileage ? `${listingData.mileage} km` : 'Nie podano'} />
+                    <InfoRow label="Rodzaj paliwa" value={listingData.fuelType} />
+                    <InfoRow label="Pojemność silnika" value={listingData.engineSize ? `${listingData.engineSize} cm³` : 'Nie podano'} />
+                    <InfoRow label="Moc" value={listingData.power ? `${listingData.power} KM` : 'Nie podano'} />
+                    <InfoRow label="Skrzynia biegów" value={listingData.transmission} />
+                    <InfoRow label="Napęd" value={listingData.drive} />
+                    <InfoRow label="Kraj pochodzenia" value={listingData.countryOfOrigin} />
+                    <InfoRow label="Typ nadwozia" value={listingData.bodyType} />
+                    <InfoRow label="Kolor" value={listingData.color} />
+                    <InfoRow label="Liczba drzwi" value={listingData.doors} />
+                    <InfoRow label="Wykończenie" value={listingData.interior || listingData.finish} />
+                    <InfoRow label="Waga" value={listingData.weight ? `${listingData.weight} kg` : 'Nie podano'} />
+                    <InfoRow label="Opcja zakupu" value={listingData.purchaseOption === 'sprzedaz' ? 'Sprzedaż' : listingData.purchaseOption === 'najem' ? 'Najem' : 'Inne'} />
+                    <InfoRow label="Cena do negocjacji" value={listingData.negotiable} />
+                  </div>
                 </div>
+                
+                {/* VIN osobno jeśli istnieje */}
+                {listingData.vin && (
+                  <div className="mt-4 pt-4 border-t">
+                    <InfoRow label="VIN" value={listingData.vin} />
+                  </div>
+                )}
               </div>
 
               {/* Lokalizacja */}

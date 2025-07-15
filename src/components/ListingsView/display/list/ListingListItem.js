@@ -170,7 +170,7 @@ const ListingListItem = memo(({
                 <div>
                   <div className="text-sm sm:text-xs lg:text-sm text-gray-500">Sprzedawca</div>
                   <div className="text-base sm:text-base lg:text-base font-medium text-[#35530A]">
-                    {listing.sellerType === 'prywatny' ? 'Prywatny' : listing.sellerType}
+                    {listing.sellerType}
                   </div>
                 </div>
               </div>

@@ -42,16 +42,24 @@ const ListingCard = memo(({ listing, onNavigate, onFavorite, isFavorite, message
       {/* Zdjęcie */}
       <div className="relative">
         <img
-          src={listing.images && listing.images.length > 0 
-            ? getImageUrl(typeof listing.mainImageIndex === 'number' && 
-               listing.mainImageIndex >= 0 && 
-               listing.mainImageIndex < listing.images.length 
-                ? listing.images[listing.mainImageIndex] 
-                : listing.images[0])
-            : listing.image || '/images/auto-788747_1280.jpg'}
+          src={(() => {
+            const originalImageUrl = listing.images && listing.images.length > 0 
+              ? (typeof listing.mainImageIndex === 'number' && 
+                 listing.mainImageIndex >= 0 && 
+                 listing.mainImageIndex < listing.images.length 
+                  ? listing.images[listing.mainImageIndex] 
+                  : listing.images[0])
+              : listing.image || '/images/auto-788747_1280.jpg';
+            
+            console.log('🖼️ ListingCard - Original image URL:', originalImageUrl);
+            const processedUrl = getImageUrl(originalImageUrl);
+            console.log('🖼️ ListingCard - Processed image URL:', processedUrl);
+            return processedUrl;
+          })()}
           alt={listing.title}
           className="w-full h-48 object-cover"
           onError={(e) => {
+            console.log('❌ ListingCard - Image failed to load:', e.target.src);
             e.target.onerror = null;
             e.target.src = '/images/auto-788747_1280.jpg';
           }}
@@ -174,7 +182,7 @@ const ListingCard = memo(({ listing, onNavigate, onFavorite, isFavorite, message
           <div className="flex items-center">
             <User className="w-4 h-4 mr-1 text-gray-700" />
             <div className="text-sm font-medium text-[#35530A]">
-              {listing.sellerType === 'prywatny' ? 'Prywatny' : listing.sellerType}
+              {listing.sellerType}
             </div>
           </div>
 

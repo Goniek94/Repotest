@@ -21,7 +21,7 @@ const BASE_ITEMS = [
   { id: 'panel', name: 'Panel', path: '/profil', icon: Eye },
   { id: 'messages', name: 'Wiadomości', path: '/profil/messages', search: '?folder=odebrane', icon: Mail, badgeKey: 'messages' },
   { id: 'listings', name: 'Moje ogłoszenia', path: '/profil/listings', icon: FileText },
-  { id: 'notifications', name: 'Powiadomienia', path: '/profil/notifications', icon: Bell, badgeKey: 'alerts' },
+  { id: 'notifications', name: 'Powiadomienia', path: '/profil/notifications', icon: Bell, badgeKey: 'notifications' },
   { id: 'transactions', name: 'Historia Transakcji', path: '/profil/transactions', icon: History },
   { id: 'contact', name: 'Kontakt', path: '/profil/contact', icon: PhoneCall },
   { id: 'settings', name: 'Ustawienia', path: '/profil/settings', icon: SettingsIcon },
@@ -46,7 +46,7 @@ const ProfileNavigation = React.forwardRef(
   ) => {
   const breakpoint = useBreakpoint();
   const { isAdmin } = useAuth();
-  const { unreadCount = { messages: 0, alerts: 0 } } = useNotifications();
+  const { unreadCount = { notifications: 0, messages: 0 } } = useNotifications();
   const { isExpanded } = useSidebar();
   const location = useLocation();
   const navigate = useNavigate();
@@ -100,9 +100,9 @@ const ProfileNavigation = React.forwardRef(
             className="px-4 py-2 font-bold uppercase rounded-[2px] hover:bg-gray-100 transition-colors relative flex items-center gap-2 text-gray-800 text-sm lg:text-base xl:text-lg"
           >
             Mój Profil
-            {counts.messages + counts.alerts > 0 && (
-              <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                {counts.messages + counts.alerts}
+            {counts.messages + counts.notifications > 0 && (
+              <div className="absolute -top-2 -right-2 bg-green-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                {counts.messages + counts.notifications}
               </div>
             )}
           </button>
@@ -134,10 +134,7 @@ const ProfileNavigation = React.forwardRef(
                     <item.icon className="w-4 h-4 mr-2" />
                     {item.name}
                     {item.badgeKey && counts[item.badgeKey] > 0 && (
-                      <span
-                        className="ml-1 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
-                        style={{ backgroundColor: PRIMARY_COLOR }}
-                      >
+                      <span className="ml-1 bg-green-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
                         {counts[item.badgeKey]}
                       </span>
                     )}
@@ -217,10 +214,7 @@ const ProfileNavigation = React.forwardRef(
               <item.icon className="w-4 h-4 mr-2" />
               {item.name}
               {item.badgeKey && counts[item.badgeKey] > 0 && (
-                <span
-                  className="ml-1 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
-                  style={{ backgroundColor: PRIMARY_COLOR }}
-                >
+                <span className="ml-1 bg-green-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
                   {counts[item.badgeKey]}
                 </span>
               )}

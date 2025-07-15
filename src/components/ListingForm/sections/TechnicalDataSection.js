@@ -105,24 +105,7 @@ const TechnicalDataSection = ({ formData, handleChange, errors }) => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-4 bg-white">
-      
-      {/* Jedna główna karta - kompaktowa */}
-      <div className="bg-white rounded-lg shadow-lg border border-gray-100 overflow-hidden">
-        
-        {/* Header karty bez postępu */}
-        <div className="bg-gradient-to-r from-[#35530A] to-[#2D4A06] text-white p-4">
-          <div className="flex items-center">
-            <Settings className="h-6 w-6 mr-3" />
-            <div>
-              <h2 className="text-xl font-bold">Dane techniczne</h2>
-              <p className="text-green-100 text-sm">Parametry techniczne pojazdu</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Zawartość karty */}
-        <div className="p-6 space-y-6">
+    <div className="space-y-6">
           
           {/* Kompaktowa siatka wszystkich pól */}
           <div>
@@ -186,6 +169,17 @@ const TechnicalDataSection = ({ formData, handleChange, errors }) => {
                 unit="KM"
                 errors={errors}
               />
+              <InputField
+                name="weight"
+                label="Waga"
+                value={formData.weight}
+                placeholder="np. 1500"
+                type="number"
+                min="0"
+                max="10000"
+                unit="kg"
+                errors={errors}
+              />
               <SelectField
                 name="transmission"
                 label="Skrzynia"
@@ -222,8 +216,6 @@ const TechnicalDataSection = ({ formData, handleChange, errors }) => {
               Przebieg z CEPiK pomoże zweryfikować historię pojazdu.
             </p>
           </div>
-        </div>
-      </div>
     </div>
   );
 };

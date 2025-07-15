@@ -61,6 +61,20 @@ const DesktopNav = ({ user }) => {
             </Link>
           </li>
         )}
+        {user && user.role === 'admin' && (
+          <li>
+            <Link 
+              to="/admin" 
+              className={`px-3 py-2 transition-colors border-b-3 ${
+                isActive('/admin') 
+                  ? 'text-[#35530A] border-[#35530A]'
+                  : 'hover:bg-gray-100 rounded-[2px] border-transparent'
+              }`}
+            >
+              Panel Administratora
+            </Link>
+          </li>
+        )}
       </ul>
     </nav>
   );

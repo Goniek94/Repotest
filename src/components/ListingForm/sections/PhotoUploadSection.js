@@ -1,10 +1,14 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Upload, X, Star, Trash2, Image, AlertCircle, CheckCircle, Cloud } from 'lucide-react';
+import { Upload, X, Star, Trash2, Image, AlertCircle, CheckCircle, Cloud, Loader } from 'lucide-react';
+import { compressImages, validateImageFile, COMPRESSION_PRESETS } from '../../../utils/imageCompression';
+import { useImageUpload } from '../../../hooks/useImageUpload';
 
 const PhotoUploadSection = ({ formData, setFormData, errors, showToast }) => {
   const [photos, setPhotos] = useState([]);
   const [draggedIndex, setDraggedIndex] = useState(null);
   const [mainPhotoIndex, setMainPhotoIndex] = useState(0);
+  const [isCompressing, setIsCompressing] = useState(false);
+  const [compressionProgress, setCompressionProgress] = useState({ current: 0, total: 0, fileName: '' });
   const fileInputRef = useRef(null);
 
   // Synchronizacja zdjęć z globalnym stanem formularza
@@ -42,34 +46,86 @@ const PhotoUploadSection = ({ formData, setFormData, errors, showToast }) => {
     }
   }, [photos, mainPhotoIndex, setFormData]);
 
-  const handleFileUpload = useCallback((event) => {
+  const handleFileUpload = useCallback(async (event) => {
     const files = Array.from(event.target.files);
-    const remainingSlots = 20 - photos.length;
+    const remainingSlots = 15 - photos.length; // Zmieniono limit na 15
     
     if (files.length > remainingSlots) {
-      alert(`Możesz dodać maksymalnie ${remainingSlots} zdjęć. Limit to 20 zdjęć.`);
+      alert(`Możesz dodać maksymalnie ${remainingSlots} zdjęć. Limit to 15 zdjęć.`);
       return;
     }
 
-    files.forEach(file => {
-      if (file.size > 5 * 1024 * 1024) {
-        alert(`Plik ${file.name} jest za duży. Maksymalny rozmiar to 5MB.`);
-        return;
+    // Walidacja plików przed kompresją
+    const validFiles = [];
+    for (const file of files) {
+      const validation = validateImageFile(file, { maxSizeKB: 5120 });
+      if (!validation.isValid) {
+        alert(`Błąd w pliku ${file.name}: ${validation.errors.join(', ')}`);
+        continue;
+      }
+      validFiles.push(file);
+    }
+
+    if (validFiles.length === 0) return;
+
+    // Rozpocznij kompresję
+    setIsCompressing(true);
+    setCompressionProgress({ current: 0, total: validFiles.length, fileName: '' });
+
+    try {
+      // Kompresja zdjęć z callbackiem postępu
+      const result = await compressImages(
+        validFiles, 
+        COMPRESSION_PRESETS.HIGH_QUALITY,
+        (progress) => {
+          setCompressionProgress({
+            current: progress.current,
+            total: progress.total,
+            fileName: progress.fileName,
+            status: progress.status
+          });
+        }
+      );
+
+      // Przetwórz skompresowane pliki
+      const newPhotos = [];
+      for (const compressedFile of result.compressedFiles) {
+        const reader = new FileReader();
+        const photoPromise = new Promise((resolve) => {
+          reader.onload = (e) => {
+            const newPhoto = {
+              id: Date.now() + Math.random(),
+              src: e.target.result, // base64 do podglądu
+              name: compressedFile.name,
+              size: compressedFile.size,
+              file: compressedFile // Skompresowany plik
+            };
+            resolve(newPhoto);
+          };
+        });
+        reader.readAsDataURL(compressedFile);
+        newPhotos.push(await photoPromise);
       }
 
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const newPhoto = {
-          id: Date.now() + Math.random(),
-          src: e.target.result, // base64 do podglądu
-          name: file.name,
-          size: file.size,
-          file: file // Przechowujemy oryginalny plik File
-        };
-        setPhotos(prev => [...prev, newPhoto]);
-      };
-      reader.readAsDataURL(file);
-    });
+      // Dodaj nowe zdjęcia do stanu
+      setPhotos(prev => [...prev, ...newPhotos]);
+
+      // Pokaż informacje o kompresji
+      if (result.errors.length > 0) {
+        console.warn('Błędy kompresji:', result.errors);
+        alert(`Niektóre zdjęcia nie zostały skompresowane: ${result.errors.map(e => e.file).join(', ')}`);
+      }
+
+      // Wyczyść input
+      event.target.value = '';
+
+    } catch (error) {
+      console.error('Błąd kompresji zdjęć:', error);
+      alert('Wystąpił błąd podczas przetwarzania zdjęć. Spróbuj ponownie.');
+    } finally {
+      setIsCompressing(false);
+      setCompressionProgress({ current: 0, total: 0, fileName: '' });
+    }
   }, [photos.length]);
 
   const handleDragStart = (index) => {
@@ -158,7 +214,7 @@ const PhotoUploadSection = ({ formData, setFormData, errors, showToast }) => {
             </div>
             <div className="text-right">
               <div className="text-2xl font-bold">{photos.length}</div>
-              <div className="text-green-100 text-sm">z 20 zdjęć</div>
+              <div className="text-green-100 text-sm">z 15 zdjęć</div>
             </div>
           </div>
           
@@ -166,7 +222,7 @@ const PhotoUploadSection = ({ formData, setFormData, errors, showToast }) => {
           <div className="mt-3 bg-green-900/30 rounded-full h-2 overflow-hidden">
             <div 
               className="bg-white h-full rounded-full transition-all duration-500"
-              style={{ width: `${Math.min((photos.length / 20) * 100, 100)}%` }}
+              style={{ width: `${Math.min((photos.length / 15) * 100, 100)}%` }}
             />
           </div>
         </div>
@@ -201,10 +257,10 @@ const PhotoUploadSection = ({ formData, setFormData, errors, showToast }) => {
                 Przeciągnij zdjęcia lub kliknij, aby wybrać
               </p>
               <p className="text-sm text-gray-500">
-                Maksymalnie 20 zdjęć, każde do 5MB
+                Maksymalnie 15 zdjęć, każde do 5MB (automatyczna kompresja)
               </p>
               <div className="mt-3 text-sm text-gray-400">
-                {photos.length}/20 zdjęć
+                {photos.length}/15 zdjęć
               </div>
             </div>
             
@@ -215,8 +271,40 @@ const PhotoUploadSection = ({ formData, setFormData, errors, showToast }) => {
               accept="image/*"
               onChange={handleFileUpload}
               className="hidden"
+              disabled={isCompressing}
             />
           </div>
+
+          {/* Postęp kompresji */}
+          {isCompressing && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <Loader className="h-5 w-5 text-blue-600 animate-spin" />
+                <div>
+                  <p className="font-medium text-blue-800">Kompresja zdjęć w toku...</p>
+                  <p className="text-sm text-blue-600">
+                    {compressionProgress.current} z {compressionProgress.total} zdjęć
+                  </p>
+                </div>
+              </div>
+              
+              {/* Pasek postępu kompresji */}
+              <div className="bg-blue-200 rounded-full h-2 overflow-hidden mb-2">
+                <div 
+                  className="bg-blue-600 h-full rounded-full transition-all duration-300"
+                  style={{ 
+                    width: `${compressionProgress.total > 0 ? (compressionProgress.current / compressionProgress.total) * 100 : 0}%` 
+                  }}
+                />
+              </div>
+              
+              {compressionProgress.fileName && (
+                <p className="text-xs text-blue-600 truncate">
+                  Przetwarzanie: {compressionProgress.fileName}
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Kontrolki */}
           {photos.length > 0 && (

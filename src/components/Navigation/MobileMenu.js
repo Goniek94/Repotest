@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FaHome, FaList, FaHeart, FaUser, FaSignOutAlt, FaPlus } from 'react-icons/fa';
+import { FaHome, FaList, FaHeart, FaUser, FaSignOutAlt, FaPlus, FaCog } from 'react-icons/fa';
 
 const MobileMenu = ({ 
   isOpen, 
@@ -86,6 +86,16 @@ const MobileMenu = ({
                   </span>
                 )}
               </Link>
+              
+              {user.role === 'admin' && (
+                <Link 
+                  to="/admin"
+                  className="flex items-center py-4 border-b border-gray-200 text-[#35530A]"
+                  onClick={closeMenu}
+                >
+                  <FaCog className="mr-3" /> PANEL ADMINISTRATORA
+                </Link>
+              )}
               
               <button
                 onClick={handleLogout}

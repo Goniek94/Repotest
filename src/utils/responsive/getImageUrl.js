@@ -16,9 +16,13 @@ const getImageUrl = (image) => {
   // Domyślne zdjęcie placeholder
   const defaultImage = 'https://via.placeholder.com/400x300/cccccc/666666?text=Brak+zdjęcia';
   
+  // DEBUG: Logowanie oryginalnego URL
+  console.log('🔍 getImageUrl - Original image URL:', image);
+  
   try {
     // Jeśli brak zdjęcia lub jest undefined/null, zwróć domyślne zdjęcie
     if (!image) {
+      console.log('❌ getImageUrl - No image provided, returning default');
       return defaultImage;
     }
     
@@ -50,6 +54,12 @@ const getImageUrl = (image) => {
     
     // Jeśli to już pełny URL (HTTP/HTTPS), zwróć go bez zmian
     if (cleanImage.startsWith('http://') || cleanImage.startsWith('https://')) {
+      console.log('✅ getImageUrl - Full URL detected, returning as-is:', cleanImage);
+      return cleanImage;
+    }
+    
+    // Jeśli to base64 data URL, zwróć go bez zmian
+    if (cleanImage.startsWith('data:')) {
       return cleanImage;
     }
     
@@ -87,10 +97,12 @@ const getImageUrl = (image) => {
     
     // Domyślna obsługa - dodaj /uploads/ do ścieżki
     const cleanPath = cleanImage.replace(/^\/+/, ''); // usuń początkowe slashe
-    return `${apiUrl}/uploads/${cleanPath}`;
+    const finalUrl = `${apiUrl}/uploads/${cleanPath}`;
+    console.log('🔧 getImageUrl - Final processed URL:', finalUrl);
+    return finalUrl;
     
   } catch (error) {
-    console.error('getImageUrl: Błąd podczas przetwarzania URL zdjęcia:', error);
+    console.error('❌ getImageUrl: Błąd podczas przetwarzania URL zdjęcia:', error);
     return defaultImage;
   }
 };
