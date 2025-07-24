@@ -1,57 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-const carData = {
-  Audi: ['A1', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'Q3', 'Q5', 'Q7', 'Q8', 'TT', 'R8'],
-  BMW: [
-    'Seria 1', 'Seria 2', 'Seria 3', 'Seria 4', 'Seria 5', 'Seria 6', 'Seria 7', 'Seria 8',
-    'X1', 'X2', 'X3', 'X4', 'X5', 'X6', 'X7'
-  ],
-  Mercedes: [
-    'Klasa A', 'Klasa B', 'Klasa C', 'Klasa E', 'Klasa S', 'CLA', 'CLS', 'GLA', 'GLB',
-    'GLC', 'GLE', 'GLS'
-  ],
-  Volkswagen: [
-    'Golf', 'Polo', 'Passat', 'Arteon', 'T-Roc', 'T-Cross', 'Tiguan', 'Touareg',
-    'ID.3', 'ID.4'
-  ],
-  Toyota: [
-    'Yaris', 'Corolla', 'Camry', 'RAV4', 'C-HR', 'Highlander', 'Land Cruiser', 'Supra', 'Prius'
-  ],
-  Ford: ['Fiesta', 'Focus', 'Mondeo', 'Kuga', 'Puma', 'Edge', 'Mustang', 'Explorer'],
-  Opel: ['Corsa', 'Astra', 'Insignia', 'Crossland', 'Grandland', 'Mokka'],
-  Hyundai: ['i20', 'i30', 'i40', 'Kona', 'Tucson', 'Santa Fe', 'IONIQ', 'NEXO'],
-  Kia: ['Picanto', 'Rio', 'Ceed', 'Proceed', 'Stinger', 'XCeed', 'Sportage', 'Sorento'],
-  Škoda: ['Fabia', 'Scala', 'Octavia', 'Superb', 'Kamiq', 'Karoq', 'Kodiaq', 'Enyaq'],
-};
-
-const bodyTypes = [
-  'Sedan', 'Hatchback', 'SUV', 'Kombi', 'Coupé', 'Cabrio', 'VAN', 'Pickup'
-];
-
-const advancedOptions = {
-  damageStatus: ['Brak uszkodzeń', 'Lekko uszkodzony', 'Poważnie uszkodzony', 'Uszkodzony', 'Bezwypadkowy'],
-  country: ['Polska', 'Niemcy', 'Francja', 'Włochy', 'Inne państwa europejskie'],
-  fuelType: ['Benzyna', 'Diesel', 'Elektryczny', 'Hybrydowy', 'LPG', 'CNG'],
-  driveType: ['Przedni', 'Tylny', '4x4', 'Na przód'],
-  transmission: ['Automatyczna', 'Manualna'],
-  color: ['Biały', 'Czarny', 'Srebrny', 'Czerwony', 'Niebieski', 'Zielony', 'Żółty', 'Inny'],
-  doorCount: ['2/3', '4/5'],
-  tuning: ['Tak', 'Nie'],
-  vehicleCondition: ['Używany', 'Nowy', 'Powypadkowy'],
-  sellingForm: ['Sprzedaż', 'Zamiana', 'Wynajem', 'Leasing'],
-  sellerType: ['Prywatny', 'Firma'],
-  vehicleStatus: ['Uszkodzony', 'Bezwypadkowy', 'Kierownica po prawej', 'Przystosowany dla niepełnosprawnych'],
-};
-
-const regions = [
-  'Dolnośląskie', 'Kujawsko-pomorskie', 'Lubelskie', 'Lubuskie', 'Łódzkie', 
-  'Małopolskie', 'Mazowieckie', 'Opolskie', 'Podkarpackie', 'Podlaskie',
-  'Pomorskie', 'Śląskie', 'Świętokrzyskie', 'Warmińsko-mazurskie', 'Wielkopolskie', 'Zachodniopomorskie'
-];
+import useCarData from './search/hooks/useCarData';
+import { bodyTypes, advancedOptions, regions } from './search/SearchFormConstants';
 
 export default function SearchForm({ initialValues = {} }) {
   const navigate = useNavigate();
+  
+  // Pobierz dane o markach i modelach z hooka useCarData
+  const { carData, brands, getModelsForBrand, loading } = useCarData();
 
   // Dane formularza
   const [formData, setFormData] = useState(() => ({
@@ -88,7 +44,7 @@ export default function SearchForm({ initialValues = {} }) {
 
   // Lista dostępnych modeli dla wybranej marki
   const [availableModels, setAvailableModels] = useState([]);
-
+  
   // Czy pokazywać zaawansowane filtry
   const [showAdvanced, setShowAdvanced] = useState(false);
 
@@ -110,12 +66,17 @@ export default function SearchForm({ initialValues = {} }) {
 
   // Aktualizuj dostępne modele na podstawie wybranej marki
   useEffect(() => {
-    if (formData.make && carData[formData.make]) {
-      setAvailableModels(carData[formData.make]);
-    } else {
-      setAvailableModels([]);
-    }
-  }, [formData.make]);
+    const fetchModels = async () => {
+      if (formData.make) {
+        const models = await getModelsForBrand(formData.make);
+        setAvailableModels(models);
+      } else {
+        setAvailableModels([]);
+      }
+    };
+    
+    fetchModels();
+  }, [formData.make, getModelsForBrand]);
 
   // Przeliczaj „wynik" przy każdej zmianie formData
   useEffect(() => {
@@ -208,7 +169,7 @@ export default function SearchForm({ initialValues = {} }) {
                 className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
               >
                 <option value="">Wybierz markę</option>
-                {Object.keys(carData).map((make) => (
+                {brands.map((make) => (
                   <option key={make} value={make}>
                     {make}
                   </option>

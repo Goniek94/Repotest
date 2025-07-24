@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import CarDataService from '../../../services/carDataService';
-import { carData as staticCarData } from '../SearchFormConstants';
 import { generationsData, getGenerationsForModel as getStaticGenerations } from '../GenerationsData';
 
 /**
@@ -49,7 +48,7 @@ const useCarData = () => {
       console.warn(`Nie udało się pobrać modeli dla marki ${brand} z backendu, używam danych statycznych`, err);
     }
 
-    // Jeśli nie udało się pobrać modeli z backendu, próbujemy użyć danych statycznych
+    // Jeśli nie udało się pobrać modeli z backendu, próbujemy użyć danych z cache
     if (carData[brand]) {
       // Pobieramy modele z danych wczytanych wcześniej
       const models = carData[brand].sort();
@@ -57,21 +56,12 @@ const useCarData = () => {
         ...prev,
         [brand]: models
       }));
-      console.log(`Pobrano modele dla marki ${brand} z danych statycznych`, models);
-      return models;
-    } else if (staticCarData[brand]) {
-      // Pobieramy modele z danych statycznych
-      const models = staticCarData[brand].sort();
-      setModelsCache(prev => ({
-        ...prev,
-        [brand]: models
-      }));
-      console.log(`Pobrano modele dla marki ${brand} z danych statycznych (fallback)`, models);
+      console.log(`Pobrano modele dla marki ${brand} z danych cache`, models);
       return models;
     }
 
-    // Jeśli nie ma danych ani w backendzie, ani w danych statycznych, zwracamy pustą tablicę
-    console.warn(`Brak modeli dla marki ${brand} w danych statycznych`);
+    // Jeśli nie ma danych, zwracamy pustą tablicę
+    console.warn(`Brak modeli dla marki ${brand}`);
     return [];
   }, [carData, modelsCache]);
 
@@ -111,22 +101,11 @@ const useCarData = () => {
       setError(null);
 
       try {
-        // Sprawdź, czy mamy dane w localStorage
-        const cachedData = localStorage.getItem('carData');
-        if (cachedData) {
-          const parsedData = JSON.parse(cachedData);
-          if (parsedData && typeof parsedData === 'object' && Object.keys(parsedData).length > 0) {
-            if (isMounted) {
-              console.log('Pobrano dane o markach i modelach z localStorage', Object.keys(parsedData).length);
-              setCarData(parsedData);
-              setBrands(Object.keys(parsedData).sort());
-              setLoading(false);
-              return;
-            }
-          }
-        }
-
-        // Jeśli nie ma danych w localStorage, pobierz z backendu
+        // Najpierw wyczyść localStorage, aby wymusić pobieranie z backendu
+        localStorage.removeItem('carData');
+        console.log('Wyczyszczono cache danych o samochodach');
+        
+        // Pobierz dane z backendu
         const data = await CarDataService.getAllBrandsAndModels();
         
         if (data && typeof data === 'object' && Object.keys(data).length > 0) {
@@ -140,21 +119,69 @@ const useCarData = () => {
             setLoading(false);
             return;
           }
+        } else {
+          console.warn('Dane z backendu są puste lub niepoprawne');
         }
         
-        // Jeśli dane z backendu są puste lub niepoprawne, użyj danych statycznych
+        // Jeśli dane z backendu są puste lub niepoprawne, sprawdź localStorage jako zapasowe źródło
+        const cachedData = localStorage.getItem('carData');
+        if (cachedData) {
+          const parsedData = JSON.parse(cachedData);
+          if (parsedData && typeof parsedData === 'object' && Object.keys(parsedData).length > 0) {
+            if (isMounted) {
+              console.log('Pobrano dane o markach i modelach z localStorage (zapasowo)', Object.keys(parsedData).length);
+              setCarData(parsedData);
+              setBrands(Object.keys(parsedData).sort());
+              setLoading(false);
+              return;
+            }
+          }
+        }
+        
+        // Jeśli nie ma danych ani w backendu, ani w localStorage, użyj danych zapasowych
         if (isMounted) {
-          console.log('Używam statycznych danych o markach i modelach', Object.keys(staticCarData).length);
-          setCarData(staticCarData);
-          setBrands(Object.keys(staticCarData).sort());
+          console.log('Używam danych zapasowych');
+          
+          // Dane zapasowe z pliku car-brands-data.json
+          const fallbackData = {
+            "Audi": ["A1", "A3", "A4", "A5", "A6", "A7", "A8", "Q2", "Q3", "Q4 e-tron", "Q5", "Q7", "Q8", "TT", "R8", "e-tron GT", "RS3", "RS4", "RS5", "RS6", "RS7", "RSQ3", "RSQ8", "S3", "S4", "S5", "S6", "S7", "S8", "SQ2", "SQ5", "SQ7", "SQ8"],
+            "Daewoo": ["Espero", "Kalos", "Lacetti", "Lanos", "Leganza", "Matiz", "Nubira", "Tacuma", "Tico", "Polonez"],
+            "Honda": ["Civic", "Accord", "Insight", "CR-V", "HR-V", "Passport", "Pilot", "Ridgeline", "Odyssey", "Fit", "NSX", "e"],
+            "Mazda": ["Mazda2", "Mazda3", "Mazda6", "MX-5", "CX-3", "CX-30", "CX-5", "CX-9", "CX-50", "MX-30"],
+            "Mercedes-Benz": ["A-Class", "B-Class", "C-Class", "CLA", "CLS", "E-Class", "G-Class", "GLA", "GLB", "GLC", "GLE", "GLS", "S-Class", "SL", "SLK", "AMG GT", "EQA", "EQB", "EQC", "EQE", "EQS", "EQV", "Maybach S-Class", "Maybach GLS"],
+            "Nissan": ["Micra", "Sentra", "Altima", "Maxima", "370Z", "GT-R", "Juke", "Qashqai", "X-Trail", "Murano", "Pathfinder", "Armada", "Titan", "Leaf", "Ariya"],
+            "Toyota": ["Yaris", "Corolla", "Camry", "Avalon", "Prius", "C-HR", "RAV4", "Highlander", "4Runner", "Sequoia", "Tacoma", "Tundra", "Sienna", "Land Cruiser", "Supra", "86", "Mirai", "bZ4X"]
+          };
+          
+          // Zapisz dane zapasowe w localStorage
+          localStorage.setItem('carData', JSON.stringify(fallbackData));
+          
+          setCarData(fallbackData);
+          setBrands(Object.keys(fallbackData).sort());
         }
       } catch (err) {
         console.warn('Błąd podczas pobierania danych o markach i modelach:', err);
         if (isMounted) {
-          // Używamy danych statycznych jako fallback, bez komunikatu o błędzie
+          // W przypadku błędu, użyj danych zapasowych
+          console.log('Używam danych zapasowych po błędzie');
+          
+          // Dane zapasowe z pliku car-brands-data.json
+          const fallbackData = {
+            "Audi": ["A1", "A3", "A4", "A5", "A6", "A7", "A8", "Q2", "Q3", "Q4 e-tron", "Q5", "Q7", "Q8", "TT", "R8", "e-tron GT", "RS3", "RS4", "RS5", "RS6", "RS7", "RSQ3", "RSQ8", "S3", "S4", "S5", "S6", "S7", "S8", "SQ2", "SQ5", "SQ7", "SQ8"],
+            "Daewoo": ["Espero", "Kalos", "Lacetti", "Lanos", "Leganza", "Matiz", "Nubira", "Tacuma", "Tico", "Polonez"],
+            "Honda": ["Civic", "Accord", "Insight", "CR-V", "HR-V", "Passport", "Pilot", "Ridgeline", "Odyssey", "Fit", "NSX", "e"],
+            "Mazda": ["Mazda2", "Mazda3", "Mazda6", "MX-5", "CX-3", "CX-30", "CX-5", "CX-9", "CX-50", "MX-30"],
+            "Mercedes-Benz": ["A-Class", "B-Class", "C-Class", "CLA", "CLS", "E-Class", "G-Class", "GLA", "GLB", "GLC", "GLE", "GLS", "S-Class", "SL", "SLK", "AMG GT", "EQA", "EQB", "EQC", "EQE", "EQS", "EQV", "Maybach S-Class", "Maybach GLS"],
+            "Nissan": ["Micra", "Sentra", "Altima", "Maxima", "370Z", "GT-R", "Juke", "Qashqai", "X-Trail", "Murano", "Pathfinder", "Armada", "Titan", "Leaf", "Ariya"],
+            "Toyota": ["Yaris", "Corolla", "Camry", "Avalon", "Prius", "C-HR", "RAV4", "Highlander", "4Runner", "Sequoia", "Tacoma", "Tundra", "Sienna", "Land Cruiser", "Supra", "86", "Mirai", "bZ4X"]
+          };
+          
+          // Zapisz dane zapasowe w localStorage
+          localStorage.setItem('carData', JSON.stringify(fallbackData));
+          
+          setCarData(fallbackData);
+          setBrands(Object.keys(fallbackData).sort());
           setError(null);
-          setCarData(staticCarData);
-          setBrands(Object.keys(staticCarData).sort());
         }
       } finally {
         if (isMounted) {

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Czyszczenie Cache - Marketplace</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      color: #333;
+    }
+    
+    h1 {
+      color: #35530A;
+      border-bottom: 2px solid #35530A;
+      padding-bottom: 10px;
+    }
+    
+    .card {
+      background-color: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    button {
+      background-color: #35530A;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+    
+    button:hover {
+      background-color: #2D4A06;
+    }
+    
+    .refresh-button {
+      background-color: #0A5353;
+    }
+    
+    .refresh-button:hover {
+      background-color: #064A4A;
+    }
+    
+    #status {
+      padding: 15px;
+      border-radius: 4px;
+      margin: 15px 0;
+      display: none;
+    }
+    
+    #status.success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+      display: block;
+    }
+    
+    #status.error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+      display: block;
+    }
+    
+    #storage-info {
+      background-color: #e2f0fb;
+      padding: 15px;
+      border-radius: 4px;
+      border: 1px solid #b8daff;
+    }
+    
+    .actions {
+      margin-top: 20px;
+    }
+    
+    .note {
+      font-size: 0.9em;
+      color: #666;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <h1>Narzędzie do czyszczenia cache</h1>
+  
+  <div class="card">
+    <h2>Informacje o cache</h2>
+    <p>To narzędzie pozwala wyczyścić dane przechowywane w przeglądarce, które mogą powodować problemy z wyświetlaniem marek samochodów w wyszukiwarce.</p>
+    
+    <div id="storage-info">
+      <p>Ładowanie informacji o cache...</p>
+    </div>
+    
+    <div id="status"></div>
+    
+    <div id="actions" class="actions">
+      <button id="clear-cache">Wyczyść cache</button>
+      <button id="check-storage">Sprawdź zawartość cache</button>
+    </div>
+    
+    <p class="note">Uwaga: Po wyczyszczeniu cache, należy odświeżyć stronę główną, aby pobrać nowe dane z serwera.</p>
+  </div>
+  
+  <div class="card">
+    <h2>Rozwiązywanie problemów</h2>
+    <p>Jeśli po wyczyszczeniu cache nadal występują problemy z wyszukiwarką:</p>
+    <ol>
+      <li>Upewnij się, że serwer backend jest uruchomiony</li>
+      <li>Sprawdź, czy API zwraca poprawne dane (endpoint: <code>/api/car-brands/all-data</code>)</li>
+      <li>Wyczyść całą pamięć podręczną przeglądarki (Ctrl+F5 lub Cmd+Shift+R)</li>
+      <li>Spróbuj otworzyć stronę w trybie incognito</li>
+    </ol>
+  </div>
+  
+  <p><a href="/">Powrót do strony głównej</a></p>
+  
+  <script src="/static/js/clear-cache.js"></script>
+</body>
+</html>

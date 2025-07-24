@@ -2,30 +2,9 @@
  * Dane statyczne dla formularza wyszukiwania pojazdów
  */
 
-// Dane marek i modeli samochodów
-export const carData = {
-  Audi: ['A1', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'Q3', 'Q5', 'Q7', 'Q8', 'TT', 'R8'],
-  BMW: [
-    'Seria 1', 'Seria 2', 'Seria 3', 'Seria 4', 'Seria 5', 'Seria 6', 'Seria 7', 'Seria 8',
-    'X1', 'X2', 'X3', 'X4', 'X5', 'X6', 'X7'
-  ],
-  Mercedes: [
-    'Klasa A', 'Klasa B', 'Klasa C', 'Klasa E', 'Klasa S', 'CLA', 'CLS', 'GLA', 'GLB',
-    'GLC', 'GLE', 'GLS'
-  ],
-  Volkswagen: [
-    'Golf', 'Polo', 'Passat', 'Arteon', 'T-Roc', 'T-Cross', 'Tiguan', 'Touareg',
-    'ID.3', 'ID.4'
-  ],
-  Toyota: [
-    'Yaris', 'Corolla', 'Camry', 'RAV4', 'C-HR', 'Highlander', 'Land Cruiser', 'Supra', 'Prius'
-  ],
-  Ford: ['Fiesta', 'Focus', 'Mondeo', 'Kuga', 'Puma', 'Edge', 'Mustang', 'Explorer'],
-  Opel: ['Corsa', 'Astra', 'Insignia', 'Crossland', 'Grandland', 'Mokka'],
-  Hyundai: ['i20', 'i30', 'i40', 'Kona', 'Tucson', 'Santa Fe', 'IONIQ', 'NEXO'],
-  Kia: ['Picanto', 'Rio', 'Ceed', 'Proceed', 'Stinger', 'XCeed', 'Sportage', 'Sorento'],
-  Škoda: ['Fabia', 'Scala', 'Octavia', 'Superb', 'Kamiq', 'Karoq', 'Kodiaq', 'Enyaq'],
-};
+// Dane marek i modeli samochodów - teraz pobierane z backendu
+// Removed hardcoded data - now fetched from backend API
+export const carData = {};
 
 // Typy nadwozia
 export const bodyTypes = [
