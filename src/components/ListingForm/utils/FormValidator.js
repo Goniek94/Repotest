@@ -89,30 +89,48 @@ class FormValidator {
      * Walidacja stanu pojazdu
      */
     static validateVehicleStatus(formData, errors) {
-      // Stan - ustawiamy domyślną wartość, jeśli jest pusty
+      // Stan - wymagany
       if (!formData.condition) {
-        formData.condition = 'Używany';
+        errors.condition = 'Stan pojazdu jest wymagany';
       }
       
-      // Pozostałe pola są opcjonalne, ale jeśli są puste, ustawiamy domyślne wartości
+      // Wypadkowość - wymagana
       if (!formData.accidentStatus) {
-        formData.accidentStatus = 'Bezwypadkowy';
+        errors.accidentStatus = 'Informacja o wypadkowości jest wymagana';
       }
+      
+      // Uszkodzenia - wymagane
       if (!formData.damageStatus) {
-        formData.damageStatus = 'Nieuszkodzony';
+        errors.damageStatus = 'Informacja o uszkodzeniach jest wymagana';
       }
+      
+      // Kraj pochodzenia - wymagany
+      if (!formData.countryOfOrigin) {
+        errors.countryOfOrigin = 'Kraj pochodzenia jest wymagany';
+      }
+      
+      // POLA Z GWIAZDKAMI - WYMAGANE zgodnie z żądaniem użytkownika
+      if (!formData.imported) {
+        errors.imported = 'Informacja o imporcie jest wymagana';
+      }
+      
+      if (!formData.registeredInPL) {
+        errors.registeredInPL = 'Informacja o rejestracji w PL jest wymagana';
+      }
+      
+      if (!formData.firstOwner) {
+        errors.firstOwner = 'Informacja o pierwszym właścicielu jest wymagana';
+      }
+      
+      // ADAPTACJA MEDYCZNA - OPCJONALNA (bez gwiazdki)
+      // Nie sprawdzamy tego pola - jest opcjonalne
+      
+      // Tuning - opcjonalny, ale jeśli pusty, ustawiamy domyślną wartość
       if (!formData.tuning) {
         formData.tuning = 'Nie';
       }
-      if (!formData.imported) {
-        formData.imported = 'Nie';
-      }
-      if (!formData.registeredInPL) {
-        formData.registeredInPL = 'Tak';
-      }
-      if (!formData.firstOwner) {
-        formData.firstOwner = 'Nie';
-      }
+      
+      // Adaptacja medyczna - opcjonalna, ale jeśli pusta, ustawiamy domyślną wartość
       if (!formData.disabledAdapted) {
         formData.disabledAdapted = 'Nie';
       }

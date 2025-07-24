@@ -12,7 +12,7 @@ import { safeConsole } from './utils/debug';
 // Komponenty główne, które zawsze ładujemy
 import Navigation from './components/Navigation/Navigation';
 import Footer from './components/Footer';
-import SearchForm from './components/search/SearchFormUpdated';
+import SearchFormUpdated from './components/search/SearchFormUpdated';
 import FeaturedListings from './components/FeaturedListings/FeaturedListings';
 import LoginModal from './components/auth/LoginModal';
 
@@ -97,7 +97,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
 // Zawartość strony głównej
 const HomePageContent = () => (
   <>
-    <SearchForm compact={true} />
+    <SearchFormUpdated />
     <FeaturedListings />
   </>
 );

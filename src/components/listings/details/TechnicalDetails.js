@@ -9,42 +9,51 @@ const TechnicalDetails = ({ listing }) => {
     </div>
   );
 
-  // Dane techniczne
-  const technical = [
+  // Dane techniczne - zgodnie z pierwszym zdjęciem
+  const technicalData = [
     { label: "Marka", value: listing.make || listing.brand },
     { label: "Model", value: listing.model },
     { label: "Generacja", value: listing.generation },
-    { label: "Wersja", value: listing.version },
-    { label: "Rok", value: listing.year?.toString() || listing.productionYear?.toString() },
+    { label: "Wersja silnika", value: listing.version },
+    { label: "Rok produkcji", value: listing.year?.toString() || listing.productionYear?.toString() },
+    { label: "Przebieg", value: listing.mileage ? `${listing.mileage.toLocaleString()} km` : null },
     { label: "Paliwo", value: listing.fuelType || listing.fuel },
     { label: "Moc", value: listing.power ? `${listing.power} KM` : null },
     { label: "Pojemność", value: listing.engineSize ? `${listing.engineSize} cm³` : null },
     { label: "Skrzynia", value: listing.transmission },
     { label: "Napęd", value: listing.drive },
-    { label: "Przebieg", value: listing.mileage ? `${listing.mileage.toLocaleString()} km` : null },
-    { label: "Ostatni przebieg (CEPiK)", value: listing.lastOfficialMileage ? `${listing.lastOfficialMileage.toLocaleString()} km` : null },
     { label: "Waga", value: listing.weight ? `${listing.weight} kg` : null },
   ];
 
-  // Dane nadwozia i wyposażenia
-  const body = [
-    { label: "Typ nadwozia", value: listing.bodyType },
-    { label: "Kolor", value: listing.color },
-    { label: "Liczba drzwi", value: listing.doors?.toString() },
+  // Historia i stan techniczny - zgodnie z drugim zdjęciem + VIN, nr rejestracyjny, data pierwszej rejestracji
+  const statusData = [
     { label: "Stan techniczny", value: listing.condition },
-    { label: "Wypadkowość", value: listing.accidentStatus },
-    { label: "Uszkodzenia", value: listing.damageStatus },
-    { label: "Tuning", value: listing.tuning },
+    { label: "Pierwszy właściciel", value: listing.firstOwner },
     { label: "Importowany", value: listing.imported },
     { label: "Zarejestrowany w PL", value: listing.registeredInPL },
-    { label: "Pierwszy właściciel", value: listing.firstOwner },
-    { label: "Dla niepełnosprawnych", value: listing.disabledAdapted },
+    { label: "Wypadkowość", value: listing.accidentStatus },
     { label: "Kraj pochodzenia", value: listing.countryOfOrigin },
-    { label: "Typ sprzedawcy", value: listing.sellerType },
-    { label: "Opcja zakupu", value: listing.purchaseOptions },
-    { label: "Cena do negocjacji", value: listing.negotiable },
-    { label: "Nr rejestracyjny", value: listing.registrationNumber },
+    { label: "Uszkodzenia", value: listing.damageStatus },
+    { label: "Adaptacja medyczna", value: listing.disabledAdapted },
     { label: "VIN", value: listing.vin },
+    { label: "Nr rejestracyjny", value: listing.registrationNumber },
+    { label: "Data pierwszej rejestracji", value: listing.firstRegistrationDate },
+  ];
+
+  // Dane nadwozia - zgodnie z trzecim zdjęciem + dodatkowe pola
+  const bodyData = [
+    { label: "Typ nadwozia", value: listing.bodyType || "Nie podano" },
+    { label: "Kolor", value: listing.color || "Nie podano" },
+    { label: "Liczba drzwi", value: listing.doors?.toString() || "Nie podano" },
+    { label: "Liczba miejsc", value: listing.seats?.toString() || "5" },
+    { label: "Wykończenie", value: listing.paintFinish || listing.finish || "Standardowe" },
+    { label: "Tuning", value: listing.tuning || "nie" },
+  ];
+
+  // Informacje dodatkowe
+  const additionalInfo = [
+    { label: "Cena do negocjacji", value: listing.negotiable },
+    { label: "Opcja zakupu", value: listing.purchaseOptions },
   ];
 
   // Pobierz dane potrzebne do nagłówka
@@ -69,15 +78,34 @@ const TechnicalDetails = ({ listing }) => {
         Dane techniczne
       </h2>
       <div className="grid grid-cols-2 gap-2 text-sm mb-6">
-        {technical.filter(({ value }) => value).map(({ label, value }) => (
+        {technicalData.filter(({ value }) => value).map(({ label, value }) => (
           <InfoRow key={label} label={label} value={value} />
         ))}
       </div>
+      
       <h2 className="text-lg font-bold mb-4 text-black">
-        Nadwozie i wyposażenie
+        Historia i stan techniczny
+      </h2>
+      <div className="grid grid-cols-2 gap-2 text-sm mb-6">
+        {statusData.filter(({ value }) => value).map(({ label, value }) => (
+          <InfoRow key={label} label={label} value={value} />
+        ))}
+      </div>
+      
+      <h2 className="text-lg font-bold mb-4 text-black">
+        Nadwozie
+      </h2>
+      <div className="grid grid-cols-2 gap-2 text-sm mb-6">
+        {bodyData.filter(({ value }) => value).map(({ label, value }) => (
+          <InfoRow key={label} label={label} value={value} />
+        ))}
+      </div>
+      
+      <h2 className="text-lg font-bold mb-4 text-black">
+        Informacje dodatkowe
       </h2>
       <div className="grid grid-cols-2 gap-2 text-sm">
-        {body.filter(({ value }) => value).map(({ label, value }) => (
+        {additionalInfo.filter(({ value }) => value).map(({ label, value }) => (
           <InfoRow key={label} label={label} value={value} />
         ))}
       </div>

@@ -10,7 +10,7 @@ const BodyInfoSection = ({ formData, handleChange, errors }) => {
     'Pickup', 'Van', 'Minivan', 'Limuzyna', 'Roadster', 'Targa'
   ];
 
-  const DOOR_OPTIONS = ['2/3', '4/5', '6/7'];
+  const DOOR_OPTIONS = ['1', '2', '3', '4', '5', '6'];
   const SEAT_OPTIONS = ['2', '3', '4', '5', '6', '7', '8', '9+'];
 
   const COLORS = [
@@ -18,22 +18,17 @@ const BodyInfoSection = ({ formData, handleChange, errors }) => {
     'Zielony', 'Żółty', 'Brązowy', 'Złoty', 'Fioletowy', 'Pomarańczowy', 'Inne'
   ];
 
-  const INTERIOR_COLORS = [
-    'Czarny', 'Szary', 'Beżowy', 'Brązowy', 'Biały', 'Czerwony', 'Niebieski', 'Inne'
-  ];
-
-  const UPHOLSTERY_TYPES = [
-    'Tkanina', 'Skóra', 'Skóra częściowa', 'Alcantara', 'Welur', 'Inne'
+  const PAINT_FINISHES = [
+    'Metalik', 'Perła', 'Mat', 'Połysk', 'Inne'
   ];
 
   // Lista opcji nadwozia i koloru
   const bodyOptions = [
     { name: 'bodyType', label: 'Typ nadwozia', options: BODY_TYPES, required: true },
     { name: 'color', label: 'Kolor', options: COLORS, required: true },
-    { name: 'doors', label: 'Liczba drzwi', options: DOOR_OPTIONS, required: false },
-    { name: 'seats', label: 'Liczba miejsc', options: SEAT_OPTIONS, required: false },
-    { name: 'interiorColor', label: 'Kolor wnętrza', options: INTERIOR_COLORS, required: false },
-    { name: 'upholstery', label: 'Tapicerka', options: UPHOLSTERY_TYPES, required: false }
+    { name: 'paintFinish', label: 'Wykończenie', options: PAINT_FINISHES, required: true },
+    { name: 'doors', label: 'Liczba drzwi', options: DOOR_OPTIONS, required: true },
+    { name: 'seats', label: 'Liczba miejsc', options: SEAT_OPTIONS, required: true }
   ];
 
   // Obsługa otwierania/zamykania listy rozwijanej
@@ -107,8 +102,8 @@ const BodyInfoSection = ({ formData, handleChange, errors }) => {
 
   return (
     <div className="space-y-6">
-      {/* Grid z polami - BEZ RAMEK, PROSTY STYL */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Grid z polami - 5 pól w jednej linii */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {bodyOptions.map((option) => (
           <SelectField 
             key={option.name}

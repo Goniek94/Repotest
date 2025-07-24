@@ -2,9 +2,12 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, ChevronLeft, ChevronRight, Medal, Image, Star } from 'lucide-react';
 
-const InfoRow = ({ label, value }) => (
-  <div className="p-2 bg-gray-50 rounded-[2px]">
-    <div className="text-gray-600 font-medium">{label}</div>
+const InfoRow = ({ label, value, required = false }) => (
+  <div className={`p-2 rounded-[2px] ${required ? 'bg-green-50 border border-green-200' : 'bg-gray-50'}`}>
+    <div className={`font-medium flex items-center gap-1 ${required ? 'text-green-700' : 'text-gray-600'}`}>
+      {label}
+      {required && <span className="text-red-500">*</span>}
+    </div>
     <div className="font-semibold text-black">{value || 'Nie podano'}</div>
   </div>
 );
@@ -147,7 +150,7 @@ const ListingSummary = ({ listingData, onBack, onContinue }) => {
               {/* Tytuł i cena */}
               <div className="bg-white p-4 shadow-sm rounded-[2px] mb-4">
                 <h1 className="text-2xl font-bold text-black mb-2">
-                  {listingData.brand} {listingData.model} {listingData.generation} {listingData.version}
+                  {listingData.brand} {listingData.model} {listingData.version}
                 </h1>
                 <div className="text-3xl font-black text-[#35530A]">
                   {listingData.purchaseOptions === 'inne' || listingData.purchaseOption === 'najem'
@@ -161,19 +164,19 @@ const ListingSummary = ({ listingData, onBack, onContinue }) => {
                 <div className="grid grid-cols-2 gap-4">
                   {/* KOLUMNA 1 - PODSTAWOWE DANE */}
                   <div className="space-y-2 text-sm">
-                    <InfoRow label="Marka" value={listingData.brand} />
-                    <InfoRow label="Model" value={listingData.model} />
+                    <InfoRow label="Marka" value={listingData.brand} required={true} />
+                    <InfoRow label="Model" value={listingData.model} required={true} />
                     <InfoRow label="Generacja" value={listingData.generation} />
-                    <InfoRow label="Wersja silnika" value={listingData.version} />
-                    <InfoRow label="Rok produkcji" value={listingData.productionYear} />
-                    <InfoRow label="Stan" value={listingData.condition} />
-                    <InfoRow label="Wypadkowość" value={listingData.accidentStatus} />
-                    <InfoRow label="Uszkodzenia" value={listingData.damageStatus} />
+                    <InfoRow label="Wersja silnika" value={listingData.version} required={true} />
+                    <InfoRow label="Rok produkcji" value={listingData.productionYear} required={true} />
+                    <InfoRow label="Stan" value={listingData.condition} required={true} />
+                    <InfoRow label="Wypadkowość" value={listingData.accidentStatus} required={true} />
+                    <InfoRow label="Uszkodzenia" value={listingData.damageStatus} required={true} />
                     <InfoRow label="Tuning" value={listingData.tuning} />
-                    <InfoRow label="Importowany" value={listingData.imported} />
-                    <InfoRow label="Zarejestrowany w PL" value={listingData.registeredInPL} />
-                    <InfoRow label="Dla niepełnosprawnych" value={listingData.disabledAdapted} />
-                    <InfoRow label="Pierwszy właściciel" value={listingData.firstOwner} />
+                    <InfoRow label="Importowany" value={listingData.imported} required={true} />
+                    <InfoRow label="Zarejestrowany w PL" value={listingData.registeredInPL} required={true} />
+                    <InfoRow label="Adaptacja medyczna" value={listingData.disabledAdapted} />
+                    <InfoRow label="Pierwszy właściciel" value={listingData.firstOwner} required={true} />
                   </div>
 
                   {/* KOLUMNA 2 - DANE TECHNICZNE */}
@@ -188,10 +191,12 @@ const ListingSummary = ({ listingData, onBack, onContinue }) => {
                     <InfoRow label="Kraj pochodzenia" value={listingData.countryOfOrigin} />
                     <InfoRow label="Typ nadwozia" value={listingData.bodyType} />
                     <InfoRow label="Kolor" value={listingData.color} />
+                    <InfoRow label="Wykończenie lakieru" value={listingData.paintFinish} />
                     <InfoRow label="Liczba drzwi" value={listingData.doors} />
-                    <InfoRow label="Wykończenie" value={listingData.interior || listingData.finish} />
+                    <InfoRow label="Liczba miejsc" value={listingData.seats} />
+                    <InfoRow label="Data pierwszej rejestracji" value={listingData.firstRegistrationDate} />
                     <InfoRow label="Waga" value={listingData.weight ? `${listingData.weight} kg` : 'Nie podano'} />
-                    <InfoRow label="Opcja zakupu" value={listingData.purchaseOption === 'sprzedaz' ? 'Sprzedaż' : listingData.purchaseOption === 'najem' ? 'Najem' : 'Inne'} />
+                    <InfoRow label="Opcja zakupu" value={listingData.purchaseOptions || (listingData.purchaseOption === 'sprzedaz' ? 'Sprzedaż' : listingData.purchaseOption === 'najem' ? 'Najem' : 'Inne')} />
                     <InfoRow label="Cena do negocjacji" value={listingData.negotiable} />
                   </div>
                 </div>

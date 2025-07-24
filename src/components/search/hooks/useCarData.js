@@ -66,7 +66,7 @@ const useCarData = () => {
   }, [carData, modelsCache]);
 
   // Funkcja do pobierania generacji dla konkretnej marki i modelu
-  const getGenerationsForModel = useCallback((make, model) => {
+  const getGenerationsForModel = useCallback(async (make, model) => {
     // Jeśli brak marki lub modelu, zwróć pustą tablicę
     if (!make || !model) return [];
 
@@ -79,7 +79,24 @@ const useCarData = () => {
       return generationsCache[cacheKey];
     }
 
-    // Pobierz generacje z danych statycznych
+    try {
+      // Najpierw próbujemy pobrać generacje z backendu
+      const generations = await CarDataService.getGenerationsForModel(make, model);
+      
+      if (generations && Array.isArray(generations) && generations.length > 0) {
+        // Jeśli udało się pobrać generacje z backendu, aktualizujemy cache i zwracamy je
+        setGenerationsCache(prev => ({
+          ...prev,
+          [cacheKey]: generations
+        }));
+        console.log(`Pobrano generacje dla ${make} ${model} z backendu`, generations);
+        return generations;
+      }
+    } catch (err) {
+      console.warn(`Nie udało się pobrać generacji dla ${make} ${model} z backendu, używam danych statycznych`, err);
+    }
+
+    // Jeśli nie udało się pobrać generacji z backendu, użyj danych statycznych
     const generations = getStaticGenerations(make, model);
     
     // Aktualizuj cache i zwróć generacje
@@ -88,7 +105,7 @@ const useCarData = () => {
       [cacheKey]: generations
     }));
     
-    console.log(`Pobrano generacje dla ${make} ${model}`, generations);
+    console.log(`Pobrano generacje dla ${make} ${model} ze statycznych danych`, generations);
     return generations;
   }, [generationsCache]);
 

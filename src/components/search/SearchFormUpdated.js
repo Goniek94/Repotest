@@ -28,12 +28,13 @@ export default function SearchFormUpdated({ initialValues = {}, onFilterChange }
   }
   
   // Pobierz dane o markach i modelach z backendu
-  const { carData, brands, getModelsForBrand, loading, error } = useCarData();
+  const { carData, brands, getModelsForBrand, getGenerationsForModel, loading, error } = useCarData();
 
   // Stan formularza
   const [formData, setFormData] = useState(() => ({
     make: [],  // Checklist - musi być tablica
     model: [],  // Checklist - musi być tablica
+    generation: [],  // Checklist - musi być tablica
     priceFrom: '',
     priceTo: '',
     yearFrom: '',
@@ -89,6 +90,7 @@ export default function SearchFormUpdated({ initialValues = {}, onFilterChange }
     const defaultFormData = {
       make: [],  // Checklist - musi być tablica
       model: [], // Checklist - musi być tablica
+      generation: [], // Checklist - musi być tablica
       priceFrom: '',
       priceTo: '',
       yearFrom: '',
@@ -327,6 +329,7 @@ export default function SearchFormUpdated({ initialValues = {}, onFilterChange }
             generateYearOptions={generateYearOptions}
             advancedOptions={advancedOptions}
             regions={regions}
+            getGenerationsForModel={getGenerationsForModel}
           />
           
           {showAdvanced && (

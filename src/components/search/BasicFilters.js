@@ -1,6 +1,6 @@
 // BasicFilters.js
 import React, { useState, useEffect } from "react";
-import { regionToCities } from "./SearchFormConstants";
+import { regionToCities, priceRanges, mileageRanges, generateYearOptions } from "./SearchFormConstants";
 
 /**
  * BasicFilters component with optimized checklist filters
@@ -16,12 +16,16 @@ export default function BasicFilters({
   generateYearOptions,
   advancedOptions,
   regions,
+  getGenerationsForModel,
 }) {
   // State do zarządzania otwartymi/zamkniętymi checklistami
   const [openChecklists, setOpenChecklists] = useState({});
   
   // State dla dostępnych miast, zależny od wybranego województwa
   const [availableCities, setAvailableCities] = useState([]);
+  
+  // State dla dostępnych generacji, zależny od wybranej marki i modelu
+  const [availableGenerations, setAvailableGenerations] = useState([]);
   
   // Aktualizacja dostępnych miast, gdy zmienia się wybrane województwo
   useEffect(() => {
@@ -67,6 +71,36 @@ export default function BasicFilters({
       }
     }
   }, [formData.region]);
+
+  // Aktualizacja dostępnych generacji, gdy zmienia się wybrana marka i model
+  useEffect(() => {
+    const updateGenerations = async () => {
+      if (formData.make && formData.make.length === 1 && formData.model && formData.model.length === 1 && getGenerationsForModel) {
+        try {
+          const generations = await getGenerationsForModel(formData.make[0], formData.model[0]);
+          setAvailableGenerations(generations || []);
+          console.log(`Pobrano generacje dla ${formData.make[0]} ${formData.model[0]}:`, generations);
+        } catch (error) {
+          console.warn('Błąd podczas pobierania generacji:', error);
+          setAvailableGenerations([]);
+        }
+      } else {
+        setAvailableGenerations([]);
+        
+        // Zresetuj wybrane generacje, jeśli jakieś były wybrane
+        if (formData.generation && formData.generation.length > 0) {
+          handleInputChange({
+            target: {
+              name: 'generation',
+              value: []
+            }
+          });
+        }
+      }
+    };
+    
+    updateGenerations();
+  }, [formData.make, formData.model, getGenerationsForModel]);
 
   const toggleChecklist = (filterName) => {
     setOpenChecklists(prev => ({
@@ -164,36 +198,6 @@ export default function BasicFilters({
       </div>
     );
   };
-  // Komponent dla zakresów (cena, przebieg, rok)
-  const RangeFilter = ({ nameFrom, nameTo, label, placeholderFrom, placeholderTo, type = "number", min, max }) => (
-    <div>
-      <label className="block text-sm font-semibold text-gray-700 mb-1">
-        {label}
-      </label>
-      <div className="grid grid-cols-2 gap-2">
-        <input
-          type={type}
-          name={nameFrom}
-          placeholder={placeholderFrom}
-          min={min}
-          max={max}
-          value={formData[nameFrom] || ''}
-          onChange={handleInputChange}
-          className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
-        />
-        <input
-          type={type}
-          name={nameTo}
-          placeholder={placeholderTo}
-          min={min}
-          max={max}
-          value={formData[nameTo] || ''}
-          onChange={handleInputChange}
-          className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
-        />
-      </div>
-    </div>
-  );
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-4">
@@ -222,39 +226,122 @@ export default function BasicFilters({
         placeholder={formData.make?.length > 0 ? "Wybierz model" : "Najpierw wybierz markę"}
       />
 
-      {/* Rok produkcji - Zakres */}
-      <RangeFilter
-        nameFrom="yearFrom"
-        nameTo="yearTo"
-        label="Rok produkcji"
-        placeholderFrom="Od"
-        placeholderTo="Do"
-        type="number"
-        min="1900"
-        max={new Date().getFullYear()}
+      {/* Generacja - Checklist (zależny od marki i modelu) */}
+      <ChecklistFilter
+        name="generation"
+        label="Generacja"
+        options={availableGenerations}
+        placeholder={
+          formData.make?.length === 1 && formData.model?.length === 1 
+            ? "Wybierz generację" 
+            : "Najpierw wybierz jedną markę i jeden model"
+        }
       />
 
-      {/* Cena - Zakres */}
-      <RangeFilter
-        nameFrom="priceFrom"
-        nameTo="priceTo"
-        label="Cena (PLN)"
-        placeholderFrom="Od"
-        placeholderTo="Do"
-        type="number"
-        min="0"
-      />
+      {/* Rok produkcji - Od/Do Selecty */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-1">
+          Rok produkcji
+        </label>
+        <div className="grid grid-cols-2 gap-2">
+          <select
+            name="yearFrom"
+            value={formData.yearFrom || ''}
+            onChange={handleInputChange}
+            className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
+          >
+            <option value="">Od</option>
+            {generateYearOptions(1900).map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
+          <select
+            name="yearTo"
+            value={formData.yearTo || ''}
+            onChange={handleInputChange}
+            className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
+          >
+            <option value="">Do</option>
+            {generateYearOptions(1900).map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
 
-      {/* Przebieg - Zakres */}
-      <RangeFilter
-        nameFrom="mileageFrom"
-        nameTo="mileageTo"
-        label="Przebieg (km)"
-        placeholderFrom="Od"
-        placeholderTo="Do"
-        type="number"
-        min="0"
-      />
+      {/* Cena - Od/Do Selecty */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-1">
+          Cena (PLN)
+        </label>
+        <div className="grid grid-cols-2 gap-2">
+          <select
+            name="priceFrom"
+            value={formData.priceFrom || ''}
+            onChange={handleInputChange}
+            className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
+          >
+            <option value="">Od</option>
+            {priceRanges.map((price) => (
+              <option key={price.value} value={price.value}>
+                {price.label}
+              </option>
+            ))}
+          </select>
+          <select
+            name="priceTo"
+            value={formData.priceTo || ''}
+            onChange={handleInputChange}
+            className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
+          >
+            <option value="">Do</option>
+            {priceRanges.map((price) => (
+              <option key={price.value} value={price.value}>
+                {price.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Przebieg - Od/Do Selecty */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-1">
+          Przebieg (km)
+        </label>
+        <div className="grid grid-cols-2 gap-2">
+          <select
+            name="mileageFrom"
+            value={formData.mileageFrom || ''}
+            onChange={handleInputChange}
+            className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
+          >
+            <option value="">Od</option>
+            {mileageRanges.map((mileage) => (
+              <option key={mileage.value} value={mileage.value}>
+                {mileage.label}
+              </option>
+            ))}
+          </select>
+          <select
+            name="mileageTo"
+            value={formData.mileageTo || ''}
+            onChange={handleInputChange}
+            className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
+          >
+            <option value="">Do</option>
+            {mileageRanges.map((mileage) => (
+              <option key={mileage.value} value={mileage.value}>
+                {mileage.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
 
       {/* Rodzaj paliwa - Checklist */}
       <ChecklistFilter
@@ -294,14 +381,6 @@ export default function BasicFilters({
         label="Kolor"
         options={advancedOptions?.color || []}
         placeholder="Wybierz kolor"
-      />
-
-      {/* Liczba drzwi - Checklist */}
-      <ChecklistFilter
-        name="doorCount"
-        label="Liczba drzwi"
-        options={advancedOptions?.doorCount || []}
-        placeholder="Wybierz liczbę drzwi"
       />
       
     </div>

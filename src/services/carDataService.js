@@ -98,6 +98,24 @@ class CarDataService {
   }
 
   /**
+   * Pobiera generacje dla konkretnej marki i modelu
+   * @param {string} brand Nazwa marki
+   * @param {string} model Nazwa modelu
+   * @returns {Promise<Array>} Lista generacji dla danego modelu
+   */
+  static async getGenerationsForModel(brand, model) {
+    if (!brand || !model) return [];
+    
+    try {
+      const response = await api.get(`/car-brands/${encodeURIComponent(brand)}/${encodeURIComponent(model)}/generations`);
+      return response.data.data || [];
+    } catch (error) {
+      console.error(`Błąd podczas pobierania generacji dla modelu ${model} marki ${brand}:`, error);
+      return [];
+    }
+  }
+
+  /**
    * Wyszukuje modele dla konkretnej marki
    * @param {string} brand Nazwa marki
    * @param {string} query Zapytanie wyszukiwania

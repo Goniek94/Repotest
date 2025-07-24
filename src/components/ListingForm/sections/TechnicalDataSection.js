@@ -1,13 +1,85 @@
 import React, { useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Info } from 'lucide-react';
 
 const TechnicalDataSection = ({ formData, handleChange, errors }) => {
   const [openDropdowns, setOpenDropdowns] = useState({});
 
-  const FUEL_TYPES = ['Benzyna', 'Diesel', 'Benzyna+LPG', 'Benzyna+CNG', 'Hybryda', 'Elektryczny', 'Etanol'];
-  const TRANSMISSION_TYPES = ['Manualna', 'Automatyczna', 'Półautomatyczna', 'Bezstopniowa CVT'];
-  const DRIVE_TYPES = ['Przedni', 'Tylny', 'Na cztery koła'];
-  const COUNTRIES = ['Polska', 'Niemcy', 'Francja', 'Włochy', 'Hiszpania', 'Holandia', 'Belgia', 'Czechy', 'Słowacja', 'Inne'];
+  const FUEL_TYPES = [
+    'Benzyna', 
+    'Diesel', 
+    'Benzyna+LPG', 
+    'Benzyna+CNG', 
+    'Hybryda', 
+    'Hybryda plug-in', 
+    'Elektryczny', 
+    'Etanol', 
+    'Wodór', 
+    'Benzyna+Etanol', 
+    'Inne'
+  ];
+  
+  const TRANSMISSION_TYPES = [
+    'Manualna', 
+    'Automatyczna', 
+    'Półautomatyczna', 
+    'Bezstopniowa CVT', 
+    'Automatyczna dwusprzęgłowa', 
+    'Sekwencyjna', 
+    'Inne'
+  ];
+  
+  const DRIVE_TYPES = [
+    'Przedni', 
+    'Tylny', 
+    'Na cztery koła stały', 
+    'Na cztery koła dołączany', 
+    'AWD', 
+    '4WD', 
+    '4x4', 
+    'RWD', 
+    'FWD', 
+    'Inne'
+  ];
+  
+  const COUNTRIES = [
+    'Polska', 
+    'Niemcy', 
+    'Francja', 
+    'Włochy', 
+    'Hiszpania', 
+    'Holandia', 
+    'Belgia', 
+    'Czechy', 
+    'Słowacja', 
+    'Austria', 
+    'Szwajcaria', 
+    'Dania', 
+    'Szwecja', 
+    'Norwegia', 
+    'Finlandia', 
+    'Wielka Brytania', 
+    'Irlandia', 
+    'Portugalia', 
+    'Luksemburg', 
+    'Słowenia', 
+    'Chorwacja', 
+    'Węgry', 
+    'Rumunia', 
+    'Bułgaria', 
+    'Litwa', 
+    'Łotwa', 
+    'Estonia', 
+    'USA', 
+    'Kanada', 
+    'Japonia', 
+    'Korea Południowa', 
+    'Chiny', 
+    'Indie', 
+    'Brazylia', 
+    'Meksyk', 
+    'Australia', 
+    'Inne'
+  ];
 
   const toggleDropdown = (name) => {
     setOpenDropdowns(prev => ({
@@ -36,6 +108,15 @@ const TechnicalDataSection = ({ formData, handleChange, errors }) => {
         <label className="block text-sm font-medium mb-2 text-gray-700">
           <div className="flex items-center gap-1">
             <span>{label}</span>
+            {name === 'disabledAdapted' && (
+              <div className="relative group">
+                <Info className="h-4 w-4 text-gray-400 cursor-help" />
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                  Adaptacja dla osób z niepełnosprawnością
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+                </div>
+              </div>
+            )}
             {required && <span className="text-red-500">*</span>}
           </div>
         </label>
@@ -77,13 +158,6 @@ const TechnicalDataSection = ({ formData, handleChange, errors }) => {
   };
 
   const InputField = ({ name, label, value, required, placeholder, type = "text", min, max, unit }) => {
-    const [localValue, setLocalValue] = useState(value || '');
-    
-    // Sync z zewnętrzną wartością
-    React.useEffect(() => {
-      setLocalValue(value || '');
-    }, [value]);
-    
     return (
       <div className="relative">
         <label className="block text-sm font-medium mb-2 text-gray-700">
@@ -95,11 +169,11 @@ const TechnicalDataSection = ({ formData, handleChange, errors }) => {
         </label>
         <input
           type="text"
-          value={localValue}
+          name={name}
+          value={value || ''}
           onChange={(e) => {
-            const newValue = e.target.value;
-            setLocalValue(newValue);
-            handleChange(name, newValue);
+            // Bezpośrednie wywołanie handleChange z eventem
+            handleChange(e);
           }}
           placeholder={placeholder}
           className="w-full h-9 text-sm px-3 border border-gray-300 rounded-md transition-all duration-200 hover:border-gray-400 focus:border-[#35530A]"
@@ -114,7 +188,7 @@ const TechnicalDataSection = ({ formData, handleChange, errors }) => {
   return (
     <div className="space-y-6">
       {/* Grid z polami technicznymi */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <InputField
           name="mileage"
           label="Przebieg"
@@ -148,6 +222,7 @@ const TechnicalDataSection = ({ formData, handleChange, errors }) => {
           name="engineSize"
           label="Pojemność"
           value={formData.engineSize}
+          required={true}
           placeholder="np. 1600"
           type="number"
           min="0"
@@ -158,6 +233,7 @@ const TechnicalDataSection = ({ formData, handleChange, errors }) => {
           name="power"
           label="Moc"
           value={formData.power}
+          required={true}
           placeholder="np. 150"
           type="number"
           min="0"
@@ -191,10 +267,19 @@ const TechnicalDataSection = ({ formData, handleChange, errors }) => {
           placeholder="Wybierz napęd"
         />
         <SelectField
+          name="tuning"
+          label="Tuning"
+          options={['Tak', 'Nie']}
+          value={formData.tuning}
+          required={false}
+          placeholder="Wybierz"
+        />
+        <SelectField
           name="countryOfOrigin"
           label="Kraj pochodzenia"
           options={COUNTRIES}
           value={formData.countryOfOrigin}
+          required={false}
           placeholder="Wybierz kraj"
         />
       </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import FormValidator from '../utils/FormValidator';
 
 const TEMP_STORAGE_KEY = 'auto_sell_temp_form'; // Tymczasowe dane tylko przy cofaniu z podglądu
@@ -98,19 +98,76 @@ export default function useListingForm(isReturningFromPreview = false) {
    try {
      const dataToSave = { ...data };
      
-     // Usuwamy obiekty File z tablicy images
+     // Usuń zdjęcia base64 które powodują przekroczenie limitu localStorage
+     if (dataToSave.photos) {
+       delete dataToSave.photos;
+     }
+     
+     // Zachowaj tylko podstawowe informacje o zdjęciach
      if (dataToSave.images && Array.isArray(dataToSave.images)) {
        dataToSave.images = dataToSave.images.map(img => {
+         if (typeof img === 'string') {
+           return img; // URL string
+         }
          if (img && typeof img === 'object') {
-           return { url: img.url || '' };
+           return {
+             url: img.url || img.src || '',
+             name: img.name || ''
+           };
          }
          return img;
        });
      }
      
+     // Usuń inne potencjalnie problematyczne pola
+     delete dataToSave.file;
+     delete dataToSave.files;
+     
+     // Sprawdź rozmiar danych przed zapisem
+     const dataString = JSON.stringify(dataToSave);
+     const dataSize = new Blob([dataString]).size;
+     
+     // Jeśli dane są większe niż 4MB, usuń dodatkowe pola
+     if (dataSize > 4 * 1024 * 1024) {
+       console.warn('Dane formularza są zbyt duże dla localStorage, usuwam dodatkowe pola');
+       delete dataToSave.mainImage;
+       if (dataToSave.images) {
+         dataToSave.images = dataToSave.images.slice(0, 5); // Zachowaj tylko pierwsze 5 URL-i
+       }
+     }
+     
      localStorage.setItem(TEMP_STORAGE_KEY, JSON.stringify(dataToSave));
    } catch (error) {
      console.error('Błąd podczas zapisywania tymczasowych danych formularza:', error);
+     
+     // Jeśli nadal nie można zapisać, spróbuj z minimalnymi danymi
+     try {
+       const minimalData = {
+         brand: data.brand || '',
+         model: data.model || '',
+         generation: data.generation || '',
+         version: data.version || '',
+         productionYear: data.productionYear || '',
+         price: data.price || '',
+         mileage: data.mileage || '',
+         fuelType: data.fuelType || '',
+         transmission: data.transmission || '',
+         drive: data.drive || '',
+         condition: data.condition || '',
+         accidentStatus: data.accidentStatus || '',
+         damageStatus: data.damageStatus || '',
+         voivodeship: data.voivodeship || '',
+         city: data.city || '',
+         description: data.description || '',
+         headline: data.headline || '',
+         sellerType: data.sellerType || ''
+       };
+       
+       localStorage.setItem(TEMP_STORAGE_KEY, JSON.stringify(minimalData));
+       console.log('Zapisano minimalne dane formularza');
+     } catch (minimalError) {
+       console.error('Nie udało się zapisać nawet minimalnych danych:', minimalError);
+     }
    }
  };
 
@@ -192,7 +249,7 @@ export default function useListingForm(isReturningFromPreview = false) {
    }
  };
 
- const handleChange = (fieldOrEvent, value) => {
+ const handleChange = useCallback((fieldOrEvent, value) => {
    let field, val;
    
    // Sprawdź czy to event object czy bezpośrednie wartości
@@ -211,14 +268,15 @@ export default function useListingForm(isReturningFromPreview = false) {
      [field]: val
    }));
 
-   if (errors[field]) {
-     setErrors(prev => {
+   setErrors(prev => {
+     if (prev[field]) {
        const newErrors = { ...prev };
        delete newErrors[field];
        return newErrors;
-     });
-   }
- };
+     }
+     return prev;
+   });
+ }, []);
 
  const validateForm = () => {
    const newErrors = FormValidator.validateForm(formData);

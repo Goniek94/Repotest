@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
-import { ChevronDown, Shield, CheckCircle, X } from 'lucide-react';
+import { ChevronDown, Shield, CheckCircle, X, Info } from 'lucide-react';
 
 const VehicleStatusSection = ({ formData, handleChange, errors }) => {
   const [openDropdowns, setOpenDropdowns] = useState({});
 
   const statusOptions = [
     { name: 'condition', label: 'Stan', options: ['Nowy', 'Używany'], required: true },
-    { name: 'accidentStatus', label: 'Wypadkowość', options: ['Bezwypadkowy', 'Powypadkowy'], required: false },
-    { name: 'damageStatus', label: 'Uszkodzenia', options: ['Nieuszkodzony', 'Uszkodzony'], required: false },
-    { name: 'tuning', label: 'Tuning', options: ['Tak', 'Nie'], required: false },
-    { name: 'imported', label: 'Importowany', options: ['Tak', 'Nie'], required: false },
-    { name: 'registeredInPL', label: 'Zarejestrowany w PL', options: ['Tak', 'Nie'], required: false },
-    { name: 'firstOwner', label: 'Pierwszy właściciel', options: ['Tak', 'Nie'], required: false },
-    { name: 'disabledAdapted', label: 'Dla niepełnosprawnych', options: ['Tak', 'Nie'], required: false }
+    { name: 'accidentStatus', label: 'Wypadkowość', options: ['Bezwypadkowy', 'Powypadkowy'], required: true },
+    { name: 'damageStatus', label: 'Uszkodzenia', options: ['Nieuszkodzony', 'Uszkodzony'], required: true },
+    { name: 'countryOfOrigin', label: 'Kraj pochodzenia', options: ['Polska', 'Niemcy', 'Francja', 'Włochy', 'Hiszpania', 'Czechy', 'Słowacja', 'Austria', 'Belgia', 'Holandia', 'Szwecja', 'Dania', 'Norwegia', 'Finlandia', 'Wielka Brytania', 'USA', 'Japonia', 'Korea Południowa', 'Inne'], required: true },
+    { name: 'imported', label: 'Importowany', options: ['Tak', 'Nie'], required: true },
+    { name: 'registeredInPL', label: 'Zarejestrowany w PL', options: ['Tak', 'Nie'], required: true },
+    { name: 'firstOwner', label: 'Pierwszy właściciel', options: ['Tak', 'Nie'], required: true },
+    { name: 'disabledAdapted', label: 'Adaptacja medyczna', options: ['Tak', 'Nie'], required: false }
   ];
 
   const toggleDropdown = (name) => {
@@ -82,6 +82,15 @@ const VehicleStatusSection = ({ formData, handleChange, errors }) => {
         <label className="block text-sm font-medium mb-2 text-gray-700">
           <div className="flex items-center gap-1">
             <span>{label}</span>
+            {name === 'disabledAdapted' && (
+              <div className="relative group">
+                <Info className="h-4 w-4 text-gray-400 cursor-help" />
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                  Adaptacja dla osób z niepełnosprawnością
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+                </div>
+              </div>
+            )}
             {required && <span className="text-red-500">*</span>}
           </div>
         </label>
@@ -128,48 +137,21 @@ const VehicleStatusSection = ({ formData, handleChange, errors }) => {
 
   return (
     <div className="space-y-6">
-      {/* Kompaktowa siatka wszystkich pól */}
-      <div>
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-8 h-8 bg-[#35530A] text-white rounded-full flex items-center justify-center text-sm font-bold">1</div>
-          <h3 className="text-lg font-semibold text-gray-800">Stan i historia pojazdu</h3>
-        </div>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {statusOptions.map((option) => (
-            <SelectField
-              key={option.name}
-              name={option.name}
-              label={option.label}
-              options={option.options}
-              value={formData[option.name]}
-              required={option.required}
-              placeholder="Wybierz"
-            />
-          ))}
-        </div>
+      {/* Grid z polami stanu pojazdu */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {statusOptions.map((option) => (
+          <SelectField
+            key={option.name}
+            name={option.name}
+            label={option.label}
+            options={option.options}
+            value={formData[option.name]}
+            required={option.required}
+            placeholder="Wybierz"
+          />
+        ))}
       </div>
 
-      {/* Podsumowanie statusów */}
-      <div className="bg-gray-50 rounded-lg p-4">
-        <h4 className="font-semibold text-gray-800 mb-3">Podsumowanie stanu:</h4>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-          {statusOptions.map((option) => {
-            const value = formData[option.name];
-            if (!value) return null;
-            
-            return (
-              <div
-                key={option.name}
-                className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 ${getStatusColor(option.name, value)}`}
-              >
-                {getStatusIcon(option.name, value)}
-                <span>{option.label}: {value}</span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
 
       {/* Informacje pomocnicze */}
       <div className="bg-[#F5FAF5] border-l-4 border-[#35530A] p-4 rounded-md">

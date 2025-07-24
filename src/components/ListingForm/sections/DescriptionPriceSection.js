@@ -66,18 +66,15 @@ const DescriptionPriceSection = ({ formData, handleChange, errors }) => {
         <div className="p-6 space-y-6">
       
       {/* Sekcja opisu */}
-      <div className="mb-8">
-        <h3 className="text-white p-2 rounded-[2px] mb-4 bg-[#35530A]">
-          Opis pojazdu
-        </h3>
-        
+      <div className="mb-6">
         {/* Pole opisu - zwiększone */}
         <div className={`relative ${errors.description ? 'mb-1' : 'mb-0'}`}>
           <textarea
+            name="description"
             rows="20"
             maxLength={maxDescriptionLength}
             value={formData.description || ''}
-            onChange={(e) => handleChange('description', e.target.value)}
+            onChange={handleChange}
             placeholder="Wpisz opis pojazdu..."
             className={`
               w-full border rounded-[2px] p-6 text-gray-700 text-base
@@ -137,62 +134,54 @@ const DescriptionPriceSection = ({ formData, handleChange, errors }) => {
           )}
         </div>
         
-        {/* Cena z kategoriami cenowymi */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          {/* Pole ceny standardowej - zawsze wyświetlane */}
-          <FormField
-            type="number"
-            label="Cena (zł)*"
-            name="price"
-            value={formData.price}
-            onChange={(e) => handleNumberChange('price', e.target.value)}
-            error={errors.price}
-            min="0"
-            placeholder="np. 25000"
-            className="md:col-span-2"
-          />
+        {/* Cena - kompaktowy układ */}
+        <div className="flex flex-col items-center gap-4 mb-6">
+          {/* Pole ceny standardowej - wyśrodkowane */}
+          <div className="w-full max-w-md">
+            <FormField
+              type="number"
+              label="Cena (zł)*"
+              name="price"
+              value={formData.price}
+              onChange={(e) => handleNumberChange('price', e.target.value)}
+              error={errors.price}
+              min="0"
+              placeholder="np. 25000"
+            />
+          </div>
           
           {/* Dodatkowe pole dla najmu - wyświetlane tylko gdy wybrano opcję najmu */}
           {hasRentalOption && (
-            <FormField
-              type="number"
-              label="Cena najmu (zł/miesiąc)*"
-              name="rentalPrice"
-              value={formData.rentalPrice}
-              onChange={(e) => handleNumberChange('rentalPrice', e.target.value)}
-              error={errors.rentalPrice}
-              min="0"
-              placeholder="np. 1500"
-              className="md:col-span-2"
-            />
+            <div className="w-full max-w-md">
+              <FormField
+                type="number"
+                label="Cena najmu (zł/miesiąc)*"
+                name="rentalPrice"
+                value={formData.rentalPrice}
+                onChange={(e) => handleNumberChange('rentalPrice', e.target.value)}
+                error={errors.rentalPrice}
+                min="0"
+                placeholder="np. 1500"
+              />
+            </div>
           )}
           
-          {/* Możliwość negocjacji */}
-          <div className="md:col-span-2 flex items-center">
-            <label className="flex items-center cursor-pointer">
+          {/* Możliwość negocjacji - mniejszy przycisk obok */}
+          <div className="flex items-center">
+            <label className="flex items-center cursor-pointer bg-gray-50 px-3 py-2 rounded-md border hover:bg-gray-100 transition-colors">
               <input
                 type="checkbox"
                 checked={formData.negotiable === 'Tak'}
                 onChange={(e) => handleChange('negotiable', e.target.checked ? 'Tak' : 'Nie')}
                 className="mr-2 accent-[#35530A]"
               />
-              <span>Cena do negocjacji</span>
+              <span className="text-sm">Cena do negocjacji</span>
             </label>
           </div>
         </div>
         
       </div>
       
-          {/* Informacja końcowa */}
-          <div className="bg-[#F5FAF5] border-l-4 border-[#35530A] p-4 rounded-md">
-            <p className="text-[#35530A] text-sm font-medium mb-2">
-              To ostatni krok przed podglądem ogłoszenia!
-            </p>
-            <p className="text-[#35530A] text-sm">
-              Po kliknięciu "Przejdź do podglądu" będziesz mógł zobaczyć, jak będzie wyglądało Twoje ogłoszenie.
-              Twoje dane są automatycznie zapisywane, więc możesz bezpiecznie przejść do podglądu i wrócić do edycji.
-            </p>
-          </div>
         </div>
       </div>
     </div>

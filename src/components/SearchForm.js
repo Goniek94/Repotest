@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useCarData from './search/hooks/useCarData';
-import { bodyTypes, advancedOptions, regions } from './search/SearchFormConstants';
+import { bodyTypes, advancedOptions, regions, generateYearOptions, priceRanges, mileageRanges } from './search/SearchFormConstants';
 
 export default function SearchForm({ initialValues = {} }) {
   const navigate = useNavigate();
@@ -13,18 +13,15 @@ export default function SearchForm({ initialValues = {} }) {
   const [formData, setFormData] = useState(() => ({
     make: '',
     model: '',
-    priceFrom: '',
-    priceTo: '',
-    yearFrom: '',
-    yearTo: '',
+    price: '',
+    year: '',
+    mileage: '',
     bodyType: '',
     damageStatus: '',
     country: '',
     region: '',
     fuelType: '',
     driveType: '',
-    mileageFrom: '',
-    mileageTo: '',
     location: '',
     transmission: '',
     enginePowerFrom: '',
@@ -84,11 +81,6 @@ export default function SearchForm({ initialValues = {} }) {
     setMatchingResults(newCount);
   }, [formData]);
 
-  // Generuj listę roczników wstecz (np. od 1990)
-  const generateYearOptions = () => {
-    const currentYear = new Date().getFullYear();
-    return Array.from({ length: currentYear - 1989 }, (_, i) => currentYear - i);
-  };
 
   // Obsługa zmian w polach formularza
   const handleInputChange = (e) => {
@@ -199,121 +191,6 @@ export default function SearchForm({ initialValues = {} }) {
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Generacja (rocznik)
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <select
-                  name="yearFrom"
-                  value={formData.yearFrom}
-                  onChange={handleInputChange}
-                  className="w-full h-10 text-sm px-2 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
-                >
-                  <option value="">Od</option>
-                  {generateYearOptions().map((yr) => (
-                    <option key={yr} value={yr}>
-                      {yr}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  name="yearTo"
-                  value={formData.yearTo}
-                  onChange={handleInputChange}
-                  className="w-full h-10 text-sm px-2 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
-                >
-                  <option value="">Do</option>
-                  {generateYearOptions().map((yr) => (
-                    <option key={yr} value={yr}>
-                      {yr}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* RZĄD 2 */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Cena
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <input
-                  type="number"
-                  name="priceFrom"
-                  placeholder="Od"
-                  min="0"
-                  value={formData.priceFrom}
-                  onChange={handleInputChange}
-                  className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
-                />
-                <input
-                  type="number"
-                  name="priceTo"
-                  placeholder="Do"
-                  min="0"
-                  value={formData.priceTo}
-                  onChange={handleInputChange}
-                  className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Rocznik
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <input
-                  type="number"
-                  name="yearFrom"
-                  placeholder="Od"
-                  min="1900"
-                  max={new Date().getFullYear()}
-                  value={formData.yearFrom}
-                  onChange={handleInputChange}
-                  className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
-                />
-                <input
-                  type="number"
-                  name="yearTo"
-                  placeholder="Do"
-                  min="1900"
-                  max={new Date().getFullYear()}
-                  value={formData.yearTo}
-                  onChange={handleInputChange}
-                  className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Przebieg
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <input
-                  type="number"
-                  name="mileageFrom"
-                  placeholder="Od"
-                  min="0"
-                  value={formData.mileageFrom}
-                  onChange={handleInputChange}
-                  className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
-                />
-                <input
-                  type="number"
-                  name="mileageTo"
-                  placeholder="Do"
-                  min="0"
-                  value={formData.mileageTo}
-                  onChange={handleInputChange}
-                  className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
                 Rodzaj paliwa
               </label>
               <select
@@ -326,6 +203,64 @@ export default function SearchForm({ initialValues = {} }) {
                 {advancedOptions.fuelType.map((fuel) => (
                   <option key={fuel} value={fuel}>
                     {fuel}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* RZĄD 2 */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                Cena (PLN)
+              </label>
+              <select
+                name="price"
+                value={formData.price}
+                onChange={handleInputChange}
+                className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
+              >
+                <option value="">Wybierz cenę</option>
+                {priceRanges.map((price) => (
+                  <option key={price.value} value={price.value}>
+                    do {price.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                Rok produkcji
+              </label>
+              <select
+                name="year"
+                value={formData.year}
+                onChange={handleInputChange}
+                className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
+              >
+                <option value="">Wybierz rok</option>
+                {generateYearOptions(1900).map((yr) => (
+                  <option key={yr} value={yr}>
+                    {yr}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                Przebieg (km)
+              </label>
+              <select
+                name="mileage"
+                value={formData.mileage}
+                onChange={handleInputChange}
+                className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A]"
+              >
+                <option value="">Wybierz przebieg</option>
+                {mileageRanges.map((mileage) => (
+                  <option key={mileage.value} value={mileage.value}>
+                    do {mileage.label}
                   </option>
                 ))}
               </select>

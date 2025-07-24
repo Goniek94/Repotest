@@ -230,24 +230,46 @@ const PhotoUploadSection = ({ formData, setFormData, errors, showToast }) => {
       {/* Zawartość karty */}
       <div className="p-6 space-y-6">
           
-          {/* Ostrzeżenie o tymczasowości */}
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
-              <div className="text-sm text-yellow-800">
-                <p className="font-medium">Uwaga - zdjęcia tymczasowe!</p>
-                <p>Zdjęcia zostaną przesłane po zapisaniu ogłoszenia. Po odświeżeniu strony zdjęcia znikną.</p>
+          {/* Wytyczne dotyczące zdjęć */}
+          <div className="bg-[#F5FAF5] border border-[#35530A] rounded-lg p-4 mb-6">
+            <div className="flex items-start gap-3">
+              <Image className="h-5 w-5 text-[#35530A] mt-0.5 flex-shrink-0" />
+              <div>
+                <h4 className="font-semibold text-[#35530A] mb-3">Jakie zdjęcia dodać?</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-[#35530A]">
+                  <div>
+                    <p className="font-medium mb-2">📸 Zdjęcia zewnętrzne:</p>
+                    <ul className="space-y-1 text-xs">
+                      <li>• Przód pojazdu (główne zdjęcie)</li>
+                      <li>• Tył pojazdu</li>
+                      <li>• Lewa strona</li>
+                      <li>• Prawa strona</li>
+                      <li>• Uszkodzenia (jeśli są)</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <p className="font-medium mb-2">🚗 Zdjęcia wnętrza:</p>
+                    <ul className="space-y-1 text-xs">
+                      <li>• Deska rozdzielcza</li>
+                      <li>• Fotele przednie</li>
+                      <li>• Fotele tylne</li>
+                      <li>• Bagażnik</li>
+                      <li>• Licznik (przebieg)</li>
+                    </ul>
+                  </div>
+                </div>
+                <div className="mt-3 p-3 bg-[#35530A]/10 rounded-md">
+                  <p className="text-xs text-[#35530A]">
+                    <strong>💡 Wskazówka:</strong> Dobre zdjęcia zwiększają zainteresowanie ogłoszeniem o 70%! 
+                    Rób zdjęcia w dobrym świetle, najlepiej w dzień przy naturalnym oświetleniu.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Upload Zone */}
           <div>
-            <div className="flex items-center gap-2 mb-4">
-              <Upload className="h-5 w-5 text-[#35530A]" />
-              <h3 className="text-lg font-semibold text-gray-800">Dodaj zdjęcia</h3>
-            </div>
-            
             <div 
               className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-gray-50 hover:border-[#35530A] hover:bg-green-50 transition-all duration-200 cursor-pointer"
               onClick={() => fileInputRef.current?.click()}

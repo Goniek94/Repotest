@@ -76,6 +76,25 @@ const LocationSection = ({ formData, handleChange, errors }) => {
     );
   };
 
+  // Funkcja formatowania nazwy miasta
+  const formatCityName = (cityName) => {
+    if (!cityName) return '';
+    // Konwertuj pierwszą literę na wielką, resztę na małe
+    return cityName.charAt(0).toUpperCase() + cityName.slice(1).toLowerCase();
+  };
+
+  // Obsługa zmiany dla pola miasta z formatowaniem
+  const handleCityChange = (e) => {
+    const formattedCity = formatCityName(e.target.value);
+    const syntheticEvent = {
+      target: {
+        name: 'city',
+        value: formattedCity
+      }
+    };
+    handleChange(syntheticEvent);
+  };
+
   const InputField = ({ name, label, value, required, placeholder }) => {
     return (
       <div className="relative">
@@ -87,8 +106,9 @@ const LocationSection = ({ formData, handleChange, errors }) => {
         </label>
         <input
           type="text"
+          name={name}
           value={value || ''}
-          onChange={(e) => handleChange(name, e.target.value)}
+          onChange={name === 'city' ? handleCityChange : handleChange}
           placeholder={placeholder}
           className={`w-full h-9 text-sm px-3 border rounded-md transition-all duration-200 ${
             value 
@@ -108,10 +128,6 @@ const LocationSection = ({ formData, handleChange, errors }) => {
           
           {/* Kompaktowa siatka pól lokalizacji */}
           <div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-[#35530A] text-white rounded-full flex items-center justify-center text-sm font-bold">1</div>
-              <h3 className="text-lg font-semibold text-gray-800">Dane lokalizacji</h3>
-            </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <SelectField

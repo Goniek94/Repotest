@@ -224,15 +224,7 @@ export default function AdvancedFilters({
           label="Moc silnika"
           unit="KM"
         />
-        {/* Dodatkowy wybór marek - użyteczne dla zaawansowanego filtrowania */}
-        {availableBrands.length > 0 && (
-          <ChecklistFilter
-            name="make"
-            label="Marka (zaawansowane)"
-            options={availableBrands}
-            placeholder="Wybierz markę"
-          />
-        )}
+        
         {/* Pojemność silnika */}
         <RangeFilter
           nameFrom="engineCapacityFrom"
@@ -284,6 +276,14 @@ export default function AdvancedFilters({
           label="Wykończenie lakieru"
           options={finishTypes}
           placeholder="Wybierz wykończenie"
+        />
+        
+        {/* Liczba drzwi */}
+        <ChecklistFilter
+          name="doorCount"
+          label="Liczba drzwi"
+          options={advancedOptions?.doorCount || []}
+          placeholder="Wybierz liczbę drzwi"
         />
         
         {/* Waga pojazdu */}

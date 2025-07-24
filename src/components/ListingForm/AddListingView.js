@@ -1,4 +1,3 @@
-// src/components/listings/AddListingView.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { MapPin, Medal, Image, Star, Upload } from 'lucide-react';
@@ -83,35 +82,35 @@ const AddListingView = () => {
   const mapFormDataToBackend = (formData) => {
     // Mapowania wartości z frontendu na backend
     const fuelTypeMapping = {
-      'Benzyna': 'benzyna',
-      'Diesel': 'diesel', 
-      'Elektryczny': 'elektryczny',
-      'Hybryda': 'hybryda',
-      'Hybrydowy': 'hybrydowy',
-      'Benzyna+LPG': 'benzyna+LPG',
-      'Benzyna+CNG': 'benzyna+LPG', // mapujemy CNG na LPG jako najbliższe
-      'Etanol': 'inne'
+      'Benzyna': 'Benzyna',
+      'Diesel': 'Diesel', 
+      'Elektryczny': 'Elektryczny',
+      'Hybryda': 'Hybryda',
+      'Hybrydowy': 'Hybrydowy',
+      'Benzyna+LPG': 'Benzyna+LPG',
+      'Benzyna+CNG': 'Benzyna+LPG', // mapujemy CNG na LPG jako najbliższe
+      'Etanol': 'Inne'
     };
 
     const transmissionMapping = {
-      'Manualna': 'manualna',
-      'Automatyczna': 'automatyczna',
-      'Półautomatyczna': 'półautomatyczna',
-      'Bezstopniowa CVT': 'automatyczna' // CVT mapujemy na automatyczną
+      'Manualna': 'Manualna',
+      'Automatyczna': 'Automatyczna',
+      'Półautomatyczna': 'Półautomatyczna',
+      'Bezstopniowa CVT': 'Automatyczna' // CVT mapujemy na automatyczną
     };
 
     const conditionMapping = {
-      'Nowy': 'nowy',
-      'Używany': 'używany'
+      'Nowy': 'Nowy',
+      'Używany': 'Używany'
     };
 
     const booleanMapping = {
-      'Tak': 'tak',
-      'Nie': 'nie',
-      'Bezwypadkowy': 'nie',
-      'Powypadkowy': 'tak',
-      'Nieuszkodzony': 'nie',
-      'Uszkodzony': 'tak'
+      'Tak': 'Tak',
+      'Nie': 'Nie',
+      'Bezwypadkowy': 'Nie',
+      'Powypadkowy': 'Tak',
+      'Nieuszkodzony': 'Nie',
+      'Uszkodzony': 'Tak'
     };
 
     return {
@@ -124,8 +123,8 @@ const AddListingView = () => {
       productionYear: parseInt(formData.productionYear || formData.year || '2010'), // Dodajemy też productionYear dla kompatybilności
       price: parseFloat(formData.price || '10000'),
       mileage: parseInt(formData.mileage || '100000'),
-      fuelType: fuelTypeMapping[formData.fuelType] || 'benzyna',
-      transmission: transmissionMapping[formData.transmission] || 'manualna',
+      fuelType: fuelTypeMapping[formData.fuelType] || 'Benzyna',
+      transmission: transmissionMapping[formData.transmission] || 'Manualna',
       vin: formData.vin || '',
       registrationNumber: formData.registrationNumber || '',
       headline: formData.headline || `${formData.brand || ''} ${formData.model || ''}`.trim(),
@@ -150,21 +149,21 @@ const AddListingView = () => {
       listingType,
       sellerType: (() => {
         const sellerTypeMapping = {
-          'Prywatny': 'prywatny',
-          'Firma': 'firma'
+          'Prywatny': 'Prywatny',
+          'Firma': 'Firma'
         };
-        return sellerTypeMapping[formData.sellerType] || 'prywatny';
+        return sellerTypeMapping[formData.sellerType] || 'Prywatny';
       })(),
       
       // Stan pojazdu
-      condition: conditionMapping[formData.condition] || 'używany',
-      accidentStatus: booleanMapping[formData.accidentStatus] || 'nie',
-      damageStatus: booleanMapping[formData.damageStatus] || 'nie',
-      tuning: booleanMapping[formData.tuning] || 'nie',
-      imported: booleanMapping[formData.imported] || 'nie',
-      registeredInPL: booleanMapping[formData.registeredInPL] || 'tak',
-      firstOwner: booleanMapping[formData.firstOwner] || 'nie',
-      disabledAdapted: booleanMapping[formData.disabledAdapted] || 'nie',
+      condition: conditionMapping[formData.condition] || 'Używany',
+      accidentStatus: booleanMapping[formData.accidentStatus] || 'Nie',
+      damageStatus: booleanMapping[formData.damageStatus] || 'Nie',
+      tuning: booleanMapping[formData.tuning] || 'Nie',
+      imported: booleanMapping[formData.imported] || 'Nie',
+      registeredInPL: booleanMapping[formData.registeredInPL] || 'Tak',
+      firstOwner: booleanMapping[formData.firstOwner] || 'Nie',
+      disabledAdapted: booleanMapping[formData.disabledAdapted] || 'Nie',
       
       // Nadwozie i wygląd
       bodyType: formData.bodyType || '',
@@ -693,10 +692,47 @@ const AddListingView = () => {
         <div className="mt-6 flex justify-center gap-4">
           <button
             onClick={() => {
-              // Zapisz dane tymczasowo przed powrotem
-              const tempData = { ...listingData };
-              localStorage.setItem('auto_sell_temp_form', JSON.stringify(tempData));
-              navigate('/create-listing?from=preview');
+              try {
+                // Przygotuj dane do zapisania - usuń problematyczne obiekty
+                const tempData = { ...listingData };
+                
+                // Usuń zdjęcia base64 które powodują przekroczenie limitu localStorage
+                if (tempData.photos) {
+                  delete tempData.photos;
+                }
+                
+                // Zachowaj tylko podstawowe informacje o zdjęciach
+                if (tempData.images && Array.isArray(tempData.images)) {
+                  tempData.images = tempData.images.map(img => {
+                    if (typeof img === 'string') {
+                      return img; // URL string
+                    }
+                    if (img && typeof img === 'object') {
+                      return {
+                        url: img.url || img.src || '',
+                        name: img.name || ''
+                      };
+                    }
+                    return img;
+                  });
+                }
+                
+                // Usuń inne potencjalnie problematyczne pola
+                delete tempData.file;
+                delete tempData.files;
+                
+                // Zapisz dane do localStorage
+                localStorage.setItem('auto_sell_temp_form', JSON.stringify(tempData));
+                
+                // Przejdź do formularza
+                navigate('/create-listing?from=preview');
+              } catch (error) {
+                console.error('Błąd podczas zapisywania danych do localStorage:', error);
+                
+                // Jeśli zapis się nie powiedzie, przejdź bez zapisywania
+                alert('Nie udało się zapisać danych formularza. Przejdziesz do pustego formularza.');
+                navigate('/create-listing');
+              }
             }}
             className="
               bg-gray-100 text-gray-700
