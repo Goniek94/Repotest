@@ -15,7 +15,7 @@ import { ResponsiveContainer } from '../../layout';
  * @returns {JSX.Element}
  */
 const ProfileLayout = () => {
-  const { isMobileOrTablet } = useBreakpoint();
+  const { isMobileOrTablet, isMobile } = useBreakpoint();
   const [isPanelRaised, setIsPanelRaised] = useState(false);
   const location = useLocation();
   
@@ -43,8 +43,8 @@ const ProfileLayout = () => {
   return (
     <SidebarProvider>
       <ResponsiveContainer className={`bg-white relative ${isPanelRaised ? 'raised-panel' : ''}`}>
-        {/* Mobilny sidebar panelu użytkownika - widoczny tylko na mobile/tablet */}
-        <MobilePanelSidebar activeItem={getActiveItem()} />
+        {/* Mobilny sidebar panelu użytkownika - widoczny tylko na mobile */}
+        {isMobile && <MobilePanelSidebar activeItem={getActiveItem()} />}
         
         <MainContentWrapper className={isMobileOrTablet ? "ml-12 sm:ml-14 lg:ml-0" : ""}>
           {isMobileOrTablet ? (

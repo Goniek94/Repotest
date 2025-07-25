@@ -205,11 +205,11 @@ const ProfileNavigation = React.forwardRef(
                   navigate(item.path);
                 }
               }}
-              className={`whitespace-nowrap py-3 px-3 md:px-4 flex items-center transition-colors ${
-                activeTab === item.id
-                  ? 'border-b-3 text-[#35530A] border-[#35530A] font-medium bg-[#f5f8f0] -mb-[1px]'
-                  : 'text-gray-600 hover:text-green-800 hover:border-b-2 hover:border-gray-300'
-              }`}
+            className={`whitespace-nowrap py-3 px-3 md:px-4 flex items-center transition-colors border-b-3 ${
+              activeTab === item.id
+                ? 'text-[#35530A] border-[#35530A] font-medium bg-[#f5f8f0]'
+                : 'text-gray-600 hover:text-green-800 border-transparent hover:border-gray-300'
+            }`}
             >
               <item.icon className="w-4 h-4 mr-2" />
               {item.name}

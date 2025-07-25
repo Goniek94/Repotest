@@ -6,7 +6,19 @@ import {
   FUEL_TYPES,
   TRANSMISSION_TYPES,
   DRIVE_TYPES,
-  COUNTRIES
+  COUNTRIES,
+  PAINT_FINISHES,
+  DOOR_OPTIONS,
+  SEAT_OPTIONS,
+  CONDITION_OPTIONS,
+  ACCIDENT_STATUS_OPTIONS,
+  DAMAGE_STATUS_OPTIONS,
+  TUNING_OPTIONS,
+  SELLER_TYPE_OPTIONS,
+  IMPORTED_OPTIONS,
+  REGISTERED_IN_PL_OPTIONS,
+  FIRST_OWNER_OPTIONS,
+  DISABLED_ADAPTED_OPTIONS
 } from '../../constants/vehicleOptions';
 
 // Mapowanie województw do miast
@@ -36,18 +48,39 @@ export const carData = {}; // Fallback dla statycznych danych
 export const bodyTypes = BODY_TYPES;
 
 export const advancedOptions = {
-  damageStatus: ['Brak uszkodzeń', 'Lekko uszkodzony', 'Poważnie uszkodzony', 'Uszkodzony', 'Bezwypadkowy'],
-  country: COUNTRIES,
+  // Dane techniczne
   fuelType: FUEL_TYPES,
-  driveType: DRIVE_TYPES,
   transmission: TRANSMISSION_TYPES,
+  driveType: DRIVE_TYPES,
+  tuning: TUNING_OPTIONS,
+  
+  // Stan pojazdu
+  condition: CONDITION_OPTIONS,
+  accidentStatus: ACCIDENT_STATUS_OPTIONS,
+  damageStatus: DAMAGE_STATUS_OPTIONS,
+  
+  // Nadwozie
+  bodyType: BODY_TYPES,
   color: COLORS,
-  doorCount: ['2/3', '4/5', '6/7'],
-  tuning: ['Tak', 'Nie'],
-  vehicleCondition: ['Używany', 'Nowy', 'Powypadkowy', 'Uszkodzony', 'Do remontu', 'Bezwypadkowy'],
-  sellingForm: ['Sprzedaż', 'Zamiana', 'Wynajem', 'Leasing'],
-  sellerType: ['Prywatny', 'Firma', 'Dealer', 'Komis'],
+  finish: PAINT_FINISHES,
+  doorCount: DOOR_OPTIONS,
+  seats: SEAT_OPTIONS,
+  
+  // Pochodzenie i sprzedawca
+  countryOfOrigin: COUNTRIES,
+  sellerType: SELLER_TYPE_OPTIONS,
+  
+  // Statusy pojazdu
+  imported: IMPORTED_OPTIONS,
+  registeredInPL: REGISTERED_IN_PL_OPTIONS,
+  firstOwner: FIRST_OWNER_OPTIONS,
+  disabledAdapted: DISABLED_ADAPTED_OPTIONS,
+  
+  // Zachowane dla kompatybilności wstecznej
+  country: COUNTRIES,
+  vehicleCondition: [...CONDITION_OPTIONS, ...ACCIDENT_STATUS_OPTIONS, ...DAMAGE_STATUS_OPTIONS],
   vehicleStatus: ['Uszkodzony', 'Bezwypadkowy', 'Kierownica po prawej', 'Przystosowany dla niepełnosprawnych', 'Pierwszy właściciel', 'Serwisowany w ASO', 'Zarejestrowany w Polsce', 'Sprowadzony'],
+  sellingForm: ['Sprzedaż', 'Zamiana', 'Wynajem', 'Leasing']
 };
 
 export const regions = [
@@ -119,4 +152,67 @@ export const mileageRanges = [
   { label: '300 000', value: 300000 },
   { label: '400 000', value: 400000 },
   { label: '500 000', value: 500000 }
+];
+
+/**
+ * Logiczne przedziały mocy silnika w KM
+ */
+export const enginePowerRanges = [
+  { label: '50', value: 50 },
+  { label: '75', value: 75 },
+  { label: '100', value: 100 },
+  { label: '125', value: 125 },
+  { label: '150', value: 150 },
+  { label: '175', value: 175 },
+  { label: '200', value: 200 },
+  { label: '250', value: 250 },
+  { label: '300', value: 300 },
+  { label: '350', value: 350 },
+  { label: '400', value: 400 },
+  { label: '450', value: 450 },
+  { label: '500', value: 500 },
+  { label: '600', value: 600 },
+  { label: '700', value: 700 },
+  { label: '800', value: 800 }
+];
+
+/**
+ * Logiczne przedziały pojemności silnika w cm³
+ */
+export const engineCapacityRanges = [
+  { label: '800', value: 800 },
+  { label: '1000', value: 1000 },
+  { label: '1200', value: 1200 },
+  { label: '1400', value: 1400 },
+  { label: '1600', value: 1600 },
+  { label: '1800', value: 1800 },
+  { label: '2000', value: 2000 },
+  { label: '2200', value: 2200 },
+  { label: '2500', value: 2500 },
+  { label: '3000', value: 3000 },
+  { label: '3500', value: 3500 },
+  { label: '4000', value: 4000 },
+  { label: '4500', value: 4500 },
+  { label: '5000', value: 5000 },
+  { label: '6000', value: 6000 }
+];
+
+/**
+ * Logiczne przedziały wagi pojazdu w kg
+ */
+export const weightRanges = [
+  { label: '800', value: 800 },
+  { label: '1000', value: 1000 },
+  { label: '1200', value: 1200 },
+  { label: '1400', value: 1400 },
+  { label: '1600', value: 1600 },
+  { label: '1800', value: 1800 },
+  { label: '2000', value: 2000 },
+  { label: '2200', value: 2200 },
+  { label: '2500', value: 2500 },
+  { label: '3000', value: 3000 },
+  { label: '3500', value: 3500 },
+  { label: '4000', value: 4000 },
+  { label: '5000', value: 5000 },
+  { label: '6000', value: 6000 }
 ];

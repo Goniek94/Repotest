@@ -70,7 +70,7 @@ const ListingsService = {
    * @returns {Promise} - Promise rozwiązywane danymi odpowiedzi
    */
   finishListing: (id) => 
-    apiClient.put(`/ads/${id}/finish`)
+    apiClient.put(`/ads/${id}/status`, { status: 'archived' })
       .then(response => response.data),
       
   /**

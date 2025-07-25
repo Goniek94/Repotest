@@ -7,6 +7,8 @@ import SearchFormButtons from "./SearchFormButtons";
 import { bodyTypes, advancedOptions, regions } from "./SearchFormConstants";
 import AdsService from "../../services/ads";
 import useCarData from './hooks/useCarData';
+import useSearchStats from './hooks/useSearchStats';
+import useFilterCounts from './hooks/useFilterCounts';
 import { safeConsole } from '../../utils/debug';
 
 /**
@@ -75,14 +77,20 @@ export default function SearchFormUpdated({ initialValues = {}, onFilterChange }
     ...sanitizedInitialValues
   }));
 
+  // Hook do statystyk wyszukiwania w czasie rzeczywistym
+  const { stats } = useSearchStats(formData);
+
+  // Hook do liczników filtrów - nowy system kaskadowego filtrowania
+  const { totalMatching, loading: countsLoading } = useFilterCounts(formData);
+
   // Dostępne modele dla wybranej marki
   const [availableModels, setAvailableModels] = useState([]);
 
   // Pokaż zaawansowane filtry
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  // Liczba pasujących wyników z backendu
-  const [matchingResults, setMatchingResults] = useState(0);
+  // Liczba pasujących wyników z backendu - używamy nowego hooka
+  const matchingResults = totalMatching;
 
   // Funkcja resetująca wszystkie filtry
   const resetAllFilters = () => {
@@ -202,38 +210,6 @@ export default function SearchFormUpdated({ initialValues = {}, onFilterChange }
     }
   }, [availableModels, formData.model]);
 
-  // Pobierz rzeczywistą liczbę wyników z backendu przy zmianie filtrów
-  useEffect(() => {
-    let ignore = false;
-    const fetchCount = async () => {
-      try {
-        const params = { ...formData };
-        // Usuń puste wartości
-        Object.keys(params).forEach(
-          (key) =>
-            (params[key] === '' || params[key] === null || params[key] === undefined) &&
-            delete params[key]
-        );
-        
-        // Zmień nazwę pola 'make' na 'brand' dla zgodności z API
-        if (params.make) {
-          params.brand = params.make;
-          delete params.make;
-        }
-        
-        const res = await AdsService.getCount(params);
-        if (!ignore) setMatchingResults(res.data.count || 0);
-      } catch (e) {
-        safeConsole.error('Błąd podczas pobierania liczby wyników:', e);
-        if (!ignore) setMatchingResults(0);
-      }
-    };
-    
-    fetchCount();
-    return () => {
-      ignore = true;
-    };
-  }, [formData]);
 
   // Obsługa zmiany pól formularza
   const handleInputChange = (e) => {
@@ -343,10 +319,12 @@ export default function SearchFormUpdated({ initialValues = {}, onFilterChange }
           )}
           
           <SearchFormButtons
+            formData={formData}
             showAdvanced={showAdvanced}
             setShowAdvanced={setShowAdvanced}
             handleSearch={handleSearch}
             matchingResults={matchingResults}
+            totalResults={stats.totalCount}
           />
         </div>
       </div>

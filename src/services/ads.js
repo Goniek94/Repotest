@@ -7,6 +7,12 @@ const AdsService = {
   // Pobieranie liczby ogłoszeń pasujących do filtrów
   getCount: (params = {}) => apiClient.get('/api/ads/count', { params }),
 
+  // Pobieranie liczników filtrów dla kaskadowego filtrowania
+  getFilterCounts: (params = {}) => apiClient.get('/api/ads/filter-counts', { params }),
+
+  // Pobieranie statystyk wyszukiwania z licznikami marek i modeli
+  getSearchStats: (params = {}) => apiClient.get('/api/ads/search-stats', { params }),
+
   // Pobieranie wszystkich dostępnych marek samochodów
   getBrands: () => apiClient.get('/api/ads/brands'),
 
@@ -59,10 +65,16 @@ const AdsService = {
     apiClient.put(`/api/ads/${id}/main-image`, { mainImageIndex }),
 
   // Dodawanie ogłoszenia do ulubionych
-  addToFavorites: (id) => apiClient.post(`/api/favorites/add/${id}`),
+  addToFavorites: (id) => apiClient.post(`/api/users/favorites/${id}`),
 
   // Usuwanie ogłoszenia z ulubionych
-  removeFromFavorites: (id) => apiClient.delete(`/api/favorites/remove/${id}`),
+  removeFromFavorites: (id) => apiClient.delete(`/api/users/favorites/${id}`),
+
+  // Pobieranie ulubionych ogłoszeń użytkownika
+  getFavorites: () => apiClient.get('/api/users/favorites'),
+
+  // Sprawdzanie czy ogłoszenie jest w ulubionych
+  checkIsFavorite: (id) => apiClient.get(`/api/users/favorites/${id}/check`),
   
   // Aktualizacja statusu ogłoszenia
   updateStatus: (id, status) => apiClient.put(`/api/ads/${id}/status`, { status }),

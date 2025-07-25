@@ -1,17 +1,14 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo, memo } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Paperclip, Send, ArrowLeft, Menu, X } from 'lucide-react';
-import MessagesHeader from './MessagesHeader';
+import { useSearchParams } from 'react-router-dom';
+import { Paperclip, Send, ArrowLeft, X } from 'lucide-react';
 import MessagesTabs from './MessagesTabs';
 import MessageList from './MessageList';
 import MessageChat from './MessageChat';
 import EmptyChat from './EmptyChat';
 import ChatHeader from './ChatHeader';
-import MessageForm from './MessageForm';
 import { useNotifications } from '../../../contexts/NotificationContext';
 import useConversations from './hooks/useConversations';
 import { useAuth } from '../../../contexts/AuthContext';
-import { getAuthToken, API_URL } from '../../../services/api/config';
 import { DEFAULT_FOLDER, FOLDER_MAP } from '../../../constants/messageFolders';
 
 /**
@@ -31,7 +28,6 @@ const Messages = memo(() => {
     const initial = searchParams.get('folder');
     return FOLDER_MAP[initial] ? initial : DEFAULT_FOLDER;
   });
-  const [showNewMessage, setShowNewMessage] = useState(false);
   const [replyContent, setReplyContent] = useState('');
   const [attachments, setAttachments] = useState([]);
   const [sendingReply, setSendingReply] = useState(false);
@@ -39,6 +35,8 @@ const Messages = memo(() => {
   
   // Stan dla widoku mobilnego
   const [mobileView, setMobileView] = useState('list'); // 'list' lub 'chat'
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   
   // Referencja do inputa plików
   const fileInputRef = useRef(null);
@@ -55,9 +53,6 @@ const Messages = memo(() => {
     chatMessages,
     loading,
     error,
-    searchTerm,
-    setSearchTerm,
-    handleSearch: searchConversations,
     selectConversation,
     toggleStar,
     deleteConversation,
@@ -78,19 +73,6 @@ const Messages = memo(() => {
   }), [unreadCount.messages]);
 
   // Memoizowane handlery
-  const handleSearch = useCallback((e) => {
-    const query = e.target.value;
-    setSearchTerm(query);
-    searchConversations(query);
-  }, [setSearchTerm, searchConversations]);
-
-  const handleNewMessage = useCallback((e) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    setShowNewMessage(true);
-  }, []);
 
   const handleTabChange = useCallback((tab) => {
     setActiveTab(tab);
@@ -234,27 +216,6 @@ const Messages = memo(() => {
     window.location.href = '/login';
   }, []);
 
-  // Handler dla zamknięcia modalu nowej wiadomości
-  const handleCloseNewMessage = useCallback((e) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    setShowNewMessage(false);
-  }, []);
-
-  // Handler dla wysłania nowej wiadomości
-  const handleSendNewMessage = useCallback((e) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    setShowNewMessage(false);
-    // Odświeżenie listy konwersacji po wysłaniu nowej wiadomości
-    if (activeTab === 'wyslane') {
-      searchConversations('');
-    }
-  }, [activeTab, searchConversations]);
 
   // Memoizacja warunków renderowania
   const isButtonDisabled = useMemo(() => {
@@ -503,15 +464,6 @@ const Messages = memo(() => {
     <div className="bg-gray-50 min-h-screen pb-6">
       <div className="max-w-7xl mx-auto p-2 sm:p-4">
         <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-100 h-[calc(100vh-2rem)] sm:h-[80vh] flex flex-col">
-          {/* Nagłówek - widoczny tylko na desktopie */}
-          <div className="hidden md:block">
-            <MessagesHeader 
-              searchTerm={searchTerm}
-              onSearch={handleSearch}
-              onNewMessage={handleNewMessage}
-              unreadCount={unreadCount.messages}
-            />
-          </div>
           
           {/* Zakładki folderów - dostosowane do urządzeń */}
           <MessagesTabs
@@ -557,7 +509,7 @@ const Messages = memo(() => {
                     {ReplyField}
                   </>
                 ) : (
-                  <EmptyChat onNewMessage={handleNewMessage} />
+                  <EmptyChat />
                 )}
               </div>
             </div>
@@ -566,35 +518,11 @@ const Messages = memo(() => {
             <div className="md:hidden flex flex-col flex-1 overflow-hidden">
               {mobileView === 'list' ? (
                 <>
-                  {/* Mobilny nagłówek z przyciskiem nowej wiadomości */}
-                  <div className="bg-white border-b border-gray-200 p-4 flex items-center justify-between">
+                  {/* Mobilny nagłówek */}
+                  <div className="bg-white border-b border-gray-200 p-4">
                     <h2 className="text-lg font-semibold text-gray-900">
                       Wiadomości
                     </h2>
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleNewMessage(e);
-                      }}
-                      className="px-3 py-2 bg-[#35530A] text-white rounded-md hover:bg-[#2A4208] transition-colors text-sm"
-                    >
-                      Nowa
-                    </button>
-                  </div>
-                  
-                  {/* Mobilne pole wyszukiwania */}
-                  <div className="bg-white border-b border-gray-200 p-4">
-                    <input
-                      type="text"
-                      placeholder="Szukaj wiadomości..."
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35530A] focus:border-transparent"
-                      value={searchTerm}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        handleSearch(e);
-                      }}
-                    />
                   </div>
                   
                   {/* Lista konwersacji */}
@@ -628,7 +556,7 @@ const Messages = memo(() => {
                         onReplyToMessage={handleReplyToMessage}
                       />
                     ) : (
-                      <EmptyChat onNewMessage={handleNewMessage} />
+                      <EmptyChat />
                     )}
                   </div>
                   
@@ -641,13 +569,6 @@ const Messages = memo(() => {
         </div>
       </div>
       
-      {/* Modal nowej wiadomości */}
-      {showNewMessage && (
-        <MessageForm
-          onClose={handleCloseNewMessage}
-          onSend={handleSendNewMessage}
-        />
-      )}
     </div>
   );
 });

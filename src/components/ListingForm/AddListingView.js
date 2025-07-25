@@ -5,6 +5,10 @@ import AdsService from '../../services/ads';
 import PaymentModal from '../payment/PaymentModal';
 import InfoRow from './preview/InfoRow';
 import { useImageUpload } from '../../hooks/useImageUpload';
+import ImageGallery from '../listings/details/ImageGallery';
+import TechnicalDetails from '../listings/details/TechnicalDetails';
+import Description from '../listings/details/Description';
+import ContactInfo from '../listings/details/ContactInfo';
 
 const AddListingView = () => {
   const navigate = useNavigate();
@@ -80,6 +84,15 @@ const AddListingView = () => {
 
   // Funkcja mapująca dane z formularza na format backendu
   const mapFormDataToBackend = (formData) => {
+    // Funkcja do parsowania liczb ze spacjami
+    const parseNumberWithSpaces = (value) => {
+      if (!value) return undefined;
+      // Usuń wszystkie spacje i inne niealfanumeryczne znaki oprócz cyfr
+      const cleanValue = value.toString().replace(/[^\d]/g, '');
+      const parsed = parseInt(cleanValue, 10);
+      return isNaN(parsed) ? undefined : parsed;
+    };
+
     // Mapowania wartości z frontendu na backend
     const fuelTypeMapping = {
       'Benzyna': 'Benzyna',
@@ -121,8 +134,8 @@ const AddListingView = () => {
       version: formData.version || '',
       year: parseInt(formData.productionYear || formData.year || '2010'),
       productionYear: parseInt(formData.productionYear || formData.year || '2010'), // Dodajemy też productionYear dla kompatybilności
-      price: parseFloat(formData.price || '10000'),
-      mileage: parseInt(formData.mileage || '100000'),
+      price: parseNumberWithSpaces(formData.price) || 10000,
+      mileage: parseNumberWithSpaces(formData.mileage) || 100000,
       fuelType: fuelTypeMapping[formData.fuelType] || 'Benzyna',
       transmission: transmissionMapping[formData.transmission] || 'Manualna',
       vin: formData.vin || '',
@@ -142,7 +155,7 @@ const AddListingView = () => {
         };
         return mapping[option] || 'Sprzedaż';
       })(),
-      rentalPrice: formData.rentalPrice ? parseFloat(formData.rentalPrice) : undefined,
+      rentalPrice: parseNumberWithSpaces(formData.rentalPrice),
       negotiable: formData.negotiable || 'Nie',
       
       // Typ ogłoszenia i sprzedawcy
@@ -170,12 +183,12 @@ const AddListingView = () => {
       color: formData.color || '',
       doors: formData.doors ? parseInt(formData.doors) : undefined,
       
-      // Dane techniczne
-      lastOfficialMileage: formData.lastOfficialMileage ? parseInt(formData.lastOfficialMileage) : undefined,
-      power: formData.power ? parseInt(formData.power) : 100,
-      engineSize: formData.engineSize ? parseInt(formData.engineSize) : undefined,
+      // Dane techniczne - używamy parseNumberWithSpaces dla poprawnego parsowania
+      lastOfficialMileage: parseNumberWithSpaces(formData.lastOfficialMileage),
+      power: parseNumberWithSpaces(formData.power) || 100,
+      engineSize: parseNumberWithSpaces(formData.engineSize),
       drive: formData.drive || 'Przedni',
-      weight: formData.weight ? parseInt(formData.weight) : undefined,
+      weight: parseNumberWithSpaces(formData.weight),
       countryOfOrigin: formData.countryOfOrigin || '',
       
       // Lokalizacja
@@ -412,203 +425,99 @@ const AddListingView = () => {
       )}
 
 
-      {/* Główna zawartość - PODGLĄD OGŁOSZENIA */}
-      <div className="max-w-6xl mx-auto">
-        {/* Ogłoszenie z ramką odpowiednią do typu (standardowe/wyróżnione) */}
-        <div 
-          className={`
-            ${listingType === 'wyróżnione' 
-              ? 'border-l-4 border-[#35530A]' 
-              : 'border border-gray-200'
-            } 
-            bg-white rounded-[2px] shadow-md overflow-hidden relative mb-8
-          `}
-        >
-          {/* Etykieta WYRÓŻNIONE - tylko dla premium */}
-          {listingType === 'wyróżnione' && (
-            <div className="absolute top-3 left-3 bg-[#35530A] text-white px-3 py-1.5 text-sm rounded-[2px] font-medium flex items-center gap-1.5 z-10">
+      {/* Główna zawartość - PODGLĄD OGŁOSZENIA w stylu szczegółów */}
+      <div className="max-w-7xl mx-auto">
+        {/* Etykieta WYRÓŻNIONE - tylko dla premium */}
+        {listingType === 'wyróżnione' && (
+          <div className="mb-4 flex justify-center">
+            <div className="bg-[#35530A] text-white px-4 py-2 text-sm rounded-[2px] font-medium flex items-center gap-2">
               <Medal className="w-4 h-4" />
-              WYRÓŻNIONE
+              PODGLĄD OGŁOSZENIA WYRÓŻNIONEGO
             </div>
-          )}
+          </div>
+        )}
+        
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Lewa kolumna: galeria, nagłówek, opis */}
+          <div className="w-full lg:w-[60%] space-y-8">
+            {/* Galeria zdjęć - używamy komponentu ImageGallery */}
+            <ImageGallery 
+              images={(() => {
+                // Przygotuj tablicę zdjęć dla komponentu ImageGallery
+                if (listingData.photos && listingData.photos.length > 0) {
+                  return listingData.photos.map(photo => photo.src || photo.url || photo);
+                }
+                if (listingData.images && listingData.images.length > 0) {
+                  return listingData.images.map(img => img.url || img.src || img);
+                }
+                if (listingData.mainImage) {
+                  return [listingData.mainImage];
+                }
+                return [];
+              })()} 
+            />
 
-          <div className="flex flex-col lg:flex-row">
-            {/* Lewa strona */}
-            <div className="w-full lg:w-[60%] p-4 space-y-6">
-              {/* Galeria zdjęć - tylko podgląd */}
-              <div className="mb-6">
-                <h2 className="text-xl font-bold mb-4 text-black flex items-center gap-2">
-                  <Image className="h-5 w-5 text-[#35530A]" />
-                  Zdjęcia pojazdu
-                </h2>
-                
-              {/* Główne zdjęcie */}
-              <div className="mb-4 bg-gray-900 rounded-lg overflow-hidden">
-                {(() => {
-                  // Ujednolicona logika wyświetlania zdjęć
-                  const getImageData = () => {
-                    // Priorytet 1: photos z PhotoUploadSection (base64)
-                    if (listingData.photos && listingData.photos.length > 0) {
-                      const currentPhoto = listingData.photos[activePhotoIndex] || listingData.photos[0];
-                      return {
-                        src: currentPhoto?.src,
-                        name: currentPhoto?.name || `Zdjęcie ${activePhotoIndex + 1}`,
-                        source: 'photos'
-                      };
-                    }
-                    
-                    // Priorytet 2: images z API/Supabase
-                    if (listingData.images && listingData.images.length > 0) {
-                      const currentImage = listingData.images[activePhotoIndex] || listingData.images[0];
-                      return {
-                        src: currentImage?.url || currentImage,
-                        name: `Zdjęcie ${activePhotoIndex + 1}`,
-                        source: 'images'
-                      };
-                    }
-                    
-                    // Priorytet 3: mainImage fallback
-                    if (listingData.mainImage) {
-                      return {
-                        src: listingData.mainImage,
-                        name: 'Główne zdjęcie',
-                        source: 'mainImage'
-                      };
-                    }
-                    
-                    return null;
-                  };
-
-                  const imageData = getImageData();
-                  
-                  if (!imageData || !imageData.src) {
-                    return (
-                      <div className="w-full h-64 bg-gray-200 flex items-center justify-center">
-                        <div className="text-center text-gray-500">
-                          <div className="text-4xl mb-2">📷</div>
-                          <p>Brak zdjęcia</p>
-                        </div>
-                      </div>
-                    );
-                  }
-
-                  return (
-                    <img 
-                      src={imageData.src}
-                      alt={`${listingData.brand || ''} ${listingData.model || ''} - ${imageData.name}`}
-                      className="w-full h-64 object-cover"
-                      onError={(e) => {
-                        e.target.src = 'https://via.placeholder.com/800x600/f0f0f0/666666?text=Błąd+ładowania+zdjęcia';
-                      }}
-                    />
-                  );
-                })()}
-                  
-                  {/* Informacja o zdjęciu */}
-                  <div className="bg-black/80 p-3">
-                    <div className="flex items-center gap-2 text-white">
-                      <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                      <span className="font-medium">
-                        {activePhotoIndex === 0 ? 'Zdjęcie główne' : `Zdjęcie ${activePhotoIndex + 1}`}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Miniatury zdjęć */}
-                {((listingData.photos && listingData.photos.length > 1) || (listingData.images && listingData.images.length > 1)) && (
-                  <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
-                    {(listingData.photos || listingData.images || []).map((item, index) => (
-                      <div 
-                        key={index}
-                        onClick={() => handleThumbnailClick(index)}
-                        className={`cursor-pointer border rounded-md overflow-hidden relative ${
-                          index === activePhotoIndex ? 'border-[#35530A] ring-2 ring-[#35530A]' : 'border-gray-300'
-                        }`}
-                      >
-                        <img 
-                          src={item.src || item.url || item} 
-                          alt={`Miniatura ${index + 1}`}
-                          className="w-full h-16 object-cover"
-                        />
-                        {index === 0 && (
-                          <div className="absolute top-0 left-0 bg-[#35530A] text-white px-1 py-0.5 text-xs rounded-br-md">
-                            Główne
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Nagłówek ogłoszenia */}
-              {listingData.headline && (
-                <div className="mt-6">
-                  <h2 className="text-xl font-bold mb-4 text-black">
-                    Nagłówek ogłoszenia
-                  </h2>
-                  <div className="bg-gray-50 p-4 rounded-md border-l-4 border-[#35530A]">
-                    <p className="text-lg font-medium text-gray-800">
-                      {listingData.headline}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Opis */}
-              <div className="mt-6">
+            {/* Nagłówek ogłoszenia - jeśli istnieje */}
+            {listingData.headline && (
+              <div className="bg-white p-6 shadow-md rounded-sm">
                 <h2 className="text-xl font-bold mb-4 text-black">
-                  Opis pojazdu
+                  Nagłówek ogłoszenia
                 </h2>
-                <div className="leading-relaxed text-gray-700 whitespace-pre-line">
-                  {listingData.description}
+                <div className="bg-gray-50 p-4 rounded-md border-l-4 border-[#35530A]">
+                  <p className="text-lg font-medium text-gray-800">
+                    {listingData.headline}
+                  </p>
                 </div>
               </div>
-            </div>
-
-            {/* Prawa strona */}
-            <div className="w-full lg:w-[40%] p-4 bg-gray-50">
-              {/* Tytuł i cena */}
-              <div className="bg-white p-4 shadow-sm rounded-[2px] mb-4">
-                <h1 className="text-2xl font-bold text-black mb-2">
-                  {listingData.brand} {listingData.model} {listingData.generation} {listingData.version}
-                </h1>
-<div className="text-3xl font-black text-[#35530A]">
-                  {listingData.purchaseOptions === 'inne' || listingData.purchaseOption === 'najem'
-                    ? `${listingData.rentalPrice} PLN/mc`
-                    : `${listingData.price} PLN`}
+            )}
+            
+            {/* Opis - używamy komponentu Description */}
+            <Description description={listingData.description || 'Brak opisu'} />
+          </div>
+          
+          {/* Prawa kolumna: dane techniczne, kontakt */}
+          <div className="w-full lg:w-[40%] space-y-8">
+            {/* Dane techniczne - używamy komponentu TechnicalDetails */}
+            <TechnicalDetails listing={listingData} />
+            
+            {/* Informacje kontaktowe - używamy komponentu ContactInfo (bez funkcji kontaktu) */}
+            <div className="bg-white p-6 shadow-lg rounded-xl border border-gray-100">
+              <h2 className="text-xl font-bold mb-5 text-gray-800 flex items-center border-b border-gray-100 pb-3">
+                <span className="bg-gradient-to-r from-green-600 to-green-400 text-white p-2 rounded-full mr-3 shadow-md">
+                  <MapPin className="w-5 h-5" />
+                </span>
+                Lokalizacja
+              </h2>
+              
+              {/* Mapa z lokalizacją */}
+              <div className="relative rounded-xl overflow-hidden mb-5 border-2 border-green-100 shadow-md">
+                <div className="absolute top-3 left-3 z-10 bg-white px-3 py-1.5 rounded-full shadow-md text-sm font-semibold flex items-center border border-gray-100">
+                  <MapPin className="w-4 h-4 text-green-600 mr-1.5" />
+                  <span>{listingData.city || "Nieznane miasto"}, {listingData.voivodeship || "Nieznany region"}</span>
                 </div>
+                
+                <iframe
+                  title="Mapa lokalizacji"
+                  width="100%"
+                  height="240"
+                  loading="lazy"
+                  style={{ border: 0 }}
+                  src={`https://www.google.com/maps?q=${encodeURIComponent(
+                    (listingData.city || "") + "," + (listingData.voivodeship || "Polska")
+                  )}&output=embed`}
+                  className="hover:opacity-95 transition-opacity"
+                />
               </div>
-
-              {/* Dane techniczne */}
-              <div className="bg-white p-4 shadow-sm rounded-[2px] mb-4">
-                <h2 className="text-lg font-bold mb-3 text-black px-2">
-                  Dane techniczne
-                </h2>
-                <div className="grid grid-cols-2 gap-2 text-sm">  
-                  {/* Podstawowe dane techniczne */}
-                  <InfoRow label="Marka" value={listingData.brand} />
-                  <InfoRow label="Model" value={listingData.model} />
-                  <InfoRow label="Rok produkcji" value={listingData.productionYear || listingData.year} />
-                  <InfoRow label="Przebieg" value={listingData.mileage ? `${listingData.mileage} km` : 'Nie podano'} />
-                  <InfoRow label="Rodzaj paliwa" value={listingData.fuelType} />
-                  <InfoRow label="Pojemność silnika" value={listingData.engineSize ? `${listingData.engineSize} cm³` : 'Nie podano'} />
-                  <InfoRow label="Moc" value={listingData.power ? `${listingData.power} KM` : 'Nie podano'} />
-                  <InfoRow label="Skrzynia biegów" value={listingData.transmission} />
-                  <InfoRow label="Napęd" value={listingData.drive} />
+              
+              {/* Informacja o podglądzie */}
+              <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl">
+                <div className="flex items-center gap-2 text-blue-700">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                  <span className="font-medium">To jest podgląd ogłoszenia</span>
                 </div>
-              </div>
-
-              {/* Lokalizacja */}
-              <div className="bg-white p-4 shadow-sm rounded-[2px]">
-                <h2 className="text-lg font-bold mb-4 text-black">Lokalizacja</h2>
-                <div className="text-gray-700 text-lg flex items-center justify-center gap-2">
-                  <MapPin className="w-6 h-6" />
-                  <span>
-                    {listingData.city ? `${listingData.city}, ` : ''}{listingData.voivodeship || 'Nie podano'}
-                  </span>
-                </div>
+                <p className="text-sm text-blue-600 mt-2">
+                  Dane kontaktowe będą widoczne po opublikowaniu ogłoszenia
+                </p>
               </div>
             </div>
           </div>

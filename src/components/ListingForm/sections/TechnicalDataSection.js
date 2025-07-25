@@ -158,6 +158,34 @@ const TechnicalDataSection = ({ formData, handleChange, errors }) => {
   };
 
   const InputField = ({ name, label, value, required, placeholder, type = "text", min, max, unit }) => {
+    // Funkcja do formatowania liczb z separatorami tysięcy
+    const formatNumber = (value) => {
+      if (!value) return '';
+      // Usuń wszystkie niealfanumeryczne znaki oprócz cyfr
+      const cleanValue = value.toString().replace(/[^\d]/g, '');
+      if (!cleanValue) return '';
+      // Dodaj spacje jako separatory tysięcy
+      return cleanValue.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    };
+
+    // Funkcja do obsługi zmiany wartości w polach liczbowych
+    const handleInputChange = (e) => {
+      const inputValue = e.target.value;
+      
+      // Dla pól liczbowych (pojemność, moc, waga, przebieg)
+      if (['engineSize', 'power', 'weight', 'mileage', 'lastOfficialMileage'].includes(name)) {
+        // Pozwól na wpisywanie cyfr i spacji
+        const allowedChars = /^[\d\s]*$/;
+        if (allowedChars.test(inputValue) || inputValue === '') {
+          // Przekaż surową wartość do handleChange
+          handleChange(e);
+        }
+      } else {
+        // Dla innych pól - normalne zachowanie
+        handleChange(e);
+      }
+    };
+
     return (
       <div className="relative">
         <label className="block text-sm font-medium mb-2 text-gray-700">
@@ -171,10 +199,7 @@ const TechnicalDataSection = ({ formData, handleChange, errors }) => {
           type="text"
           name={name}
           value={value || ''}
-          onChange={(e) => {
-            // Bezpośrednie wywołanie handleChange z eventem
-            handleChange(e);
-          }}
+          onChange={handleInputChange}
           placeholder={placeholder}
           className="w-full h-9 text-sm px-3 border border-gray-300 rounded-md transition-all duration-200 hover:border-gray-400 focus:border-[#35530A]"
         />

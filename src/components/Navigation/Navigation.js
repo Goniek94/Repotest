@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { FaBars } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
+import { useMobileMenu } from '../../contexts/MobileMenuContext';
 import LoginModal from '../auth/LoginModal';
 import Logo from './Logo';
 import DesktopNav from './DesktopNav';
@@ -13,14 +14,14 @@ import AddListingButton from './AddListingButton';
 const Navigation = () => {
   const { user, logout, isAuthenticated } = useAuth();
   const { unreadCount } = useNotifications();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { isMobileMenuOpen, setIsMobileMenuOpen } = useMobileMenu();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
     setIsMobileMenuOpen(false);
-  }, [location.pathname]);
+  }, [location.pathname, setIsMobileMenuOpen]);
 
   useEffect(() => {
     document.body.style.overflow = isMobileMenuOpen ? 'hidden' : 'auto';

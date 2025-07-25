@@ -95,13 +95,17 @@ function ListingsPage() {
       console.log('Parametry zapytania:', {
         ...requestFilters,
         page: currentPage,
-        limit: itemsPerPage
+        limit: itemsPerPage,
+        sortBy,
+        order
       });
       
       const result = await AdsService.search({
         ...requestFilters,
         page: currentPage,
-        limit: itemsPerPage
+        limit: itemsPerPage,
+        sortBy,
+        order
       });
 
       const response = result.data;
@@ -310,7 +314,7 @@ function ListingsPage() {
               <div
                 className={
                   finalViewMode === 'grid'
-                    ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6'
+                    ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-6'
                     : 'space-y-4 mt-6'
                 }
               >

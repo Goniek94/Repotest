@@ -5,6 +5,7 @@ import { NotificationProvider } from './contexts/NotificationContext';
 import { SidebarProvider } from './contexts/SidebarContext';
 import { ListingFormProvider } from './contexts/ListingFormContext';
 import { SocketProvider } from './contexts/SocketContext';
+import { MobileMenuProvider } from './contexts/MobileMenuContext';
 import { ToastContainer } from 'react-toastify';
 import ToastNotification from './components/notifications/ToastNotification';
 import 'react-toastify/dist/ReactToastify.css';
@@ -137,6 +138,7 @@ const App = () => {
         <NotificationProvider>
           <FavoritesProvider>
             <SidebarProvider>
+              <MobileMenuProvider>
           <Router>
             <ScrollToTop />
             <ToastNotification />
@@ -250,6 +252,7 @@ const App = () => {
             </div>
             </ErrorBoundary>
           </Router>
+              </MobileMenuProvider>
             </SidebarProvider>
           </FavoritesProvider>
         </NotificationProvider>

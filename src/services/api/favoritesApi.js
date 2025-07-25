@@ -11,7 +11,7 @@ const FavoritesService = {
    * @returns {Promise<[]>}
    */
   async getAll() {
-    const response = await apiClient.get('/favorites');
+    const response = await apiClient.get('/users/favorites');
     return response.data;
   },
 
@@ -21,7 +21,7 @@ const FavoritesService = {
    * @returns {Promise} - Promise rozwiązywane danymi odpowiedzi
    */
   async addToFavorites(adId) {
-    const response = await apiClient.post(`/favorites/add/${adId}`);
+    const response = await apiClient.post(`/users/favorites/${adId}`);
     return response.data;
   },
 
@@ -31,7 +31,7 @@ const FavoritesService = {
    * @returns {Promise} - Promise rozwiązywane danymi odpowiedzi
    */
   async removeFromFavorites(adId) {
-    const response = await apiClient.delete(`/favorites/remove/${adId}`);
+    const response = await apiClient.delete(`/users/favorites/${adId}`);
     return response.data;
   },
 
@@ -41,7 +41,7 @@ const FavoritesService = {
    * @returns {Promise<{isFavorite: boolean}>} - Promise rozwiązywane statusem
    */
   async checkIsFavorite(adId) {
-    const response = await apiClient.get(`/favorites/check/${adId}`);
+    const response = await apiClient.get(`/users/favorites/${adId}/check`);
     return response.data;
   }
 };

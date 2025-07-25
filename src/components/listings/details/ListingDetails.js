@@ -175,7 +175,7 @@ const ListingDetails = () => {
       </button>
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Lewa kolumna: opis, komentarze */}
+          {/* Lewa kolumna: galeria, nagłówek, opis, komentarze */}
           <div className="w-full lg:w-[60%] space-y-8">
             <ListingHeader listing={listing} />
             <ImageGallery 
@@ -188,6 +188,21 @@ const ListingDetails = () => {
                 : []
               } 
             />
+            
+            {/* Nagłówek ogłoszenia - jeśli istnieje */}
+            {listing.headline && (
+              <div className="bg-white p-6 shadow-md rounded-sm">
+                <h2 className="text-xl font-bold mb-4 text-black">
+                  Nagłówek ogłoszenia
+                </h2>
+                <div className="bg-gray-50 p-4 rounded-md border-l-4 border-[#35530A]">
+                  <p className="text-lg font-medium text-gray-800">
+                    {listing.headline}
+                  </p>
+                </div>
+              </div>
+            )}
+            
             <Description description={listing.description} />
             <CommentSection
               comments={comments}

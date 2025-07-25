@@ -1,223 +1,211 @@
-import React, { createContext, useState, useContext, useEffect, useRef, useCallback } from 'react';
-import AuthService from '../services/auth';
-import { getAuthToken } from '../services/api/config';
-import ActivityLogService from '../services/activityLogService';
-import { debug, safeConsole } from '../utils/debug';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
-// Tworzenie kontekstu autoryzacji
+// Create Auth Context
 const AuthContext = createContext();
 
-// Hook ułatwiający dostęp do kontekstu
-export const useAuth = () => useContext(AuthContext);
-
-// Provider kontekstu autoryzacji
+// AuthProvider Component - wraps entire app
 export const AuthProvider = ({ children }) => {
+  // State management
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  
-  // Konfiguracja automatycznego wylogowania - zwiększony czas
-  const INACTIVITY_TIMEOUT = 60 * 60 * 1000; // 60 minut w milisekundach
-  const activityTimerRef = useRef(null);
-  const lastActivityRef = useRef(Date.now());
+  const [error, setError] = useState(null);
 
-  // Funkcja resetująca timer nieaktywności
-  const resetInactivityTimer = useCallback(() => {
-    if (activityTimerRef.current) {
-      clearTimeout(activityTimerRef.current);
-    }
-    
-    lastActivityRef.current = Date.now();
-    
-    // Tylko ustawiaj timer jeśli użytkownik jest zalogowany
-    if (isAuthenticated) {
-      activityTimerRef.current = setTimeout(() => {
-        // Sprawdź czy minęło wystarczająco dużo czasu od ostatniej aktywności
-        const timeSinceLastActivity = Date.now() - lastActivityRef.current;
-        if (timeSinceLastActivity >= INACTIVITY_TIMEOUT) {
-          debug('Automatyczne wylogowanie po okresie nieaktywności');
-          logout('/login?session_expired=true');
-        }
-      }, INACTIVITY_TIMEOUT);
-    }
-  }, [isAuthenticated, INACTIVITY_TIMEOUT]);
-  
-  // Śledzenie aktywności użytkownika
+  // Initialize auth state on app start
   useEffect(() => {
-    // Zdarzenia, które resetują timer nieaktywności
-    const activityEvents = [
-      'mousedown', 'mousemove', 'keypress', 
-      'scroll', 'touchstart', 'click'
-    ];
-    
-    const handleUserActivity = () => {
-      lastActivityRef.current = Date.now();
-      resetInactivityTimer();
-    };
-    
-    // Dodanie nasłuchiwania na zdarzenia
-    activityEvents.forEach(event => {
-      window.addEventListener(event, handleUserActivity);
-    });
-    
-    // Czyszczenie przy odmontowaniu
-    return () => {
-      if (activityTimerRef.current) {
-        clearTimeout(activityTimerRef.current);
-      }
+    initializeAuth();
+  }, []);
+
+  // Initialize authentication state
+  const initializeAuth = () => {
+    try {
+      const token = localStorage.getItem('token');
+      const userData = localStorage.getItem('user');
       
-      activityEvents.forEach(event => {
-        window.removeEventListener(event, handleUserActivity);
-      });
-    };
-  }, [isAuthenticated, resetInactivityTimer]);
-
-  // Inicjalizacja stanu autoryzacji przy montowaniu komponentu
-  useEffect(() => {
-    // Sprawdzenie czy użytkownik jest zalogowany
-    const initAuth = async () => {
-      setIsLoading(true);
-      try {
-        const currentUser = AuthService.getCurrentUser();
-        const authenticated = AuthService.isAuthenticated();
-
-        debug('Inicjalizacja auth:', {
-          user: !!currentUser,
-          isAuthenticated: authenticated,
-          token: getAuthToken() ? 'Istnieje' : 'Brak'
-        });
-
-        setUser(currentUser);
-        setIsAuthenticated(authenticated);
+      if (token && userData) {
+        const parsedUser = JSON.parse(userData);
+        setUser(parsedUser);
+        setIsAuthenticated(true);
         
-        // Zainicjuj timer nieaktywności jeśli użytkownik jest zalogowany
-        if (authenticated) {
-          resetInactivityTimer();
-          
-          // Sprawdź stan sesji na serwerze i odśwież dane użytkownika
-          try {
-            await AuthService.refreshUserData();
-            debug('Dane użytkownika odświeżone pomyślnie');
-          } catch (refreshError) {
-            safeConsole.error('Błąd odświeżania danych użytkownika:', refreshError);
-            // Nie wylogowujemy użytkownika automatycznie przy błędzie odświeżania
-          }
-        }
-      } catch (error) {
-        safeConsole.error('Błąd inicjalizacji autoryzacji:', error);
-        // Czyszczenie danych w przypadku błędu
-        AuthService.logout();
-        setUser(null);
-        setIsAuthenticated(false);
-      } finally {
-        setIsLoading(false);
+        // Verify token is still valid (optional)
+        verifyToken(token);
       }
-    };
-
-    initAuth();
-  }, [resetInactivityTimer]);
-
-  // Funkcja logowania
-  const login = async (email, password) => {
-    setIsLoading(true);
-    try {
-      const data = await AuthService.login(email, password);
-      setUser(data.user);
-      setIsAuthenticated(true);
-      resetInactivityTimer(); // Reset timera po zalogowaniu
-      ActivityLogService.logLogin(data.user);
-      return data;
     } catch (error) {
-      safeConsole.error('Błąd logowania:', error);
-      throw error;
+      console.error('Error initializing auth:', error);
+      // Clear invalid data
+      clearAuthData();
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Funkcja rejestracji
-  const register = async (userData) => {
-    setIsLoading(true);
+  // Verify token validity (optional enhancement)
+  const verifyToken = async (token) => {
     try {
-      const data = await AuthService.register(userData);
-      setUser(data.user);
-      setIsAuthenticated(true);
-      resetInactivityTimer(); // Reset timera po rejestracji
-      return data;
+      // You can add API call to verify token here
+      // const response = await api.get('/auth/verify');
+      // if (!response.data.valid) {
+      //   logout();
+      // }
     } catch (error) {
-      safeConsole.error('Błąd rejestracji:', error);
-      throw error;
-    } finally {
-      setIsLoading(false);
+      console.error('Token verification failed:', error);
+      logout();
     }
   };
 
-  // Funkcja wylogowania
-  const logout = async (redirectTo = '/') => {
-    setIsLoading(true);
+  // Login function
+  const login = (userData, token, refreshToken = null) => {
     try {
-      await AuthService.logout();
+      // Store in localStorage
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(userData));
       
-      // Dodajemy informację o wylogowaniu do localStorage
-      // Będzie ona odczytana na stronie głównej
-      localStorage.setItem('justLoggedOut', 'true');
-      
-      // Przekierowanie na stronę główną
-      window.location.href = redirectTo;
+      if (refreshToken) {
+        localStorage.setItem('refreshToken', refreshToken);
+      }
+
+      // Update state
+      setUser(userData);
+      setIsAuthenticated(true);
+      setError(null);
+
+      console.log('User logged in successfully:', userData.email);
     } catch (error) {
-      safeConsole.error('Błąd wylogowania:', error);
+      console.error('Login error:', error);
+      setError('Failed to login');
+    }
+  };
+
+  // Logout function
+  const logout = () => {
+    try {
+      // Clear localStorage
+      clearAuthData();
       
-      // Nawet w przypadku błędu, czyścimy dane użytkownika lokalnie
+      // Reset state
       setUser(null);
       setIsAuthenticated(false);
-      setIsLoading(false);
+      setError(null);
+
+      console.log('User logged out successfully');
       
-      // Przekierowanie na stronę główną
-      window.location.href = redirectTo;
-    }
-  };
-
-  // Funkcja odświeżania danych użytkownika
-  const refreshUser = async () => {
-    setIsLoading(true);
-    try {
-      const updatedUser = await AuthService.refreshUserData();
-      setUser(updatedUser);
-      resetInactivityTimer(); // Reset timera po odświeżeniu danych
-      return updatedUser;
+      // Optional: Redirect to login page
+      // window.location.href = '/login';
     } catch (error) {
-      safeConsole.error('Błąd odświeżania danych użytkownika:', error);
-      throw error;
-    } finally {
-      setIsLoading(false);
+      console.error('Logout error:', error);
     }
   };
 
-  // Funkcja sprawdzająca czy użytkownik jest adminem
-  const isAdmin = () => {
-    return AuthService.isAdmin();
+  // Clear all auth data
+  const clearAuthData = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('refreshToken');
   };
 
-  // Wartość kontekstu
-  const contextValue = React.useMemo(
-    () => ({
-      user,
-      isAuthenticated,
-      isLoading,
-      login,
-      register,
-      logout,
-      refreshUser,
-      isAdmin
-    }),
-    [user, isAuthenticated, isLoading]
-  );
+  // Update user data (for profile updates)
+  const updateUser = (updatedUserData) => {
+    try {
+      const newUserData = { ...user, ...updatedUserData };
+      localStorage.setItem('user', JSON.stringify(newUserData));
+      setUser(newUserData);
+      console.log('User data updated:', newUserData);
+    } catch (error) {
+      console.error('Error updating user:', error);
+      setError('Failed to update user data');
+    }
+  };
+
+  // Check if user has specific role
+  const hasRole = (requiredRole) => {
+    if (!user || !user.role) return false;
+    
+    // Handle array of roles
+    if (Array.isArray(requiredRole)) {
+      return requiredRole.includes(user.role);
+    }
+    
+    return user.role === requiredRole;
+  };
+
+  // Check if user is admin
+  const isAdmin = () => {
+    return hasRole('admin');
+  };
+
+  // Check if user is moderator or admin
+  const isModerator = () => {
+    return hasRole(['admin', 'moderator']);
+  };
+
+  // Get user's full name
+  const getUserDisplayName = () => {
+    if (!user) return '';
+    return user.firstName && user.lastName 
+      ? `${user.firstName} ${user.lastName}`
+      : user.email || 'User';
+  };
+
+  // Context value
+  const value = {
+    // State
+    user,
+    isAuthenticated,
+    isLoading,
+    error,
+    
+    // Actions
+    login,
+    logout,
+    updateUser,
+    
+    // Utilities
+    hasRole,
+    isAdmin,
+    isModerator,
+    getUserDisplayName,
+    
+    // Clear error
+    clearError: () => setError(null)
+  };
 
   return (
-    <AuthContext.Provider value={contextValue}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
+};
+
+// Custom hook to use Auth Context
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  
+  return context;
+};
+
+// HOC for components that require authentication
+export const withAuth = (Component) => {
+  return function AuthenticatedComponent(props) {
+    const { isAuthenticated, isLoading } = useAuth();
+    
+    if (isLoading) {
+      return <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>;
+    }
+    
+    if (!isAuthenticated) {
+      return <div className="text-center p-8">
+        <p className="text-gray-600">You need to be logged in to access this page.</p>
+      </div>;
+    }
+    
+    return <Component {...props} />;
+  };
 };
 
 export default AuthContext;

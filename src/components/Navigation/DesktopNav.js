@@ -17,7 +17,7 @@ const DesktopNav = ({ user }) => {
 
   return (
     <nav>
-      <ul className="flex items-center gap-4 lg:gap-6 xl:gap-8 font-bold uppercase text-base lg:text-lg xl:text-xl">
+      <ul className="flex items-center gap-4 lg:gap-6 xl:gap-8 font-bold uppercase text-sm lg:text-base xl:text-lg">
         <li>
           <Link 
             to="/" 

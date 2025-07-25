@@ -17,10 +17,8 @@ const ListingCard = memo(({ listing, onNavigate, onFavorite, isFavorite, message
   // Sprawdzamy, czy ogłoszenie jest wyróżnione
   const isFeatured = listing.featured || listing.listingType === 'wyróżnione';
   
-  // Używamy subtitle z danych, tak jak w widoku listowym
-  const subtitle = listing.subtitle || (listing.description 
-    ? listing.description.slice(0, 60) + (listing.description.length > 60 ? '...' : '')
-    : `${listing.year}, ${listing.mileage || 0} km`);
+  // Używamy headline z danych, tak jak w widoku listowym
+  const subtitle = listing.headline || `${listing.year}, ${listing.mileage || 0} km`;
 
   return (
     <div
@@ -88,18 +86,18 @@ const ListingCard = memo(({ listing, onNavigate, onFavorite, isFavorite, message
           <h3 className="font-bold text-lg text-gray-900 mb-0.5 line-clamp-1">
             {listing.title}
           </h3>
-          <p className="text-sm text-gray-600 line-clamp-1">
+          <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
             {subtitle}
           </p>
         </div>
 
         {/* Parametry w siatce 3x2 - podobnie jak w widoku listowym */}
-        <div className="grid grid-cols-3 gap-x-2 gap-y-2 mb-3">
+        <div className="grid grid-cols-3 gap-x-3 gap-y-3 mb-3 mt-4">
           {/* Kolumna 1 */}
           <div className="space-y-2">
             {/* Paliwo */}
-            <div className="flex items-center gap-1.5 text-gray-700">
-              <Fuel className="w-4 h-4 text-black" />
+            <div className="flex items-start gap-1.5 text-gray-700">
+              <Fuel className="w-4 h-4 text-black mt-2" />
               <div>
                 <div className="text-xs text-gray-500">Paliwo</div>
                 <div className="text-sm font-medium">{listing.fuel || listing.fuelType || 'Nie podano'}</div>
@@ -107,8 +105,8 @@ const ListingCard = memo(({ listing, onNavigate, onFavorite, isFavorite, message
             </div>
             
             {/* Przebieg */}
-            <div className="flex items-center gap-1.5 text-gray-700">
-              <Gauge className="w-4 h-4 text-black" />
+            <div className="flex items-start gap-1.5 text-gray-700">
+              <Gauge className="w-4 h-4 text-black mt-2" />
               <div>
                 <div className="text-xs text-gray-500">Przebieg</div>
                 <div className="text-sm font-medium">{listing.mileage} km</div>
@@ -119,8 +117,8 @@ const ListingCard = memo(({ listing, onNavigate, onFavorite, isFavorite, message
           {/* Kolumna 2 */}
           <div className="space-y-2">
             {/* Pojemność */}
-            <div className="flex items-center gap-1.5 text-gray-700">
-              <Box className="w-4 h-4 text-black" />
+            <div className="flex items-start gap-1.5 text-gray-700">
+              <Box className="w-4 h-4 text-black mt-2" />
               <div>
                 <div className="text-xs text-gray-500">Pojemność</div>
                 <div className="text-sm font-medium">{listing.engineCapacity}</div>
@@ -128,8 +126,8 @@ const ListingCard = memo(({ listing, onNavigate, onFavorite, isFavorite, message
             </div>
 
             {/* Rok */}
-            <div className="flex items-center gap-1.5 text-gray-700">
-              <Calendar className="w-4 h-4 text-black" />
+            <div className="flex items-start gap-1.5 text-gray-700">
+              <Calendar className="w-4 h-4 text-black mt-2" />
               <div>
                 <div className="text-xs text-gray-500">Rok</div>
                 <div className="text-sm font-medium">{listing.year}</div>
@@ -140,8 +138,8 @@ const ListingCard = memo(({ listing, onNavigate, onFavorite, isFavorite, message
           {/* Kolumna 3 */}
           <div className="space-y-2">
             {/* Moc */}
-            <div className="flex items-center gap-1.5 text-gray-700">
-              <Power className="w-4 h-4 text-black" />
+            <div className="flex items-start gap-1.5 text-gray-700">
+              <Power className="w-4 h-4 text-black mt-2" />
               <div>
                 <div className="text-xs text-gray-500">Moc</div>
                 <div className="text-sm font-medium">{listing.power}</div>
@@ -149,47 +147,53 @@ const ListingCard = memo(({ listing, onNavigate, onFavorite, isFavorite, message
             </div>
             
             {/* Napęd */}
-            <div className="flex items-center gap-1.5 text-gray-700">
-              <Car className="w-4 h-4 text-black" />
+            <div className="flex items-start gap-1.5 text-gray-700">
+              <Car className="w-4 h-4 text-black mt-2" />
               <div>
                 <div className="text-xs text-gray-500">Napęd</div>
                 <div className="text-sm font-medium">{listing.drive || 'Nie podano'}</div>
               </div>
             </div>
           </div>
-
-          {/* Match score label */}
-          {listing.matchLabel && listing.matchLabel !== 'Pozostałe ogłoszenia' && (
-            <div className="bg-black bg-opacity-60 text-white text-xs px-2 py-0.5 rounded-sm mt-2">
-              {listing.matchLabel}
-            </div>
-          )}
-          
-          {/* Message (e.g. "Added to favorites") */}
-          {message && (
-            <div className="bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded-sm mt-2">
-              {message}
-            </div>
-          )}
         </div>
+
+        {/* Match score label - poza siatką */}
+        {listing.matchLabel && listing.matchLabel !== 'Pozostałe ogłoszenia' && (
+          <div className="bg-black bg-opacity-60 text-white text-xs px-2 py-0.5 rounded-sm mt-2">
+            {listing.matchLabel}
+          </div>
+        )}
+        
+        {/* Message (e.g. "Added to favorites") - poza siatką */}
+        {message && (
+          <div className="bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded-sm mt-2">
+            {message}
+          </div>
+        )}
       </div>
 
       {/* Stopka karty - sprzedawca, lokalizacja i cena */}
       <div className="mt-auto">
+        {/* Linia separująca */}
+        <div className="border-t border-gray-200"></div>
+        
         {/* Sprzedawca i lokalizacja */}
-        <div className="flex justify-between mb-3 px-3">
+        <div className="flex justify-between items-center mb-4 px-4 pt-4">
           {/* Sprzedawca */}
-          <div className="flex items-center">
-            <User className="w-4 h-4 mr-1 text-gray-700" />
-            <div className="text-sm font-medium text-[#35530A]">
-              {listing.sellerType}
+          <div className="flex items-center flex-1">
+            <User className="w-5 h-5 mr-2 text-gray-700" />
+            <div className="text-base font-medium text-[#35530A]">
+              {listing.sellerType === 'prywatny' ? 'Prywatny' : 'Firma'}
             </div>
           </div>
 
+          {/* Separator */}
+          <div className="h-5 w-px bg-gray-300 mx-3"></div>
+
           {/* Lokalizacja */}
-          <div className="flex items-center">
-            <MapPin className="w-4 h-4 mr-1 text-gray-700" />
-            <div className="text-sm font-medium">
+          <div className="flex items-center flex-1">
+            <MapPin className="w-5 h-5 mr-2 text-gray-700" />
+            <div className="text-base font-medium">
               {listing.city}
             </div>
           </div>

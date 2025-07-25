@@ -47,11 +47,11 @@ const SmallListingCard = ({ listing, showHotOffer = false }) => {
 
   return (
     <div 
-      className="bg-white shadow-md rounded-[2px] overflow-hidden flex flex-col cursor-pointer h-full" 
+      className="bg-white shadow-md rounded-[2px] overflow-hidden flex flex-col cursor-pointer h-full hover:shadow-lg transition-shadow duration-200 min-w-[260px]" 
       onClick={() => navigate(`/listing/${listing._id}`)}
     >
       {/* Zdjęcie */}
-      <div className="relative h-44">
+      <div className="relative h-48">
         {imageUrl ? (
           <img
             src={imageUrl}
@@ -75,16 +75,16 @@ const SmallListingCard = ({ listing, showHotOffer = false }) => {
       </div>
 
       {/* Tytuł i opis */}
-      <div className="p-3 flex-1">
-        <h3 className="text-sm font-bold text-gray-900 mb-1 line-clamp-1">
+      <div className="p-4 flex-1">
+        <h3 className="text-base font-bold text-gray-900 mb-2">
           {title}
         </h3>
-        <p className="text-xs text-gray-600 line-clamp-2 mb-2">
+        <p className="text-sm text-gray-600 mb-3">
           {description || 'Ogłoszenie: ' + title}
         </p>
         
         {/* Specyfikacje w 2 kolumny z odpowiednim odstępem */}
-        <div className="grid grid-cols-2 gap-x-2.5 gap-y-2">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-2.5">
           <SpecItem icon={<YearIcon className="w-4 h-4" />} label="Rok" value={year} />
           <SpecItem icon={<FuelIcon className="w-4 h-4" />} label="Paliwo" value={fuelType} />
           <SpecItem icon={<MileageIcon className="w-4 h-4" />} label="Przebieg" value={`${mileage.toLocaleString('pl-PL')} km`} />
@@ -95,7 +95,7 @@ const SmallListingCard = ({ listing, showHotOffer = false }) => {
       </div>
 
       {/* Cena i przycisk */}
-      <div className="bg-gray-50 px-3 py-2.5 flex justify-between items-center">
+      <div className="bg-gray-50 px-4 py-3 flex justify-between items-center">
         <span className="text-base font-bold text-[#35530A]">
           {price.toLocaleString('pl-PL')} zł
         </span>
@@ -104,7 +104,7 @@ const SmallListingCard = ({ listing, showHotOffer = false }) => {
             e.stopPropagation();
             navigate(`/listing/${listing._id}`);
           }}
-          className="bg-[#35530A] text-white px-3 py-1 rounded-[2px] text-xs font-semibold hover:bg-[#2A4208] transition-colors"
+          className="bg-[#35530A] text-white px-3 py-1.5 rounded-[2px] text-sm font-semibold hover:bg-[#2A4208] transition-colors"
         >
           Szczegóły
         </button>

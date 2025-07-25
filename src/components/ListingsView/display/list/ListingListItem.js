@@ -81,7 +81,7 @@ const ListingListItem = memo(({
         <div className="flex-grow p-2 sm:p-3 lg:p-3 flex flex-col">
           <div className="mb-2 sm:mb-2.5 lg:mb-3">
             <h3 className="text-lg sm:text-xl lg:text-xl font-bold mb-0.5 sm:mb-1 lg:mb-1 line-clamp-1">{listing.title}</h3>
-            <p className="text-sm sm:text-base lg:text-base text-gray-600 line-clamp-1">{listing.subtitle}</p>
+            <p className="text-sm sm:text-base lg:text-base text-gray-600 line-clamp-2 leading-relaxed">{listing.headline || ''}</p>
           </div>
 
           {/* Parametry w 3 kolumnach po 2 parametry */}
@@ -170,7 +170,7 @@ const ListingListItem = memo(({
                 <div>
                   <div className="text-sm sm:text-xs lg:text-sm text-gray-500">Sprzedawca</div>
                   <div className="text-base sm:text-base lg:text-base font-medium text-[#35530A]">
-                    {listing.sellerType}
+                    {listing.sellerType === 'prywatny' ? 'Prywatny' : 'Firma'}
                   </div>
                 </div>
               </div>

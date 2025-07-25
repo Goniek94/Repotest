@@ -155,50 +155,20 @@ const useCarData = () => {
           }
         }
         
-        // Jeśli nie ma danych ani w backendu, ani w localStorage, użyj danych zapasowych
+        // Jeśli nie ma danych ani w backendu, ani w localStorage, ustaw puste dane
         if (isMounted) {
-          console.log('Używam danych zapasowych');
-          
-          // Dane zapasowe z pliku car-brands-data.json
-          const fallbackData = {
-            "Audi": ["A1", "A3", "A4", "A5", "A6", "A7", "A8", "Q2", "Q3", "Q4 e-tron", "Q5", "Q7", "Q8", "TT", "R8", "e-tron GT", "RS3", "RS4", "RS5", "RS6", "RS7", "RSQ3", "RSQ8", "S3", "S4", "S5", "S6", "S7", "S8", "SQ2", "SQ5", "SQ7", "SQ8"],
-            "Daewoo": ["Espero", "Kalos", "Lacetti", "Lanos", "Leganza", "Matiz", "Nubira", "Tacuma", "Tico", "Polonez"],
-            "Honda": ["Civic", "Accord", "Insight", "CR-V", "HR-V", "Passport", "Pilot", "Ridgeline", "Odyssey", "Fit", "NSX", "e"],
-            "Mazda": ["Mazda2", "Mazda3", "Mazda6", "MX-5", "CX-3", "CX-30", "CX-5", "CX-9", "CX-50", "MX-30"],
-            "Mercedes-Benz": ["A-Class", "B-Class", "C-Class", "CLA", "CLS", "E-Class", "G-Class", "GLA", "GLB", "GLC", "GLE", "GLS", "S-Class", "SL", "SLK", "AMG GT", "EQA", "EQB", "EQC", "EQE", "EQS", "EQV", "Maybach S-Class", "Maybach GLS"],
-            "Nissan": ["Micra", "Sentra", "Altima", "Maxima", "370Z", "GT-R", "Juke", "Qashqai", "X-Trail", "Murano", "Pathfinder", "Armada", "Titan", "Leaf", "Ariya"],
-            "Toyota": ["Yaris", "Corolla", "Camry", "Avalon", "Prius", "C-HR", "RAV4", "Highlander", "4Runner", "Sequoia", "Tacoma", "Tundra", "Sienna", "Land Cruiser", "Supra", "86", "Mirai", "bZ4X"]
-          };
-          
-          // Zapisz dane zapasowe w localStorage
-          localStorage.setItem('carData', JSON.stringify(fallbackData));
-          
-          setCarData(fallbackData);
-          setBrands(Object.keys(fallbackData).sort());
+          console.log('Brak danych o markach i modelach - ustawiam puste dane');
+          setCarData({});
+          setBrands([]);
         }
       } catch (err) {
         console.warn('Błąd podczas pobierania danych o markach i modelach:', err);
         if (isMounted) {
-          // W przypadku błędu, użyj danych zapasowych
-          console.log('Używam danych zapasowych po błędzie');
-          
-          // Dane zapasowe z pliku car-brands-data.json
-          const fallbackData = {
-            "Audi": ["A1", "A3", "A4", "A5", "A6", "A7", "A8", "Q2", "Q3", "Q4 e-tron", "Q5", "Q7", "Q8", "TT", "R8", "e-tron GT", "RS3", "RS4", "RS5", "RS6", "RS7", "RSQ3", "RSQ8", "S3", "S4", "S5", "S6", "S7", "S8", "SQ2", "SQ5", "SQ7", "SQ8"],
-            "Daewoo": ["Espero", "Kalos", "Lacetti", "Lanos", "Leganza", "Matiz", "Nubira", "Tacuma", "Tico", "Polonez"],
-            "Honda": ["Civic", "Accord", "Insight", "CR-V", "HR-V", "Passport", "Pilot", "Ridgeline", "Odyssey", "Fit", "NSX", "e"],
-            "Mazda": ["Mazda2", "Mazda3", "Mazda6", "MX-5", "CX-3", "CX-30", "CX-5", "CX-9", "CX-50", "MX-30"],
-            "Mercedes-Benz": ["A-Class", "B-Class", "C-Class", "CLA", "CLS", "E-Class", "G-Class", "GLA", "GLB", "GLC", "GLE", "GLS", "S-Class", "SL", "SLK", "AMG GT", "EQA", "EQB", "EQC", "EQE", "EQS", "EQV", "Maybach S-Class", "Maybach GLS"],
-            "Nissan": ["Micra", "Sentra", "Altima", "Maxima", "370Z", "GT-R", "Juke", "Qashqai", "X-Trail", "Murano", "Pathfinder", "Armada", "Titan", "Leaf", "Ariya"],
-            "Toyota": ["Yaris", "Corolla", "Camry", "Avalon", "Prius", "C-HR", "RAV4", "Highlander", "4Runner", "Sequoia", "Tacoma", "Tundra", "Sienna", "Land Cruiser", "Supra", "86", "Mirai", "bZ4X"]
-          };
-          
-          // Zapisz dane zapasowe w localStorage
-          localStorage.setItem('carData', JSON.stringify(fallbackData));
-          
-          setCarData(fallbackData);
-          setBrands(Object.keys(fallbackData).sort());
-          setError(null);
+          // W przypadku błędu, ustaw puste dane
+          console.log('Błąd podczas pobierania danych - ustawiam puste dane');
+          setCarData({});
+          setBrands([]);
+          setError(err.message || 'Błąd podczas pobierania danych o markach i modelach');
         }
       } finally {
         if (isMounted) {

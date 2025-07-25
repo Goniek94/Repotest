@@ -1,5 +1,5 @@
-import React, { useRef, useEffect, useMemo, useCallback, memo } from 'react';
-import { FileText, Image, Check, CheckCircle, Clock, Paperclip, X, Download, Trash2, Archive } from 'lucide-react';
+import React, { useRef, useEffect, useMemo, useCallback, memo, useState } from 'react';
+import { FileText, Image, Check, CheckCircle, Clock, Paperclip, X, Download, Trash2, Archive, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 
 /**
@@ -20,6 +20,13 @@ const MessageChat = memo(({
 }) => {
   const { user } = useAuth();
   const messagesEndRef = useRef(null);
+  const chatContainerRef = useRef(null);
+  
+  // Stan dla funkcjonalności mobilnych
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
   
   // Automatyczne przewijanie do najnowszej wiadomości
   useEffect(() => {
@@ -27,6 +34,59 @@ const MessageChat = memo(({
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages]);
+
+  // Obsługa scroll tracking dla przycisku "scroll to bottom"
+  const handleScroll = useCallback(() => {
+    if (!chatContainerRef.current) return;
+    
+    const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
+    const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+    
+    setShowScrollToBottom(!isNearBottom);
+  }, []);
+
+  // Dodanie event listenera dla scroll
+  useEffect(() => {
+    const container = chatContainerRef.current;
+    if (container) {
+      container.addEventListener('scroll', handleScroll);
+      return () => container.removeEventListener('scroll', handleScroll);
+    }
+  }, [handleScroll]);
+
+  // Pull-to-refresh funkcjonalność
+  const handleTouchStart = useCallback((e) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientY);
+  }, []);
+
+  const handleTouchMove = useCallback((e) => {
+    setTouchEnd(e.targetTouches[0].clientY);
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isUpSwipe = distance > 50;
+    const isDownSwipe = distance < -50;
+    
+    // Pull-to-refresh gdy użytkownik przesuwa w dół na górze listy
+    if (isDownSwipe && chatContainerRef.current?.scrollTop === 0) {
+      setIsRefreshing(true);
+      // Symulacja odświeżania - w prawdziwej aplikacji tutaj byłoby wywołanie API
+      setTimeout(() => {
+        setIsRefreshing(false);
+      }, 1000);
+    }
+  }, [touchStart, touchEnd]);
+
+  // Funkcja scroll to bottom
+  const scrollToBottom = useCallback(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, []);
   
   // Memoizacja funkcji formatowania czasu - zapobiega niepotrzebnym re-renderom
   const formatMessageTime = useCallback((dateString) => {
@@ -289,30 +349,61 @@ const MessageChat = memo(({
 
   // Wyświetlanie wiadomości
   return (
-    <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
-      {/* Grupowanie wiadomości według daty */}
-      {groupedMessages.map(group => (
-        <div key={group.date} className="mb-6">
-          {/* Nagłówek daty */}
-          <div className="flex justify-center mb-4">
-            <div className="bg-[#35530A] bg-opacity-10 text-[#35530A] text-xs font-medium px-3 py-1 rounded-full">
-              {formatMessageDate(group.date)}
-            </div>
+    <div className="relative flex-1 overflow-hidden">
+      {/* Pull-to-refresh indicator */}
+      {isRefreshing && (
+        <div className="absolute top-0 left-0 right-0 z-10 bg-[#35530A] text-white text-center py-2 text-sm">
+          <div className="flex items-center justify-center gap-2">
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            Odświeżanie...
           </div>
-          
-          {/* Wiadomości z danego dnia */}
-          {group.messages.map((message, index) => (
-            <MessageBubble
-              key={message.id || `${group.date}-${index}`}
-              message={message}
-              index={index}
-              groupMessages={group.messages}
-              groupDate={group.date}
-            />
-          ))}
         </div>
-      ))}
-      <div ref={messagesEndRef} />
+      )}
+
+      {/* Główny kontener wiadomości */}
+      <div 
+        ref={chatContainerRef}
+        className="flex-1 overflow-y-auto p-4 bg-gray-50"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        style={{ paddingTop: isRefreshing ? '50px' : '16px' }}
+      >
+        {/* Grupowanie wiadomości według daty */}
+        {groupedMessages.map(group => (
+          <div key={group.date} className="mb-6">
+            {/* Nagłówek daty */}
+            <div className="flex justify-center mb-4">
+              <div className="bg-[#35530A] bg-opacity-10 text-[#35530A] text-xs font-medium px-3 py-1 rounded-full">
+                {formatMessageDate(group.date)}
+              </div>
+            </div>
+            
+            {/* Wiadomości z danego dnia */}
+            {group.messages.map((message, index) => (
+              <MessageBubble
+                key={message.id || `${group.date}-${index}`}
+                message={message}
+                index={index}
+                groupMessages={group.messages}
+                groupDate={group.date}
+              />
+            ))}
+          </div>
+        ))}
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Scroll to bottom button - tylko na mobile */}
+      {showScrollToBottom && (
+        <button
+          onClick={scrollToBottom}
+          className="md:hidden fixed bottom-20 right-4 z-20 bg-[#35530A] text-white p-3 rounded-full shadow-lg hover:bg-[#2A4208] transition-all duration-200 animate-bounce"
+          aria-label="Przewiń do najnowszych wiadomości"
+        >
+          <ChevronDown className="w-5 h-5" />
+        </button>
+      )}
     </div>
   );
 });

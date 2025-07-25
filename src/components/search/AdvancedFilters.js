@@ -1,5 +1,6 @@
 // AdvancedFilters.js
 import React, { useState } from "react";
+import { enginePowerRanges, engineCapacityRanges, weightRanges } from "./SearchFormConstants";
 
 /**
  * AdvancedFilters component - zoptymalizowany z checklistami jak w BasicFilters
@@ -204,125 +205,411 @@ export default function AdvancedFilters({
   const countriesOfOrigin = advancedOptions?.countryOfOrigin || [];
   const finishTypes = advancedOptions?.finish || [];
   const sellerTypes = advancedOptions?.sellerType || [];
+  const fuelTypes = advancedOptions?.fuelType || [];
+  const transmissionTypes = advancedOptions?.transmission || [];
+  const bodyTypes = advancedOptions?.bodyType || [];
+  const colors = advancedOptions?.color || [];
+  const seatOptions = advancedOptions?.seats || [];
   
   // Dostępne marki z carData
   const availableBrands = Object.keys(carData || {}).sort();
   return (
     <div className="mt-6 pt-4 border-t border-gray-200">
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-4">
-        {/* Napęd */}
+        {/* Typ paliwa */}
         <RadioFilter
-          name="driveType"
-          label="Napęd"
-          options={driveTypes}
+          name="fuelType"
+          label="Typ paliwa"
+          options={fuelTypes || []}
         />
         
-        {/* Moc silnika */}
-        <RangeFilter
-          nameFrom="enginePowerFrom"
-          nameTo="enginePowerTo"
-          label="Moc silnika"
-          unit="KM"
+        {/* Skrzynia biegów */}
+        <RadioFilter
+          name="transmission"
+          label="Skrzynia biegów"
+          options={transmissionTypes || []}
         />
         
-        {/* Pojemność silnika */}
-        <RangeFilter
-          nameFrom="engineCapacityFrom"
-          nameTo="engineCapacityTo"
-          label="Pojemność silnika"
-          unit="cm³"
+        
+        {/* Typ nadwozia */}
+        <RadioFilter
+          name="bodyType"
+          label="Typ nadwozia"
+          options={bodyTypes || []}
         />
+        
+        {/* Kolor */}
+        <RadioFilter
+          name="color"
+          label="Kolor"
+          options={colors || []}
+        />
+        
+        {/* Wykończenie lakieru */}
+        <RadioFilter
+          name="finish"
+          label="Wykończenie lakieru"
+          options={finishTypes || []}
+        />
+        
+        {/* Liczba drzwi */}
+        <RadioFilter
+          name="doorCount"
+          label="Liczba drzwi"
+          options={advancedOptions?.doorCount || []}
+        />
+        
+        {/* Liczba miejsc */}
+        <RadioFilter
+          name="seats"
+          label="Liczba miejsc"
+          options={seatOptions || []}
+        />
+        
+        {/* Moc silnika - Od/Do Selecty z ograniczoną wysokością */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">
+            Moc silnika (KM)
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            {/* Od - moc silnika */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => toggleChecklist('enginePowerFrom')}
+                className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A] bg-white text-left flex items-center justify-between"
+              >
+                <span className={`${formData.enginePowerFrom ? 'text-gray-700' : 'text-gray-500'}`}>
+                  {formData.enginePowerFrom ? enginePowerRanges.find(p => p.value === formData.enginePowerFrom)?.label || formData.enginePowerFrom : 'Od'}
+                </span>
+                <span className={`transform transition-transform ${openChecklists.enginePowerFrom ? 'rotate-180' : ''}`}>
+                  ▼
+                </span>
+              </button>
+              
+              {openChecklists.enginePowerFrom && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-[2px] shadow-lg max-h-48 overflow-y-auto">
+                  <div 
+                    className="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm"
+                    onClick={() => {
+                      handleInputChange({ target: { name: 'enginePowerFrom', value: '' } });
+                      setOpenChecklists(prev => ({ ...prev, enginePowerFrom: false }));
+                    }}
+                  >
+                    Od
+                  </div>
+                  {enginePowerRanges.map((power) => (
+                    <div 
+                      key={power.value}
+                      className="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm"
+                      onClick={() => {
+                        handleInputChange({ target: { name: 'enginePowerFrom', value: power.value } });
+                        setOpenChecklists(prev => ({ ...prev, enginePowerFrom: false }));
+                      }}
+                    >
+                      {power.label}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            {/* Do - moc silnika */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => toggleChecklist('enginePowerTo')}
+                className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A] bg-white text-left flex items-center justify-between"
+              >
+                <span className={`${formData.enginePowerTo ? 'text-gray-700' : 'text-gray-500'}`}>
+                  {formData.enginePowerTo ? enginePowerRanges.find(p => p.value === formData.enginePowerTo)?.label || formData.enginePowerTo : 'Do'}
+                </span>
+                <span className={`transform transition-transform ${openChecklists.enginePowerTo ? 'rotate-180' : ''}`}>
+                  ▼
+                </span>
+              </button>
+              
+              {openChecklists.enginePowerTo && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-[2px] shadow-lg max-h-48 overflow-y-auto">
+                  <div 
+                    className="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm"
+                    onClick={() => {
+                      handleInputChange({ target: { name: 'enginePowerTo', value: '' } });
+                      setOpenChecklists(prev => ({ ...prev, enginePowerTo: false }));
+                    }}
+                  >
+                    Do
+                  </div>
+                  {enginePowerRanges.map((power) => (
+                    <div 
+                      key={power.value}
+                      className="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm"
+                      onClick={() => {
+                        handleInputChange({ target: { name: 'enginePowerTo', value: power.value } });
+                        setOpenChecklists(prev => ({ ...prev, enginePowerTo: false }));
+                      }}
+                    >
+                      {power.label}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        {/* Pojemność silnika - Od/Do Selecty z ograniczoną wysokością */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">
+            Pojemność silnika (cm³)
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            {/* Od - pojemność silnika */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => toggleChecklist('engineCapacityFrom')}
+                className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A] bg-white text-left flex items-center justify-between"
+              >
+                <span className={`${formData.engineCapacityFrom ? 'text-gray-700' : 'text-gray-500'}`}>
+                  {formData.engineCapacityFrom ? engineCapacityRanges.find(c => c.value === formData.engineCapacityFrom)?.label || formData.engineCapacityFrom : 'Od'}
+                </span>
+                <span className={`transform transition-transform ${openChecklists.engineCapacityFrom ? 'rotate-180' : ''}`}>
+                  ▼
+                </span>
+              </button>
+              
+              {openChecklists.engineCapacityFrom && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-[2px] shadow-lg max-h-48 overflow-y-auto">
+                  <div 
+                    className="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm"
+                    onClick={() => {
+                      handleInputChange({ target: { name: 'engineCapacityFrom', value: '' } });
+                      setOpenChecklists(prev => ({ ...prev, engineCapacityFrom: false }));
+                    }}
+                  >
+                    Od
+                  </div>
+                  {engineCapacityRanges.map((capacity) => (
+                    <div 
+                      key={capacity.value}
+                      className="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm"
+                      onClick={() => {
+                        handleInputChange({ target: { name: 'engineCapacityFrom', value: capacity.value } });
+                        setOpenChecklists(prev => ({ ...prev, engineCapacityFrom: false }));
+                      }}
+                    >
+                      {capacity.label}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            {/* Do - pojemność silnika */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => toggleChecklist('engineCapacityTo')}
+                className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A] bg-white text-left flex items-center justify-between"
+              >
+                <span className={`${formData.engineCapacityTo ? 'text-gray-700' : 'text-gray-500'}`}>
+                  {formData.engineCapacityTo ? engineCapacityRanges.find(c => c.value === formData.engineCapacityTo)?.label || formData.engineCapacityTo : 'Do'}
+                </span>
+                <span className={`transform transition-transform ${openChecklists.engineCapacityTo ? 'rotate-180' : ''}`}>
+                  ▼
+                </span>
+              </button>
+              
+              {openChecklists.engineCapacityTo && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-[2px] shadow-lg max-h-48 overflow-y-auto">
+                  <div 
+                    className="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm"
+                    onClick={() => {
+                      handleInputChange({ target: { name: 'engineCapacityTo', value: '' } });
+                      setOpenChecklists(prev => ({ ...prev, engineCapacityTo: false }));
+                    }}
+                  >
+                    Do
+                  </div>
+                  {engineCapacityRanges.map((capacity) => (
+                    <div 
+                      key={capacity.value}
+                      className="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm"
+                      onClick={() => {
+                        handleInputChange({ target: { name: 'engineCapacityTo', value: capacity.value } });
+                        setOpenChecklists(prev => ({ ...prev, engineCapacityTo: false }));
+                      }}
+                    >
+                      {capacity.label}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
         
         {/* Stan techniczny */}
-        <ChecklistFilter
+        <RadioFilter
           name="condition"
           label="Stan techniczny"
-          options={conditions}
-          placeholder="Wybierz stan"
+          options={conditions || []}
         />
 
         {/* Wypadkowość */}
         <RadioFilter
           name="accidentStatus"
           label="Wypadkowość"
-          options={accidentStatuses}
+          options={accidentStatuses || []}
         />
 
         {/* Stan uszkodzeń */}
         <RadioFilter
           name="damageStatus"
           label="Uszkodzenia"
-          options={damageStatuses}
+          options={damageStatuses || []}
         />
 
         {/* Tuning */}
         <RadioFilter
           name="tuning"
           label="Tuning"
-          options={tuningOptions}
+          options={tuningOptions || []}
         />
         
         {/* Kraj pochodzenia */}
-        <ChecklistFilter
+        <RadioFilter
           name="countryOfOrigin"
           label="Kraj pochodzenia"
-          options={countriesOfOrigin}
-          placeholder="Wybierz kraj"
-        />
-        
-        {/* Wykończenie lakieru */}
-        <ChecklistFilter
-          name="finish"
-          label="Wykończenie lakieru"
-          options={finishTypes}
-          placeholder="Wybierz wykończenie"
-        />
-        
-        {/* Liczba drzwi */}
-        <ChecklistFilter
-          name="doorCount"
-          label="Liczba drzwi"
-          options={advancedOptions?.doorCount || []}
-          placeholder="Wybierz liczbę drzwi"
-        />
-        
-        {/* Waga pojazdu */}
-        <RangeFilter
-          nameFrom="weightFrom"
-          nameTo="weightTo"
-          label="Waga pojazdu"
-          unit="kg"
+          options={countriesOfOrigin || []}
         />
         
         {/* Typ sprzedawcy */}
         <RadioFilter
           name="sellerType"
           label="Typ sprzedawcy"
-          options={sellerTypes}
+          options={sellerTypes || []}
         />
         
+        {/* Waga pojazdu - Od/Do Selecty z ograniczoną wysokością */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">
+            Waga pojazdu (kg)
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            {/* Od - waga pojazdu */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => toggleChecklist('weightFrom')}
+                className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A] bg-white text-left flex items-center justify-between"
+              >
+                <span className={`${formData.weightFrom ? 'text-gray-700' : 'text-gray-500'}`}>
+                  {formData.weightFrom ? weightRanges.find(w => w.value === formData.weightFrom)?.label || formData.weightFrom : 'Od'}
+                </span>
+                <span className={`transform transition-transform ${openChecklists.weightFrom ? 'rotate-180' : ''}`}>
+                  ▼
+                </span>
+              </button>
+              
+              {openChecklists.weightFrom && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-[2px] shadow-lg max-h-48 overflow-y-auto">
+                  <div 
+                    className="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm"
+                    onClick={() => {
+                      handleInputChange({ target: { name: 'weightFrom', value: '' } });
+                      setOpenChecklists(prev => ({ ...prev, weightFrom: false }));
+                    }}
+                  >
+                    Od
+                  </div>
+                  {weightRanges.map((weight) => (
+                    <div 
+                      key={weight.value}
+                      className="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm"
+                      onClick={() => {
+                        handleInputChange({ target: { name: 'weightFrom', value: weight.value } });
+                        setOpenChecklists(prev => ({ ...prev, weightFrom: false }));
+                      }}
+                    >
+                      {weight.label}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            {/* Do - waga pojazdu */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => toggleChecklist('weightTo')}
+                className="w-full h-10 text-sm px-3 border border-gray-300 rounded-[2px] focus:ring-[#35530A] focus:border-[#35530A] bg-white text-left flex items-center justify-between"
+              >
+                <span className={`${formData.weightTo ? 'text-gray-700' : 'text-gray-500'}`}>
+                  {formData.weightTo ? weightRanges.find(w => w.value === formData.weightTo)?.label || formData.weightTo : 'Do'}
+                </span>
+                <span className={`transform transition-transform ${openChecklists.weightTo ? 'rotate-180' : ''}`}>
+                  ▼
+                </span>
+              </button>
+              
+              {openChecklists.weightTo && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-[2px] shadow-lg max-h-48 overflow-y-auto">
+                  <div 
+                    className="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm"
+                    onClick={() => {
+                      handleInputChange({ target: { name: 'weightTo', value: '' } });
+                      setOpenChecklists(prev => ({ ...prev, weightTo: false }));
+                    }}
+                  >
+                    Do
+                  </div>
+                  {weightRanges.map((weight) => (
+                    <div 
+                      key={weight.value}
+                      className="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm"
+                      onClick={() => {
+                        handleInputChange({ target: { name: 'weightTo', value: weight.value } });
+                        setOpenChecklists(prev => ({ ...prev, weightTo: false }));
+                      }}
+                    >
+                      {weight.label}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        
         {/* Importowany */}
-        <CheckboxFilter 
-          name="imported" 
-          label="Importowany" 
+        <RadioFilter
+          name="imported"
+          label="Importowany"
+          options={advancedOptions?.imported || []}
         />
         
         {/* Zarejestrowany w PL */}
-        <CheckboxFilter 
-          name="registeredInPL" 
-          label="Zarejestrowany w PL" 
+        <RadioFilter
+          name="registeredInPL"
+          label="Zarejestrowany w PL"
+          options={advancedOptions?.registeredInPL || []}
         />
         
         {/* Pierwszy właściciel */}
-        <CheckboxFilter 
-          name="firstOwner" 
-          label="Pierwszy właściciel" 
+        <RadioFilter
+          name="firstOwner"
+          label="Pierwszy właściciel"
+          options={advancedOptions?.firstOwner || []}
         />
         
         {/* Przystosowany dla niepełnosprawnych */}
-        <CheckboxFilter 
-          name="disabledAdapted" 
-          label="Przystosowany dla niepełnosprawnych" 
+        <RadioFilter
+          name="disabledAdapted"
+          label="Przystosowany dla niepełnosprawnych"
+          options={advancedOptions?.disabledAdapted || []}
         />
       </div>
 
@@ -333,20 +620,17 @@ export default function AdvancedFilters({
           onClick={() => {
             // Lista pól w zaawansowanych filtrach do zresetowania
             const advancedFilterFields = [
-              'driveType', 'enginePowerFrom', 'enginePowerTo', 'engineCapacityFrom', 'engineCapacityTo',
+              'fuelType', 'transmission', 'bodyType', 'color', 'finish', 
+              'doorCount', 'seats', 'enginePowerFrom', 'enginePowerTo', 'engineCapacityFrom', 'engineCapacityTo',
               'condition', 'accidentStatus', 'damageStatus', 'tuning', 'countryOfOrigin',
-              'finish', 'weightFrom', 'weightTo', 'sellerType', 'imported', 
+              'weightFrom', 'weightTo', 'sellerType', 'imported', 
               'registeredInPL', 'firstOwner', 'disabledAdapted'
             ];
             
             // Stwórz obiekt z wyzerowanymi wartościami
             const resetValues = advancedFilterFields.reduce((acc, field) => {
-              // Dla checkboxów ustawiamy false, dla pozostałych pól - pustą wartość
-              if (['imported', 'registeredInPL', 'firstOwner', 'disabledAdapted'].includes(field)) {
-                acc[field] = false;
-              } else {
-                acc[field] = Array.isArray(formData[field]) ? [] : '';
-              }
+              // Dla wszystkich pól - pustą wartość (teraz wszystkie są pojedynczym wyborem)
+              acc[field] = '';
               return acc;
             }, {});
             

@@ -40,22 +40,29 @@ const EditListing = () => {
         
         // Ustawienie danych ogłoszenia
         setListing(data);
+        
+        // Przygotowanie tablicy zdjęć - bezpieczne przetwarzanie
+        let validImages = [];
+        let mainImageIndex = 0;
+        
+        if (data.images && Array.isArray(data.images) && data.images.length > 0) {
+          // Filtrujemy puste lub nieprawidłowe ścieżki
+          validImages = data.images.filter(img => img && typeof img === 'string');
+          
+          // Znajdź indeks głównego zdjęcia
+          if (data.mainImage && validImages.includes(data.mainImage)) {
+            mainImageIndex = validImages.indexOf(data.mainImage);
+          }
+        }
+        
+        setImages(validImages);
         setFormData({
           title: `${data.brand} ${data.model}`,
           headline: data.headline || '',
           description: data.description || '',
           price: data.price || '',
-          mainImageIndex: data.mainImageIndex || 0
+          mainImageIndex: mainImageIndex
         });
-        
-        // Przygotowanie tablicy zdjęć - bezpieczne przetwarzanie
-        if (data.images && Array.isArray(data.images) && data.images.length > 0) {
-          // Filtrujemy puste lub nieprawidłowe ścieżki
-          const validImages = data.images.filter(img => img && typeof img === 'string');
-          setImages(validImages);
-        } else {
-          setImages([]);
-        }
         
         setLoading(false);
       } catch (err) {
@@ -138,6 +145,13 @@ const EditListing = () => {
   // Zapisywanie zmian
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Walidacja - sprawdzenie czy są zdjęcia
+    const totalImages = images.length + newImages.length;
+    if (totalImages === 0) {
+      toast.error('Ogłoszenie musi zawierać co najmniej jedno zdjęcie.');
+      return;
+    }
     
     try {
       setSaving(true);
