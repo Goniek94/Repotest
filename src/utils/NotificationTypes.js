@@ -133,25 +133,25 @@ export const NOTIFICATION_TYPE_DESCRIPTIONS = {
 
 /**
  * Ikony dla typów powiadomień (do wyświetlania w interfejsie użytkownika)
- * Używa nazw ikon z Material Icons (https://fonts.google.com/icons)
+ * Używa ścieżek do plików SVG w folderze public/images/icons/
  */
 export const NOTIFICATION_TYPE_ICONS = {
-  [NOTIFICATION_TYPES.SYSTEM_NOTIFICATION]: 'announcement',
-  [NOTIFICATION_TYPES.MAINTENANCE_NOTIFICATION]: 'build',
-  [NOTIFICATION_TYPES.LISTING_ADDED]: 'post_add',
-  [NOTIFICATION_TYPES.LISTING_EXPIRING]: 'timer',
-  [NOTIFICATION_TYPES.LISTING_EXPIRED]: 'timer_off',
-  [NOTIFICATION_TYPES.LISTING_STATUS_CHANGED]: 'update',
-  [NOTIFICATION_TYPES.LISTING_LIKED]: 'favorite',
-  [NOTIFICATION_TYPES.LISTING_VIEWED]: 'visibility',
-  [NOTIFICATION_TYPES.NEW_MESSAGE]: 'message',
-  [NOTIFICATION_TYPES.NEW_COMMENT]: 'comment',
-  [NOTIFICATION_TYPES.COMMENT_REPLY]: 'reply',
-  [NOTIFICATION_TYPES.PAYMENT_COMPLETED]: 'payments',
-  [NOTIFICATION_TYPES.PAYMENT_FAILED]: 'error',
-  [NOTIFICATION_TYPES.PAYMENT_REFUNDED]: 'money_off',
-  [NOTIFICATION_TYPES.ACCOUNT_ACTIVITY]: 'account_circle',
-  [NOTIFICATION_TYPES.PROFILE_VIEWED]: 'person'
+  [NOTIFICATION_TYPES.SYSTEM_NOTIFICATION]: '/images/icons/Notifications.svg',
+  [NOTIFICATION_TYPES.MAINTENANCE_NOTIFICATION]: '/images/icons/warning.svg',
+  [NOTIFICATION_TYPES.LISTING_ADDED]: '/images/icons/Notifications.svg',
+  [NOTIFICATION_TYPES.LISTING_EXPIRING]: '/images/icons/warning.svg',
+  [NOTIFICATION_TYPES.LISTING_EXPIRED]: '/images/icons/warning.svg',
+  [NOTIFICATION_TYPES.LISTING_STATUS_CHANGED]: '/images/icons/Notifications.svg',
+  [NOTIFICATION_TYPES.LISTING_LIKED]: '/images/icons/favorite.svg',
+  [NOTIFICATION_TYPES.LISTING_VIEWED]: '/images/icons/Notifications.svg',
+  [NOTIFICATION_TYPES.NEW_MESSAGE]: '/images/icons/Notifications.svg',
+  [NOTIFICATION_TYPES.NEW_COMMENT]: '/images/icons/Notifications.svg',
+  [NOTIFICATION_TYPES.COMMENT_REPLY]: '/images/icons/Notifications.svg',
+  [NOTIFICATION_TYPES.PAYMENT_COMPLETED]: '/images/icons/payment.svg',
+  [NOTIFICATION_TYPES.PAYMENT_FAILED]: '/images/icons/warning.svg',
+  [NOTIFICATION_TYPES.PAYMENT_REFUNDED]: '/images/icons/payment.svg',
+  [NOTIFICATION_TYPES.ACCOUNT_ACTIVITY]: '/images/icons/Notifications.svg',
+  [NOTIFICATION_TYPES.PROFILE_VIEWED]: '/images/icons/Notifications.svg'
 };
 
 /**
@@ -310,10 +310,10 @@ export const formatNotificationDate = (date) => {
 /**
  * Funkcja zwracająca ikonę dla danego typu powiadomienia
  * @param {string} type - Typ powiadomienia
- * @returns {string} - Nazwa ikony Material Icons
+ * @returns {string} - Ścieżka do pliku SVG
  */
 export const getNotificationIcon = (type) => {
-  return NOTIFICATION_TYPE_ICONS[type] || 'notifications';
+  return NOTIFICATION_TYPE_ICONS[type] || '/images/icons/Notifications.svg';
 };
 
 /**

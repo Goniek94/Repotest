@@ -1,15 +1,20 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo, memo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Paperclip, Send, ArrowLeft, X } from 'lucide-react';
-import MessagesTabs from './MessagesTabs';
 import MessageList from './MessageList';
 import MessageChat from './MessageChat';
-import EmptyChat from './EmptyChat';
-import ChatHeader from './ChatHeader';
 import { useNotifications } from '../../../contexts/NotificationContext';
 import useConversations from './hooks/useConversations';
 import { useAuth } from '../../../contexts/AuthContext';
 import { DEFAULT_FOLDER, FOLDER_MAP } from '../../../constants/messageFolders';
+import notificationService from '../../../services/notifications';
+import { Inbox, Send, Star, Archive, MessageCircle, ArrowLeft } from 'lucide-react';
+import useBreakpoint from '../../../utils/responsive/useBreakpoint';
+
+// Import nowych komponentów
+import MobileChatHeader from './components/MobileChatHeader';
+import ConversationView from './components/ConversationView';
+import ReplyField from './components/ReplyField';
+import ChatHeader from './ChatHeader';
 
 /**
  * Główny komponent wiadomości
@@ -18,6 +23,9 @@ import { DEFAULT_FOLDER, FOLDER_MAP } from '../../../constants/messageFolders';
  * i zapewnia spójny interfejs użytkownika.
  */
 const Messages = memo(() => {
+  // Wykrywanie rozmiaru ekranu - używamy tego samego systemu co inne komponenty profilu
+  const { isMobileOrTablet } = useBreakpoint();
+  
   // Kontekst powiadomień i autoryzacji
   const { unreadCount } = useNotifications();
   const { isAuthenticated, user } = useAuth();
@@ -35,16 +43,29 @@ const Messages = memo(() => {
   
   // Stan dla widoku mobilnego
   const [mobileView, setMobileView] = useState('list'); // 'list' lub 'chat'
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   
-  // Referencja do inputa plików
-  const fileInputRef = useRef(null);
+  // Stan dla wybranej kategorii (zamiast rozwijania)
+  const [selectedCategory, setSelectedCategory] = useState(() => {
+    const initial = searchParams.get('folder');
+    return FOLDER_MAP[initial] ? initial : DEFAULT_FOLDER;
+  });
+
+  // Osobny stan dla wybranej konwersacji na desktop
+  const [desktopSelectedConversation, setDesktopSelectedConversation] = useState(null);
+  const [desktopChatMessages, setDesktopChatMessages] = useState([]);
+  const [desktopLoading, setDesktopLoading] = useState(false);
 
   // Synchronizacja aktywnej zakładki z parametrem w adresie
   useEffect(() => {
     setSearchParams({ folder: activeTab });
   }, [activeTab, setSearchParams]);
+
+  // Upewnij się, że selectedCategory jest zsynchronizowana z activeTab
+  useEffect(() => {
+    if (activeTab && selectedCategory !== activeTab) {
+      setSelectedCategory(activeTab);
+    }
+  }, [activeTab, selectedCategory]);
 
   // Hook useConversations zarządzający stanem i operacjami na konwersacjach
   const { 
@@ -64,6 +85,28 @@ const Messages = memo(() => {
     markConversationAsRead
   } = useConversations(activeTab);
 
+  // Śledzenie aktywnej konwersacji dla inteligentnych powiadomień
+  useEffect(() => {
+    if (selectedConversation && notificationService.isConnected()) {
+      // Znajdź ID drugiego uczestnika konwersacji
+      const otherParticipant = selectedConversation.participants?.find(
+        p => p.id !== user?._id && p._id !== user?._id
+      );
+      
+      if (otherParticipant) {
+        const participantId = otherParticipant.id || otherParticipant._id;
+        console.log(`Wchodzę do konwersacji z ${participantId}`);
+        notificationService.enterConversation(participantId, selectedConversation.id);
+        
+        // Cleanup - wyjście z konwersacji
+        return () => {
+          console.log(`Wychodzę z konwersacji z ${participantId}`);
+          notificationService.leaveConversation(participantId, selectedConversation.id);
+        };
+      }
+    }
+  }, [selectedConversation, user?._id]);
+
   // Memoizacja danych unread count dla MessagesTabs
   const unreadCountMemo = useMemo(() => ({
     odebrane: unreadCount.messages || 0,
@@ -73,15 +116,22 @@ const Messages = memo(() => {
   }), [unreadCount.messages]);
 
   // Memoizowane handlery
-
   const handleTabChange = useCallback((tab) => {
     setActiveTab(tab);
+    setSelectedCategory(tab);
     setSearchParams({ folder: tab });
+    
+    // Wyczyść wybraną konwersację przy zmianie kategorii
+    selectConversation(null);
+    setDesktopSelectedConversation(null); // Wyczyść też desktop stan
+    setDesktopChatMessages([]); // Wyczyść też wiadomości desktop
+    
     // Po zmianie zakładki wróć do listy na mobile
-    if (window.innerWidth < 768) {
+    // Na desktopie zachowujemy układ trzech kolumn
+    if (isMobileOrTablet) {
       setMobileView('list');
     }
-  }, [setSearchParams]);
+  }, [setSearchParams, selectConversation, isMobileOrTablet]);
 
   const handleStar = useCallback((conversationId) => {
     toggleStar(conversationId);
@@ -90,10 +140,10 @@ const Messages = memo(() => {
   const handleDelete = useCallback((conversationId) => {
     deleteConversation(conversationId);
     // Po usunięciu wróć do listy na mobile
-    if (window.innerWidth < 768) {
+    if (isMobileOrTablet) {
       setMobileView('list');
     }
-  }, [deleteConversation]);
+  }, [deleteConversation, isMobileOrTablet]);
 
   const handleMove = useCallback((conversationId, folder) => {
     moveToFolder(conversationId, folder);
@@ -102,10 +152,10 @@ const Messages = memo(() => {
   const handleArchive = useCallback((conversationId) => {
     moveToFolder(conversationId, 'archiwum');
     // Po archiwizacji wróć do listy na mobile
-    if (window.innerWidth < 768) {
+    if (isMobileOrTablet) {
       setMobileView('list');
     }
-  }, [moveToFolder]);
+  }, [moveToFolder, isMobileOrTablet]);
 
   const handleBack = useCallback((e) => {
     if (e) {
@@ -113,18 +163,72 @@ const Messages = memo(() => {
       e.stopPropagation();
     }
     selectConversation(null);
-    setMobileView('list');
-  }, [selectConversation]);
+    
+    // Przełączanie na widok listy tylko na urządzeniach mobilnych
+    // Na desktopie po prostu zamykamy konwersację, zachowując układ trzech kolumn
+    if (isMobileOrTablet) {
+      setMobileView('list');
+    }
+  }, [selectConversation, isMobileOrTablet]);
+
+  // Funkcja do ładowania wiadomości dla desktop
+  const loadDesktopMessages = useCallback(async (conversationId) => {
+    if (!conversationId) return;
+    
+    setDesktopLoading(true);
+    try {
+      // Tutaj będzie wywołanie API do pobrania wiadomości
+      // Na razie używamy mock danych
+      const mockMessages = [
+        {
+          id: '1',
+          content: 'Cześć! Interesuje mnie Twoje ogłoszenie.',
+          sender: { id: 'other', name: 'Mateusz' },
+          createdAt: new Date(Date.now() - 3600000).toISOString(),
+          isRead: true
+        },
+        {
+          id: '2', 
+          content: 'Dzień dobry! Oczywiście, chętnie odpowiem na pytania.',
+          sender: { id: user?._id, name: user?.name },
+          createdAt: new Date(Date.now() - 3000000).toISOString(),
+          isRead: true
+        },
+        {
+          id: '3',
+          content: 'Czy auto jest w dobrym stanie technicznym?',
+          sender: { id: 'other', name: 'Mateusz' },
+          createdAt: new Date(Date.now() - 1800000).toISOString(),
+          isRead: true
+        }
+      ];
+      
+      setDesktopChatMessages(mockMessages);
+    } catch (error) {
+      console.error('Błąd podczas ładowania wiadomości:', error);
+      showNotification('Nie udało się załadować wiadomości', 'error');
+    } finally {
+      setDesktopLoading(false);
+    }
+  }, [user?._id, showNotification]);
 
   // Obsługa wyboru konwersacji z automatycznym przejściem do czatu na mobile
   const handleSelectConversation = useCallback((conversation) => {
     if (!conversation) return;
     
-    selectConversation(conversation);
-    if (window.innerWidth < 768) {
+    // selectConversation oczekuje ID, nie całego obiektu
+    const conversationId = conversation.id || conversation._id;
+    
+    if (isMobileOrTablet) {
+      // Na mobile używamy normalnego stanu
+      selectConversation(conversationId);
       setMobileView('chat');
+    } else {
+      // Na desktop używamy osobnego stanu
+      setDesktopSelectedConversation(conversation);
+      loadDesktopMessages(conversationId);
     }
-  }, [selectConversation]);
+  }, [selectConversation, isMobileOrTablet, loadDesktopMessages]);
 
   // Obsługa odpowiadania na konkretną wiadomość
   const handleReplyToMessage = useCallback((message) => {
@@ -164,235 +268,11 @@ const Messages = memo(() => {
     }
   }, [replyContent, attachments, selectedConversation, sendReply, showNotification, replyToMessage]);
 
-  // Obsługa dodawania załączników
-  const handleAttachmentClick = useCallback((e) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    fileInputRef.current?.click();
-  }, []);
-
-  // Obsługa wyboru plików
-  const handleFileSelect = useCallback((e) => {
-    const files = Array.from(e.target.files);
-    
-    if (files.length === 0) return;
-    
-    // Ograniczenie liczby załączników
-    if (attachments.length + files.length > 5) {
-      showNotification('Możesz dodać maksymalnie 5 załączników', 'warning');
-      e.target.value = ''; // Reset input
-      return;
-    }
-    
-    // Ograniczenie rozmiaru plików (10MB)
-    const oversizedFiles = files.filter(file => file.size > 10 * 1024 * 1024);
-    if (oversizedFiles.length > 0) {
-      showNotification('Niektóre pliki są zbyt duże (maksymalny rozmiar to 10MB)', 'warning');
-      e.target.value = ''; // Reset input
-      return;
-    }
-    
-    const newAttachments = files.map(file => ({
-      file,
-      name: file.name,
-      size: file.size,
-      type: file.type
-    }));
-    
-    setAttachments(prev => [...prev, ...newAttachments]);
-    e.target.value = ''; // Reset input
-  }, [attachments.length, showNotification]);
-
-  // Usuwanie załącznika
-  const removeAttachment = useCallback((index) => {
-    setAttachments(prev => prev.filter((_, i) => i !== index));
-  }, []);
-
   // Funkcja do przekierowania na stronę logowania
   const handleLoginRedirect = useCallback(() => {
     localStorage.setItem('redirectAfterLogin', window.location.pathname);
     window.location.href = '/login';
   }, []);
-
-
-  // Memoizacja warunków renderowania
-  const isButtonDisabled = useMemo(() => {
-    return sendingReply || (!replyContent.trim() && attachments.length === 0) || !selectedConversation;
-  }, [sendingReply, replyContent, attachments.length, selectedConversation]);
-
-  // Komponent mobilnego nagłówka czatu
-  const MobileChatHeader = memo(({ conversation, onBack, onStar, onDelete, onArchive, onMarkAsRead }) => (
-    <div className="md:hidden bg-white border-b border-gray-200 p-4 flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onBack(e);
-          }}
-          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-          aria-label="Wróć do listy konwersacji"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-gray-900 truncate">
-            {conversation.subject || 'Bez tematu'}
-          </h3>
-          <p className="text-sm text-gray-500 truncate">
-            {conversation.participants?.map(p => p.name).join(', ') || 'Nieznany nadawca'}
-          </p>
-        </div>
-      </div>
-      <div className="flex items-center gap-1">
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onStar();
-          }}
-          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-          aria-label="Oznacz jako ważne"
-        >
-          <svg className={`h-5 w-5 ${conversation.isStarred ? 'text-yellow-500 fill-current' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-          </svg>
-        </button>
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onMarkAsRead();
-          }}
-          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-          aria-label="Oznacz jako przeczytane"
-        >
-          <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-            <polyline points="22 4 12 14.01 9 11.01"></polyline>
-          </svg>
-        </button>
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onArchive();
-          }}
-          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-          aria-label="Archiwizuj"
-        >
-          <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8l4 4 4-4m0 0L9 4m4 4v12" />
-          </svg>
-        </button>
-      </div>
-    </div>
-  ));
-
-  // Komponent pola odpowiedzi (wspólny dla desktop i mobile)
-  const ReplyField = useMemo(() => (
-    <div className="p-3 sm:p-4 border-t border-gray-200 bg-white">
-      {/* Informacja o wiadomości, na którą odpowiadamy */}
-      {replyToMessage && (
-        <div className="mb-2 bg-gray-100 p-2 rounded-lg border-l-4 border-[#35530A] relative">
-          <button 
-            className="absolute top-1 right-1 text-gray-500 hover:text-red-500"
-            onClick={handleCancelReply}
-            aria-label="Anuluj odpowiedź"
-          >
-            <X className="h-4 w-4" />
-          </button>
-          <div className="text-xs text-gray-500 mb-1">
-            Odpowiedź do: {replyToMessage.senderName || 'Nieznany użytkownik'}
-          </div>
-          <div className="text-sm text-gray-700 truncate">
-            {replyToMessage.content.length > 100 
-              ? `${replyToMessage.content.substring(0, 100)}...` 
-              : replyToMessage.content}
-          </div>
-        </div>
-      )}
-      
-      {/* Lista załączników */}
-      {attachments.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-2">
-          {attachments.map((attachment, index) => (
-            <div key={`${attachment.name}-${index}`} className="bg-gray-100 rounded px-2 py-1 text-sm flex items-center gap-1">
-              <span className="truncate max-w-[100px] sm:max-w-[150px]" title={attachment.name}>
-                {attachment.name}
-              </span>
-              <button 
-                className="text-gray-500 hover:text-red-500 ml-1"
-                onClick={() => removeAttachment(index)}
-                aria-label={`Usuń załącznik ${attachment.name}`}
-              >
-                &times;
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-      
-      {/* Pole tekstowe i przyciski */}
-      <div className="flex items-end gap-2">
-        <textarea
-          className="flex-grow p-2 sm:p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35530A] focus:border-transparent resize-none text-sm sm:text-base"
-          placeholder="Napisz wiadomość..."
-          rows="2"
-          value={replyContent}
-          onChange={(e) => setReplyContent(e.target.value)}
-          disabled={sendingReply}
-        />
-        <div className="flex flex-col gap-1 sm:gap-2">
-          {/* Przycisk załączników */}
-          <button
-            className="p-2 sm:p-3 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              handleAttachmentClick(e);
-            }}
-            disabled={sendingReply}
-            title="Dodaj załącznik"
-            aria-label="Dodaj załącznik"
-          >
-            <Paperclip className="h-5 w-5 sm:h-6 sm:w-6" />
-          </button>
-          
-          {/* Przycisk wysyłania */}
-          <button
-            className="p-2 sm:p-3 rounded-lg bg-[#35530A] text-white hover:bg-[#2A4208] transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              handleSendReply(e);
-            }}
-            disabled={isButtonDisabled}
-            title="Wyślij wiadomość"
-            aria-label="Wyślij wiadomość"
-          >
-            {sendingReply ? (
-              <div className="h-5 w-5 sm:h-6 sm:w-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <Send className="h-5 w-5 sm:h-6 sm:w-6" />
-            )}
-          </button>
-        </div>
-      </div>
-      
-      {/* Ukryty input do wyboru plików */}
-      <input
-        type="file"
-        ref={fileInputRef}
-        className="hidden"
-        multiple
-        onChange={handleFileSelect}
-        accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
-      />
-    </div>
-  ), [attachments, replyContent, sendingReply, isButtonDisabled, handleAttachmentClick, handleSendReply, removeAttachment, handleFileSelect]);
 
   // Memoizacja zawartości lewej kolumny
   const leftColumnContent = useMemo(() => {
@@ -439,7 +319,7 @@ const Messages = memo(() => {
     return (
       <MessageList
         messages={conversations}
-        activeConversation={selectedConversation?.id}
+        activeConversation={isMobileOrTablet ? selectedConversation?.id : (desktopSelectedConversation?.id || desktopSelectedConversation?._id)}
         onSelectConversation={handleSelectConversation}
         onStar={handleStar}
         onDelete={handleDelete}
@@ -459,43 +339,132 @@ const Messages = memo(() => {
     handleLoginRedirect
   ]);
 
+  // Definicja kategorii wiadomości
+  const messageCategories = [
+    {
+      id: 'odebrane',
+      label: 'Odebrane',
+      icon: <Inbox className="w-5 h-5" />,
+      count: unreadCountMemo.odebrane
+    },
+    {
+      id: 'wyslane', 
+      label: 'Wysłane',
+      icon: <Send className="w-5 h-5" />,
+      count: unreadCountMemo.wyslane
+    },
+    {
+      id: 'wazne',
+      label: 'Ważne', 
+      icon: <Star className="w-5 h-5" />,
+      count: unreadCountMemo.wazne
+    },
+    {
+      id: 'archiwum',
+      label: 'Archiwum',
+      icon: <Archive className="w-5 h-5" />,
+      count: unreadCountMemo.archiwum
+    }
+  ];
+
+  // Obliczanie całkowitej liczby nieprzeczytanych wiadomości
+  const totalUnreadCount = useMemo(() => {
+    return messageCategories.reduce((sum, category) => sum + category.count, 0);
+  }, [messageCategories]);
+
   // Rendering komponentu
   return (
-    <div className="bg-gray-50 min-h-screen pb-6">
-      <div className="max-w-7xl mx-auto p-2 sm:p-4">
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-100 h-[calc(100vh-2rem)] sm:h-[80vh] flex flex-col">
-          
-          {/* Zakładki folderów - dostosowane do urządzeń */}
-          <MessagesTabs
-            activeTab={activeTab}
-            onTabChange={handleTabChange}
-            unreadCount={unreadCountMemo}
-          />
-          
-          {/* Główna zawartość */}
-          <div className="flex flex-1 overflow-hidden">
-            {/* WIDOK DESKTOPOWY - podział na dwie kolumny */}
-            <div className="hidden md:flex md:flex-1 md:overflow-hidden">
-              {/* Lista konwersacji (lewa kolumna) */}
-              <div className="w-2/5 border-r border-gray-200 flex flex-col overflow-hidden">
-                {leftColumnContent}
-              </div>
-              
-              {/* Zawartość konwersacji (prawa kolumna) */}
-              <div className="w-3/5 flex flex-col overflow-hidden">
-                {selectedConversation ? (
-                  <>
-                    {/* Nagłówek konwersacji */}
-                    <ChatHeader 
-                      conversation={selectedConversation} 
-                      onStar={() => handleStar(selectedConversation.id)} 
-                      onDelete={() => handleDelete(selectedConversation.id)}
-                      onArchive={() => handleArchive(selectedConversation.id)}
-                      onBack={handleBack}
-                      onMarkAsRead={() => markConversationAsRead(selectedConversation.id)}
-                    />
-                    
-                    {/* Wiadomości w konwersacji */}
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Główna zawartość */}
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* MOBILE - Kompaktowy widok */}
+          <div className="lg:hidden">
+            {mobileView === 'list' ? (
+              <>
+                {/* Zielony nagłówek na mobile */}
+                <div className="bg-[#35530A] text-white p-4 rounded-t-lg">
+                  <div className="flex items-center gap-3">
+                    <MessageCircle className="w-6 h-6" />
+                    <div>
+                      <h1 className="text-xl font-bold">Wiadomości</h1>
+                      {totalUnreadCount > 0 && (
+                        <p className="text-sm opacity-90">
+                          <span className="bg-white bg-opacity-20 px-2 py-1 rounded-full text-xs font-medium">
+                            {totalUnreadCount} nieprzeczytanych
+                          </span>
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Kategorie na mobile - tylko ikony */}
+                <div className="p-4 border-b border-gray-200">
+                  <div className="grid grid-cols-4 gap-3">
+                    {messageCategories.map((category) => (
+                      <button
+                        key={category.id}
+                        onClick={() => handleTabChange(category.id)}
+                        className={`
+                          relative flex items-center justify-center p-4 rounded-lg transition-all duration-200
+                          ${activeTab === category.id 
+                            ? 'bg-[#35530A] bg-opacity-10 border border-[#35530A] border-opacity-30' 
+                            : 'hover:bg-gray-50 border border-transparent'}
+                        `}
+                        title={category.label} // Tooltip z nazwą kategorii
+                      >
+                        <span className={`
+                          ${activeTab === category.id ? 'text-[#35530A]' : 'text-gray-400'}
+                          transition-colors duration-200
+                        `}>
+                          {category.icon}
+                        </span>
+                        {category.count > 0 && (
+                          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                            {category.count > 99 ? '99+' : category.count}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Lista konwersacji na mobile */}
+                <div className="flex-1">
+                  {/* Nagłówek listy konwersacji */}
+                  <div className="p-4 border-b border-gray-200 bg-gray-50">
+                    <h3 className="font-semibold text-gray-800">
+                      {messageCategories.find(c => c.id === activeTab)?.label || 'Konwersacje'}
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-1">
+                      {conversations.length} {conversations.length === 1 ? 'konwersacja' : 'konwersacji'}
+                    </p>
+                  </div>
+                  
+                  {/* Lista konwersacji */}
+                  <div className="flex-1">
+                    {leftColumnContent}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Mobilny nagłówek czatu */}
+                {selectedConversation && (
+                  <MobileChatHeader
+                    conversation={selectedConversation}
+                    onBack={handleBack}
+                    onStar={() => handleStar(selectedConversation.id)}
+                    onDelete={() => handleDelete(selectedConversation.id)}
+                    onArchive={() => handleArchive(selectedConversation.id)}
+                    onMarkAsRead={() => markConversationAsRead(selectedConversation.id)}
+                  />
+                )}
+                
+                {/* Wiadomości w konwersacji */}
+                <div className="flex-1 overflow-hidden">
+                  {selectedConversation ? (
                     <MessageChat
                       messages={chatMessages}
                       currentUser={user}
@@ -504,71 +473,283 @@ const Messages = memo(() => {
                       onArchiveMessage={archiveMessage}
                       onReplyToMessage={handleReplyToMessage}
                     />
-                    
-                    {/* Pole odpowiedzi */}
-                    {ReplyField}
-                  </>
-                ) : (
-                  <EmptyChat />
+                  ) : (
+                    <div className="flex justify-center items-center h-full text-gray-500">
+                      <p>Wybierz konwersację</p>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Pole odpowiedzi */}
+                {selectedConversation && (
+                  <ReplyField
+                    replyContent={replyContent}
+                    setReplyContent={setReplyContent}
+                    attachments={attachments}
+                    setAttachments={setAttachments}
+                    sendingReply={sendingReply}
+                    replyToMessage={replyToMessage}
+                    onSendReply={handleSendReply}
+                    onCancelReply={handleCancelReply}
+                    showNotification={showNotification}
+                  />
                 )}
+              </>
+            )}
+          </div>
+
+          {/* DESKTOP - Układ z bocznym panelem */}
+          <div className="hidden xl:flex h-[80vh] flex-col">
+            {/* Zielony nagłówek na pełną szerokość */}
+            <div className="bg-[#35530A] text-white p-6 rounded-t-lg">
+              <div className="flex items-center gap-3">
+                <MessageCircle className="w-7 h-7" />
+                <div>
+                  <h1 className="text-2xl font-bold">Wiadomości</h1>
+                  {totalUnreadCount > 0 && (
+                    <p className="text-sm opacity-90 mt-1">
+                      <span className="bg-white bg-opacity-20 px-3 py-1 rounded-full text-sm font-medium">
+                        {totalUnreadCount} nieprzeczytanych
+                      </span>
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
-            
-            {/* WIDOK MOBILNY - przełączanie między listą a czatem */}
-            <div className="md:hidden flex flex-col flex-1 overflow-hidden">
-              {mobileView === 'list' ? (
-                <>
-                  {/* Mobilny nagłówek */}
-                  <div className="bg-white border-b border-gray-200 p-4">
-                    <h2 className="text-lg font-semibold text-gray-900">
-                      Wiadomości
-                    </h2>
+
+            {/* Główna zawartość - 3 kolumny: Kategorie | Lista konwersacji | Czat */}
+            <div className="flex flex-1">
+              {/* Lewy panel kategorii - zawsze widoczny */}
+              <div className="w-64 flex flex-col bg-gray-50 border-r border-gray-200">
+                <div className="p-4 overflow-y-auto">
+                  <div className="space-y-1">
+                    {messageCategories.map((category) => (
+                      <button
+                        key={category.id}
+                        onClick={() => handleTabChange(category.id)}
+                        className={`
+                          w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200 text-left
+                          ${selectedCategory === category.id 
+                            ? 'bg-[#35530A] text-white shadow-md' 
+                            : 'text-gray-700 hover:bg-white hover:shadow-sm'}
+                        `}
+                      >
+                        <span className={selectedCategory === category.id ? 'text-white' : 'text-gray-400'}>
+                          {category.icon}
+                        </span>
+                        <span className="flex-1 font-medium text-sm">{category.label}</span>
+                        {category.count > 0 && (
+                          <span className={`
+                            text-xs px-2 py-1 rounded-full font-bold
+                            ${selectedCategory === category.id 
+                              ? 'bg-white bg-opacity-20 text-white' 
+                              : 'bg-red-100 text-red-600'}
+                          `}>
+                            {category.count > 99 ? '99+' : category.count}
+                          </span>
+                        )}
+                      </button>
+                    ))}
                   </div>
-                  
-                  {/* Lista konwersacji */}
-                  <div className="flex-1 overflow-hidden">
-                    {leftColumnContent}
-                  </div>
-                </>
-              ) : (
-                <>
-                  {/* Mobilny nagłówek czatu */}
-                  {selectedConversation && (
-                    <MobileChatHeader
-                      conversation={selectedConversation}
-                      onBack={handleBack}
-                      onStar={() => handleStar(selectedConversation.id)}
-                      onDelete={() => handleDelete(selectedConversation.id)}
-                      onArchive={() => handleArchive(selectedConversation.id)}
-                      onMarkAsRead={() => markConversationAsRead(selectedConversation.id)}
-                    />
-                  )}
-                  
-                  {/* Wiadomości w konwersacji */}
-                  <div className="flex-1 overflow-hidden">
-                    {selectedConversation ? (
-                      <MessageChat
-                        messages={chatMessages}
-                        currentUser={user}
-                        loading={loading}
-                        onDeleteMessage={deleteMessage}
-                        onArchiveMessage={archiveMessage}
-                        onReplyToMessage={handleReplyToMessage}
+                </div>
+              </div>
+
+              {/* Środkowy panel - Lista konwersacji */}
+              <div className="w-80 flex flex-col bg-white border-r border-gray-200">
+                {/* Nagłówek listy konwersacji */}
+                <div className="p-4 border-b border-gray-200 bg-gray-50">
+                  <h3 className="font-semibold text-gray-800">
+                    {messageCategories.find(c => c.id === selectedCategory)?.label || 'Konwersacje'}
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {conversations.length} {conversations.length === 1 ? 'konwersacja' : 'konwersacji'}
+                  </p>
+                </div>
+
+                {/* Lista konwersacji */}
+                <div className="flex-1 overflow-y-auto">
+                  {leftColumnContent}
+                </div>
+              </div>
+
+              {/* Prawy panel - Zajebisty widok konwersacji */}
+              <div className="flex-1 bg-white flex flex-col">
+                {desktopSelectedConversation ? (
+                  // Widok aktywnej konwersacji
+                  <>
+                    {/* Stylowy nagłówek konwersacji */}
+                    <div className="bg-gradient-to-r from-[#35530A] to-[#4a7c0c] text-white p-4 border-b border-gray-200">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          {/* Avatar użytkownika */}
+                          <div className="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                            <span className="text-lg font-bold text-white">
+                              {desktopSelectedConversation.participants?.find(p => p.id !== user?._id && p._id !== user?._id)?.name?.charAt(0) || 'U'}
+                            </span>
+                          </div>
+                          
+                          <div>
+                            <h3 className="font-semibold text-lg">
+                              {desktopSelectedConversation.participants?.find(p => p.id !== user?._id && p._id !== user?._id)?.name || 'Użytkownik'}
+                            </h3>
+                            <p className="text-sm opacity-90">
+                              {desktopSelectedConversation.lastMessage?.createdAt 
+                                ? `Ostatnia wiadomość: ${new Date(desktopSelectedConversation.lastMessage.createdAt).toLocaleDateString('pl-PL')}`
+                                : 'Brak wiadomości'
+                              }
+                            </p>
+                          </div>
+                        </div>
+                        
+                        {/* Akcje konwersacji */}
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleStar(desktopSelectedConversation.id || desktopSelectedConversation._id)}
+                            className="p-2 hover:bg-white hover:bg-opacity-20 rounded-lg transition-all duration-200"
+                            title="Oznacz jako ważne"
+                          >
+                            <Star className={`w-5 h-5 ${desktopSelectedConversation.isStarred ? 'fill-yellow-400 text-yellow-400' : 'text-white'}`} />
+                          </button>
+                          
+                          <button
+                            onClick={() => handleArchive(desktopSelectedConversation.id || desktopSelectedConversation._id)}
+                            className="p-2 hover:bg-white hover:bg-opacity-20 rounded-lg transition-all duration-200"
+                            title="Archiwizuj"
+                          >
+                            <Archive className="w-5 h-5 text-white" />
+                          </button>
+                          
+                          <button
+                            onClick={() => handleDelete(desktopSelectedConversation.id || desktopSelectedConversation._id)}
+                            className="p-2 hover:bg-red-500 hover:bg-opacity-20 rounded-lg transition-all duration-200"
+                            title="Usuń konwersację"
+                          >
+                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Obszar wiadomości - ZAJEBISTY CZAT NA DESKTOP! */}
+                    <div className="flex-1 overflow-y-auto bg-gradient-to-b from-gray-50 to-white">
+                      {desktopLoading ? (
+                        <div className="flex justify-center items-center h-full">
+                          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#35530A]"></div>
+                        </div>
+                      ) : (
+                        <MessageChat
+                          messages={desktopChatMessages}
+                          currentUser={user}
+                          loading={desktopLoading}
+                          onDeleteMessage={(messageId) => {
+                            // Usuń wiadomość z desktop stanu
+                            setDesktopChatMessages(prev => prev.filter(msg => msg.id !== messageId));
+                            showNotification('Wiadomość została usunięta', 'success');
+                          }}
+                          onArchiveMessage={(messageId) => {
+                            // Archiwizuj wiadomość
+                            showNotification('Wiadomość została zarchiwizowana', 'success');
+                          }}
+                          onReplyToMessage={handleReplyToMessage}
+                        />
+                      )}
+                    </div>
+                    
+                    {/* ZAJEBISTE POLE ODPOWIEDZI NA DESKTOP! */}
+                    <div className="border-t border-gray-200 bg-white">
+                      <ReplyField
+                        replyContent={replyContent}
+                        setReplyContent={setReplyContent}
+                        attachments={attachments}
+                        setAttachments={setAttachments}
+                        sendingReply={sendingReply}
+                        replyToMessage={replyToMessage}
+                        onSendReply={async (e) => {
+                          if (e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }
+                          
+                          if ((!replyContent.trim() && attachments.length === 0) || !desktopSelectedConversation) return;
+                          
+                          setSendingReply(true);
+                          try {
+                            // Dodaj nową wiadomość do desktop czatu
+                            const newMessage = {
+                              id: Date.now().toString(),
+                              content: replyContent,
+                              sender: { id: user?._id, name: user?.name },
+                              createdAt: new Date().toISOString(),
+                              isRead: true
+                            };
+                            
+                            setDesktopChatMessages(prev => [...prev, newMessage]);
+                            setReplyContent('');
+                            setAttachments([]);
+                            setReplyToMessage(null);
+                            showNotification('Wiadomość została wysłana!', 'success');
+                          } catch (error) {
+                            console.error('Błąd podczas wysyłania wiadomości:', error);
+                            showNotification('Nie udało się wysłać wiadomości', 'error');
+                          } finally {
+                            setSendingReply(false);
+                          }
+                        }}
+                        onCancelReply={handleCancelReply}
+                        showNotification={showNotification}
                       />
-                    ) : (
-                      <EmptyChat />
-                    )}
+                    </div>
+                  </>
+                ) : (
+                  // Zajebisty pusty stan - wybierz konwersację
+                  <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-gray-50 via-white to-blue-50">
+                    <div className="text-center max-w-md">
+                      {/* Animowana ikona */}
+                      <div className="relative mb-8">
+                        <div className="w-24 h-24 mx-auto bg-gradient-to-br from-[#35530A] to-[#4a7c0c] rounded-full flex items-center justify-center shadow-xl">
+                          <MessageCircle className="w-12 h-12 text-white" />
+                        </div>
+                        <div className="absolute -top-2 -right-2 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center animate-pulse">
+                          <span className="text-white text-xs font-bold">💬</span>
+                        </div>
+                      </div>
+                      
+                      <h3 className="text-2xl font-bold text-gray-800 mb-4">
+                        Wybierz konwersację
+                      </h3>
+                      <p className="text-gray-600 leading-relaxed mb-6">
+                        Kliknij na konwersację z listy po lewej stronie, aby rozpocząć czat i zobaczyć wszystkie wiadomości.
+                      </p>
+                      
+                      {/* Wskazówki */}
+                      <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
+                        <h4 className="font-semibold text-gray-800 mb-3">💡 Wskazówki:</h4>
+                        <ul className="text-sm text-gray-600 space-y-2 text-left">
+                          <li className="flex items-center gap-2">
+                            <span className="w-2 h-2 bg-[#35530A] rounded-full"></span>
+                            Użyj kategorii po lewej, aby filtrować wiadomości
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                            Oznaczaj ważne konwersacje gwiazdką
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+                            Archiwizuj stare rozmowy, aby utrzymać porządek
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
                   </div>
-                  
-                  {/* Pole odpowiedzi */}
-                  {selectedConversation && ReplyField}
-                </>
-              )}
+                )}
+              </div>
+
             </div>
           </div>
         </div>
       </div>
-      
     </div>
   );
 });

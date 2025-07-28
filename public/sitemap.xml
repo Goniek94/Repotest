@@ -1,44 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://testauto.cba.pl/</loc>
-    <lastmod>2025-07-01</lastmod>
+    <loc>https://www.autosell.pl/</loc>
+    <lastmod>2025-01-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://testauto.cba.pl/listings</loc>
-    <lastmod>2025-07-01</lastmod>
+    <loc>https://www.autosell.pl/listings</loc>
+    <lastmod>2025-01-27</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://testauto.cba.pl/contact</loc>
-    <lastmod>2025-07-01</lastmod>
+    <loc>https://www.autosell.pl/contact</loc>
+    <lastmod>2025-01-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://testauto.cba.pl/about-company</loc>
-    <lastmod>2025-07-01</lastmod>
+    <loc>https://www.autosell.pl/about-company</loc>
+    <lastmod>2025-01-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://testauto.cba.pl/faq</loc>
-    <lastmod>2025-07-01</lastmod>
+    <loc>https://www.autosell.pl/faq</loc>
+    <lastmod>2025-01-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://testauto.cba.pl/register</loc>
-    <lastmod>2025-07-01</lastmod>
+    <loc>https://www.autosell.pl/register</loc>
+    <lastmod>2025-01-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://testauto.cba.pl/login</loc>
-    <lastmod>2025-07-01</lastmod>
+    <loc>https://www.autosell.pl/login</loc>
+    <lastmod>2025-01-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>

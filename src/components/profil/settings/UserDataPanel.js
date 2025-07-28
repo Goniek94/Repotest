@@ -45,15 +45,15 @@ const UserDataPanel = () => {
       
       try {
         const data = await fetchUserSettings();
-        console.log('User data loaded:', data);
+        console.log('User data loaded from API:', data);
         
-        // Fill form with user data
+        // Fill form with user data from API
         setUserForm({
           name: data.name || '',
           lastName: data.lastName || '',
           email: data.email || '',
           phoneNumber: data.phoneNumber || '',
-          dob: data.dob ? new Date(data.dob).toISOString().split('T')[0] : ''
+          dob: data.dob ? data.dob : ''
         });
         
         // Set verification status directly from backend data
@@ -71,7 +71,7 @@ const UserDataPanel = () => {
         
         setLoading(false);
       } catch (err) {
-        console.log('Error loading user settings:', err);
+        console.error('Error loading user settings:', err);
         setError('Nie udało się pobrać danych użytkownika. Spróbuj odświeżyć stronę lub zaloguj się ponownie.');
         setLoading(false);
       }

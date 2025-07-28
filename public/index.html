@@ -2,19 +2,72 @@
 <html lang="pl">
 <head>
   <meta charset="utf-8" />
-  <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+  <link rel="icon" href="" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#006a4e" />
+  <meta name="theme-color" content="#35530A" />
+  
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+  <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
 
-  <title>AutoSell</title>
+  <!-- SEO Meta Tags -->
+  <title>AutoSell.pl – Nowa generacja ogłoszeń motoryzacyjnych. Twoje auto w centrum uwagi.</title>
+  <meta name="description" content="AutoSell to nowoczesny marketplace samochodowy. Znajdź swój wymarzony samochód lub sprzedaj swój pojazd szybko i bezpiecznie. Tysiące ofert samochodów używanych i nowych." />
+  <meta name="keywords" content="samochody, marketplace, sprzedaż samochodów, kupno samochodów, samochody używane, samochody nowe, AutoSell, ogłoszenia motoryzacyjne" />
+  <meta name="author" content="AutoSell" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.autosell.pl/" />
 
-  <!-- Import czcionek Google Fonts -->
+  <!-- Open Graph Meta Tags -->
+  <meta property="og:title" content="AutoSell - Marketplace Samochodowy" />
+  <meta property="og:description" content="Znajdź swój wymarzony samochód lub sprzedaj swój pojazd szybko i bezpiecznie na AutoSell." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://www.autosell.pl/" />
+  <meta property="og:image" content="https://www.autosell.pl/AUTOSELL_logo_v1.png" />
+  <meta property="og:site_name" content="AutoSell" />
+  <meta property="og:locale" content="pl_PL" />
+
+  <!-- Twitter Card Meta Tags -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="AutoSell - Marketplace Samochodowy" />
+  <meta name="twitter:description" content="Znajdź swój wymarzony samochód lub sprzedaj swój pojazd szybko i bezpiecznie na AutoSell." />
+  <meta name="twitter:image" content="https://www.autosell.pl/AUTOSELL_logo_v1.png" />
+
+  <!-- Additional SEO Meta Tags -->
+  <meta name="geo.region" content="PL" />
+  <meta name="geo.placename" content="Polska" />
+  <meta name="language" content="Polish" />
+  <meta name="distribution" content="global" />
+  <meta name="rating" content="general" />
+
+  <!-- Preconnect for Performance -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://www.autosell.pl" />
+
+  <!-- Import czcionek Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Roboto&display=swap" rel="stylesheet" />
   
   <!-- Import Material Icons -->
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+
+  <!-- Structured Data for SEO -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "AutoSell",
+    "description": "Marketplace samochodowy - kupuj i sprzedawaj samochody online",
+    "url": "https://www.autosell.pl",
+    "logo": "https://www.autosell.pl/AUTOSELL_logo_v1.png",
+    "sameAs": [],
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://www.autosell.pl/listings?search={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
 </head>
 <body>
   <noscript>Musisz włączyć JavaScript, aby uruchomić tę aplikację.</noscript>

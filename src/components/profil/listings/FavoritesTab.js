@@ -52,6 +52,21 @@ const FavoritesTab = () => {
     }
   };
 
+  // Dodawanie z powrotem do ulubionych (jeśli ktoś przypadkowo usunął)
+  const handleAddToFavorites = async (adId) => {
+    try {
+      await AdsService.addToFavorites(adId);
+      
+      // Odśwież listę ulubionych
+      fetchFavorites();
+      
+      toast.success('Ogłoszenie zostało dodane do ulubionych');
+    } catch (err) {
+      console.error('Błąd podczas dodawania do ulubionych:', err);
+      toast.error('Błąd podczas dodawania do ulubionych');
+    }
+  };
+
   // Przekierowanie do szczegółów ogłoszenia
   const handleNavigate = (id) => {
     navigate(`/listing/${id}`);

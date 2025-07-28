@@ -1,5 +1,6 @@
 import React from "react";
 import { Phone } from "lucide-react";
+import { useAuth } from "../../../contexts/AuthContext";
 
 /**
  * PhoneSection component displays the phone number directly for logged-in users.
@@ -7,10 +8,10 @@ import { Phone } from "lucide-react";
  * @param {Object} props.listing - Listing object containing ownerPhone.
  */
 const PhoneSection = ({ listing }) => {
-  // Check if user is logged in (token in localStorage)
-  const isLoggedIn = !!localStorage.getItem("token");
+  // Check if user is logged in using AuthContext
+  const { isAuthenticated } = useAuth();
 
-  if (!isLoggedIn) {
+  if (!isAuthenticated) {
     return (
       <div className="w-full flex items-center justify-center gap-2 bg-gray-200 text-gray-500 py-3 px-4 rounded-lg text-lg">
         <Phone className="w-5 h-5" />

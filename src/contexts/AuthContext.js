@@ -1,4 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { 
+  setAuthData, 
+  clearAuthData, 
+  getUserData, 
+  isAuthenticated as checkAuth,
+  isAuthenticatedSync,
+  refreshUserData
+} from '../services/api/config';
+import AuthService from '../services/api/authApi';
 
 // Create Auth Context
 const AuthContext = createContext();
@@ -17,70 +26,100 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // Initialize authentication state
-  const initializeAuth = () => {
+  const initializeAuth = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const userData = localStorage.getItem('user');
+      // Najpierw sprawdź synchronicznie czy mamy dane w localStorage
+      const localUserData = getUserData();
       
-      if (token && userData) {
-        const parsedUser = JSON.parse(userData);
-        setUser(parsedUser);
+      if (localUserData) {
+        // Ustaw tymczasowo dane z localStorage
+        setUser(localUserData);
         setIsAuthenticated(true);
-        
-        // Verify token is still valid (optional)
-        verifyToken(token);
+      }
+      
+      // Następnie sprawdź przez API czy sesja jest nadal ważna
+      const authenticated = await checkAuth();
+      
+      if (authenticated) {
+        // Sesja jest ważna - odśwież dane użytkownika
+        const freshUserData = await refreshUserData();
+        if (freshUserData) {
+          setUser(freshUserData);
+          setIsAuthenticated(true);
+        }
+      } else {
+        // Sesja nieważna - wyczyść stan
+        clearAuthData();
+        setUser(null);
+        setIsAuthenticated(false);
       }
     } catch (error) {
       console.error('Error initializing auth:', error);
-      // Clear invalid data
       clearAuthData();
+      setUser(null);
+      setIsAuthenticated(false);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Verify token validity (optional enhancement)
-  const verifyToken = async (token) => {
+  // Login function - handles API call and state update
+  const login = async (email, password) => {
     try {
-      // You can add API call to verify token here
-      // const response = await api.get('/auth/verify');
-      // if (!response.data.valid) {
-      //   logout();
-      // }
+      setError(null);
+      setIsLoading(true);
+      
+      // Użyj AuthService zamiast fetch - wszystko przez apiClient z axios
+      const data = await AuthService.login(email, password);
+
+      // Update state
+      setUser(data.user);
+      setIsAuthenticated(true);
+
+      console.log('User logged in successfully:', data.user.email);
+      return data;
     } catch (error) {
-      console.error('Token verification failed:', error);
-      logout();
+      console.error('Login error:', error);
+      setError(error.message || 'Failed to login');
+      throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Login function
-  const login = (userData, token, refreshToken = null) => {
+  // Register function
+  const register = async (userData) => {
     try {
-      // Store in localStorage
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(userData));
+      setError(null);
+      setIsLoading(true);
       
-      if (refreshToken) {
-        localStorage.setItem('refreshToken', refreshToken);
+      // Użyj AuthService zamiast fetch - wszystko przez apiClient z axios
+      const data = await AuthService.register(userData);
+
+      // Po rejestracji użytkownik może być automatycznie zalogowany
+      if (data.user) {
+        setUser(data.user);
+        setIsAuthenticated(true);
       }
 
-      // Update state
-      setUser(userData);
-      setIsAuthenticated(true);
-      setError(null);
-
-      console.log('User logged in successfully:', userData.email);
+      console.log('User registered successfully:', data.user?.email);
+      return data;
     } catch (error) {
-      console.error('Login error:', error);
-      setError('Failed to login');
+      console.error('Registration error:', error);
+      setError(error.message || 'Failed to register');
+      throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // Logout function
-  const logout = () => {
+  const logout = async () => {
     try {
-      // Clear localStorage
-      clearAuthData();
+      setIsLoading(true);
+      
+      // Użyj AuthService zamiast fetch - wszystko przez apiClient z axios
+      await AuthService.logout();
       
       // Reset state
       setUser(null);
@@ -89,30 +128,45 @@ export const AuthProvider = ({ children }) => {
 
       console.log('User logged out successfully');
       
-      // Optional: Redirect to login page
-      // window.location.href = '/login';
     } catch (error) {
       console.error('Logout error:', error);
+      // Wyloguj lokalnie nawet jeśli wystąpił błąd
+      clearAuthData();
+      setUser(null);
+      setIsAuthenticated(false);
+    } finally {
+      setIsLoading(false);
     }
-  };
-
-  // Clear all auth data
-  const clearAuthData = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('refreshToken');
   };
 
   // Update user data (for profile updates)
   const updateUser = (updatedUserData) => {
     try {
       const newUserData = { ...user, ...updatedUserData };
-      localStorage.setItem('user', JSON.stringify(newUserData));
+      
+      // Zapisz zaktualizowane dane (bez tokenów)
+      setAuthData(newUserData);
       setUser(newUserData);
+      
       console.log('User data updated:', newUserData);
     } catch (error) {
       console.error('Error updating user:', error);
       setError('Failed to update user data');
+    }
+  };
+
+  // Refresh user data from server
+  const refreshUser = async () => {
+    try {
+      const userData = await refreshUserData();
+      if (userData) {
+        setUser(userData);
+        return userData;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error refreshing user data:', error);
+      return null;
     }
   };
 
@@ -143,7 +197,7 @@ export const AuthProvider = ({ children }) => {
     if (!user) return '';
     return user.firstName && user.lastName 
       ? `${user.firstName} ${user.lastName}`
-      : user.email || 'User';
+      : user.name || user.email || 'User';
   };
 
   // Context value
@@ -156,8 +210,10 @@ export const AuthProvider = ({ children }) => {
     
     // Actions
     login,
+    register,
     logout,
     updateUser,
+    refreshUser,
     
     // Utilities
     hasRole,

@@ -17,10 +17,12 @@ const AuthService = {
   login: async (email, password) => {
     try {
       const response = await apiClient.post('/users/login', { email, password });
-      if (response.data.token) {
-        // Zapisujemy token i dane użytkownika
-        setAuthData(response.data.token, response.data.user);
-        debug('Zalogowano pomyślnie, token zapisany');
+      
+      // NAPRAWIONE: Zapisujemy tylko dane użytkownika (BEZ tokenu!)
+      // Token jest automatycznie ustawiany jako HttpOnly cookie przez backend
+      if (response.data.user) {
+        setAuthData(response.data.user); // Tylko dane użytkownika, bez tokenu
+        debug('Zalogowano pomyślnie, dane użytkownika zapisane (token w HttpOnly cookie)');
         
         // Po zalogowaniu czyścimy cache API
         apiClient.clearCache();
@@ -41,9 +43,12 @@ const AuthService = {
   register: async (userData) => {
     try {
       const response = await apiClient.post('/users/register', userData);
-      if (response.data.token) {
-        // Zapisujemy token i dane użytkownika
-        setAuthData(response.data.token, response.data.user);
+      
+      // NAPRAWIONE: Zapisujemy tylko dane użytkownika (BEZ tokenu!)
+      // Token jest automatycznie ustawiany jako HttpOnly cookie przez backend
+      if (response.data.user) {
+        setAuthData(response.data.user); // Tylko dane użytkownika, bez tokenu
+        debug('Zarejestrowano pomyślnie, dane użytkownika zapisane (token w HttpOnly cookie)');
         
         // Po rejestracji czyścimy cache API
         apiClient.clearCache();
@@ -93,7 +98,7 @@ const AuthService = {
       const updatedUser = response.data;
       
       // Aktualizujemy tylko dane użytkownika
-      setAuthData(null, updatedUser);
+      setAuthData(updatedUser);
       
       return updatedUser;
     } catch (error) {
@@ -193,7 +198,7 @@ const AuthService = {
       const response = await apiClient.put('/users/profile', userData);
       
       // Aktualizacja danych w localStorage i cache
-      setAuthData(null, response.data);
+      setAuthData(response.data);
       
       // Odświeżamy cache
       apiClient.clearCache('/users/profile');
@@ -232,10 +237,12 @@ const AuthService = {
   loginWithGoogle: async (googleToken) => {
     try {
       const response = await apiClient.post('/users/auth/google', { token: googleToken });
-      if (response.data.token) {
-        // Zapisujemy token i dane użytkownika
-        setAuthData(response.data.token, response.data.user);
-        debug('Zalogowano przez Google pomyślnie, token zapisany');
+      
+      // NAPRAWIONE: Zapisujemy tylko dane użytkownika (BEZ tokenu!)
+      // Token jest automatycznie ustawiany jako HttpOnly cookie przez backend
+      if (response.data.user) {
+        setAuthData(response.data.user); // Tylko dane użytkownika, bez tokenu
+        debug('Zalogowano przez Google pomyślnie, dane użytkownika zapisane (token w HttpOnly cookie)');
         
         // Po zalogowaniu czyścimy cache API
         apiClient.clearCache();
@@ -257,7 +264,7 @@ const AuthService = {
       const response = await apiClient.put('/users/complete-google-profile', profileData);
       
       // Aktualizacja danych w localStorage i cache
-      setAuthData(null, response.data.user);
+      setAuthData(response.data.user);
       
       // Odświeżamy cache
       apiClient.clearCache('/users/profile');

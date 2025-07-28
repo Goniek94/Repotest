@@ -288,7 +288,7 @@ const MessageList = memo(({
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                onSelectConversation && onSelectConversation(conversation.id);
+                onSelectConversation && onSelectConversation(conversation);
               }}
               onMouseEnter={() => setHoveredConversation(conversation.id)}
               onMouseLeave={() => setHoveredConversation(null)}

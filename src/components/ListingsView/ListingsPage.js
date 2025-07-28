@@ -1,6 +1,7 @@
 // src/components/ListingsView/ListingsPage.js
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import SearchForm from '../../components/search/SearchFormUpdated';
 import ListingControls from './controls/ListingControls';
 import ListingListItem from './display/list/ListingListItem';
@@ -8,10 +9,12 @@ import ListingListItem from './display/list/ListingListItem';
 import ListingCard from './display/grid/ListingCard';
 import AdsService from '../../services/ads';
 import getImageUrl from '../../utils/responsive/getImageUrl';
+import { useAuth } from '../../contexts/AuthContext';
 
 function ListingsPage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   // Stany dla danych z API
   const [listings, setListings] = useState([]);
@@ -31,6 +34,7 @@ function ListingsPage() {
   const [favorites, setFavorites] = useState([]);
   const [favMessages, setFavMessages] = useState({});
   const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
+  const [favoritesLoading, setFavoritesLoading] = useState(false);
 
   // Inicjalizuj filtry z parametrów URL
   useEffect(() => {
@@ -210,9 +214,35 @@ function ListingsPage() {
     itemsPerPage
   ]);
 
+  // Pobieranie ulubionych użytkownika przy ładowaniu strony
+  const fetchUserFavorites = useCallback(async () => {
+    if (!user) return;
+    
+    try {
+      setFavoritesLoading(true);
+      const response = await AdsService.getFavorites();
+      
+      if (response.data && response.data.success && response.data.data && response.data.data.favorites) {
+        // Wyciągnij ID-ki z ulubionych ogłoszeń
+        const favoriteIds = response.data.data.favorites.map(fav => String(fav._id));
+        setFavorites(favoriteIds);
+        console.log('Pobrano ulubione ogłoszenia:', favoriteIds);
+      }
+    } catch (err) {
+      console.error('Błąd podczas pobierania ulubionych:', err);
+    } finally {
+      setFavoritesLoading(false);
+    }
+  }, [user]);
+
   useEffect(() => {
     fetchListings();
   }, [fetchListings]);
+
+  // Pobierz ulubione przy ładowaniu strony
+  useEffect(() => {
+    fetchUserFavorites();
+  }, [fetchUserFavorites]);
 
   const handleFilterChange = useCallback((newFilters) => {
     setFilters(newFilters);
@@ -220,6 +250,11 @@ function ListingsPage() {
   }, []);
 
   const toggleFavorite = useCallback(async (id) => {
+    if (!user) {
+      toast.error('Musisz być zalogowany, aby dodać ogłoszenie do ulubionych');
+      return;
+    }
+
     try {
       // Zapewniamy, że id jest zawsze stringiem
       const adId = String(id);
@@ -227,8 +262,10 @@ function ListingsPage() {
 
       if (isFav) {
         await AdsService.removeFromFavorites(adId);
+        toast.success('Usunięto z ulubionych');
       } else {
         await AdsService.addToFavorites(adId);
+        toast.success('Dodano do ulubionych');
       }
 
       const msg = isFav ? 'Usunięto z ulubionych' : 'Dodano do ulubionych';
@@ -243,8 +280,9 @@ function ListingsPage() {
       }, 2000);
     } catch (err) {
       console.error('Błąd przy aktualizacji ulubionych:', err);
+      toast.error('Wystąpił błąd podczas aktualizacji ulubionych');
     }
-  }, [favorites]);
+  }, [favorites, user]);
 
   const handleShowMore = useCallback(() => {
     setCurrentPage((prev) => prev + 1);

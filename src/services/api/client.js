@@ -19,26 +19,22 @@ const apiCache = new Map();
 const apiClient = axios.create({
   baseURL: API_URL,
   timeout: API_TIMEOUT,
-  withCredentials: true, // Kluczowe - przesyłanie ciasteczek
+  withCredentials: true, // KLUCZOWE - JWT w HttpOnly cookie
   headers: {
     'Content-Type': 'application/json'
   }
 });
 
-// Interceptor dodający token do nagłówków
+// Interceptor przygotowujący requesty (BEZ tokenów - używamy tylko HttpOnly cookies)
 apiClient.interceptors.request.use(
   config => {
-    // Dodajemy token do nagłówka jako fallback, gdyby ciasteczka nie działały
-    const token = getAuthToken();
-    if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
-    }
+    // USUNIĘTO: Nie dodajemy tokenów z localStorage - używamy tylko HttpOnly cookies
+    // HttpOnly cookies są automatycznie wysyłane przez przeglądarkę z withCredentials: true
     
-    // Dla FormData nie ustawiaj Content-Type - axios zrobi to automatycznie
+    // Dla FormData nie ustawiaj Content-Type - axios zrobi to sam
     if (config.data instanceof FormData) {
       delete config.headers['Content-Type'];
     }
-    
     return config;
   },
   error => {
@@ -54,24 +50,24 @@ apiClient.interceptors.response.use(
     if (error.response) {
       // Obsługa błędu 401 Unauthorized
       if (error.response.status === 401) {
-        safeConsole.warn('Wykryto błąd 401 Unauthorized');
-        clearAuthData();
+        safeConsole.warn('Wykryto błąd 401 Unauthorized - wylogowywanie użytkownika');
+        
+        // Wyczyść dane autoryzacyjne
+        await clearAuthData();
+        
+        // Przekieruj na stronę logowania jeśli nie jesteśmy już tam
+        if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+          window.location.href = '/login?expired=true';
+        }
       }
-      
       // Obsługa błędu 429 Too Many Requests - throttling
       if (error.response.status === 429 && !error.config._isRetry && THROTTLE_REQUESTS) {
-        // Ustawiamy flagę, że to jest ponowna próba
         error.config._isRetry = true;
-        
-        // Obliczamy opóźnienie (1 sekunda lub wartość z nagłówka Retry-After)
         const retryAfter = error.response.headers['retry-after'] 
           ? parseInt(error.response.headers['retry-after']) * 1000 
           : 1000;
-        
         safeConsole.warn(`Zbyt wiele zapytań (429). Ponowna próba za ${retryAfter}ms...`);
-        
         try {
-          // Czekamy określony czas i ponawiamy żądanie
           await new Promise(resolve => setTimeout(resolve, retryAfter));
           return await axios(error.config);
         } catch (retryError) {
@@ -80,7 +76,6 @@ apiClient.interceptors.response.use(
         }
       }
     }
-    
     return Promise.reject(error);
   }
 );
@@ -89,13 +84,10 @@ apiClient.interceptors.response.use(
 apiClient.getCache = (key) => {
   const cached = apiCache.get(key);
   if (!cached) return null;
-  
-  // Sprawdzamy czy cache nie wygasł
   if (cached.expiry && Date.now() > cached.expiry) {
     apiCache.delete(key);
     return null;
   }
-  
   return cached.data;
 };
 
@@ -114,17 +106,13 @@ apiClient.clearCache = (key) => {
   }
 };
 
-// Funkcje rozszerzające API client
-
 // GET z obsługą cache
 apiClient.getCached = async (url, params = {}, ttl = CACHE_TTL) => {
   const cacheKey = `${url}${JSON.stringify(params)}`;
   const cached = apiClient.getCache(cacheKey);
-  
   if (cached) {
     return { data: cached };
   }
-  
   try {
     const response = await apiClient.get(url, { params });
     apiClient.setCache(cacheKey, response.data, ttl);
@@ -138,27 +126,20 @@ apiClient.getCached = async (url, params = {}, ttl = CACHE_TTL) => {
 // GET z obsługą retry i błędów
 apiClient.getSafe = async (url, params = {}, retries = MAX_RETRIES) => {
   let lastError = null;
-  
   for (let i = 0; i <= retries; i++) {
     try {
       const response = await apiClient.get(url, { params });
       return response;
     } catch (error) {
       lastError = error;
-      
-      // Jeśli to nie jest błąd 429 lub to ostatnia próba, nie próbujemy ponownie
       if (error.response?.status !== 429 || i === retries) {
         break;
       }
-      
-      // Czekamy coraz dłużej przed kolejną próbą
       const delay = Math.pow(2, i) * 1000;
       safeConsole.warn(`Próba ${i+1}/${retries+1} nie powiodła się. Kolejna próba za ${delay}ms...`);
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
-  
-  // Jeśli wszystkie próby zawiodły, zwracamy null jako dane i załączamy błąd
   safeConsole.error(`Wszystkie próby pobrania ${url} zawiodły.`);
   return { data: null, error: lastError };
 };

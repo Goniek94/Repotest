@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Mail } from "lucide-react";
 import MessagesService from "../../../services/api/messages";
+import { useAuth } from "../../../contexts/AuthContext";
 
 /**
  * MessageButton component allows sending a message to the listing owner.
@@ -14,11 +15,11 @@ const MessageButton = ({ listing }) => {
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const isLoggedIn = !!localStorage.getItem("token");
+  const { isAuthenticated } = useAuth();
 
   const handleSend = async (e) => {
     e.preventDefault();
-    if (!isLoggedIn) {
+    if (!isAuthenticated) {
       setStatus({ type: "error", msg: "Musisz być zalogowany, aby wysłać wiadomość." });
       return;
     }

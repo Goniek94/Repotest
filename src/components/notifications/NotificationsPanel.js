@@ -3,7 +3,7 @@ import { ResponsiveCard } from '../ui/ResponsiveCard';
 import { Heading2, Text } from '../ui/Typography';
 import { ResponsiveStack } from '../layout/ResponsiveStack';
 import useBreakpoint from '../../utils/responsive/useBreakpoint';
-import { getNotificationIcon, getNotificationTypeName } from '../../utils/NotificationTypes';
+import { getNotificationTypeName, getNotificationIcon, getNotificationColor } from '../../utils/NotificationTypes';
 import { SocketContext } from '../../contexts/SocketContext';
 import axios from 'axios';
 
@@ -139,8 +139,25 @@ const NotificationsPanel = () => {
   
   // Renderowanie ikony w zależności od typu powiadomienia
   const renderNotificationIcon = (type) => {
-    const { icon, color } = getNotificationIcon(type);
-    return <div className={`${color} text-xl`}>{icon}</div>;
+    const iconPath = getNotificationIcon(type);
+    const color = getNotificationColor(type);
+    
+    return (
+      <div 
+        className="w-6 h-6 flex items-center justify-center rounded-full p-1"
+        style={{ backgroundColor: `${color}20` }}
+      >
+        <img 
+          src={iconPath} 
+          alt="Notification icon" 
+          className="w-4 h-4"
+          style={{ 
+            filter: `brightness(0) saturate(100%)`,
+            color: color
+          }}
+        />
+      </div>
+    );
   };
   
   // Renderowanie pojedynczego powiadomienia

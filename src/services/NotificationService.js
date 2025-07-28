@@ -10,35 +10,28 @@ class NotificationService {
     this.apiClient = axios.create({
       baseURL: this.baseURL,
       timeout: 10000,
+      withCredentials: true, // KLUCZOWE - JWT w HttpOnly cookie
       headers: {
         'Content-Type': 'application/json'
       }
     });
 
-    // Interceptor do automatycznego dodawania tokenu autoryzacji
-    this.apiClient.interceptors.request.use(
-      (config) => {
-        const token = localStorage.getItem('token');
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-      },
-      (error) => {
-        return Promise.reject(error);
-      }
-    );
-
     // Interceptor do obsługi błędów
     this.apiClient.interceptors.response.use(
       (response) => response,
-      (error) => {
+      async (error) => {
         console.error('NotificationService API Error:', error);
         
-        // Jeśli token jest nieprawidłowy, przekieruj do logowania
+        // Jeśli token jest nieprawidłowy, wyczyść dane i przekieruj
         if (error.response?.status === 401) {
-          localStorage.removeItem('token');
-          window.location.href = '/login';
+          // Importuj dynamicznie clearAuthData aby uniknąć circular dependency
+          const { clearAuthData } = await import('./api/config');
+          await clearAuthData();
+          
+          // Przekieruj na stronę logowania jeśli nie jesteśmy już tam
+          if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+            window.location.href = '/login?expired=true';
+          }
         }
         
         return Promise.reject(error);

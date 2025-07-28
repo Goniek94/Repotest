@@ -1,323 +1,118 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { 
-  Badge, 
-  IconButton, 
-  Popover, 
-  Box, 
-  Typography, 
-  Button, 
-  Divider, 
-  CircularProgress 
-} from '@mui/material';
-import { Notifications as NotificationsIcon } from '@mui/icons-material';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import { useSnackbar } from 'notistack';
-
-import { SocketContext } from '../../contexts/SocketContext';
-import NotificationItem from './NotificationItem';
-import EmptyState from '../ui/EmptyState';
+import React, { memo } from 'react';
+import { Link } from 'react-router-dom';
 
 /**
- * Komponent wyświetlający ikonę powiadomień z liczbą nieprzeczytanych powiadomień
+ * Komponent dymka powiadomień z ikonką
+ * Wyświetla ikonkę powiadomień z liczbą nieprzeczytanych powiadomień
+ * 
+ * @param {Object} props - Właściwości komponentu
+ * @param {number} props.count - Liczba nieprzeczytanych powiadomień
+ * @param {string} props.type - Typ powiadomienia ('notifications' lub 'messages')
+ * @param {string} props.className - Dodatkowe klasy CSS
+ * @param {string} props.size - Rozmiar ikony ('sm', 'md', 'lg')
+ * @param {boolean} props.showZero - Czy pokazywać badge gdy count = 0
+ * @param {string} props.linkTo - Ścieżka do przekierowania po kliknięciu
  * @returns {JSX.Element}
  */
-const NotificationBadge = () => {
-  const navigate = useNavigate();
-  const { enqueueSnackbar } = useSnackbar();
-  const socket = useContext(SocketContext);
-  
-  // Stan komponentu
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [anchorEl, setAnchorEl] = useState(null);
-  
-  // Pobieranie nieprzeczytanych powiadomień
-  useEffect(() => {
-    fetchUnreadNotifications();
-    
-    // Nasłuchiwanie na nowe powiadomienia
-    if (socket) {
-      socket.on('notification:new', handleNewNotification);
-      socket.on('notification:read', handleNotificationRead);
-      socket.on('notification:read-all', handleAllNotificationsRead);
-      socket.on('notification:deleted', handleNotificationDeleted);
-      socket.on('notification:deleted-all', handleAllNotificationsDeleted);
-    }
-    
-    return () => {
-      // Czyszczenie nasłuchiwania
-      if (socket) {
-        socket.off('notification:new');
-        socket.off('notification:read');
-        socket.off('notification:read-all');
-        socket.off('notification:deleted');
-        socket.off('notification:deleted-all');
-      }
-    };
-  }, [socket]);
-  
-  // Pobieranie nieprzeczytanych powiadomień z API
-  const fetchUnreadNotifications = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get('/api/notifications/unread');
-      setNotifications(response.data);
-      setUnreadCount(response.data.length);
-      setError(null);
-    } catch (err) {
-      console.error('Błąd podczas pobierania nieprzeczytanych powiadomień:', err);
-      setError('Nie udało się pobrać powiadomień');
-    } finally {
-      setLoading(false);
+const NotificationBadge = memo(({
+  count = 0,
+  type = 'notifications',
+  className = '',
+  size = 'md',
+  showZero = false,
+  linkTo = '/profil/notifications'
+}) => {
+  // Mapowanie typów na ikonki
+  const iconMap = {
+    notifications: '/images/icons/Notifications.svg',
+    messages: '/images/icons/messages.svg', // Dedykowana ikonka dla wiadomości
+    warning: '/images/icons/warning.svg',
+    payment: '/images/icons/payment.svg'
+  };
+
+  // Mapowanie rozmiarów
+  const sizeMap = {
+    sm: {
+      icon: 'w-4 h-4',
+      badge: 'w-4 h-4 text-xs',
+      container: 'relative'
+    },
+    md: {
+      icon: 'w-6 h-6',
+      badge: 'w-5 h-5 text-xs',
+      container: 'relative'
+    },
+    lg: {
+      icon: 'w-8 h-8',
+      badge: 'w-6 h-6 text-sm',
+      container: 'relative'
     }
   };
-  
-  // Obsługa nowego powiadomienia
-  const handleNewNotification = (notification) => {
-    // Dodajemy nowe powiadomienie na początek listy
-    setNotifications(prev => [notification, ...prev]);
-    setUnreadCount(prev => prev + 1);
-    
-    // Wyświetlamy powiadomienie w snackbarze
-    enqueueSnackbar(notification.title, {
-      variant: 'info',
-      action: (key) => (
-        <Button 
-          color="inherit" 
-          size="small" 
-          onClick={() => {
-            navigate(notification.actionUrl);
-            handleMarkAsRead(notification._id);
-          }}
-        >
-          {notification.actionText || 'Zobacz'}
-        </Button>
-      )
-    });
+
+  const iconSrc = iconMap[type] || iconMap.notifications;
+  const sizes = sizeMap[size] || sizeMap.md;
+  const shouldShowBadge = count > 0 || showZero;
+
+  // Formatowanie liczby (99+ dla liczb > 99)
+  const formatCount = (num) => {
+    if (num > 99) return '99+';
+    return num.toString();
   };
-  
-  // Obsługa oznaczenia powiadomienia jako przeczytane
-  const handleNotificationRead = (notificationId) => {
-    // Aktualizujemy stan powiadomienia
-    setNotifications(prev => 
-      prev.map(notification => 
-        notification._id === notificationId 
-          ? { ...notification, read: true } 
-          : notification
-      )
-    );
-    
-    // Zmniejszamy licznik nieprzeczytanych
-    setUnreadCount(prev => Math.max(0, prev - 1));
-  };
-  
-  // Obsługa oznaczenia wszystkich powiadomień jako przeczytane
-  const handleAllNotificationsRead = () => {
-    // Aktualizujemy stan wszystkich powiadomień
-    setNotifications(prev => 
-      prev.map(notification => ({ ...notification, read: true }))
-    );
-    
-    // Zerujemy licznik nieprzeczytanych
-    setUnreadCount(0);
-  };
-  
-  // Obsługa usunięcia powiadomienia
-  const handleNotificationDeleted = (notificationId) => {
-    // Usuwamy powiadomienie z listy
-    const notification = notifications.find(n => n._id === notificationId);
-    setNotifications(prev => prev.filter(n => n._id !== notificationId));
-    
-    // Jeśli powiadomienie było nieprzeczytane, zmniejszamy licznik
-    if (notification && !notification.read) {
-      setUnreadCount(prev => Math.max(0, prev - 1));
-    }
-  };
-  
-  // Obsługa usunięcia wszystkich powiadomień
-  const handleAllNotificationsDeleted = () => {
-    // Czyścimy listę powiadomień
-    setNotifications([]);
-    
-    // Zerujemy licznik nieprzeczytanych
-    setUnreadCount(0);
-  };
-  
-  // Otwieranie/zamykanie popovera
-  const handleClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-  
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-  
-  // Oznaczanie powiadomienia jako przeczytane
-  const handleMarkAsRead = async (notificationId) => {
-    try {
-      await axios.put(`/api/notifications/${notificationId}/read`);
-      
-      // Aktualizacja stanu
-      handleNotificationRead(notificationId);
-    } catch (err) {
-      console.error('Błąd podczas oznaczania powiadomienia jako przeczytane:', err);
-      enqueueSnackbar('Nie udało się oznaczyć powiadomienia jako przeczytane', { variant: 'error' });
-    }
-  };
-  
-  // Oznaczanie wszystkich powiadomień jako przeczytane
-  const handleMarkAllAsRead = async () => {
-    try {
-      await axios.put('/api/notifications/read-all');
-      
-      // Aktualizacja stanu
-      handleAllNotificationsRead();
-      
-      enqueueSnackbar('Wszystkie powiadomienia oznaczone jako przeczytane', { variant: 'success' });
-    } catch (err) {
-      console.error('Błąd podczas oznaczania wszystkich powiadomień jako przeczytane:', err);
-      enqueueSnackbar('Nie udało się oznaczyć wszystkich powiadomień jako przeczytane', { variant: 'error' });
-    }
-  };
-  
-  // Usuwanie powiadomienia
-  const handleDeleteNotification = async (notificationId) => {
-    try {
-      await axios.delete(`/api/notifications/${notificationId}`);
-      
-      // Aktualizacja stanu
-      handleNotificationDeleted(notificationId);
-      
-      enqueueSnackbar('Powiadomienie usunięte', { variant: 'success' });
-    } catch (err) {
-      console.error('Błąd podczas usuwania powiadomienia:', err);
-      enqueueSnackbar('Nie udało się usunąć powiadomienia', { variant: 'error' });
-    }
-  };
-  
-  // Przejście do strony powiadomień
-  const goToNotificationsPage = () => {
-    navigate('/profil/notifications');
-    handleClose();
-  };
-  
-  // Sprawdzenie, czy popover jest otwarty
-  const open = Boolean(anchorEl);
-  const id = open ? 'notifications-popover' : undefined;
-  
-  return (
-    <>
-      <IconButton
-        color="inherit"
-        aria-label="powiadomienia"
-        onClick={handleClick}
-        aria-describedby={id}
-      >
-        <Badge badgeContent={unreadCount} color="error" max={99}>
-          <NotificationsIcon />
-        </Badge>
-      </IconButton>
-      
-      <Popover
-        id={id}
-        open={open}
-        anchorEl={anchorEl}
-        onClose={handleClose}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'right',
+
+  const BadgeContent = () => (
+    <div className={`${sizes.container} ${className}`}>
+      {/* Ikonka powiadomień */}
+      <img 
+        src={iconSrc}
+        alt={`${type} icon`}
+        className={`${sizes.icon} transition-opacity hover:opacity-80`}
+        style={{ 
+          filter: 'brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%)'
         }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: 'right',
-        }}
-        PaperProps={{
-          sx: {
-            width: { xs: '100%', sm: 400 },
-            maxWidth: '100%',
-            maxHeight: '80vh',
-            overflow: 'auto'
-          }
-        }}
-      >
-        {/* Nagłówek */}
-        <Box
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-          p={2}
-          bgcolor="primary.main"
-          color="primary.contrastText"
-        >
-          <Typography variant="h6">
-            Powiadomienia {unreadCount > 0 && `(${unreadCount})`}
-          </Typography>
-          
-          {unreadCount > 0 && (
-            <Button
-              variant="outlined"
-              color="inherit"
-              size="small"
-              onClick={handleMarkAllAsRead}
-            >
-              Oznacz wszystkie jako przeczytane
-            </Button>
-          )}
-        </Box>
-        
-        <Divider />
-        
-        {/* Zawartość */}
-        <Box p={2} sx={{ maxHeight: '60vh', overflow: 'auto' }}>
-          {loading ? (
-            <Box display="flex" justifyContent="center" alignItems="center" p={4}>
-              <CircularProgress />
-            </Box>
-          ) : error ? (
-            <EmptyState
-              icon="error_outline"
-              title="Wystąpił błąd"
-              description={error}
-              actionText="Spróbuj ponownie"
-              onAction={fetchUnreadNotifications}
-            />
-          ) : notifications.length === 0 ? (
-            <EmptyState
-              icon="notifications_off"
-              title="Brak powiadomień"
-              description="Nie masz żadnych nieprzeczytanych powiadomień"
-            />
-          ) : (
-            notifications.slice(0, 5).map(notification => (
-              <NotificationItem
-                key={notification._id}
-                notification={notification}
-                onMarkAsRead={() => handleMarkAsRead(notification._id)}
-                onDelete={() => handleDeleteNotification(notification._id)}
-              />
-            ))
-          )}
-        </Box>
-        
-        <Divider />
-        
-        {/* Stopka */}
-        <Box p={2} display="flex" justifyContent="center">
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={goToNotificationsPage}
-            fullWidth
-          >
-            Zobacz wszystkie powiadomienia
-          </Button>
-        </Box>
-      </Popover>
-    </>
+      />
+      
+      {/* Dymek z liczbą */}
+      {shouldShowBadge && (
+        <div className={`
+          absolute -top-2 -right-2 
+          ${sizes.badge}
+          bg-red-500 text-white 
+          rounded-full 
+          flex items-center justify-center 
+          font-bold 
+          shadow-lg
+          border-2 border-white
+          min-w-[20px]
+          animate-pulse
+        `}>
+          {formatCount(count)}
+        </div>
+      )}
+      
+      {/* Efekt świecenia dla nowych powiadomień */}
+      {count > 0 && (
+        <div className="absolute inset-0 rounded-full bg-red-400 opacity-20 animate-ping"></div>
+      )}
+    </div>
   );
-};
+
+  // Jeśli podano linkTo, owijamy w Link
+  if (linkTo) {
+    return (
+      <Link 
+        to={linkTo}
+        className="inline-block transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 rounded-full"
+        aria-label={`${count} nieprzeczytanych powiadomień`}
+      >
+        <BadgeContent />
+      </Link>
+    );
+  }
+
+  // W przeciwnym razie zwracamy sam komponent
+  return <BadgeContent />;
+});
+
+NotificationBadge.displayName = 'NotificationBadge';
 
 export default NotificationBadge;

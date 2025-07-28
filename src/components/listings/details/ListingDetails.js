@@ -1,6 +1,7 @@
 // src/components/listings/details/ListingDetails.js
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import ImageGallery from "./ImageGallery";
 import TechnicalDetails from "./TechnicalDetails";
 import Description from "./Description";
@@ -8,6 +9,7 @@ import ContactInfo from "./ContactInfo";
 import CommentSection from "./CommentSection";
 import SimilarListings from "./SimilarListings";
 import ListingHeader from "./ListingHeader";
+import CollapsibleSection from "./CollapsibleSection";
 import AuthService from "../../../services/api/authApi";
 import ViewHistoryService from "../../../services/viewHistoryService";
 
@@ -165,16 +167,24 @@ const ListingDetails = () => {
   }
   if (!listing) return null;
 
+  // Get data needed for mobile header
+  const brand = listing.make || listing.brand || '';
+  const model = listing.model || '';
+  const vehicleTitle = `${brand} ${model}`.trim();
+  const price = listing.price ? `${listing.price.toLocaleString()} zł` : "Cena na żądanie";
+
   return (
     <div className="bg-[#FCFCFC] py-8 px-4 lg:px-[8%] min-h-screen">
       <button
         onClick={() => navigate(-1)}
-        className="mb-6 flex items-center gap-2 font-bold text-xl text-black hover:text-gray-700 transition-colors"
+        className="mb-6 flex items-center gap-2 text-[#35530A] hover:text-[#44671A] transition-colors font-medium"
       >
-        ← Powrót do ogłoszeń
+        <ArrowLeft className="w-5 h-5" />
+        Powrót
       </button>
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col lg:flex-row gap-8">
+        {/* Desktop Layout - unchanged */}
+        <div className="hidden lg:flex flex-row gap-8">
           {/* Lewa kolumna: galeria, nagłówek, opis, komentarze */}
           <div className="w-full lg:w-[60%] space-y-8">
             <ListingHeader listing={listing} />
@@ -217,7 +227,71 @@ const ListingDetails = () => {
             <ContactInfo listing={listing} />
           </div>
         </div>
-        {/* Podobne ogłoszenia na dole, na całą szerokość */}
+
+        {/* Mobile Layout - with collapsible sections */}
+        <div className="lg:hidden space-y-4">
+          {/* 1. Zdjęcia */}
+          <ImageGallery 
+            images={listing.images && listing.images.length > 0 
+              ? listing.images.map(img => 
+                  img.startsWith('http') 
+                    ? img 
+                    : `http://localhost:5000${img.startsWith('/') ? '' : '/'}${img}`
+                )
+              : []
+            } 
+          />
+
+          {/* 2. Marka, model i cena */}
+          <div className="bg-white p-6 shadow-md rounded-sm">
+            <div className="text-center">
+              {vehicleTitle && (
+                <h1 className="text-2xl font-bold text-black mb-4">
+                  {vehicleTitle}
+                </h1>
+              )}
+              <div className="text-2xl font-bold text-[#35530A]">
+                {price}
+              </div>
+            </div>
+          </div>
+
+          {/* 3. Nagłówek ogłoszenia - taki jak na desktop */}
+          <ListingHeader listing={listing} />
+
+          {/* 3. Nagłówek - jeśli istnieje, taki jak na desktop */}
+          {listing.headline && (
+            <div className="bg-white p-6 shadow-md rounded-sm">
+              <h2 className="text-xl font-bold mb-4 text-black">
+                Nagłówek ogłoszenia
+              </h2>
+              <div className="bg-gray-50 p-4 rounded-md border-l-4 border-[#35530A]">
+                <p className="text-lg font-medium text-gray-800">
+                  {listing.headline}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* 4. Dane techniczne - zwijane sekcje (tylko te z prawej kolumny) */}
+          <TechnicalDetails listing={listing} />
+
+          {/* 5. Opis - taki jak na desktop */}
+          <Description description={listing.description} />
+
+          {/* 6. Komentarze - takie jak na desktop */}
+          <CommentSection
+            comments={comments}
+            onAddComment={handleAddComment}
+            userId={userId}
+            commentError={commentError}
+          />
+
+          {/* 7. Lokalizacja i kontakt - taka jak na desktop */}
+          <ContactInfo listing={listing} />
+        </div>
+
+        {/* 8. Podobne ogłoszenia - zawsze na dole */}
         <div className="mt-10">
           <SimilarListings listings={similarListings} />
         </div>

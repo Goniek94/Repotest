@@ -32,33 +32,45 @@ export const NotificationProvider = ({ children }) => {
 
     setIsLoading(true);
     try {
-      // Używamy apiClient zamiast axios bezpośrednio, aby korzystać z interceptorów i ciasteczek
-      const response = await axios.get(`${API_URL}/notifications`, {
-        withCredentials: true // Ważne - przesyłanie ciasteczek
-      });
+      // Pobierz powiadomienia i liczniki osobno
+      const [notificationsResponse, countResponse] = await Promise.all([
+        axios.get(`${API_URL}/notifications`, {
+          withCredentials: true
+        }),
+        axios.get(`${API_URL}/notifications/unread/count`, {
+          withCredentials: true
+        })
+      ]);
 
-      const notificationsData = response.data.notifications || [];
+      const notificationsData = notificationsResponse.data.notifications || [];
       setNotifications(notificationsData);
       
-      // Obliczenie licznika nieprzeczytanych
-      const unread = notificationsData.reduce(
-        (acc, notification) => {
-          if (notification.isRead) return acc;
-
-          if (notification.type === 'new_message') {
-            acc.messages += 1;
-          } else {
-            acc.notifications += 1;
-          }
-          return acc;
-        },
-        { notifications: 0, messages: 0 }
-      );
+      // Użyj liczników z dedykowanego endpointu
+      const countData = countResponse.data;
+      setUnreadCount({
+        notifications: countData.notifications || 0,
+        messages: countData.messages || 0
+      });
       
-      setUnreadCount(unread);
     } catch (error) {
       console.error('Błąd podczas pobierania powiadomień:', error);
-      // Nie wylogowujemy użytkownika automatycznie przy błędzie pobierania powiadomień
+      // Fallback - oblicz liczniki lokalnie jeśli endpoint nie działa
+      if (notifications.length > 0) {
+        const unread = notifications.reduce(
+          (acc, notification) => {
+            if (notification.isRead) return acc;
+
+            if (notification.type === 'new_message') {
+              acc.messages += 1;
+            } else {
+              acc.notifications += 1;
+            }
+            return acc;
+          },
+          { notifications: 0, messages: 0 }
+        );
+        setUnreadCount(unread);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -195,6 +207,8 @@ export const NotificationProvider = ({ children }) => {
 
       // Nasłuchiwanie na nowe powiadomienia
       const handleNewNotification = (notification) => {
+        console.log('Otrzymano nowe powiadomienie:', notification);
+        
         setNotifications(prev => {
           // Dodaj nowe powiadomienie na początek listy
           return [notification, ...prev];
@@ -203,7 +217,8 @@ export const NotificationProvider = ({ children }) => {
         // Aktualizacja licznika nieprzeczytanych
         setUnreadCount(prev => {
           const newCount = { ...prev };
-          if (notification.type === 'new_message') {
+          // Sprawdzamy typ powiadomienia - backend używa NEW_MESSAGE
+          if (notification.type === 'new_message' || notification.type === 'NEW_MESSAGE') {
             newCount.messages = (newCount.messages || 0) + 1;
           } else {
             newCount.notifications = (newCount.notifications || 0) + 1;
@@ -285,8 +300,9 @@ export const NotificationProvider = ({ children }) => {
         setIsConnected(connected);
       };
 
-      // Rejestracja nasłuchiwania
+      // Rejestracja nasłuchiwania - dodajemy nasłuchiwanie na właściwy event z backendu
       notificationService.on('notification', handleNewNotification);
+      notificationService.on('new_notification', handleNewNotification); // Event z backendu
       notificationService.on('notification_updated', handleNotificationUpdated);
       notificationService.on('all_notifications_read', handleAllNotificationsRead);
       notificationService.on('notification_deleted', handleNotificationDeleted);
@@ -296,6 +312,7 @@ export const NotificationProvider = ({ children }) => {
       // Czyszczenie nasłuchiwania przy odmontowaniu
       return () => {
         notificationService.off('notification', handleNewNotification);
+        notificationService.off('new_notification', handleNewNotification); // Event z backendu
         notificationService.off('notification_updated', handleNotificationUpdated);
         notificationService.off('all_notifications_read', handleAllNotificationsRead);
         notificationService.off('notification_deleted', handleNotificationDeleted);

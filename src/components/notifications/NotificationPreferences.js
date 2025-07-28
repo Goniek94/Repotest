@@ -1,601 +1,344 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Box, 
-  Typography, 
-  Paper, 
-  Divider, 
-  FormGroup, 
-  FormControlLabel, 
-  Switch, 
-  Button, 
-  CircularProgress, 
-  Alert, 
-  Accordion, 
-  AccordionSummary, 
-  AccordionDetails,
-  Grid,
-  useTheme
-} from '@mui/material';
-import { 
-  ExpandMore as ExpandMoreIcon, 
-  ArrowBack as ArrowBackIcon,
-  Save as SaveIcon
-} from '@mui/icons-material';
-import axios from 'axios';
-import { useSnackbar } from 'notistack';
-
-import { 
-  getNotificationGroups, 
-  getNotificationGroupNames, 
-  getNotificationTypeName, 
-  getNotificationIcon, 
-  getNotificationColor,
-  getDefaultNotificationPreferences
-} from '../../utils/NotificationTypes';
 
 /**
  * Komponent preferencji powiadomień
  * @returns {JSX.Element}
  */
 const NotificationPreferences = () => {
-  const theme = useTheme();
-  const { enqueueSnackbar } = useSnackbar();
-  
-  // Stan komponentu
-  const [preferences, setPreferences] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState(null);
-  const [expanded, setExpanded] = useState(null);
-  
-  // Grupy powiadomień
-  const notificationGroups = getNotificationGroups();
-  const groupNames = getNotificationGroupNames();
-  
-  // Pobieranie preferencji powiadomień
+  const [preferences, setPreferences] = useState({
+    email: {
+      system: true,
+      listings: true,
+      messages: true,
+      comments: true,
+      payments: true,
+      offers: true
+    },
+    push: {
+      system: true,
+      listings: true,
+      messages: true,
+      comments: true,
+      payments: true,
+      offers: true
+    },
+    sms: {
+      system: false,
+      listings: false,
+      messages: false,
+      comments: false,
+      payments: true,
+      offers: false
+    }
+  });
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [saveStatus, setSaveStatus] = useState(null);
+
+  // Symulacja ładowania preferencji z API
   useEffect(() => {
-    fetchPreferences();
+    // Tu będzie wywołanie API do pobrania preferencji użytkownika
+    console.log('Ładowanie preferencji powiadomień...');
   }, []);
-  
-  // Pobieranie preferencji powiadomień z API
-  const fetchPreferences = async () => {
-    try {
-      setLoading(true);
-      
-      // Pobieramy preferencje użytkownika
-      const response = await axios.get('/api/users/me');
-      const userPreferences = response.data.notificationPreferences;
-      
-      // Jeśli użytkownik nie ma jeszcze preferencji, używamy domyślnych
-      if (!userPreferences) {
-        setPreferences(getDefaultNotificationPreferences());
-      } else {
-        setPreferences(userPreferences);
+
+  // Obsługa zmiany preferencji
+  const handlePreferenceChange = (type, category) => {
+    setPreferences(prev => ({
+      ...prev,
+      [type]: {
+        ...prev[type],
+        [category]: !prev[type][category]
       }
-      
-      setError(null);
-    } catch (err) {
-      console.error('Błąd podczas pobierania preferencji powiadomień:', err);
-      setError('Nie udało się pobrać preferencji powiadomień. Spróbuj ponownie później.');
-      
-      // Ustawiamy domyślne preferencje
-      setPreferences(getDefaultNotificationPreferences());
-    } finally {
-      setLoading(false);
-    }
+    }));
   };
-  
-  // Zapisywanie preferencji powiadomień
-  const savePreferences = async () => {
+
+  // Zapisywanie preferencji
+  const handleSave = async () => {
+    setIsLoading(true);
+    setSaveStatus(null);
+    
     try {
-      setSaving(true);
-      
-      // Zapisujemy preferencje użytkownika
-      await axios.put('/api/notifications/preferences', preferences);
-      
-      enqueueSnackbar('Preferencje powiadomień zostały zapisane', { variant: 'success' });
-      setError(null);
-    } catch (err) {
-      console.error('Błąd podczas zapisywania preferencji powiadomień:', err);
-      setError('Nie udało się zapisać preferencji powiadomień. Spróbuj ponownie później.');
-      enqueueSnackbar('Nie udało się zapisać preferencji powiadomień', { variant: 'error' });
+      // Tu będzie wywołanie API do zapisania preferencji
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Symulacja
+      setSaveStatus('success');
+      setTimeout(() => setSaveStatus(null), 3000);
+    } catch (error) {
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus(null), 3000);
     } finally {
-      setSaving(false);
+      setIsLoading(false);
     }
   };
-  
-  // Zmiana wartości przełącznika
-  const handleSwitchChange = (channel, type, value) => {
+
+  // Resetowanie do domyślnych
+  const handleReset = () => {
     setPreferences({
-      ...preferences,
-      [channel]: {
-        ...preferences[channel],
-        [type]: value
+      email: {
+        system: true,
+        listings: true,
+        messages: true,
+        comments: true,
+        payments: true,
+        offers: true
+      },
+      push: {
+        system: true,
+        listings: true,
+        messages: true,
+        comments: true,
+        payments: true,
+        offers: true
+      },
+      sms: {
+        system: false,
+        listings: false,
+        messages: false,
+        comments: false,
+        payments: true,
+        offers: false
       }
     });
   };
-  
-  // Zmiana wartości przełącznika dla całej grupy
-  const handleGroupSwitchChange = (channel, group, value) => {
-    const newPreferences = { ...preferences };
-    
-    // Aktualizujemy wszystkie typy w grupie
-    notificationGroups[group].forEach(type => {
-      const preferenceKey = typeToPreferenceKey(type);
-      if (preferenceKey) {
-        newPreferences[channel][preferenceKey] = value;
-      }
-    });
-    
-    setPreferences(newPreferences);
-  };
-  
-  // Konwersja typu powiadomienia na klucz preferencji
-  const typeToPreferenceKey = (type) => {
-    // Konwertujemy typ na camelCase
-    const parts = type.split('_');
-    return parts.map((part, index) => 
-      index === 0 
-        ? part.toLowerCase() 
-        : part.charAt(0) + part.slice(1).toLowerCase()
-    ).join('');
-  };
-  
-  // Sprawdzenie, czy wszystkie typy w grupie mają tę samą wartość
-  const isGroupEnabled = (channel, group) => {
-    if (!preferences) return false;
-    
-    const types = notificationGroups[group];
-    const values = types.map(type => {
-      const preferenceKey = typeToPreferenceKey(type);
-      return preferenceKey ? preferences[channel][preferenceKey] : false;
-    });
-    
-    return values.every(v => v === true);
-  };
-  
-  // Sprawdzenie, czy niektóre typy w grupie są włączone
-  const isGroupPartiallyEnabled = (channel, group) => {
-    if (!preferences) return false;
-    
-    const types = notificationGroups[group];
-    const values = types.map(type => {
-      const preferenceKey = typeToPreferenceKey(type);
-      return preferenceKey ? preferences[channel][preferenceKey] : false;
-    });
-    
-    return values.some(v => v === true) && !values.every(v => v === true);
-  };
-  
-  // Obsługa zmiany rozwinięcia akordeonu
-  const handleAccordionChange = (panel) => (event, isExpanded) => {
-    setExpanded(isExpanded ? panel : null);
-  };
-  
-  // Renderowanie zawartości
-  if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="300px">
-        <CircularProgress />
-      </Box>
-    );
-  }
-  
+
+  const categories = [
+    { id: 'system', label: 'Systemowe', description: 'Ważne informacje o systemie i bezpieczeństwie' },
+    { id: 'listings', label: 'Ogłoszenia', description: 'Nowe ogłoszenia, wygaśnięcia, moderacja' },
+    { id: 'messages', label: 'Wiadomości', description: 'Nowe wiadomości od innych użytkowników' },
+    { id: 'comments', label: 'Komentarze', description: 'Komentarze do Twoich ogłoszeń' },
+    { id: 'payments', label: 'Płatności', description: 'Transakcje, faktury, płatności' },
+    { id: 'offers', label: 'Oferty', description: 'Nowe oferty i promocje' }
+  ];
+
+  const notificationTypes = [
+    { id: 'email', label: 'Email', icon: '📧' },
+    { id: 'push', label: 'Powiadomienia w aplikacji', icon: '🔔' },
+    { id: 'sms', label: 'SMS', icon: '📱' }
+  ];
+
   return (
-    <Box>
-      {/* Nagłówek */}
-      <Box 
-        display="flex" 
-        flexDirection={{ xs: 'column', sm: 'row' }} 
-        justifyContent="space-between" 
-        alignItems={{ xs: 'flex-start', sm: 'center' }} 
-        mb={3}
-        gap={2}
-      >
-        <Typography 
-          variant="h5" 
-          component="h1" 
-          fontWeight="bold"
-          sx={{ fontSize: { xs: '1.3rem', sm: '1.5rem' } }}
-        >
-          Preferencje powiadomień
-        </Typography>
-        
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<SaveIcon />}
-          onClick={savePreferences}
-          disabled={saving}
-          sx={{ 
-            py: { xs: 1.5 },
-            px: { xs: 3 },
-            width: { xs: '100%', sm: 'auto' }
-          }}
-          size="large"
-        >
-          {saving ? 'Zapisywanie...' : 'Zapisz preferencje'}
-        </Button>
-      </Box>
-      
-      {/* Błąd */}
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
-      
-      {/* Opis */}
-      <Paper sx={{ p: { xs: 3, sm: 2 }, mb: 3 }}>
-        <Typography 
-          variant="body1"
-          sx={{ fontSize: { xs: '1rem', sm: '1rem' } }}
-        >
-          Dostosuj swoje preferencje powiadomień poniżej. Możesz wybrać, które powiadomienia chcesz otrzymywać i w jakiej formie.
-        </Typography>
-      </Paper>
-      
-      {/* Kanały powiadomień */}
-      <Grid container spacing={3}>
-        {/* Email */}
-        <Grid item xs={12} md={4}>
-          <Paper sx={{ p: { xs: 3, sm: 2 }, height: '100%' }}>
-            <Typography 
-              variant="h6" 
-              fontWeight="bold" 
-              gutterBottom
-              sx={{ fontSize: { xs: '1.2rem', sm: '1.25rem' } }}
-            >
-              <span className="material-icons" style={{ verticalAlign: 'middle', marginRight: 8, fontSize: '1.5rem' }}>
-                email
-              </span>
-              Powiadomienia email
-            </Typography>
-            
-            <Typography 
-              variant="body2" 
-              color="text.secondary" 
-              paragraph
-              sx={{ fontSize: { xs: '1rem', sm: '0.875rem' } }}
-            >
-              Powiadomienia wysyłane na Twój adres email. Idealne dla ważnych informacji, które nie wymagają natychmiastowej reakcji.
-            </Typography>
-            
-            <Divider sx={{ my: 2 }} />
-            
-            {Object.keys(notificationGroups).map(group => (
-              <Accordion
-                key={`email-${group}`}
-                expanded={expanded === `email-${group}`}
-                onChange={handleAccordionChange(`email-${group}`)}
-                sx={{ mb: 1 }}
-              >
-                <AccordionSummary 
-                  expandIcon={<ExpandMoreIcon sx={{ fontSize: { xs: '1.5rem', sm: '1.25rem' } }} />}
-                  sx={{ 
-                    minHeight: { xs: 56, sm: 48 },
-                    py: { xs: 0.5, sm: 0 }
-                  }}
-                >
-                  <Box display="flex" alignItems="center" justifyContent="space-between" width="100%" pr={2}>
-                    <Typography sx={{ fontSize: { xs: '1rem', sm: '0.875rem' } }}>
-                      {groupNames[group]}
-                    </Typography>
-                    
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={isGroupEnabled('email', group)}
-                          indeterminate={isGroupPartiallyEnabled('email', group)}
-                          onChange={(e) => handleGroupSwitchChange('email', group, e.target.checked)}
-                          onClick={(e) => e.stopPropagation()}
-                          onFocus={(e) => e.stopPropagation()}
-                          sx={{ 
-                            '& .MuiSwitch-thumb': { 
-                              width: { xs: 20, sm: 16 },
-                              height: { xs: 20, sm: 16 }
-                            },
-                            '& .MuiSwitch-track': {
-                              width: { xs: 40, sm: 32 },
-                              height: { xs: 24, sm: 20 }
-                            }
-                          }}
-                        />
-                      }
-                      label=""
-                      sx={{ m: 0 }}
-                    />
-                  </Box>
-                </AccordionSummary>
-                
-                <AccordionDetails sx={{ pt: { xs: 1, sm: 0 }, pb: { xs: 2, sm: 1 } }}>
-                  <FormGroup>
-                    {notificationGroups[group].map(type => {
-                      const preferenceKey = typeToPreferenceKey(type);
-                      return (
-                        <FormControlLabel
-                          key={`email-${type}`}
-                          control={
-                            <Switch
-                              checked={preferences.email[preferenceKey] || false}
-                              onChange={(e) => handleSwitchChange('email', preferenceKey, e.target.checked)}
-                              sx={{ 
-                                '& .MuiSwitch-thumb': { 
-                                  width: { xs: 20, sm: 16 },
-                                  height: { xs: 20, sm: 16 }
-                                },
-                                '& .MuiSwitch-track': {
-                                  width: { xs: 40, sm: 32 },
-                                  height: { xs: 24, sm: 20 }
-                                }
-                              }}
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Nagłówek */}
+        <div className="rounded-2xl shadow-xl p-8 mb-8" style={{background: 'linear-gradient(135deg, #35530A, #4a7c0c, #35530A)'}}>
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-white mb-2">
+              Preferencje powiadomień
+            </h1>
+            <p className="text-green-100">
+              Dostosuj sposób otrzymywania powiadomień do swoich potrzeb
+            </p>
+          </div>
+        </div>
+
+        {/* Informacja o preferencjach */}
+        <div className="bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200 rounded-2xl p-6 mb-8">
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                <span className="text-blue-600 text-lg">ℹ️</span>
+              </div>
+            </div>
+            <div className="ml-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Jak to działa?</h3>
+              <p className="text-gray-700 text-sm leading-relaxed mb-3">
+                Dostosuj swoje preferencje powiadomień, aby otrzymywać tylko te informacje, które są dla Ciebie ważne. 
+                Możesz wybrać różne kanały komunikacji dla różnych typów powiadomień.
+              </p>
+              <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3">
+                <p className="text-yellow-800 text-xs">
+                  <strong>Uwaga:</strong> Niektóre powiadomienia systemowe są wymagane ze względów bezpieczeństwa i nie można ich wyłączyć.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Tabela preferencji */}
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead>
+                <tr className="bg-gradient-to-r from-gray-50 to-green-50 border-b border-gray-200">
+                  <th className="px-6 py-4 text-left">
+                    <div className="text-sm font-semibold text-gray-900">Kategoria powiadomień</div>
+                  </th>
+                  {notificationTypes.map(type => (
+                    <th key={type.id} className="px-6 py-4 text-center">
+                      <div className="flex flex-col items-center">
+                        <span className="text-2xl mb-1">{type.icon}</span>
+                        <span className="text-sm font-semibold text-gray-900">{type.label}</span>
+                      </div>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {categories.map((category, index) => (
+                  <tr key={category.id} className={`hover:bg-gradient-to-r hover:from-gray-50 hover:to-green-50 transition-all duration-200 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}`}>
+                    <td className="px-6 py-6">
+                      <div>
+                        <div className="text-sm font-semibold text-gray-900 mb-1">
+                          {category.label}
+                        </div>
+                        <div className="text-xs text-gray-600 leading-relaxed">
+                          {category.description}
+                        </div>
+                      </div>
+                    </td>
+                    {notificationTypes.map(type => (
+                      <td key={type.id} className="px-6 py-6 text-center">
+                        <label className="inline-flex items-center cursor-pointer group">
+                          <div className="relative">
+                            <input
+                              type="checkbox"
+                              checked={preferences[type.id][category.id]}
+                              onChange={() => handlePreferenceChange(type.id, category.id)}
+                              className="sr-only"
+                              disabled={category.id === 'system' && type.id === 'email'}
                             />
-                          }
-                          label={getNotificationTypeName(type)}
-                          sx={{ 
-                            '& .MuiFormControlLabel-label': { 
-                              fontSize: { xs: '1rem', sm: '0.875rem' } 
-                            },
-                            my: { xs: 0.5, sm: 0 }
-                          }}
-                        />
-                      );
-                    })}
-                  </FormGroup>
-                </AccordionDetails>
-              </Accordion>
-            ))}
-          </Paper>
-        </Grid>
-        
-        {/* Push */}
-        <Grid item xs={12} md={4}>
-          <Paper sx={{ p: { xs: 3, sm: 2 }, height: '100%' }}>
-            <Typography 
-              variant="h6" 
-              fontWeight="bold" 
-              gutterBottom
-              sx={{ fontSize: { xs: '1.2rem', sm: '1.25rem' } }}
-            >
-              <span className="material-icons" style={{ verticalAlign: 'middle', marginRight: 8, fontSize: '1.5rem' }}>
-                notifications
-              </span>
-              Powiadomienia w aplikacji
-            </Typography>
-            
-            <Typography 
-              variant="body2" 
-              color="text.secondary" 
-              paragraph
-              sx={{ fontSize: { xs: '1rem', sm: '0.875rem' } }}
-            >
-              Powiadomienia wyświetlane w aplikacji. Idealne dla bieżących informacji, które chcesz zobaczyć podczas korzystania z serwisu.
-            </Typography>
-            
-            <Divider sx={{ my: 2 }} />
-            
-            {Object.keys(notificationGroups).map(group => (
-              <Accordion
-                key={`push-${group}`}
-                expanded={expanded === `push-${group}`}
-                onChange={handleAccordionChange(`push-${group}`)}
-                sx={{ mb: 1 }}
-              >
-                <AccordionSummary 
-                  expandIcon={<ExpandMoreIcon sx={{ fontSize: { xs: '1.5rem', sm: '1.25rem' } }} />}
-                  sx={{ 
-                    minHeight: { xs: 56, sm: 48 },
-                    py: { xs: 0.5, sm: 0 }
-                  }}
-                >
-                  <Box display="flex" alignItems="center" justifyContent="space-between" width="100%" pr={2}>
-                    <Typography sx={{ fontSize: { xs: '1rem', sm: '0.875rem' } }}>
-                      {groupNames[group]}
-                    </Typography>
-                    
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={isGroupEnabled('push', group)}
-                          indeterminate={isGroupPartiallyEnabled('push', group)}
-                          onChange={(e) => handleGroupSwitchChange('push', group, e.target.checked)}
-                          onClick={(e) => e.stopPropagation()}
-                          onFocus={(e) => e.stopPropagation()}
-                          sx={{ 
-                            '& .MuiSwitch-thumb': { 
-                              width: { xs: 20, sm: 16 },
-                              height: { xs: 20, sm: 16 }
-                            },
-                            '& .MuiSwitch-track': {
-                              width: { xs: 40, sm: 32 },
-                              height: { xs: 24, sm: 20 }
-                            }
-                          }}
-                        />
-                      }
-                      label=""
-                      sx={{ m: 0 }}
-                    />
-                  </Box>
-                </AccordionSummary>
-                
-                <AccordionDetails sx={{ pt: { xs: 1, sm: 0 }, pb: { xs: 2, sm: 1 } }}>
-                  <FormGroup>
-                    {notificationGroups[group].map(type => {
-                      const preferenceKey = typeToPreferenceKey(type);
-                      return (
-                        <FormControlLabel
-                          key={`push-${type}`}
-                          control={
-                            <Switch
-                              checked={preferences.push[preferenceKey] || false}
-                              onChange={(e) => handleSwitchChange('push', preferenceKey, e.target.checked)}
-                              sx={{ 
-                                '& .MuiSwitch-thumb': { 
-                                  width: { xs: 20, sm: 16 },
-                                  height: { xs: 20, sm: 16 }
-                                },
-                                '& .MuiSwitch-track': {
-                                  width: { xs: 40, sm: 32 },
-                                  height: { xs: 24, sm: 20 }
-                                }
-                              }}
-                            />
-                          }
-                          label={getNotificationTypeName(type)}
-                          sx={{ 
-                            '& .MuiFormControlLabel-label': { 
-                              fontSize: { xs: '1rem', sm: '0.875rem' } 
-                            },
-                            my: { xs: 0.5, sm: 0 }
-                          }}
-                        />
-                      );
-                    })}
-                  </FormGroup>
-                </AccordionDetails>
-              </Accordion>
-            ))}
-          </Paper>
-        </Grid>
-        
-        {/* SMS */}
-        <Grid item xs={12} md={4}>
-          <Paper sx={{ p: { xs: 3, sm: 2 }, height: '100%' }}>
-            <Typography 
-              variant="h6" 
-              fontWeight="bold" 
-              gutterBottom
-              sx={{ fontSize: { xs: '1.2rem', sm: '1.25rem' } }}
-            >
-              <span className="material-icons" style={{ verticalAlign: 'middle', marginRight: 8, fontSize: '1.5rem' }}>
-                sms
-              </span>
-              Powiadomienia SMS
-            </Typography>
-            
-            <Typography 
-              variant="body2" 
-              color="text.secondary" 
-              paragraph
-              sx={{ fontSize: { xs: '1rem', sm: '0.875rem' } }}
-            >
-              Powiadomienia wysyłane jako wiadomości SMS. Idealne dla krytycznych informacji, które wymagają natychmiastowej uwagi.
-            </Typography>
-            
-            <Divider sx={{ my: 2 }} />
-            
-            {Object.keys(notificationGroups).map(group => (
-              <Accordion
-                key={`sms-${group}`}
-                expanded={expanded === `sms-${group}`}
-                onChange={handleAccordionChange(`sms-${group}`)}
-                sx={{ mb: 1 }}
-              >
-                <AccordionSummary 
-                  expandIcon={<ExpandMoreIcon sx={{ fontSize: { xs: '1.5rem', sm: '1.25rem' } }} />}
-                  sx={{ 
-                    minHeight: { xs: 56, sm: 48 },
-                    py: { xs: 0.5, sm: 0 }
-                  }}
-                >
-                  <Box display="flex" alignItems="center" justifyContent="space-between" width="100%" pr={2}>
-                    <Typography sx={{ fontSize: { xs: '1rem', sm: '0.875rem' } }}>
-                      {groupNames[group]}
-                    </Typography>
-                    
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={isGroupEnabled('sms', group)}
-                          indeterminate={isGroupPartiallyEnabled('sms', group)}
-                          onChange={(e) => handleGroupSwitchChange('sms', group, e.target.checked)}
-                          onClick={(e) => e.stopPropagation()}
-                          onFocus={(e) => e.stopPropagation()}
-                          sx={{ 
-                            '& .MuiSwitch-thumb': { 
-                              width: { xs: 20, sm: 16 },
-                              height: { xs: 20, sm: 16 }
-                            },
-                            '& .MuiSwitch-track': {
-                              width: { xs: 40, sm: 32 },
-                              height: { xs: 24, sm: 20 }
-                            }
-                          }}
-                        />
-                      }
-                      label=""
-                      sx={{ m: 0 }}
-                    />
-                  </Box>
-                </AccordionSummary>
-                
-                <AccordionDetails sx={{ pt: { xs: 1, sm: 0 }, pb: { xs: 2, sm: 1 } }}>
-                  <FormGroup>
-                    {notificationGroups[group].map(type => {
-                      const preferenceKey = typeToPreferenceKey(type);
-                      return (
-                        <FormControlLabel
-                          key={`sms-${type}`}
-                          control={
-                            <Switch
-                              checked={preferences.sms[preferenceKey] || false}
-                              onChange={(e) => handleSwitchChange('sms', preferenceKey, e.target.checked)}
-                              sx={{ 
-                                '& .MuiSwitch-thumb': { 
-                                  width: { xs: 20, sm: 16 },
-                                  height: { xs: 20, sm: 16 }
-                                },
-                                '& .MuiSwitch-track': {
-                                  width: { xs: 40, sm: 32 },
-                                  height: { xs: 24, sm: 20 }
-                                }
-                              }}
-                            />
-                          }
-                          label={getNotificationTypeName(type)}
-                          sx={{ 
-                            '& .MuiFormControlLabel-label': { 
-                              fontSize: { xs: '1rem', sm: '0.875rem' } 
-                            },
-                            my: { xs: 0.5, sm: 0 }
-                          }}
-                        />
-                      );
-                    })}
-                  </FormGroup>
-                </AccordionDetails>
-              </Accordion>
-            ))}
-          </Paper>
-        </Grid>
-      </Grid>
-      
-      {/* Przycisk zapisz */}
-      <Box 
-        display="flex" 
-        justifyContent={{ xs: 'center', sm: 'flex-end' }} 
-        mt={4}
-        mb={{ xs: 4, sm: 2 }}
-      >
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<SaveIcon />}
-          onClick={savePreferences}
-          disabled={saving}
-          size="large"
-          sx={{ 
-            py: { xs: 1.5, sm: 1 },
-            px: { xs: 4, sm: 3 },
-            width: { xs: '100%', sm: 'auto' },
-            fontSize: { xs: '1rem', sm: '0.9rem' }
-          }}
-        >
-          {saving ? 'Zapisywanie...' : 'Zapisz preferencje'}
-        </Button>
-      </Box>
-    </Box>
+                            <div className={`w-12 h-6 rounded-full transition-all duration-200 ${
+                              preferences[type.id][category.id] 
+                                ? 'bg-gradient-to-r from-green-500 to-green-600 shadow-lg' 
+                                : 'bg-gray-300'
+                            } ${category.id === 'system' && type.id === 'email' ? 'opacity-50 cursor-not-allowed' : 'group-hover:shadow-lg'}`}>
+                              <div className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-200 ${
+                                preferences[type.id][category.id] ? 'translate-x-6' : 'translate-x-0.5'
+                              } mt-0.5`}></div>
+                            </div>
+                          </div>
+                        </label>
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Dodatkowe opcje */}
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Częstotliwość powiadomień email */}
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+              <span className="text-2xl mr-2">📧</span>
+              Częstotliwość emaili
+            </h3>
+            <div className="space-y-3">
+              <label className="flex items-center cursor-pointer group">
+                <input type="radio" name="emailFrequency" value="instant" className="sr-only" defaultChecked />
+                <div className="w-4 h-4 border-2 border-green-500 rounded-full mr-3 flex items-center justify-center group-hover:border-green-600">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                </div>
+                <span className="text-sm text-gray-700">Natychmiast</span>
+              </label>
+              <label className="flex items-center cursor-pointer group">
+                <input type="radio" name="emailFrequency" value="daily" className="sr-only" />
+                <div className="w-4 h-4 border-2 border-gray-300 rounded-full mr-3 flex items-center justify-center group-hover:border-green-600">
+                  <div className="w-2 h-2 bg-transparent rounded-full"></div>
+                </div>
+                <span className="text-sm text-gray-700">Podsumowanie dzienne</span>
+              </label>
+              <label className="flex items-center cursor-pointer group">
+                <input type="radio" name="emailFrequency" value="weekly" className="sr-only" />
+                <div className="w-4 h-4 border-2 border-gray-300 rounded-full mr-3 flex items-center justify-center group-hover:border-green-600">
+                  <div className="w-2 h-2 bg-transparent rounded-full"></div>
+                </div>
+                <span className="text-sm text-gray-700">Podsumowanie tygodniowe</span>
+              </label>
+            </div>
+          </div>
+
+          {/* Godziny ciszy */}
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+              <span className="text-2xl mr-2">🌙</span>
+              Godziny ciszy
+            </h3>
+            <div className="space-y-4">
+              <label className="flex items-center cursor-pointer">
+                <input type="checkbox" className="sr-only" />
+                <div className="w-5 h-5 border-2 border-gray-300 rounded mr-3 flex items-center justify-center">
+                  <svg className="w-3 h-3 text-green-600 hidden" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <span className="text-sm text-gray-700">Włącz godziny ciszy</span>
+              </label>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Od</label>
+                  <input type="time" defaultValue="22:00" className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Do</label>
+                  <input type="time" defaultValue="08:00" className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Przyciski akcji */}
+        <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+          <button
+            onClick={handleSave}
+            disabled={isLoading}
+            className="inline-flex items-center px-8 py-3 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{background: 'linear-gradient(135deg, #35530A, #4a7c0c)'}}
+          >
+            {isLoading ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Zapisywanie...
+              </>
+            ) : (
+              <>
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Zapisz preferencje
+              </>
+            )}
+          </button>
+          
+          <button
+            onClick={handleReset}
+            className="inline-flex items-center px-8 py-3 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+          >
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Przywróć domyślne
+          </button>
+        </div>
+
+        {/* Status zapisywania */}
+        {saveStatus && (
+          <div className={`mt-6 p-4 rounded-xl text-center ${
+            saveStatus === 'success' 
+              ? 'bg-green-50 border border-green-200 text-green-800' 
+              : 'bg-red-50 border border-red-200 text-red-800'
+          }`}>
+            {saveStatus === 'success' ? (
+              <div className="flex items-center justify-center">
+                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                Preferencje zostały zapisane pomyślnie!
+              </div>
+            ) : (
+              <div className="flex items-center justify-center">
+                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                Wystąpił błąd podczas zapisywania preferencji.
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 

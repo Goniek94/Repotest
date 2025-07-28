@@ -1,5 +1,6 @@
 import axios from 'axios';
 import vinService from './vinService';
+import { getAuthToken } from './api/config';
 
 /**
  * Konfiguracja Axios dla API
@@ -8,6 +9,7 @@ import vinService from './vinService';
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL || '/api',
   timeout: 10000,
+  withCredentials: true, // Ważne: wysyłaj cookies z każdym requestem
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
@@ -17,7 +19,7 @@ const api = axios.create({
 // Interceptor dla requestów - dodaje token JWT jeśli istnieje
 api.interceptors.request.use(
   config => {
-    const token = localStorage.getItem('token');
+    const token = getAuthToken(); // Używamy bezpiecznej funkcji z config.js
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
@@ -37,8 +39,17 @@ api.interceptors.response.use(
       // Sprawdź, czy to nie jest endpoint logowania
       if (!error.config.url.includes('/auth/login')) {
         console.warn('Sesja wygasła. Wylogowywanie...');
-        localStorage.removeItem('token');
+        
+        // Usuń tylko dane użytkownika z localStorage (nie tokeny - są w cookies)
         localStorage.removeItem('user');
+        
+        // Wyślij żądanie wylogowania do serwera aby wyczyścić cookies
+        fetch('/api/users/logout', {
+          method: 'POST',
+          credentials: 'include'
+        }).catch(() => {
+          // Ignoruj błędy wylogowania
+        });
         
         // Przekieruj na stronę logowania, jeśli nie jesteśmy już na niej
         if (window.location.pathname !== '/login') {

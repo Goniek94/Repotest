@@ -42,25 +42,6 @@ const DesktopNav = ({ user }) => {
             Lista ogłoszeń
           </Link>
         </li>
-        {user && (
-          <li className="relative">
-            <Link 
-              to="/profil/messages" 
-              className={`px-3 py-2 transition-colors border-b-3 ${
-                isActive('/profil/messages') 
-                  ? 'text-[#35530A] border-[#35530A]'
-                  : 'hover:bg-gray-100 rounded-[2px] border-transparent'
-              }`}
-            >
-              Wiadomości
-              {unreadCount.messages > 0 && (
-                <span className="absolute -top-4 -right-2 bg-red-600 text-white text-sm font-bold px-2.5 py-1.5 rounded-full min-w-[24px] text-center shadow-md z-10">
-                  {unreadCount.messages}
-                </span>
-              )}
-            </Link>
-          </li>
-        )}
         {user && user.role === 'admin' && (
           <li>
             <Link 

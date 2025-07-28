@@ -56,7 +56,7 @@ const Navigation = () => {
   // Używamy rzeczywistych danych o nieprzeczytanych powiadomieniach
   const notifications = {
     messages: unreadCount?.messages || 0,
-    alerts: unreadCount?.alerts || 0,
+    notifications: unreadCount?.notifications || 0,
   };
 
   return (
@@ -70,14 +70,19 @@ const Navigation = () => {
           <AddListingButton user={user} setIsLoginModalOpen={setIsLoginModalOpen} />
 
           {isAuthenticated && user ? (
-            <ProfileNavigation
-              notifications={notifications}
-              handleLogout={handleLogout}
-              isDropdown={true}
-              isOpen={isUserMenuOpen}
-              setIsOpen={setIsUserMenuOpen}
-              user={user}
-            />
+            <div className="flex items-center space-x-4">
+              {/* Menu profilu */}
+              <div className="relative">
+                <ProfileNavigation
+                  notifications={notifications}
+                  handleLogout={handleLogout}
+                  isDropdown={true}
+                  isOpen={isUserMenuOpen}
+                  setIsOpen={setIsUserMenuOpen}
+                  user={user}
+                />
+              </div>
+            </div>
           ) : (
             <button
               onClick={handleOpenLogin}

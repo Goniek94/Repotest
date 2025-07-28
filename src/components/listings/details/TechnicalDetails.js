@@ -1,10 +1,20 @@
 import React from 'react';
+import { Info } from 'lucide-react';
+import CollapsibleSection from './CollapsibleSection';
 
 const TechnicalDetails = ({ listing }) => {
   // Komponent pomocniczy do wyświetlania wiersza danych
-  const InfoRow = ({ label, value }) => (
+  const InfoRow = ({ label, value, isMobile = false }) => (
     <div className="p-2 bg-gray-50 rounded-sm">
-      <div className="text-gray-600 font-medium">{label}</div>
+      <div className="text-gray-600 font-medium flex items-center gap-1">
+        {label}
+        {label === "Adaptacja medyczna" && (
+          <Info 
+            className={`text-gray-500 hover:text-[#35530A] cursor-help transition-colors ${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} 
+            title="Przystosowanie dla osób niepełnosprawnych" 
+          />
+        )}
+      </div>
       <div className="font-semibold text-black">{value || 'Nie podano'}</div>
     </div>
   );
@@ -59,44 +69,89 @@ const TechnicalDetails = ({ listing }) => {
   const price = listing.price ? `${listing.price.toLocaleString()} zł` : "Cena na żądanie";
 
   return (
-    <div className="bg-white p-6 shadow-md rounded-sm">
-      <div className="mb-8 text-center border-b pb-6">
-        {vehicleTitle && (
-          <h1 className="text-3xl font-bold text-black mb-4">
-            {vehicleTitle}
-          </h1>
-        )}
-        <div className="text-3xl font-bold text-[#35530A] mt-2">
-          {price}
+    <>
+      {/* Desktop Layout - unchanged */}
+      <div className="hidden lg:block bg-white p-6 shadow-md rounded-sm">
+        <div className="mb-8 text-center border-b pb-6">
+          {vehicleTitle && (
+            <h1 className="text-3xl font-bold text-black mb-4">
+              {vehicleTitle}
+            </h1>
+          )}
+          <div className="text-3xl font-bold text-[#35530A] mt-2">
+            {price}
+          </div>
+        </div>
+        <h2 className="text-lg font-bold mb-4 text-black">
+          Dane techniczne
+        </h2>
+        <div className="grid grid-cols-2 gap-2 text-sm mb-6">
+          {technicalData.filter(({ value }) => value).map(({ label, value }) => (
+            <InfoRow key={label} label={label} value={value} />
+          ))}
+        </div>
+        
+        <h2 className="text-lg font-bold mb-4 text-black">
+          Stan pojazdu
+        </h2>
+        <div className="grid grid-cols-2 gap-2 text-sm mb-6">
+          {vehicleStatusData.filter(({ value }) => value).map(({ label, value }) => (
+            <InfoRow key={label} label={label} value={value} />
+          ))}
+        </div>
+        
+        <h2 className="text-lg font-bold mb-4 text-black">
+          Informacje dodatkowe
+        </h2>
+        <div className="grid grid-cols-2 gap-2 text-sm">
+          {additionalInfo.filter(({ value }) => value).map(({ label, value }) => (
+            <InfoRow key={label} label={label} value={value} />
+          ))}
         </div>
       </div>
-      <h2 className="text-lg font-bold mb-4 text-black">
-        Dane techniczne
-      </h2>
-      <div className="grid grid-cols-2 gap-2 text-sm mb-6">
-        {technicalData.filter(({ value }) => value).map(({ label, value }) => (
-          <InfoRow key={label} label={label} value={value} />
-        ))}
+
+      {/* Mobile Layout - with collapsible sections */}
+      <div className="lg:hidden space-y-4">
+        {/* Technical data - collapsible, default open */}
+        <CollapsibleSection 
+          title="Dane techniczne" 
+          defaultOpen={true}
+          contentClassName="pt-4"
+        >
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            {technicalData.filter(({ value }) => value).map(({ label, value }) => (
+              <InfoRow key={label} label={label} value={value} isMobile={true} />
+            ))}
+          </div>
+        </CollapsibleSection>
+        
+        {/* Vehicle status - collapsible, default closed */}
+        <CollapsibleSection 
+          title="Stan pojazdu" 
+          defaultOpen={false}
+          contentClassName="pt-4"
+        >
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            {vehicleStatusData.filter(({ value }) => value).map(({ label, value }) => (
+              <InfoRow key={label} label={label} value={value} isMobile={true} />
+            ))}
+          </div>
+        </CollapsibleSection>
+        
+        {/* Additional information - collapsible, default closed */}
+        <CollapsibleSection 
+          title="Informacje dodatkowe" 
+          defaultOpen={false}
+          contentClassName="pt-4"
+        >
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            {additionalInfo.filter(({ value }) => value).map(({ label, value }) => (
+              <InfoRow key={label} label={label} value={value} isMobile={true} />
+            ))}
+          </div>
+        </CollapsibleSection>
       </div>
-      
-      <h2 className="text-lg font-bold mb-4 text-black">
-        Stan pojazdu
-      </h2>
-      <div className="grid grid-cols-2 gap-2 text-sm mb-6">
-        {vehicleStatusData.filter(({ value }) => value).map(({ label, value }) => (
-          <InfoRow key={label} label={label} value={value} />
-        ))}
-      </div>
-      
-      <h2 className="text-lg font-bold mb-4 text-black">
-        Informacje dodatkowe
-      </h2>
-      <div className="grid grid-cols-2 gap-2 text-sm">
-        {additionalInfo.filter(({ value }) => value).map(({ label, value }) => (
-          <InfoRow key={label} label={label} value={value} />
-        ))}
-      </div>
-    </div>
+    </>
   );
 };
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Bell, CheckCircle, Trash2, Clock, User, Car, Mail, MessageSquare, CreditCard, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Bell, Clock, User, Car, Mail, MessageSquare, CreditCard, AlertTriangle } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { getNotificationIcon, getNotificationColor, formatNotificationDate } from '../../utils/NotificationTypes';
 import EmptyState from '../../components/ui/EmptyState';
@@ -86,10 +86,10 @@ const NotificationPage = () => {
   // Mapowanie ikon dla różnych typów powiadomień
   const getIconComponent = (type) => {
     const iconMap = {
-      'listing_added': CheckCircle,
+      'listing_added': Bell,
       'listing_expiring': Clock,
       'listing_expired': AlertTriangle,
-      'listing_status_changed': CheckCircle,
+      'listing_status_changed': Bell,
       'new_message': Mail,
       'new_comment': MessageSquare,
       'comment_reply': MessageSquare,
@@ -185,7 +185,7 @@ const NotificationPage = () => {
           disabled={isDeleting}
           className="inline-flex items-center px-4 py-2 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <Trash2 className="w-4 h-4 mr-2" />
+          <span className="w-4 h-4 mr-2 text-red-600">×</span>
           {isDeleting ? 'Usuwanie...' : 'Usuń'}
         </button>
       </div>

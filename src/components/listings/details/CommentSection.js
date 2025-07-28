@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Edit2, Flag, ThumbsUp, ThumbsDown } from 'lucide-react';
 import getImageUrl from '../../../utils/responsive/getImageUrl';
+import apiClient from '../../../services/api/client';
 
-const CommentSection = ({ comments = [], onAddComment, onEditComment, onSaveComment, userId, commentError }) => {
+const CommentSection = ({ comments = [], onAddComment, onEditComment, onSaveComment, userId, commentError, isWrapped = false }) => {
   const [newComment, setNewComment] = useState('');
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -28,12 +29,8 @@ const CommentSection = ({ comments = [], onAddComment, onEditComment, onSaveComm
     }
   };
 
-  return (
-    <div className="bg-white p-6 shadow-md rounded-sm">
-      <h2 className="text-xl md:text-2xl font-bold mb-6 text-black">
-        Komentarze
-      </h2>
-      
+  const content = (
+    <>
       {/* Lista komentarzy */}
       <div className="space-y-6">
         {comments.map((comment) => (
@@ -90,15 +87,14 @@ const CommentSection = ({ comments = [], onAddComment, onEditComment, onSaveComm
                   </button>
                   <button
                     onClick={async () => {
-                      const token = localStorage.getItem("token");
-                      await fetch(`http://localhost:5000/api/comments/${comment.id}`, {
-                        method: "DELETE",
-                        headers: {
-                          Authorization: token ? `Bearer ${token}` : "",
-                        },
-                      });
-                      // Odśwież komentarze po usunięciu
-                      if (typeof window !== "undefined") window.location.reload();
+                      try {
+                        await apiClient.delete(`/comments/${comment.id}`);
+                        // Odśwież komentarze po usunięciu
+                        if (typeof window !== "undefined") window.location.reload();
+                      } catch (error) {
+                        console.error('Błąd podczas usuwania komentarza:', error);
+                        alert('Nie udało się usunąć komentarza. Spróbuj ponownie.');
+                      }
                     }}
                     className="text-red-600 hover:text-red-700 transition-colors flex items-center gap-1"
                   >
@@ -109,14 +105,13 @@ const CommentSection = ({ comments = [], onAddComment, onEditComment, onSaveComm
               {comment.userId !== userId && (
                 <button
                   onClick={async () => {
-                    const token = localStorage.getItem("token");
-                    await fetch(`http://localhost:5000/api/comments/${comment.id}/report`, {
-                      method: "POST",
-                      headers: {
-                        Authorization: token ? `Bearer ${token}` : "",
-                      },
-                    });
-                    alert("Komentarz został zgłoszony do moderatora.");
+                    try {
+                      await apiClient.post(`/comments/${comment.id}/report`);
+                      alert("Komentarz został zgłoszony do moderatora.");
+                    } catch (error) {
+                      console.error('Błąd podczas zgłaszania komentarza:', error);
+                      alert('Nie udało się zgłosić komentarza. Spróbuj ponownie.');
+                    }
                   }}
                   className="text-red-600 hover:text-red-700 transition-colors flex items-center gap-1"
                 >
@@ -198,6 +193,20 @@ const CommentSection = ({ comments = [], onAddComment, onEditComment, onSaveComm
           </button>
         </div>
       </div>
+    </>
+  );
+
+  // If wrapped (mobile), return just content, otherwise wrap in container
+  if (isWrapped) {
+    return content;
+  }
+
+  return (
+    <div className="bg-white p-6 shadow-md rounded-sm">
+      <h2 className="text-xl md:text-2xl font-bold mb-6 text-black">
+        Komentarze
+      </h2>
+      {content}
     </div>
   );
 };

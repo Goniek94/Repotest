@@ -1,27 +1,28 @@
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { SidebarProvider } from './contexts/SidebarContext';
 import { ListingFormProvider } from './contexts/ListingFormContext';
 import { SocketProvider } from './contexts/SocketContext';
 import { MobileMenuProvider } from './contexts/MobileMenuContext';
-import { ToastContainer } from 'react-toastify';
 import ToastNotification from './components/notifications/ToastNotification';
 import 'react-toastify/dist/ReactToastify.css';
-import { safeConsole } from './utils/debug';
+
 // Komponenty główne, które zawsze ładujemy
 import Navigation from './components/Navigation/Navigation';
 import Footer from './components/Footer';
 import SearchFormUpdated from './components/search/SearchFormUpdated';
 import FeaturedListings from './components/FeaturedListings/FeaturedListings';
 import LoginModal from './components/auth/LoginModal';
+import LoadingSpinner from './components/LoadingSpinner';
+import PWAInstallButton from './components/PWAInstallButton';
 
 import { FavoritesProvider } from './FavoritesContext';
 import ScrollToTop from './ScrollToTop';
-import { clearAuthData } from './services/api/config';
 import ErrorBoundary from './components/ErrorBoundary';
-import { useAuth } from './contexts/AuthContext';
+// Import nowego ProtectedRoute
+import ProtectedRoute, { AdminRoute } from './components/ProtectedRoute';
 
 // Komponenty ładowane leniwie dla optymalizacji
 const ListingsPage = lazy(() => import('./components/ListingsView/ListingsPage'));
@@ -37,63 +38,6 @@ const ListingDetails = lazy(() => import('./components/listings/details/ListingD
 const AdminPanel = lazy(() => import('./components/admin/AdminPanel'));
 const UserProfileRoutes = lazy(() => import('./components/profil/UserProfileRoutes'));
 
-// Ulepszony komponent dla tras chronionych z ograniczeniem zapętlenia
-const ProtectedRoute = ({ children, requireAdmin = false }) => {
-  const { user, isAuthenticated, isLoading } = useAuth();
-  const location = useLocation();
-  
-  // Używamy useRef zamiast stanu, aby przechować informację o ostatnim sprawdzeniu
-  // bez powodowania ponownego renderowania
-  const lastCheckRef = React.useRef({
-    isAuthenticated: null,
-    userId: null,
-    path: null
-  });
-  
-  // Sprawdzamy, czy status uwierzytelnienia się zmienił
-  const hasAuthChanged = 
-    lastCheckRef.current.isAuthenticated !== isAuthenticated ||
-    lastCheckRef.current.userId !== (user?.userId || null) ||
-    lastCheckRef.current.path !== location.pathname;
-  
-  // Aktualizujemy referencję tylko gdy autentykacja się zmieniła
-  if (hasAuthChanged) {
-    lastCheckRef.current = {
-      isAuthenticated,
-      userId: user?.userId || null,
-      path: location.pathname
-    };
-    
-    // Logowanie tylko gdy faktycznie zmieniła się autentykacja lub ścieżka
-      safeConsole.log('ProtectedRoute sprawdzanie:', {
-      isAuthenticated,
-      user: !!user,
-      path: location.pathname
-    });
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-t-[#35530A] border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-gray-600">Ładowanie...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated || !user) {
-    safeConsole.log('Przekierowanie do logowania z:', location.pathname);
-    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
-  }
-
-  if (requireAdmin && user.role !== 'admin') {
-    return <Navigate to="/" replace />;
-  }
-
-  return children;
-};
 
 // Zawartość strony głównej
 const HomePageContent = () => (
@@ -146,14 +90,7 @@ const App = () => {
               <div className="flex flex-col min-h-screen">
               <Navigation />
               <main className="flex-grow">
-                <Suspense fallback={
-                  <div className="flex items-center justify-center min-h-screen">
-                    <div className="text-center">
-                      <div className="w-16 h-16 border-4 border-t-[#35530A] border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin mx-auto"></div>
-                      <p className="mt-4 text-gray-600">Ładowanie...</p>
-                    </div>
-                  </div>
-                }>
+                <Suspense fallback={<LoadingSpinner message="Ładowanie strony..." />}>
                 <Routes>
                 {/* Strona główna */}
                 <Route path="/" element={<HomePageContent />} />
@@ -214,9 +151,9 @@ const App = () => {
                 <Route
                   path="/admin"
                   element={
-                    <ProtectedRoute requireAdmin>
+                    <AdminRoute>
                       <AdminPanel />
-                    </ProtectedRoute>
+                    </AdminRoute>
                   }
                 />
 
@@ -249,6 +186,9 @@ const App = () => {
                 </Suspense>
               </main>
               <Footer />
+              
+              {/* PWA Install Button */}
+              <PWAInstallButton />
             </div>
             </ErrorBoundary>
           </Router>

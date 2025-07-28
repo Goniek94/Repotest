@@ -61,6 +61,7 @@ class NotificationService {
       this.socket.on('new_notification', (notification) => {
         debug('Otrzymano nowe powiadomienie:', notification);
         this._emitEvent('notification', notification);
+        this._emitEvent('new_notification', notification); // Dodajemy również oryginalny event
       });
 
       // Obsługa aktualizacji powiadomień
@@ -95,6 +96,36 @@ class NotificationService {
       this.socket = null;
       this.connected = false;
     }
+  }
+
+  /**
+   * Informuje serwer o wejściu do konwersacji
+   * @param {string} participantId - ID uczestnika konwersacji
+   * @param {string} conversationId - ID konwersacji (opcjonalne)
+   */
+  enterConversation(participantId, conversationId = null) {
+    if (!this.socket || !this.connected) {
+      console.warn('Brak połączenia z serwerem powiadomień');
+      return;
+    }
+
+    this.socket.emit('enter_conversation', { participantId, conversationId });
+    debug(`Weszedł do konwersacji z ${participantId}`);
+  }
+
+  /**
+   * Informuje serwer o wyjściu z konwersacji
+   * @param {string} participantId - ID uczestnika konwersacji
+   * @param {string} conversationId - ID konwersacji (opcjonalne)
+   */
+  leaveConversation(participantId, conversationId = null) {
+    if (!this.socket || !this.connected) {
+      console.warn('Brak połączenia z serwerem powiadomień');
+      return;
+    }
+
+    this.socket.emit('leave_conversation', { participantId, conversationId });
+    debug(`Wyszedł z konwersacji z ${participantId}`);
   }
 
   /**

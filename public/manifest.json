@@ -1,6 +1,7 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Marketplace",
+  "name": "Marketplace - Ogłoszenia Motoryzacyjne",
+  "description": "Najlepsze ogłoszenia motoryzacyjne w Polsce. Kup lub sprzedaj swój samochód szybko i bezpiecznie.",
   "icons": [
     {
       "src": "favicon.ico",
@@ -20,6 +21,35 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#35530A",
+  "background_color": "#ffffff",
+  "orientation": "portrait-primary",
+  "categories": ["automotive", "marketplace", "shopping"],
+  "lang": "pl",
+  "dir": "ltr",
+  "scope": "/",
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "Dodaj ogłoszenie",
+      "short_name": "Dodaj",
+      "description": "Szybko dodaj nowe ogłoszenie",
+      "url": "/create-listing",
+      "icons": [{ "src": "logo192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Przeglądaj ogłoszenia",
+      "short_name": "Przeglądaj",
+      "description": "Zobacz wszystkie ogłoszenia",
+      "url": "/listings",
+      "icons": [{ "src": "logo192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Mój profil",
+      "short_name": "Profil",
+      "description": "Zarządzaj swoim kontem",
+      "url": "/profil",
+      "icons": [{ "src": "logo192.png", "sizes": "192x192" }]
+    }
+  ]
 }

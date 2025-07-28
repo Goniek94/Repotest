@@ -49,19 +49,20 @@ const ChatHeader = ({
   }
 
   return (
-    <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 bg-white shadow-sm">
+    <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 bg-[#35530A] text-white shadow-sm">
       <div className="flex items-center">
-        {/* Przycisk powrotu na mobilnych ekranach */}
+        {/* Przycisk powrotu/zamknięcia - widoczny na desktop i mobile */}
         <button 
           onClick={onBack} 
-          className="p-1 rounded-full hover:bg-[#35530A] hover:bg-opacity-10 text-gray-500 hover:text-[#35530A] md:hidden"
+          className="p-1 rounded-full hover:bg-white hover:bg-opacity-20 text-white hover:text-white mr-2"
+          title="Zamknij konwersację"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
         
         {/* Avatar rozmówcy */}
         <div className="relative">
-          <div className="w-10 h-10 rounded-full bg-[#35530A] flex items-center justify-center text-white font-medium">
+          <div className="w-10 h-10 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-white font-medium">
             {conversation.sender?.name?.charAt(0).toUpperCase() || '?'}
           </div>
           
@@ -75,10 +76,10 @@ const ChatHeader = ({
         
         {/* Informacje o rozmówcy */}
         <div className="ml-3">
-          <h2 className="text-base font-medium text-gray-900">
+          <h2 className="text-base font-medium text-white">
             {conversation.sender?.name || 'Nieznany użytkownik'}
           </h2>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-white text-opacity-80">
             {conversation.sender?.lastSeen 
               ? `Ostatnio online: ${new Date(conversation.sender.lastSeen).toLocaleString('pl-PL', {
                   day: 'numeric', 
@@ -96,10 +97,10 @@ const ChatHeader = ({
         {/* Gwiazdka */}
         <button 
           onClick={() => onStar && onStar(conversation.id)}
-          className={`p-1.5 rounded-full hover:bg-[#35530A] hover:bg-opacity-10 ${
+          className={`p-1.5 rounded-full hover:bg-white hover:bg-opacity-20 ${
             conversation.isStarred 
-              ? 'text-[#35530A]' 
-              : 'text-gray-500 hover:text-[#35530A]'
+              ? 'text-yellow-300' 
+              : 'text-white hover:text-white'
           }`}
           title={conversation.isStarred ? 'Usuń z ważnych' : 'Oznacz jako ważne'}
         >
@@ -109,7 +110,7 @@ const ChatHeader = ({
         {/* Odpowiedz */}
         <button 
           onClick={() => onReply && onReply(conversation.id)}
-          className="p-1.5 rounded-full text-gray-500 hover:bg-[#35530A] hover:bg-opacity-10 hover:text-[#35530A]"
+          className="p-1.5 rounded-full text-white hover:bg-white hover:bg-opacity-20 hover:text-white"
           title="Odpowiedz"
         >
           <Reply className="w-5 h-5" />
@@ -119,7 +120,7 @@ const ChatHeader = ({
         <div className="relative" ref={menuRef}>
           <button 
             onClick={() => setShowActionMenu(!showActionMenu)}
-            className="p-1.5 rounded-full text-gray-500 hover:bg-[#35530A] hover:bg-opacity-10 hover:text-[#35530A]"
+            className="p-1.5 rounded-full text-white hover:bg-white hover:bg-opacity-20 hover:text-white"
             title="Więcej opcji"
           >
             <MoreVertical className="w-5 h-5" />
@@ -129,7 +130,7 @@ const ChatHeader = ({
             <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-20 py-1 border border-gray-200">
               {/* Archiwizuj */}
               <button 
-                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-[#35530A] hover:bg-opacity-10 hover:text-[#35530A] flex items-center"
+                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
                 onClick={() => {
                   onArchive && onArchive(conversation.id);
                   setShowActionMenu(false);
@@ -141,7 +142,7 @@ const ChatHeader = ({
               
               {/* Oznacz jako ważne */}
               <button 
-                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-[#35530A] hover:bg-opacity-10 hover:text-[#35530A] flex items-center"
+                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
                 onClick={() => {
                   onStar && onStar(conversation.id);
                   setShowActionMenu(false);
@@ -153,7 +154,7 @@ const ChatHeader = ({
               
               {/* Oznacz jako przeczytane */}
               <button 
-                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-[#35530A] hover:bg-opacity-10 hover:text-[#35530A] flex items-center"
+                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
                 onClick={() => {
                   onMarkAsRead && onMarkAsRead(conversation.id);
                   setShowActionMenu(false);
@@ -168,7 +169,7 @@ const ChatHeader = ({
               
               {/* Zgłoś */}
               <button 
-                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-[#35530A] hover:bg-opacity-10 hover:text-[#35530A] flex items-center"
+                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
                 onClick={() => {
                   onReport && onReport(conversation.id);
                   setShowActionMenu(false);

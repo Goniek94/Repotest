@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FaHome, FaList, FaHeart, FaUser, FaSignOutAlt, FaPlus, FaCog } from 'react-icons/fa';
+import { FaHome, FaList, FaHeart, FaUser, FaSignOutAlt, FaPlus, FaCog, FaEnvelope, FaBell } from 'react-icons/fa';
+import NotificationBadge from '../notifications/NotificationBadge';
 
 const MobileMenu = ({ 
   isOpen, 
@@ -74,17 +75,44 @@ const MobileMenu = ({
             <>
               <Link 
                 to="/profil"
+                className="flex items-center py-4 border-b border-gray-200 text-[#35530A]"
+                onClick={closeMenu}
+              >
+                <FaUser className="mr-3" /> MÓJ PROFIL
+              </Link>
+              
+              {/* Powiadomienia */}
+              <Link 
+                to="/profil/notifications"
                 className="flex items-center justify-between py-4 border-b border-gray-200 text-[#35530A]"
                 onClick={closeMenu}
               >
                 <div className="flex items-center">
-                  <FaUser className="mr-3" /> MÓJ PROFIL
+                  <FaBell className="mr-3" /> POWIADOMIENIA
                 </div>
-                {(notifications?.messages + notifications?.alerts > 0) && (
-                  <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                    {notifications.messages + notifications.alerts}
-                  </span>
-                )}
+                <NotificationBadge 
+                  count={notifications?.notifications || 0}
+                  type="notifications"
+                  size="sm"
+                  linkTo={null}
+                />
+              </Link>
+              
+              {/* Wiadomości */}
+              <Link 
+                to="/profil/messages"
+                className="flex items-center justify-between py-4 border-b border-gray-200 text-[#35530A]"
+                onClick={closeMenu}
+              >
+                <div className="flex items-center">
+                  <FaEnvelope className="mr-3" /> WIADOMOŚCI
+                </div>
+                <NotificationBadge 
+                  count={notifications?.messages || 0}
+                  type="messages"
+                  size="sm"
+                  linkTo={null}
+                />
               </Link>
               
               {user.role === 'admin' && (
