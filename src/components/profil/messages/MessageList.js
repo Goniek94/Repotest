@@ -37,8 +37,10 @@ const MessageList = memo(({
     if ((a.unreadCount > 0) !== (b.unreadCount > 0)) {
       return a.unreadCount > 0 ? -1 : 1;
     }
-    // Sortowanie według daty ostatniej wiadomości
-    return new Date(b.lastMessage.date) - new Date(a.lastMessage.date);
+    // Sortowanie według daty ostatniej wiadomości - bezpieczne tworzenie dat
+    const dateA = a.lastMessage?.date ? new Date(a.lastMessage.date) : new Date(0);
+    const dateB = b.lastMessage?.date ? new Date(b.lastMessage.date) : new Date(0);
+    return dateB - dateA;
   });
 
   // Formatowanie daty z względnym czasem

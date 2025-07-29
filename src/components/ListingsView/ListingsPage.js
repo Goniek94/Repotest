@@ -366,7 +366,7 @@ function ListingsPage() {
                       listing={listing}
                       onNavigate={() => navigateToListing(listing.id)}
                       onFavorite={() => toggleFavorite(listing.id)}
-                      isFavorite={favorites.includes(listing.id)}
+                      isFavorite={favorites.includes(String(listing.id))}
                       message={favMessages[listing.id]}
                     />
                   ) : (
@@ -375,7 +375,7 @@ function ListingsPage() {
                       listing={listing}
                       onNavigate={() => navigateToListing(listing.id)}
                       onFavorite={() => toggleFavorite(listing.id)}
-                      isFavorite={favorites.includes(listing.id)}
+                      isFavorite={favorites.includes(String(listing.id))}
                       message={favMessages[listing.id]}
                     />
                   );

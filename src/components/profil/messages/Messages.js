@@ -7,6 +7,7 @@ import useConversations from './hooks/useConversations';
 import { useAuth } from '../../../contexts/AuthContext';
 import { DEFAULT_FOLDER, FOLDER_MAP } from '../../../constants/messageFolders';
 import notificationService from '../../../services/notifications';
+import MessagesService from '../../../services/api/messages';
 import { Inbox, Send, Star, Archive, MessageCircle, ArrowLeft } from 'lucide-react';
 import useBreakpoint from '../../../utils/responsive/useBreakpoint';
 
@@ -177,40 +178,77 @@ const Messages = memo(() => {
     
     setDesktopLoading(true);
     try {
-      // Tutaj będzie wywołanie API do pobrania wiadomości
-      // Na razie używamy mock danych
-      const mockMessages = [
-        {
-          id: '1',
-          content: 'Cześć! Interesuje mnie Twoje ogłoszenie.',
-          sender: { id: 'other', name: 'Mateusz' },
-          createdAt: new Date(Date.now() - 3600000).toISOString(),
-          isRead: true
-        },
-        {
-          id: '2', 
-          content: 'Dzień dobry! Oczywiście, chętnie odpowiem na pytania.',
-          sender: { id: user?._id, name: user?.name },
-          createdAt: new Date(Date.now() - 3000000).toISOString(),
-          isRead: true
-        },
-        {
-          id: '3',
-          content: 'Czy auto jest w dobrym stanie technicznym?',
-          sender: { id: 'other', name: 'Mateusz' },
-          createdAt: new Date(Date.now() - 1800000).toISOString(),
-          isRead: true
-        }
-      ];
+      // Znajdź konwersację w liście
+      const conversation = conversations.find(c => c.id === conversationId || c._id === conversationId);
+      if (!conversation) {
+        console.error('Nie znaleziono konwersacji:', conversationId);
+        return;
+      }
+
+      // Użyj tego samego API co hook useConversations
+      const response = await MessagesService.getConversation(conversation.userId);
       
-      setDesktopChatMessages(mockMessages);
+      console.log('Otrzymana odpowiedź z API dla desktop wiadomości:', response);
+      
+      if (!response) {
+        console.error('Brak odpowiedzi przy pobieraniu wiadomości');
+        throw new Error('Nie udało się pobrać wiadomości z konwersacji');
+      }
+      
+      let allMessages = [];
+      
+      // Obsługa różnych formatów odpowiedzi - taka sama jak w useConversations
+      if (response.conversations) {
+        console.log('Format odpowiedzi: grupowanie według ogłoszeń');
+        Object.values(response.conversations).forEach(convo => {
+          if (convo.messages && Array.isArray(convo.messages)) {
+            allMessages = [...allMessages, ...convo.messages];
+          }
+        });
+      } else if (Array.isArray(response)) {
+        console.log('Format odpowiedzi: bezpośrednia tablica wiadomości');
+        allMessages = response;
+      } else if (response.messages && Array.isArray(response.messages)) {
+        console.log('Format odpowiedzi: wiadomości w property messages');
+        allMessages = response.messages;
+      } else if (response.data && Array.isArray(response.data)) {
+        console.log('Format odpowiedzi: wiadomości w property data');
+        allMessages = response.data;
+      }
+      
+      console.log('Wszystkie wiadomości przed formatowaniem (desktop):', allMessages);
+      
+      // Formatowanie wiadomości do jednolitego formatu - zgodne z MessageChat
+      const formattedChatMessages = allMessages.map(msg => ({
+        id: msg._id,
+        sender: msg.sender?._id || msg.sender,
+        senderName: msg.sender?.name || 'Nieznany użytkownik',
+        content: msg.content || '',
+        timestamp: msg.createdAt || msg.date 
+          ? new Date(msg.createdAt || msg.date)
+          : new Date(),
+        isRead: msg.read || false,
+        isDelivered: true,
+        isDelivering: false,
+        attachments: (msg.attachments || []).map(att => ({
+          id: att._id,
+          name: att.name || att.originalname || 'Załącznik',
+          url: att.path || att.url,
+          type: att.mimetype || att.type || 'application/octet-stream'
+        }))
+      }));
+      
+      // Sortowanie wiadomości według czasu
+      formattedChatMessages.sort((a, b) => a.timestamp - b.timestamp);
+      
+      setDesktopChatMessages(formattedChatMessages);
     } catch (error) {
       console.error('Błąd podczas ładowania wiadomości:', error);
       showNotification('Nie udało się załadować wiadomości', 'error');
     } finally {
       setDesktopLoading(false);
     }
-  }, [user?._id, showNotification]);
+  }, [conversations, showNotification]);
 
   // Obsługa wyboru konwersacji z automatycznym przejściem do czatu na mobile
   const handleSelectConversation = useCallback((conversation) => {
@@ -332,6 +370,9 @@ const Messages = memo(() => {
     loading,
     conversations,
     selectedConversation?.id,
+    desktopSelectedConversation?.id,
+    desktopSelectedConversation?._id,
+    isMobileOrTablet,
     handleSelectConversation,
     handleStar,
     handleDelete,
@@ -499,26 +540,24 @@ const Messages = memo(() => {
           </div>
 
           {/* DESKTOP - Układ z bocznym panelem */}
-          <div className="hidden xl:flex h-[80vh] flex-col">
+          <div className="hidden lg:flex bg-white rounded-lg shadow-lg overflow-hidden" style={{ height: '600px' }}>
             {/* Zielony nagłówek na pełną szerokość */}
-            <div className="bg-[#35530A] text-white p-6 rounded-t-lg">
+            <div className="absolute top-0 left-0 right-0 bg-[#35530A] text-white p-4 z-10">
               <div className="flex items-center gap-3">
-                <MessageCircle className="w-7 h-7" />
+                <MessageCircle className="w-6 h-6" />
                 <div>
-                  <h1 className="text-2xl font-bold">Wiadomości</h1>
+                  <h1 className="text-xl font-bold">Wiadomości</h1>
                   {totalUnreadCount > 0 && (
-                    <p className="text-sm opacity-90 mt-1">
-                      <span className="bg-white bg-opacity-20 px-3 py-1 rounded-full text-sm font-medium">
-                        {totalUnreadCount} nieprzeczytanych
-                      </span>
-                    </p>
+                    <span className="bg-white bg-opacity-20 px-2 py-1 rounded-full text-xs font-medium ml-2">
+                      {totalUnreadCount} nieprzeczytanych
+                    </span>
                   )}
                 </div>
               </div>
             </div>
 
             {/* Główna zawartość - 3 kolumny: Kategorie | Lista konwersacji | Czat */}
-            <div className="flex flex-1">
+            <div className="flex w-full" style={{ marginTop: '80px', height: 'calc(100% - 80px)' }}>
               {/* Lewy panel kategorii - zawsze widoczny */}
               <div className="w-64 flex flex-col bg-gray-50 border-r border-gray-200">
                 <div className="p-4 overflow-y-auto">

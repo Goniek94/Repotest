@@ -19,18 +19,10 @@ export const SocketProvider = ({ children }) => {
     const initializeSocket = async () => {
       try {
         if (isAuthenticated && user) {
-          // Pobierz token z localStorage lub cookies
-          const token = document.cookie.match(/(?:^|; )token=([^;]*)/)?.[1] || null;
-          
-          if (!token) {
-            console.warn('Brak tokenu JWT, nie można nawiązać połączenia WebSocket');
-            return;
-          }
-          
-          // Inicjalizacja socketa
+          // Inicjalizacja socketa - backend automatycznie odczyta token z HttpOnly cookies
           const serverUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
           socketInstance = io(serverUrl, {
-            auth: { token },
+            withCredentials: true, // Ważne: wysyła HttpOnly cookies
             reconnection: true,
             reconnectionAttempts: 5,
             reconnectionDelay: 3000
@@ -92,8 +84,8 @@ export const SocketProvider = ({ children }) => {
           // Ustawienie socketa w stanie
           setSocket(socketInstance);
           
-          // Połącz z serwerem powiadomień
-          await notificationService.connect(token);
+          // Połącz z serwerem powiadomień - używa cookies automatycznie
+          await notificationService.connect();
         }
       } catch (error) {
         console.error('Błąd inicjalizacji Socket.io:', error);

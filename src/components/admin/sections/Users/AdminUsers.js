@@ -11,8 +11,6 @@ import useAdminNotifications from '../../hooks/useAdminNotifications';
 
 const AdminUsers = () => {
   const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -34,7 +32,18 @@ const AdminUsers = () => {
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [bulkLoading, setBulkLoading] = useState(false);
 
-  const { get, post, put, del } = useAdminApi();
+  const { 
+    getUsers, 
+    getUserById, 
+    createUser, 
+    updateUser, 
+    deleteUser, 
+    toggleUserBlock, 
+    bulkUpdateUsers, 
+    exportUsers,
+    loading, 
+    error 
+  } = useAdminApi();
   const { showSuccess, showError } = useAdminNotifications();
 
   // Fetch users
@@ -44,9 +53,6 @@ const AdminUsers = () => {
 
   const fetchUsers = async () => {
     try {
-      setLoading(true);
-      setError(null);
-
       const params = {
         page: pagination.currentPage,
         limit: pagination.pageSize,
@@ -54,23 +60,21 @@ const AdminUsers = () => {
         ...filters
       };
 
-      const response = await get('/users', params);
+      const response = await getUsers(params);
       
       if (response.success) {
-        setUsers(response.data.users);
+        setUsers(response.data.users || []);
         setPagination(prev => ({
           ...prev,
-          totalItems: response.data.total,
-          totalPages: response.data.totalPages
+          totalItems: response.data.pagination?.totalCount || 0,
+          totalPages: response.data.pagination?.totalPages || 0
         }));
       } else {
-        throw new Error(response.error);
+        showError('Nie udało się załadować użytkowników');
       }
     } catch (err) {
-      setError(err.message);
+      console.error('Fetch users error:', err);
       showError('Nie udało się załadować użytkowników');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -94,18 +98,20 @@ const AdminUsers = () => {
   };
 
   const handleDeleteUser = async (userId) => {
-    if (!window.confirm('Czy na pewno chcesz usunąć tego użytkownika?')) {
+    const reason = window.prompt('Podaj powód usunięcia użytkownika (minimum 10 znaków):');
+    if (!reason || reason.trim().length < 10) {
+      showError('Powód usunięcia musi mieć minimum 10 znaków');
       return;
     }
 
     try {
-      const response = await del(`/users/${userId}`);
+      const response = await deleteUser(userId, reason);
       
       if (response.success) {
         showSuccess('Użytkownik został usunięty');
         fetchUsers();
       } else {
-        throw new Error(response.error);
+        showError('Nie udało się usunąć użytkownika');
       }
     } catch (err) {
       showError('Nie udało się usunąć użytkownika');
@@ -114,45 +120,33 @@ const AdminUsers = () => {
 
   const handleUserAction = async (userId, action) => {
     try {
-      let endpoint;
+      let response;
       let successMessage;
 
       switch (action) {
-        case 'activate':
-          endpoint = `/users/${userId}/activate`;
-          successMessage = 'Użytkownik został aktywowany';
-          break;
-        case 'deactivate':
-          endpoint = `/users/${userId}/deactivate`;
-          successMessage = 'Użytkownik został dezaktywowany';
-          break;
-        case 'verify':
-          endpoint = `/users/${userId}/verify`;
-          successMessage = 'Użytkownik został zweryfikowany';
-          break;
         case 'block':
-          endpoint = `/users/${userId}/block`;
+          const reason = window.prompt('Podaj powód blokady (minimum 10 znaków):');
+          if (!reason || reason.trim().length < 10) {
+            showError('Powód blokady musi mieć minimum 10 znaków');
+            return;
+          }
+          response = await toggleUserBlock(userId, true, reason);
           successMessage = 'Użytkownik został zablokowany';
           break;
         case 'unblock':
-          endpoint = `/users/${userId}/unblock`;
+          response = await toggleUserBlock(userId, false);
           successMessage = 'Użytkownik został odblokowany';
           break;
-        case 'reset_password':
-          endpoint = `/users/${userId}/reset-password`;
-          successMessage = 'Link do resetowania hasła został wysłany';
-          break;
         default:
-          throw new Error('Nieznana akcja');
+          showError('Nieznana akcja');
+          return;
       }
-
-      const response = await post(endpoint);
       
       if (response.success) {
         showSuccess(successMessage);
         fetchUsers();
       } else {
-        throw new Error(response.error);
+        showError('Nie udało się wykonać akcji');
       }
     } catch (err) {
       showError('Nie udało się wykonać akcji');
@@ -174,17 +168,15 @@ const AdminUsers = () => {
     try {
       setBulkLoading(true);
       
-      const response = await post('/users/bulk-action', {
-        userIds: selectedUsers,
-        action: action
-      });
+      const updateData = { action };
+      const response = await bulkUpdateUsers(selectedUsers, updateData);
       
       if (response.success) {
         showSuccess(`Akcja została wykonana na ${selectedUsers.length} użytkownikach`);
         setSelectedUsers([]);
         fetchUsers();
       } else {
-        throw new Error(response.error);
+        showError('Nie udało się wykonać akcji zbiorczej');
       }
     } catch (err) {
       showError('Nie udało się wykonać akcji zbiorczej');
@@ -199,9 +191,9 @@ const AdminUsers = () => {
       let response;
       
       if (modalMode === 'create') {
-        response = await post('/users', userData);
+        response = await createUser(userData);
       } else if (modalMode === 'edit') {
-        response = await put(`/users/${selectedUser.id}`, userData);
+        response = await updateUser(selectedUser.id, userData);
       }
       
       if (response.success) {
@@ -209,7 +201,7 @@ const AdminUsers = () => {
         setShowModal(false);
         fetchUsers();
       } else {
-        throw new Error(response.error);
+        showError('Nie udało się zapisać użytkownika');
       }
     } catch (err) {
       showError('Nie udało się zapisać użytkownika');
@@ -217,27 +209,14 @@ const AdminUsers = () => {
   };
 
   // Handle export
-  const handleExport = async (format = 'csv') => {
+  const handleExport = async (format = 'json') => {
     try {
-      const response = await get('/users/export', { format, ...filters });
+      const response = await exportUsers(format, filters);
       
       if (response.success) {
-        // Trigger download
-        const blob = new Blob([response.data], { 
-          type: format === 'csv' ? 'text/csv' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
-        });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `users.${format}`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        
         showSuccess('Dane zostały wyeksportowane');
       } else {
-        throw new Error(response.error);
+        showError('Nie udało się wyeksportować danych');
       }
     } catch (err) {
       showError('Nie udało się wyeksportować danych');

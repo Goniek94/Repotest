@@ -14,24 +14,18 @@ class NotificationService {
 
   /**
    * Inicjalizuje połączenie Socket.IO
-   * @param {string} token - Token JWT do uwierzytelnienia
    * @returns {Promise} - Promise rozwiązywane po nawiązaniu połączenia
    */
-  connect(token) {
+  connect() {
     return new Promise((resolve, reject) => {
-      if (!token) {
-        reject(new Error('Brak tokenu uwierzytelniającego'));
-        return;
-      }
-
       // Jeśli już jest połączenie, rozłącz je
       if (this.socket) {
         this.socket.disconnect();
       }
 
-      // Inicjalizacja Socket.IO
+      // Inicjalizacja Socket.IO - używa HttpOnly cookies automatycznie
       this.socket = io(this.serverUrl, {
-        auth: { token },
+        withCredentials: true, // Ważne: wysyła HttpOnly cookies
         reconnection: true,
         reconnectionAttempts: 5,
         reconnectionDelay: 3000

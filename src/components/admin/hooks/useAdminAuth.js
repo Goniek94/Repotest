@@ -11,56 +11,46 @@ const useAdminAuth = () => {
     const checkAuth = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem('admin_token');
         
-        if (!token) {
-          setIsAuthenticated(false);
-          setUser(null);
-          return;
-        }
-
-        // Try to verify token with backend
+        // Try to verify authentication with backend using HttpOnly cookies
         try {
           const response = await fetch('/api/admin-panel/health', {
+            credentials: 'include', // Ważne: wysyła HttpOnly cookies
             headers: {
-              'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             }
           });
 
           if (response.ok) {
-            // Token is valid, create mock user for now
-            const mockUser = {
-              id: 1,
-              name: 'Administrator',
-              email: 'admin@example.com',
-              role: 'admin',
-              permissions: ['*'],
-              token: token
-            };
-            
-            setUser(mockUser);
-            setIsAuthenticated(true);
+            // User is authenticated, get user data
+            const userResponse = await fetch('/api/v1/users/check', {
+              credentials: 'include',
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            });
+
+            if (userResponse.ok) {
+              const userData = await userResponse.json();
+              if (userData.success && userData.user && ['admin', 'moderator'].includes(userData.user.role)) {
+                setUser(userData.user);
+                setIsAuthenticated(true);
+              } else {
+                setIsAuthenticated(false);
+                setUser(null);
+              }
+            } else {
+              setIsAuthenticated(false);
+              setUser(null);
+            }
           } else {
-            // Token invalid, remove it
-            localStorage.removeItem('admin_token');
             setIsAuthenticated(false);
             setUser(null);
           }
         } catch (apiError) {
-          // API not available, but token exists - allow access for development
-          console.warn('Admin API not available, using mock authentication');
-          const mockUser = {
-            id: 1,
-            name: 'Administrator',
-            email: 'admin@example.com',
-            role: 'admin',
-            permissions: ['*'],
-            token: token
-          };
-          
-          setUser(mockUser);
-          setIsAuthenticated(true);
+          console.warn('Admin API check failed:', apiError);
+          setIsAuthenticated(false);
+          setUser(null);
         }
       } catch (err) {
         setError(err.message);
@@ -74,14 +64,16 @@ const useAdminAuth = () => {
     checkAuth();
   }, []);
 
-  // Login function
+  // Login function - używa zwykłego logowania, nie osobnego admin logowania
   const login = useCallback(async (credentials) => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/admin/auth/login', {
+      // Używamy zwykłego endpointu logowania
+      const response = await fetch('/api/v1/users/login', {
         method: 'POST',
+        credentials: 'include', // Ważne: odbiera HttpOnly cookies
         headers: {
           'Content-Type': 'application/json'
         },
@@ -95,8 +87,10 @@ const useAdminAuth = () => {
 
       const data = await response.json();
       
-      // Store token
-      localStorage.setItem('admin_token', data.token);
+      // Sprawdź czy użytkownik ma uprawnienia admin
+      if (!data.user || !['admin', 'moderator'].includes(data.user.role)) {
+        throw new Error('Brak uprawnień administratora');
+      }
       
       // Set user data
       setUser(data.user);
@@ -111,26 +105,20 @@ const useAdminAuth = () => {
     }
   }, []);
 
-  // Logout function
+  // Logout function - używa zwykłego wylogowania
   const logout = useCallback(async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('admin_token');
 
-      if (token) {
-        // Call logout API
-        await fetch('/api/admin/auth/logout', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-      }
+      // Call logout API - używa zwykłego endpointu
+      await fetch('/api/v1/users/logout', {
+        method: 'POST',
+        credentials: 'include', // Ważne: wysyła HttpOnly cookies
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
 
-      // Clear local storage
-      localStorage.removeItem('admin_token');
-      
       // Reset state
       setUser(null);
       setIsAuthenticated(false);
@@ -138,7 +126,6 @@ const useAdminAuth = () => {
     } catch (err) {
       console.error('Logout error:', err);
       // Force logout locally even if API call fails
-      localStorage.removeItem('admin_token');
       setUser(null);
       setIsAuthenticated(false);
     } finally {
@@ -149,12 +136,9 @@ const useAdminAuth = () => {
   // Refresh user data
   const refreshUser = useCallback(async () => {
     try {
-      const token = localStorage.getItem('admin_token');
-      if (!token) return;
-
-      const response = await fetch('/api/admin/auth/me', {
+      const response = await fetch('/api/v1/users/check', {
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
@@ -163,8 +147,12 @@ const useAdminAuth = () => {
         throw new Error('Failed to refresh user data');
       }
 
-      const userData = await response.json();
-      setUser(userData);
+      const data = await response.json();
+      if (data.success && data.user) {
+        setUser(data.user);
+      } else {
+        throw new Error('Invalid user data');
+      }
     } catch (err) {
       console.error('Refresh user error:', err);
       // If refresh fails, logout user
@@ -175,13 +163,10 @@ const useAdminAuth = () => {
   // Update user profile
   const updateProfile = useCallback(async (profileData) => {
     try {
-      const token = localStorage.getItem('admin_token');
-      if (!token) throw new Error('No authentication token');
-
-      const response = await fetch('/api/admin/auth/profile', {
+      const response = await fetch('/api/v1/users/profile', {
         method: 'PUT',
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(profileData)
@@ -192,10 +177,13 @@ const useAdminAuth = () => {
         throw new Error(errorData.message || 'Profile update failed');
       }
 
-      const updatedUser = await response.json();
-      setUser(updatedUser);
-      
-      return { success: true, user: updatedUser };
+      const data = await response.json();
+      if (data.success && data.user) {
+        setUser(data.user);
+        return { success: true, user: data.user };
+      } else {
+        throw new Error('Profile update failed');
+      }
     } catch (err) {
       setError(err.message);
       return { success: false, error: err.message };
@@ -205,13 +193,10 @@ const useAdminAuth = () => {
   // Change password
   const changePassword = useCallback(async (passwordData) => {
     try {
-      const token = localStorage.getItem('admin_token');
-      if (!token) throw new Error('No authentication token');
-
-      const response = await fetch('/api/admin/auth/change-password', {
+      const response = await fetch('/api/v1/users/change-password', {
         method: 'POST',
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(passwordData)
@@ -231,8 +216,23 @@ const useAdminAuth = () => {
 
   // Check if user has specific permission
   const hasPermission = useCallback((permission) => {
-    if (!user || !user.permissions) return false;
-    return user.permissions.includes(permission) || user.role === 'admin';
+    if (!user || !user.role) return false;
+    
+    // Admin ma wszystkie uprawnienia
+    if (user.role === 'admin') return true;
+    
+    // Moderator ma ograniczone uprawnienia
+    if (user.role === 'moderator') {
+      const moderatorPermissions = [
+        'view_users',
+        'moderate_content',
+        'view_reports',
+        'manage_listings'
+      ];
+      return moderatorPermissions.includes(permission);
+    }
+    
+    return false;
   }, [user]);
 
   return {

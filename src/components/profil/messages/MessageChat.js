@@ -134,8 +134,9 @@ const MessageChat = memo(({
     const groups = {};
     
     messages.forEach(message => {
-      // Pobierz datę w formacie YYYY-MM-DD
-      const date = new Date(message.timestamp).toISOString().split('T')[0];
+      // Pobierz datę w formacie YYYY-MM-DD - bezpieczne tworzenie daty
+      const messageDate = message.timestamp ? new Date(message.timestamp) : new Date();
+      const date = messageDate.toISOString().split('T')[0];
       
       if (!groups[date]) {
         groups[date] = [];
@@ -360,14 +361,18 @@ const MessageChat = memo(({
         </div>
       )}
 
-      {/* Główny kontener wiadomości */}
+      {/* Główny kontener wiadomości - messenger style scrolling */}
       <div 
         ref={chatContainerRef}
-        className="flex-1 overflow-y-auto p-4 bg-gray-50"
+        className="flex-1 overflow-y-auto p-4 bg-gray-50 scroll-smooth"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        style={{ paddingTop: isRefreshing ? '50px' : '16px' }}
+        style={{ 
+          paddingTop: isRefreshing ? '50px' : '16px',
+          scrollBehavior: 'smooth',
+          WebkitOverflowScrolling: 'touch' // Smooth scrolling na iOS
+        }}
       >
         {/* Grupowanie wiadomości według daty */}
         {groupedMessages.map(group => (

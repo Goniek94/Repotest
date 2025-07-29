@@ -1,42 +1,42 @@
 import React, { useState, useEffect } from 'react';
 import { Users, FileText, TrendingUp, AlertCircle, Eye, MessageSquare, Star, DollarSign } from 'lucide-react';
 import { useAuth } from '../../../../contexts/AuthContext';
+import useAdminApi from '../../hooks/useAdminApi';
 
 const AdminDashboard = () => {
-  const { user, token } = useAuth();
+  const { user } = useAuth();
+  const { getDashboardStats, loading, error } = useAdminApi();
   const [dashboardData, setDashboardData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
-  // Fetch real dashboard data from API
+  // Fetch real dashboard data from API using new hook
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        setLoading(true);
-        setError(null);
-
-        const response = await fetch('http://localhost:5000/api/admin/dashboard/stats', {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
+        const result = await getDashboardStats();
         
         if (result.success) {
           setDashboardData(result.data);
         } else {
-          throw new Error(result.error || 'Nie udało się pobrać danych');
+          console.error('Dashboard fetch error:', result.error);
+          // Fallback data in case of error
+          setDashboardData({
+            stats: {
+              totalUsers: 0,
+              totalListings: 0,
+              pendingReports: 0,
+              totalRevenue: 0
+            },
+            trends: {
+              users: 'Błąd ładowania',
+              listings: 'Błąd ładowania',
+              reports: 'Błąd ładowania',
+              revenue: 'Błąd ładowania'
+            },
+            recentActivity: []
+          });
         }
       } catch (err) {
         console.error('Dashboard fetch error:', err);
-        setError(err.message);
         // Fallback data in case of error
         setDashboardData({
           stats: {
@@ -53,15 +53,13 @@ const AdminDashboard = () => {
           },
           recentActivity: []
         });
-      } finally {
-        setLoading(false);
       }
     };
 
-    if (user && token) {
+    if (user) {
       fetchDashboardData();
     }
-  }, [user, token]);
+  }, [user, getDashboardStats]);
 
   const StatCard = ({ title, value, icon: Icon, trend, color = 'green' }) => (
     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">

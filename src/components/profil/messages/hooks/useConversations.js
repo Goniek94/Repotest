@@ -138,7 +138,9 @@ const useConversations = (activeTab) => {
           userName: userInfo.name || userInfo.email || 'Nieznany użytkownik',
           lastMessage: {
             content: conversation.lastMessage?.content || '',
-            date: new Date(conversation.lastMessage?.createdAt || conversation.lastMessage?.date || Date.now()),
+            date: conversation.lastMessage?.createdAt || conversation.lastMessage?.date 
+              ? new Date(conversation.lastMessage.createdAt || conversation.lastMessage.date)
+              : new Date(),
             isRead: conversation.lastMessage?.read || false,
           },
           unreadCount: conversation.unreadCount || 0,
@@ -245,23 +247,25 @@ const useConversations = (activeTab) => {
       
       console.log('Wszystkie wiadomości przed formatowaniem:', allMessages);
       
-      // Formatowanie wiadomości do jednolitego formatu
-      const formattedChatMessages = allMessages.map(msg => ({
-        id: msg._id,
-        sender: msg.sender?._id || msg.sender,
-        senderName: msg.sender?.name || 'Nieznany użytkownik',
-        content: msg.content || '',
-        timestamp: new Date(msg.createdAt || msg.date || Date.now()),
-        isRead: msg.read || false,
-        isDelivered: true,
-        isDelivering: false,
-        attachments: (msg.attachments || []).map(att => ({
-          id: att._id,
-          name: att.name || att.originalname || 'Załącznik',
-          url: att.path || att.url,
-          type: att.mimetype || att.type || 'application/octet-stream'
-        }))
-      }));
+        // Formatowanie wiadomości do jednolitego formatu
+        const formattedChatMessages = allMessages.map(msg => ({
+          id: msg._id,
+          sender: msg.sender?._id || msg.sender,
+          senderName: msg.sender?.name || 'Nieznany użytkownik',
+          content: msg.content || '',
+          timestamp: msg.createdAt || msg.date 
+            ? new Date(msg.createdAt || msg.date)
+            : new Date(),
+          isRead: msg.read || false,
+          isDelivered: true,
+          isDelivering: false,
+          attachments: (msg.attachments || []).map(att => ({
+            id: att._id,
+            name: att.name || att.originalname || 'Załącznik',
+            url: att.path || att.url,
+            type: att.mimetype || att.type || 'application/octet-stream'
+          }))
+        }));
       
       // Sortowanie wiadomości według czasu
       formattedChatMessages.sort((a, b) => a.timestamp - b.timestamp);
@@ -442,7 +446,9 @@ const useConversations = (activeTab) => {
             userName: conversation.user?.name || conversation.user?.email || 'Nieznany użytkownik',
             lastMessage: {
               content: conversation.lastMessage?.content || '',
-              date: new Date(conversation.lastMessage?.createdAt || conversation.lastMessage?.date || Date.now()),
+              date: conversation.lastMessage?.createdAt || conversation.lastMessage?.date 
+                ? new Date(conversation.lastMessage.createdAt || conversation.lastMessage.date)
+                : new Date(),
               isRead: conversation.lastMessage?.read || false,
             },
             unreadCount: conversation.unreadCount || 0,

@@ -187,8 +187,8 @@ const useAdminNotifications = () => {
   // Persistence (localStorage)
   const saveToStorage = useCallback(() => {
     try {
-      localStorage.setItem('admin_notifications', JSON.stringify(notifications));
-      localStorage.setItem('admin_notifications_unread', unreadCount.toString());
+      // Powiadomienia są teraz zarządzane przez backend i cookies
+      // Nie przechowujemy ich w localStorage
     } catch (err) {
       console.warn('Failed to save notifications to localStorage:', err);
     }

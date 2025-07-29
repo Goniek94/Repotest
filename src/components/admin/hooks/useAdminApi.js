@@ -4,25 +4,15 @@ const useAdminApi = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Get auth token from localStorage
-  const getAuthToken = () => {
-    return localStorage.getItem('admin_token');
-  };
-
-  // Base API call function
+  // Base API call function - używa HttpOnly cookies
   const apiCall = useCallback(async (endpoint, options = {}) => {
     try {
       setLoading(true);
       setError(null);
 
-      const token = getAuthToken();
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
       const defaultOptions = {
+        credentials: 'include', // Ważne: wysyła HttpOnly cookies
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
           ...options.headers
         }
@@ -95,11 +85,6 @@ const useAdminApi = () => {
       setLoading(true);
       setError(null);
 
-      const token = getAuthToken();
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
       const formData = new FormData();
       formData.append('file', file);
       
@@ -110,10 +95,8 @@ const useAdminApi = () => {
 
       const response = await fetch(`/api/admin-panel${endpoint}`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-          // Don't set Content-Type for FormData
-        },
+        credentials: 'include', // Ważne: wysyła HttpOnly cookies
+        // Don't set Content-Type for FormData
         body: formData
       });
 
@@ -138,16 +121,9 @@ const useAdminApi = () => {
       setLoading(true);
       setError(null);
 
-      const token = getAuthToken();
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
       const response = await fetch(`/api/admin-panel${endpoint}`, {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        credentials: 'include' // Ważne: wysyła HttpOnly cookies
       });
 
       if (!response.ok) {
@@ -241,14 +217,148 @@ const useAdminApi = () => {
     setError(null);
   }, []);
 
-  // Check if token exists
-  const isAuthenticated = useCallback(() => {
-    return !!getAuthToken();
+  // Check if authenticated by trying to access admin endpoint
+  const isAuthenticated = useCallback(async () => {
+    try {
+      const response = await fetch('/api/admin-panel/health', {
+        credentials: 'include'
+      });
+      return response.ok;
+    } catch {
+      return false;
+    }
   }, []);
+
+  // Specific API methods for admin panel
+
+  // Dashboard methods
+  const getDashboardStats = useCallback(async () => {
+    return get('/dashboard');
+  }, [get]);
+
+  // User management methods
+  const getUsers = useCallback(async (params = {}) => {
+    return get('/users', params);
+  }, [get]);
+
+  const getUserById = useCallback(async (userId) => {
+    return get(`/users/${userId}`);
+  }, [get]);
+
+  const createUser = useCallback(async (userData) => {
+    return post('/users', userData);
+  }, [post]);
+
+  const updateUser = useCallback(async (userId, userData) => {
+    return put(`/users/${userId}`, userData);
+  }, [put]);
+
+  const deleteUser = useCallback(async (userId, reason) => {
+    return del(`/users/${userId}`, { reason });
+  }, [del]);
+
+  const toggleUserBlock = useCallback(async (userId, blocked, reason = '') => {
+    return post(`/users/${userId}/block`, { blocked, reason });
+  }, [post]);
+
+  const bulkUpdateUsers = useCallback(async (userIds, updateData) => {
+    return post('/users/bulk-update', { userIds, updateData });
+  }, [post]);
+
+  const getUserAnalytics = useCallback(async (timeframe = '30d') => {
+    return get('/users/analytics', { timeframe });
+  }, [get]);
+
+  const exportUsers = useCallback(async (format = 'json', filters = {}) => {
+    return downloadFile(`/users/export?format=${format}&${new URLSearchParams(filters).toString()}`, `users.${format}`);
+  }, [downloadFile]);
+
+  // Listing management methods
+  const getListings = useCallback(async (params = {}) => {
+    return get('/listings', params);
+  }, [get]);
+
+  const getListingById = useCallback(async (listingId) => {
+    return get(`/listings/${listingId}`);
+  }, [get]);
+
+  const updateListing = useCallback(async (listingId, listingData) => {
+    return put(`/listings/${listingId}`, listingData);
+  }, [put]);
+
+  const deleteListing = useCallback(async (listingId, reason) => {
+    return del(`/listings/${listingId}`, { reason });
+  }, [del]);
+
+  const approveListing = useCallback(async (listingId) => {
+    return post(`/listings/${listingId}/approve`);
+  }, [post]);
+
+  const rejectListing = useCallback(async (listingId, reason) => {
+    return post(`/listings/${listingId}/reject`, { reason });
+  }, [post]);
+
+  // Report management methods
+  const getReports = useCallback(async (params = {}) => {
+    return get('/reports', params);
+  }, [get]);
+
+  const getReportById = useCallback(async (reportId) => {
+    return get(`/reports/${reportId}`);
+  }, [get]);
+
+  const updateReportStatus = useCallback(async (reportId, status, resolution = '') => {
+    return put(`/reports/${reportId}`, { status, resolution });
+  }, [put]);
+
+  const resolveReport = useCallback(async (reportId, resolution) => {
+    return post(`/reports/${reportId}/resolve`, { resolution });
+  }, [post]);
+
+  // Promotion management methods
+  const getPromotions = useCallback(async (params = {}) => {
+    return get('/promotions', params);
+  }, [get]);
+
+  const createPromotion = useCallback(async (promotionData) => {
+    return post('/promotions', promotionData);
+  }, [post]);
+
+  const updatePromotion = useCallback(async (promotionId, promotionData) => {
+    return put(`/promotions/${promotionId}`, promotionData);
+  }, [put]);
+
+  const deletePromotion = useCallback(async (promotionId) => {
+    return del(`/promotions/${promotionId}`);
+  }, [del]);
+
+  // Statistics methods
+  const getStatistics = useCallback(async (params = {}) => {
+    return get('/statistics', params);
+  }, [get]);
+
+  const getAdvancedAnalytics = useCallback(async (type, timeframe = '30d') => {
+    return get(`/analytics/${type}`, { timeframe });
+  }, [get]);
+
+  // Settings methods
+  const getSettings = useCallback(async () => {
+    return get('/settings');
+  }, [get]);
+
+  const updateSettings = useCallback(async (settings) => {
+    return put('/settings', settings);
+  }, [put]);
+
+  // System health check
+  const getSystemHealth = useCallback(async () => {
+    return get('/health');
+  }, [get]);
 
   return {
     loading,
     error,
+    // Generic methods
     get,
     post,
     put,
@@ -258,7 +368,44 @@ const useAdminApi = () => {
     downloadFile,
     batch,
     clearError,
-    isAuthenticated
+    isAuthenticated,
+    // Dashboard methods
+    getDashboardStats,
+    // User management methods
+    getUsers,
+    getUserById,
+    createUser,
+    updateUser,
+    deleteUser,
+    toggleUserBlock,
+    bulkUpdateUsers,
+    getUserAnalytics,
+    exportUsers,
+    // Listing management methods
+    getListings,
+    getListingById,
+    updateListing,
+    deleteListing,
+    approveListing,
+    rejectListing,
+    // Report management methods
+    getReports,
+    getReportById,
+    updateReportStatus,
+    resolveReport,
+    // Promotion management methods
+    getPromotions,
+    createPromotion,
+    updatePromotion,
+    deletePromotion,
+    // Statistics methods
+    getStatistics,
+    getAdvancedAnalytics,
+    // Settings methods
+    getSettings,
+    updateSettings,
+    // System methods
+    getSystemHealth
   };
 };
 
