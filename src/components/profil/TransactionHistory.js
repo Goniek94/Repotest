@@ -1,223 +1,183 @@
-import React, { useState, useEffect } from "react";
-import TransactionFilters from "./transactions/TransactionFilters";
-import TransactionTable from "./transactions/TransactionTable";
-import { getTransactionHistory } from "../../services/api";
+import React, { useState, memo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { CreditCard } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
+import TransactionHeader from './transactions/TransactionHeader';
+import TransactionCategoriesPanel from './transactions/TransactionCategoriesPanel';
+import TransactionListPanel from './transactions/TransactionListPanel';
+import TransactionDetailsPanel from './transactions/TransactionDetailsPanel';
+import useTransactions from './transactions/hooks/useTransactions';
 
-// Prosta funkcja powiadomień zamiast react-toastify
-const showNotification = (message, type = 'info') => {
-  debug(`[${type.toUpperCase()}] ${message}`);
-  // Można również użyć window.alert() w razie potrzeby
-  // alert(`${type.toUpperCase()}: ${message}`);
-};
-
-const PRIMARY_COLOR = "#35530A";
-
-const TransactionHistory = () => {
-  // Stany dla danych transakcji
-  const [allTransactions, setAllTransactions] = useState([]);
-  const [transactions, setTransactions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+/**
+ * 💳 TRANSACTION HISTORY - Główny komponent historii transakcji
+ * 
+ * 3-panelowy layout w stylu innych komponentów profilu:
+ * 1. Panel kategorii (stały sidebar)
+ * 2. Panel listy transakcji (slide-in z prawej)
+ * 3. Panel szczegółów transakcji (slide-in z prawej)
+ */
+const TransactionHistory = memo(() => {
+  // ===== HOOKS =====
+  const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   
-  // Stany dla filtrowania i sortowania
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortConfig, setSortConfig] = useState({ key: 'date', direction: 'desc' });
-  const [dateFilter, setDateFilter] = useState('all');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  // ===== STATE =====
+  // Aktywna kategoria transakcji
+  const [activeCategory, setActiveCategory] = useState(() => {
+    const initial = searchParams.get('category');
+    return initial || 'wszystkie';
+  });
+  
+  // Stan paneli - kontroluje które panele są widoczne
+  const [panelState, setPanelState] = useState('list'); // categories, list, details
+  
+  // Custom hook do zarządzania transakcjami
+  const transactionsData = useTransactions(activeCategory, user?.id);
 
-  // Pobieranie historii transakcji
+  // ===== EFFECTS =====
+  /**
+   * Automatycznie otwórz panel listy transakcji po załadowaniu
+   */
   useEffect(() => {
-    const fetchTransactionHistory = async () => {
-      try {
-        setLoading(true);
-        const response = await getTransactionHistory();
-        
-        // Formatowanie transakcji do odpowiedniego formatu
-        const formattedTransactions = response.map(transaction => ({
-          id: transaction._id,
-          date: new Date(transaction.transactionDate).toISOString().split('T')[0], // Format YYYY-MM-DD
-          description: transaction.description,
-          amount: `${transaction.amount > 0 ? '+' : ''}${transaction.amount} PLN`,
-          status: transaction.status,
-          paymentMethod: transaction.paymentMethod,
-          adId: transaction.adId,
-          adTitle: transaction.adTitle
-        }));
-        
-        setAllTransactions(formattedTransactions);
-        setTransactions(formattedTransactions);
-        setLoading(false);
-      } catch (err) {
-        console.error("Błąd podczas pobierania historii transakcji:", err);
-        setError("Nie udało się pobrać historii transakcji. Spróbuj ponownie później.");
-        setLoading(false);
-      }
-    };
-
-    fetchTransactionHistory();
-  }, []);
-
-  // Formatowanie daty do porównań
-  const formatDate = (dateStr) => {
-    const [year, month, day] = dateStr.split('-').map(Number);
-    return new Date(year, month - 1, day);
-  };
-
-  // Sortowanie transakcji
-  const sortTransactions = (key) => {
-    let direction = 'asc';
-    if (sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
+    // Jeśli nie ma parametru category w URL, ustaw domyślny i otwórz panel listy
+    if (!searchParams.get('category')) {
+      setSearchParams({ category: 'wszystkie' });
+      setPanelState('list');
     }
-    setSortConfig({ key, direction });
+  }, [searchParams, setSearchParams]);
+
+  // ===== HANDLERS =====
+  /**
+   * Obsługa zmiany kategorii transakcji
+   */
+  const handleCategoryChange = (category) => {
+    setActiveCategory(category);
+    setSearchParams({ category });
+    setPanelState('list'); // Pokaż panel listy
+    transactionsData.selectTransaction(null); // Wyczyść wybór
   };
 
-  // Filtrowanie po okresie czasu
-  const handleDateFilterChange = (filter) => {
-    setDateFilter(filter);
-    
-    if (filter === 'custom') return; // Nie filtruj przy przełączeniu na niestandardowy okres
-    
-    const today = new Date();
-    let filterDate = new Date();
-    
-    switch(filter) {
-      case '30days':
-        filterDate.setDate(today.getDate() - 30);
-        break;
-      case '90days':
-        filterDate.setDate(today.getDate() - 90);
-        break;
-      case '180days':
-        filterDate.setDate(today.getDate() - 180);
-        break;
-      case 'all':
-      default:
-        setTransactions(allTransactions);
-        return;
+  /**
+   * Obsługa wyboru transakcji
+   */
+  const handleSelectTransaction = (transaction) => {
+    transactionsData.selectTransaction(transaction.id);
+    setPanelState('details'); // Pokaż panel szczegółów
+  };
+
+  /**
+   * Obsługa powrotu do poprzedniego panelu
+   */
+  const handleBack = () => {
+    if (panelState === 'details') {
+      setPanelState('list');
+      transactionsData.selectTransaction(null);
+    } else if (panelState === 'list') {
+      setPanelState('categories');
     }
-    
-    const filtered = allTransactions.filter(trans => {
-      const transDate = formatDate(trans.date);
-      return transDate >= filterDate;
-    });
-    
-    setTransactions(filtered);
   };
 
-  // Filtrowanie po niestandardowym okresie
-  const handleCustomDateFilter = () => {
-    if (!startDate || !endDate) return;
-    
-    const start = formatDate(startDate);
-    const end = formatDate(endDate);
-    
-    const filtered = allTransactions.filter(trans => {
-      const transDate = formatDate(trans.date);
-      return transDate >= start && transDate <= end;
-    });
-    
-    setTransactions(filtered);
-  };
+  // Oblicz statystyki dla nagłówka
+  const totalTransactions = transactionsData.transactionCounts.all || 0;
 
-  // Filtrowanie podczas wyszukiwania
-  useEffect(() => {
-    if (!allTransactions.length) return;
-    
-    if (searchTerm.trim() === '') {
-      handleDateFilterChange(dateFilter);
-      return;
-    }
-    
-    const searchTermLower = searchTerm.toLowerCase();
-    const filtered = allTransactions.filter(trans => 
-      trans.description.toLowerCase().includes(searchTermLower) || 
-      trans.amount.toLowerCase().includes(searchTermLower) ||
-      (trans.adTitle && trans.adTitle.toLowerCase().includes(searchTermLower))
-    );
-    
-    setTransactions(filtered);
-  }, [searchTerm, allTransactions]);
-
-  // Sortowanie transakcji na podstawie obecnej konfiguracji
-  useEffect(() => {
-    if (!transactions.length) return;
-    
-    const sortedTransactions = [...transactions].sort((a, b) => {
-      if (sortConfig.key === 'date') {
-        return sortConfig.direction === 'asc' 
-          ? formatDate(a.date) - formatDate(b.date)
-          : formatDate(b.date) - formatDate(a.date);
-      }
-      
-      if (sortConfig.key === 'amount') {
-        const amountA = parseFloat(a.amount.replace(/[^0-9.-]+/g, ""));
-        const amountB = parseFloat(b.amount.replace(/[^0-9.-]+/g, ""));
-        return sortConfig.direction === 'asc' ? amountA - amountB : amountB - amountA;
-      }
-      
-      if (a[sortConfig.key] < b[sortConfig.key]) {
-        return sortConfig.direction === 'asc' ? -1 : 1;
-      }
-      if (a[sortConfig.key] > b[sortConfig.key]) {
-        return sortConfig.direction === 'asc' ? 1 : -1;
-      }
-      return 0;
-    });
-    
-    setTransactions(sortedTransactions);
-  }, [sortConfig]);
-
+  // ===== RENDER =====
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white rounded shadow">
-      <h1 className="text-2xl font-bold mb-6 text-center">HISTORIA TRANSAKCJI</h1>
-      
-      {loading ? (
-        <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-700"></div>
-          <p className="mt-4 text-gray-600">Ładowanie historii transakcji...</p>
-        </div>
-      ) : error ? (
-        <div className="text-center py-12 text-red-500">
-          <p>{error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="mt-4 px-4 py-2 bg-green-600 text-white rounded-sm hover:bg-green-700"
-          >
-            Odśwież stronę
-          </button>
-        </div>
-      ) : transactions.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">
-          <p>Brak transakcji w historii.</p>
-          <p className="mt-2 text-sm">Twoje transakcje pojawią się tutaj po dokonaniu pierwszej płatności.</p>
-        </div>
-      ) : (
-        <>
-          <TransactionFilters
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            dateFilter={dateFilter}
-            setDateFilter={setDateFilter}
-            startDate={startDate}
-            setStartDate={setStartDate}
-            endDate={endDate}
-            setEndDate={setEndDate}
-            onCustomDateFilter={handleCustomDateFilter}
-            onDateFilterChange={handleDateFilterChange}
-            primaryColor={PRIMARY_COLOR}
+    <div className="bg-gradient-to-br from-gray-50 via-white to-blue-50 overflow-x-hidden">
+      <div className="max-w-6xl mx-auto px-4 py-4">
+        {/* Nagłówek z tytułem i liczbą transakcji */}
+        <div className="mb-5">
+          <TransactionHeader 
+            totalTransactions={totalTransactions}
           />
-          <TransactionTable
-            transactions={transactions}
-            onSort={sortTransactions}
-            sortConfig={sortConfig}
-            primaryColor={PRIMARY_COLOR}
-          />
-        </>
-      )}
+        </div>
+
+        {/* Główny kontener - jeden panel po lewej, reszta po prawej */}
+        <div className="flex gap-5 h-[600px]">
+          
+          {/* Panel kategorii - zawsze widoczny po lewej */}
+          <div className="w-64 flex-shrink-0">
+            <TransactionCategoriesPanel
+              activeCategory={activeCategory}
+              transactionCounts={transactionsData.transactionCounts}
+              onCategoryChange={handleCategoryChange}
+            />
+          </div>
+
+          {/* Obszar wysuwanych paneli - po prawej stronie */}
+          <div className="flex-1 relative overflow-hidden">
+            
+            {/* Panel listy transakcji - wysuwa się z prawej */}
+            <div className={`
+              absolute inset-0 transition-transform duration-300 ease-out
+              ${panelState === 'list' || panelState === 'details' 
+                ? 'transform translate-x-0' 
+                : 'transform translate-x-full'
+              }
+            `}>
+              <TransactionListPanel
+                isVisible={true}
+                transactions={transactionsData.transactions}
+                loading={transactionsData.loading}
+                error={transactionsData.error}
+                activeCategory={activeCategory}
+                onSelectTransaction={handleSelectTransaction}
+                onBack={handleBack}
+                onExport={transactionsData.exportTransactions}
+                // Filtry
+                searchTerm={transactionsData.searchTerm}
+                setSearchTerm={transactionsData.setSearchTerm}
+                dateFilter={transactionsData.dateFilter}
+                setDateFilter={transactionsData.setDateFilter}
+                startDate={transactionsData.startDate}
+                setStartDate={transactionsData.setStartDate}
+                endDate={transactionsData.endDate}
+                setEndDate={transactionsData.setEndDate}
+                onCustomDateFilter={transactionsData.onCustomDateFilter}
+                onDateFilterChange={transactionsData.onDateFilterChange}
+              />
+            </div>
+
+            {/* Panel szczegółów transakcji - wysuwa się z prawej nad panelem listy */}
+            <div className={`
+              absolute inset-0 transition-transform duration-300 ease-out
+              ${panelState === 'details' 
+                ? 'transform translate-x-0' 
+                : 'transform translate-x-full'
+              }
+            `}>
+              <TransactionDetailsPanel
+                isVisible={true}
+                transaction={transactionsData.selectedTransaction}
+                onBack={handleBack}
+                onDownloadReceipt={transactionsData.downloadReceipt}
+              />
+            </div>
+
+            {/* Domyślny widok gdy żaden panel nie jest aktywny */}
+            {panelState === 'categories' && (
+              <div className="h-full bg-white rounded-lg shadow-sm border border-gray-200 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CreditCard className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    Historia Transakcji
+                  </h3>
+                  <p className="text-gray-500 text-sm">
+                    Kliknij na jedną z kategorii po lewej stronie, aby zobaczyć swoje transakcje
+                  </p>
+                </div>
+              </div>
+            )}
+
+          </div>
+
+        </div>
+      </div>
     </div>
   );
-};
+});
+
+TransactionHistory.displayName = 'TransactionHistory';
 
 export default TransactionHistory;

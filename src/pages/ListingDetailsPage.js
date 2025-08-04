@@ -1,10 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Heart, Share2, Flag, Phone, Mail, MapPin, Calendar, Gauge, Fuel, Settings, Car } from 'lucide-react';
 import { useFavorites } from '../FavoritesContext';
 import { useAuth } from '../contexts/AuthContext';
 import TechnicalDetails from '../components/listings/details/TechnicalDetails';
 import ContactInfo from '../components/listings/details/ContactInfo';
+import AdsService from '../services/ads';
+import apiClient from '../services/api/client';
+import debugUtils from '../utils/debug';
+
+const { safeConsole } = debugUtils;
 
 const ListingDetailsPage = () => {
   const { id } = useParams();
@@ -18,18 +23,61 @@ const ListingDetailsPage = () => {
 
   const isFavorite = favorites.some(fav => fav.id === listing?.id);
 
+  // Funkcja do wymuszenia odświeżenia danych z czyszczeniem cache
+  const forceRefreshListing = useCallback(async () => {
+    try {
+      safeConsole.log('🔄 Wymuszam odświeżenie danych ogłoszenia z czyszczeniem cache...');
+      
+      // 1. Wyczyść cache dla tego ogłoszenia
+      const cacheKey = `/ads/${id}`;
+      apiClient.clearCache(cacheKey);
+      
+      // 2. Wyczyść cache przeglądarki dla tego endpointu
+      if ('caches' in window) {
+        try {
+          const cacheNames = await caches.keys();
+          for (const cacheName of cacheNames) {
+            const cache = await caches.open(cacheName);
+            await cache.delete(`/api/ads/${id}`);
+            await cache.delete(`http://localhost:5000/api/ads/${id}`);
+          }
+        } catch (cacheError) {
+          safeConsole.warn('Nie udało się wyczyścić cache przeglądarki:', cacheError);
+        }
+      }
+      
+      // 3. Dodaj timestamp do żądania aby wymusić świeże dane
+      const timestamp = Date.now();
+      const response = await apiClient.get(`/ads/${id}?_t=${timestamp}`, {
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
+      
+      if (response.data) {
+        safeConsole.log('✅ Pobrano świeże dane z serwera:', response.data);
+        setListing(response.data);
+        return response.data;
+      } else {
+        throw new Error('Brak danych w odpowiedzi');
+      }
+    } catch (err) {
+      safeConsole.error('❌ Błąd podczas wymuszenia odświeżenia:', err);
+      throw err;
+    }
+  }, [id]);
+
   useEffect(() => {
     const fetchListing = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/ads/${id}`);
-        if (!response.ok) {
-          throw new Error('Nie udało się pobrać ogłoszenia');
-        }
-        const data = await response.json();
-        setListing(data);
+        setError(null);
+        await forceRefreshListing();
       } catch (err) {
-        setError(err.message);
+        safeConsole.error('Błąd podczas pobierania ogłoszenia:', err);
+        setError(err.message || 'Nie udało się pobrać ogłoszenia');
       } finally {
         setLoading(false);
       }
@@ -38,7 +86,43 @@ const ListingDetailsPage = () => {
     if (id) {
       fetchListing();
     }
-  }, [id]);
+  }, [id, forceRefreshListing]);
+
+  // Funkcja do odświeżenia danych (może być wywołana z zewnątrz)
+  const refreshListing = useCallback(async () => {
+    try {
+      setLoading(true);
+      await forceRefreshListing();
+    } catch (err) {
+      setError(err.message || 'Nie udało się odświeżyć ogłoszenia');
+    } finally {
+      setLoading(false);
+    }
+  }, [forceRefreshListing]);
+
+  // Nasłuchiwanie na zmiany w localStorage (jeśli inne komponenty aktualizują dane)
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === `listing_updated_${id}`) {
+        safeConsole.log('🔄 Wykryto aktualizację ogłoszenia, odświeżam dane...');
+        refreshListing();
+        // Usuń flagę po odświeżeniu
+        localStorage.removeItem(`listing_updated_${id}`);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Sprawdź czy nie ma już flagi przy załadowaniu
+    if (localStorage.getItem(`listing_updated_${id}`)) {
+      refreshListing();
+      localStorage.removeItem(`listing_updated_${id}`);
+    }
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [id, refreshListing]);
 
   const handleFavoriteToggle = () => {
     if (!user) {

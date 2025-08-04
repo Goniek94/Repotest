@@ -13,7 +13,9 @@ import {
   Trash,
   RefreshCw,
   Clock,
-  Calendar as CalendarIcon
+  Calendar as CalendarIcon,
+  Settings,
+  MapPin
 } from 'lucide-react';
 import getImageUrl from '../../../utils/responsive/getImageUrl';
 
@@ -146,7 +148,7 @@ const UserListingListItem = memo(({
               <p className="text-sm lg:text-base text-gray-600 line-clamp-1 mb-3">{listing.subtitle}</p>
               
               {/* Parameters grid - bardziej kompaktowy na mobile */}
-              <div className="grid grid-cols-3 lg:grid-cols-3 gap-3 mt-2">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-2">
                 <div className="flex items-center gap-2 text-gray-700">
                   <Fuel className="w-4 h-4 lg:w-5 lg:h-5 text-black flex-shrink-0" />
                   <div className="min-w-0">
@@ -169,6 +171,13 @@ const UserListingListItem = memo(({
                   </div>
                 </div>
                 <div className="flex items-center gap-2 text-gray-700">
+                  <Settings className="w-4 h-4 lg:w-5 lg:h-5 text-black flex-shrink-0" />
+                  <div className="min-w-0">
+                    <div className="text-xs text-gray-500">Skrzynia</div>
+                    <div className="text-sm font-medium truncate">{listing.transmission || listing.gearbox || 'N/A'}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-gray-700">
                   <Box className="w-4 h-4 lg:w-5 lg:h-5 text-black flex-shrink-0" />
                   <div className="min-w-0">
                     <div className="text-xs text-gray-500">Pojemność</div>
@@ -187,6 +196,13 @@ const UserListingListItem = memo(({
                   <div className="min-w-0">
                     <div className="text-xs text-gray-500">Napęd</div>
                     <div className="text-sm font-medium truncate">{listing.drive}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-gray-700">
+                  <MapPin className="w-4 h-4 lg:w-5 lg:h-5 text-black flex-shrink-0" />
+                  <div className="min-w-0">
+                    <div className="text-xs text-gray-500">Pochodzenie</div>
+                    <div className="text-sm font-medium truncate">{listing.countryOrigin || listing.origin || 'N/A'}</div>
                   </div>
                 </div>
               </div>

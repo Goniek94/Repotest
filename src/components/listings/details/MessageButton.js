@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Mail } from "lucide-react";
-import MessagesService from "../../../services/api/messages";
+import MessagesService from "../../../services/api/messagesApi";
 import { useAuth } from "../../../contexts/AuthContext";
 
 /**
@@ -27,12 +27,7 @@ const MessageButton = ({ listing }) => {
     setStatus(null);
 
     try {
-      await MessagesService.sendToAd(listing._id, {
-        recipient: listing.owner, // odbiorca to właściciel ogłoszenia
-        adId: listing._id,
-        subject,
-        content,
-      });
+      await MessagesService.sendMessageToAd(listing._id, subject, content);
 
       setStatus({ type: "success", msg: "Wiadomość została wysłana!" });
       setSubject("");

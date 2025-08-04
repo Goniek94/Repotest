@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaGoogle, FaEye, FaEyeSlash, FaInfoCircle } from 'react-icons/fa';
+import { FaGoogle, FaEye, FaEyeSlash, FaInfoCircle, FaTimes } from 'react-icons/fa';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -22,6 +22,26 @@ const LoginModal = ({ isOpen, onClose }) => {
       navigate(from, { replace: true });
     }
   }, [isAuthenticated, navigate, location]);
+
+  // Handle Escape key to close modal
+  useEffect(() => {
+    const handleEscapeKey = (event) => {
+      if (event.key === 'Escape' && isOpen && onClose) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscapeKey);
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen, onClose]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -68,15 +88,26 @@ const LoginModal = ({ isOpen, onClose }) => {
 
   if (!isOpen && window.location.pathname !== '/login') return null;
 
+  // Funkcja do zamykania modala przez kliknięcie poza nim
+  const handleBackdropClick = (e) => {
+    if (e.target === e.currentTarget && onClose) {
+      onClose();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 px-2 sm:px-4">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 px-2 sm:px-4"
+      onClick={handleBackdropClick}
+    >
       <div className="bg-white p-6 sm:p-8 rounded-lg shadow-2xl max-w-md w-full relative">
         {onClose && (
           <button
             onClick={onClose}
-            className="absolute top-3 right-3 text-gray-500 hover:text-gray-900 text-2xl font-bold"
+            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors duration-200 p-1 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300"
+            aria-label="Zamknij modal"
           >
-            ×
+            <FaTimes size={16} />
           </button>
         )}
         <h2 className="text-xl sm:text-2xl font-bold uppercase mb-6 text-center text-[#35530A]">

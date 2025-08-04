@@ -1,6 +1,6 @@
 // Centralna konfiguracja API
 const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-export const API_URL = `${baseUrl}/api`; // Dodajemy /api do base URL
+export const API_URL = baseUrl; // Nie dodajemy /api tutaj, bo będzie w endpointach
 export const API_TIMEOUT = parseInt(process.env.REACT_APP_API_TIMEOUT || '30000', 10); // domyślnie 30 sekund
 
 // Konfiguracja cache

@@ -9,7 +9,9 @@ import {
   Car,
   Box,
   User,
-  Medal
+  Medal,
+  Globe,
+  Settings
 } from 'lucide-react';
 import getImageUrl from '../../../../utils/responsive/getImageUrl';
 
@@ -84,25 +86,25 @@ const ListingListItem = memo(({
             <p className="text-sm sm:text-base lg:text-base text-gray-600 line-clamp-2 leading-relaxed">{listing.headline || ''}</p>
           </div>
 
-          {/* Parametry w 3 kolumnach po 2 parametry */}
-          <div className="grid grid-cols-3 gap-x-4 gap-y-2 sm:gap-x-4 sm:gap-y-2">
+          {/* Parametry w 4 kolumnach po 2 parametry */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-2 sm:gap-x-4 sm:gap-y-2 mt-3" style={{ transform: 'translateY(-10%)' }}>
             {/* Kolumna 1 */}
             <div className="space-y-2">
               {/* Paliwo */}
               <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
-                <Fuel className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-black" />
+                <Fuel className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
                 <div>
-                  <div className="text-sm sm:text-xs lg:text-sm text-gray-500">Paliwo</div>
-                  <div className="text-base sm:text-base lg:text-base font-medium">{listing.fuel}</div>
+                  <div className="text-xs text-gray-500">Paliwo</div>
+                  <div className="text-sm font-medium">{listing.fuel}</div>
                 </div>
               </div>
               
               {/* Przebieg */}
               <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
-                <Gauge className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-black" />
+                <Gauge className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
                 <div>
-                  <div className="text-sm sm:text-xs lg:text-sm text-gray-500">Przebieg</div>
-                  <div className="text-base sm:text-base lg:text-base font-medium">{listing.mileage} km</div>
+                  <div className="text-xs text-gray-500">Przebieg</div>
+                  <div className="text-sm font-medium">{listing.mileage} km</div>
                 </div>
               </div>
             </div>
@@ -111,19 +113,19 @@ const ListingListItem = memo(({
             <div className="space-y-2">
               {/* Pojemność */}
               <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
-                <Box className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-black" />
+                <Box className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
                 <div>
-                  <div className="text-sm sm:text-xs lg:text-sm text-gray-500">Pojemność</div>
-                  <div className="text-base sm:text-base lg:text-base font-medium">{listing.engineCapacity}</div>
+                  <div className="text-xs text-gray-500">Pojemność</div>
+                  <div className="text-sm font-medium">{listing.engineCapacity}</div>
                 </div>
               </div>
 
               {/* Rok */}
               <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
-                <Calendar className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-black" />
+                <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
                 <div>
-                  <div className="text-sm sm:text-xs lg:text-sm text-gray-500">Rok</div>
-                  <div className="text-base sm:text-base lg:text-base font-medium">{listing.year}</div>
+                  <div className="text-xs text-gray-500">Rok</div>
+                  <div className="text-sm font-medium">{listing.year}</div>
                 </div>
               </div>
             </div>
@@ -132,19 +134,43 @@ const ListingListItem = memo(({
             <div className="space-y-2">
               {/* Moc */}
               <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
-                <Power className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-black" />
+                <Power className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
                 <div>
-                  <div className="text-sm sm:text-xs lg:text-sm text-gray-500">Moc</div>
-                  <div className="text-base sm:text-base lg:text-base font-medium">{listing.power}</div>
+                  <div className="text-xs text-gray-500">Moc</div>
+                  <div className="text-sm font-medium">{listing.power}</div>
                 </div>
               </div>
               
               {/* Napęd */}
               <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
-                <Car className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-black" />
+                <Settings className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
                 <div>
-                  <div className="text-sm sm:text-xs lg:text-sm text-gray-500">Napęd</div>
-                  <div className="text-base sm:text-base lg:text-base font-medium">{listing.drive}</div>
+                  <div className="text-xs text-gray-500">Napęd</div>
+                  <div className="text-sm font-medium">{listing.drive}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Kolumna 4 */}
+            <div className="space-y-2">
+              {/* Skrzynia biegów */}
+              <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
+                <Car className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
+                <div>
+                  <div className="text-xs text-gray-500">Skrzynia</div>
+                  <div className="text-sm font-medium">{listing.transmission || listing.gearbox || listing.transmissionType || 'N/A'}</div>
+                </div>
+              </div>
+
+              {/* Kraj pochodzenia */}
+              <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
+                <Globe className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
+                <div>
+                  <div className="text-xs text-gray-500">Pochodzenie</div>
+                  <div className="text-sm font-medium">
+                    {listing.countryOfOrigin || 
+                     (listing.imported === 'Tak' || listing.imported === 'tak' ? 'Import' : 'Polska')}
+                  </div>
                 </div>
               </div>
             </div>

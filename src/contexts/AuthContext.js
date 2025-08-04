@@ -128,6 +128,9 @@ export const AuthProvider = ({ children }) => {
 
       console.log('User logged out successfully');
       
+      // Don't redirect to login page - stay on current page or go to home
+      // The user should be able to browse the site without being forced to login
+      
     } catch (error) {
       console.error('Logout error:', error);
       // Wyloguj lokalnie nawet jeśli wystąpił błąd

@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { SidebarProvider } from './contexts/SidebarContext';
@@ -41,18 +41,28 @@ const UserProfileRoutes = lazy(() => import('./components/profil/UserProfileRout
 
 // Zawartość strony głównej
 const HomePageContent = () => (
-  <>
-    <SearchFormUpdated />
-    <FeaturedListings />
-  </>
+  <div className="desktop-spacing">
+    <div className="section-spacing">
+      <SearchFormUpdated />
+    </div>
+    <div className="section-spacing">
+      <FeaturedListings />
+    </div>
+  </div>
 );
 
 // Komponent strony logowania wyświetlany na tle strony głównej
 const LoginPage = () => {
+  const navigate = useNavigate();
+  
+  const handleCloseModal = () => {
+    navigate('/');
+  };
+
   return (
     <>
       <HomePageContent />
-      <LoginModal isOpen={true} />
+      <LoginModal isOpen={true} onClose={handleCloseModal} />
     </>
   );
 };
@@ -89,7 +99,7 @@ const App = () => {
             <ErrorBoundary>
               <div className="flex flex-col min-h-screen">
               <Navigation />
-              <main className="flex-grow">
+              <main className="flex-grow main-content-desktop">
                 <Suspense fallback={<LoadingSpinner message="Ładowanie strony..." />}>
                 <Routes>
                 {/* Strona główna */}

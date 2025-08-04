@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import MessagesService from '../../../../services/api/messages';
+import messagesApi from '../../../../services/api/messagesApi';
 import useMessageActions from './useMessageActions';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../../../contexts/AuthContext';
@@ -57,11 +57,6 @@ const useConversations = (activeTab) => {
    * Fixed dependencies and removed potential infinite loop causes
    */
   const fetchConversations = useCallback(async (signal) => {
-    if (!currentUserId) {
-      setLoading(false);
-      return;
-    }
-    
     try {
       setLoading(true);
       setError(null);
@@ -69,7 +64,7 @@ const useConversations = (activeTab) => {
       console.log(`Pobieranie konwersacji z folderu: ${backendFolder}`);
       
       // Bezpośrednie wywołanie API - zapewnia pobieranie rzeczywistych danych
-      let response = await MessagesService.getConversationsList(backendFolder, { signal });
+      let response = await messagesApi.getConversations(backendFolder, { signal });
 
       console.log('Otrzymana odpowiedź z API:', response);
 
@@ -87,7 +82,7 @@ const useConversations = (activeTab) => {
       // Jeśli API konwersacji zwróci pustą tablicę, próbujemy fallbacku do zwykłych wiadomości
       if (Array.isArray(data) && data.length === 0) {
         console.log('Brak konwersacji z API, próba pobrania wiadomości z folderu.');
-        const messagesFallback = await MessagesService.getByFolder(backendFolder);
+        const messagesFallback = await messagesApi.searchMessages('', { folder: backendFolder });
 
         if (Array.isArray(messagesFallback) && messagesFallback.length > 0) {
           const convMap = {};
@@ -132,10 +127,20 @@ const useConversations = (activeTab) => {
           conversation.otherUserId ||
           conversation._id;
 
+        // Lepsze wyciąganie nazwy użytkownika
+        let userName = 'Nieznany użytkownik';
+        if (userInfo.name && userInfo.name.trim()) {
+          userName = userInfo.name.trim();
+        } else if (userInfo.email && userInfo.email.trim()) {
+          // Jeśli nie ma imienia, użyj części przed @ z emaila
+          const emailPart = userInfo.email.split('@')[0];
+          userName = emailPart.charAt(0).toUpperCase() + emailPart.slice(1);
+        }
+
         return {
           id: conversation._id || userId,
           userId,
-          userName: userInfo.name || userInfo.email || 'Nieznany użytkownik',
+          userName,
           lastMessage: {
             content: conversation.lastMessage?.content || '',
             date: conversation.lastMessage?.createdAt || conversation.lastMessage?.date 
@@ -173,7 +178,7 @@ const useConversations = (activeTab) => {
     if (!conversationId) return;
 
     try {
-      await MessagesService.markConversationAsRead(conversationId);
+      await messagesApi.markConversationAsRead(conversationId);
 
       setConversations(prev => {
         const unreadBefore = prev.find(c => c.id === conversationId)?.unreadCount || 0;
@@ -211,7 +216,7 @@ const useConversations = (activeTab) => {
       
       console.log(`Pobieranie wiadomości dla konwersacji z użytkownikiem ${conversation.userId}`);
       
-      const response = await MessagesService.getConversation(conversation.userId, { signal });
+      const response = await messagesApi.getConversation(conversation.userId, { signal });
       
       console.log('Otrzymana odpowiedź z API dla wiadomości:', response);
       
@@ -287,7 +292,7 @@ const useConversations = (activeTab) => {
     } finally {
       setLoading(false);
     }
-  }, [markConversationAsRead, showNotification]);
+  }, [showNotification]);
 
   /**
    * Oznaczenie konwersacji jako ważnej (gwiazdka)
@@ -296,7 +301,7 @@ const useConversations = (activeTab) => {
     if (!conversationId) return;
     
     try {
-      await MessagesService.toggleConversationStar(conversationId);
+      await messagesApi.toggleConversationStar(conversationId);
       
       const conversation = conversations.find(c => c.id === conversationId);
       const isCurrentlyStarred = conversation?.isStarred || false;
@@ -334,7 +339,7 @@ const useConversations = (activeTab) => {
 
     try {
       // Usuwamy konwersację, przenosząc ją do kosza
-      await MessagesService.moveConversationToTrash(conversationId);
+      await messagesApi.deleteConversation(conversationId);
 
       // Usunięcie z listy konwersacji
       setConversations(prevConversations =>
@@ -369,11 +374,11 @@ const useConversations = (activeTab) => {
       
       // Wybór odpowiedniej metody API zależnie od folderu docelowego
       if (targetBackendFolder === 'archived') {
-        await MessagesService.archiveConversation(conversationId);
+        await messagesApi.archiveConversation(conversationId);
       } else if (targetBackendFolder === 'trash') {
-        await MessagesService.moveConversationToTrash(conversationId);
+        await messagesApi.deleteConversation(conversationId);
       } else {
-        await MessagesService.moveConversationToFolder(conversationId, targetBackendFolder);
+        await messagesApi.moveConversationToFolder(conversationId, targetBackendFolder);
       }
       
       // Aktualizacja listy konwersacji
@@ -434,7 +439,7 @@ const useConversations = (activeTab) => {
         setLoading(true);
         setError(null);
 
-        const response = await MessagesService.searchConversations(query, backendFolder);
+        const response = await messagesApi.searchMessages(query, { folder: backendFolder });
 
         // Normalizacja odpowiedzi
         const data = Array.isArray(response) ? response : (response.data || []);
@@ -504,7 +509,7 @@ const useConversations = (activeTab) => {
     showNotification
   }), [selectedConversation, currentUserId, user, showNotification]);
 
-  const { sendReply, deleteMessage, archiveMessage } = useMessageActions(messageActionsConfig);
+  const { sendReply, editMessage, deleteMessage, archiveMessage } = useMessageActions(messageActionsConfig);
 
   // Czyszczenie oczekującego timeoutu wyszukiwania przy odmontowaniu
   useEffect(() => {
@@ -516,10 +521,8 @@ const useConversations = (activeTab) => {
   }, []);
 
   // Pobieranie konwersacji przy zmianie aktywnego folderu lub użytkownika
-  // Fixed: Only depend on currentUserId and activeTab, use AbortController properly
+  // Fixed: Działa również dla niezalogowanych użytkowników (pokazuje przykładowe dane)
   useEffect(() => {
-    if (!currentUserId) return;
-    
     const controller = new AbortController();
     fetchConversations(controller.signal);
     
@@ -532,7 +535,7 @@ const useConversations = (activeTab) => {
         clearTimeout(searchTimeoutRef.current);
       }
     };
-  }, [currentUserId, activeTab, fetchConversations]);
+  }, [activeTab, fetchConversations]);
   
   // Pobieranie wiadomości przy wyborze konwersacji
   // Fixed: Proper dependency management and AbortController usage
@@ -563,6 +566,7 @@ const useConversations = (activeTab) => {
     toggleStar,
     deleteConversation,
     moveToFolder,
+    editMessage,
     deleteMessage,
     archiveMessage,
     sendReply,
@@ -581,10 +585,12 @@ const useConversations = (activeTab) => {
     toggleStar,
     deleteConversation,
     moveToFolder,
+    editMessage,
     deleteMessage,
     archiveMessage,
     sendReply,
-    showNotification
+    showNotification,
+    markConversationAsRead
   ]);
 };
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Paperclip, FileText, Image, Search, User, Download } from 'lucide-react';
-import MessagesService from '../../../services/api/messages';
+import messagesApi from '../../../services/api/messagesApi';
 import { useAuth } from '../../../contexts/AuthContext';
 
 /**
@@ -42,7 +42,7 @@ const MessageForm = ({ onClose, onSend, initialRecipient = null, initialSubject 
     }
     
     searchTimeoutRef.current = setTimeout(() => {
-      MessagesService.searchUsers(searchQuery)
+      messagesApi.searchUsers(searchQuery)
         .then(response => {
           setSearchResults(response.data || []);
           setShowResults(true);
@@ -173,7 +173,7 @@ const MessageForm = ({ onClose, onSend, initialRecipient = null, initialSubject 
       });
       
       // Wysłanie wiadomości
-      await MessagesService.send(formData);
+      await messagesApi.sendMessage(formData);
       
       // Wywołanie callbacków
       if (onSend) onSend();

@@ -1,44 +1,36 @@
-import React from 'react';
-import { Search, MessageSquare } from 'lucide-react';
-import useBreakpoint from '../../../utils/responsive/useBreakpoint';
+import React, { memo } from 'react';
+import { MessageCircle } from 'lucide-react';
 
 /**
- * Nagłówek sekcji wiadomości
- * Responsywny - dostosowany do urządzeń mobilnych i desktopowych
+ * 📋 MESSAGES HEADER - Nagłówek panelu wiadomości w stylu powiadomień
+ * 
+ * Wyświetla tytuł sekcji z zielonym gradientowym tłem i licznikiem nieprzeczytanych
  */
-const MessagesHeader = ({ searchTerm, onSearch, onNewMessage, unreadCount = 0 }) => {
-  const breakpoint = useBreakpoint();
-  const isMobile = breakpoint === 'mobile';
-  
-  const handleSearchChange = (e) => {
-    onSearch && onSearch(e.target.value);
-  };
-
+const MessagesHeader = memo(({ unreadCount = 0 }) => {
   return (
-    <div className="bg-white p-4 border-b border-gray-200">
-      <div className={`flex ${isMobile ? 'flex-col space-y-3' : 'items-center justify-between'}`}>
-        {/* Nagłówek */}
-        <div className="flex items-center">
-          <MessageSquare className="w-5 h-5 text-[#35530A] mr-2" />
-          <h1 className="text-xl font-bold text-gray-800">Wiadomości</h1>
-        </div>
-        
-        {/* Wyszukiwarka */}
-        <div className={`relative ${isMobile ? 'w-full' : 'w-64'}`}>
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-4 w-4 text-gray-400" />
+    <div className="bg-gradient-to-r from-green-600 via-emerald-600 to-green-800 rounded-2xl shadow-xl p-4 mb-2" style={{background: 'linear-gradient(135deg, #35530A, #4a7c0c, #35530A)'}}>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
+            <MessageCircle className="w-8 h-8 text-white" />
           </div>
-          <input
-            type="text"
-            placeholder="Szukaj..."
-            className="pl-10 pr-4 py-2 w-full text-sm bg-gray-50 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#35530A] focus:border-[#35530A]"
-            value={searchTerm}
-            onChange={handleSearchChange}
-          />
+          <div>
+            <h1 className="text-3xl font-bold text-white mb-2">
+              Wiadomości
+            </h1>
+            {unreadCount > 0 && (
+              <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-white/20 text-white backdrop-blur-sm">
+                <div className="w-2 h-2 bg-yellow-400 rounded-full mr-2 animate-pulse"></div>
+                {unreadCount} {unreadCount === 1 ? 'nieprzeczytana' : 'nieprzeczytanych'}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
   );
-};
+});
+
+MessagesHeader.displayName = 'MessagesHeader';
 
 export default MessagesHeader;

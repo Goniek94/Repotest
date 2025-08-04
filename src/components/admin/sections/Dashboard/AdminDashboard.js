@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, FileText, TrendingUp, AlertCircle, Eye, MessageSquare, Star, DollarSign } from 'lucide-react';
+import { Users, FileText, TrendingUp, AlertCircle, DollarSign } from 'lucide-react';
 import { useAuth } from '../../../../contexts/AuthContext';
 import useAdminApi from '../../hooks/useAdminApi';
 
@@ -134,28 +134,28 @@ const AdminDashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Użytkownicy"
-          value={dashboardData.stats.totalUsers}
+          value={dashboardData.stats?.totalUsers || 0}
           icon={Users}
           trend={dashboardData.trends?.users || '+0 w tym tygodniu'}
           color="green"
         />
         <StatCard
           title="Ogłoszenia"
-          value={dashboardData.stats.totalListings}
+          value={dashboardData.stats?.totalListings || 0}
           icon={FileText}
           trend={dashboardData.trends?.listings || 'Brak nowych'}
           color="green"
         />
         <StatCard
           title="Zgłoszenia"
-          value={dashboardData.stats.pendingReports}
+          value={dashboardData.stats?.pendingReports || 0}
           icon={AlertCircle}
           trend={dashboardData.trends?.reports || 'Wszystkie rozwiązane'}
-          color={dashboardData.stats.pendingReports > 0 ? 'red' : 'green'}
+          color={(dashboardData.stats?.pendingReports || 0) > 0 ? 'red' : 'green'}
         />
         <StatCard
           title="Przychody"
-          value={`${dashboardData.stats.totalRevenue} zł`}
+          value={`${dashboardData.stats?.totalRevenue || 0} zł`}
           icon={DollarSign}
           trend={dashboardData.trends?.revenue || '0% zmiana'}
           color="green"
@@ -170,15 +170,21 @@ const AdminDashboard = () => {
           </div>
           <div className="p-6">
             <div className="space-y-4">
-              {dashboardData.recentActivity.map((activity) => (
-                <div key={activity.id} className="flex items-center space-x-3">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-900">{activity.message}</p>
-                    <p className="text-xs text-gray-500">{activity.time}</p>
+              {(dashboardData.recentActivity || []).length > 0 ? (
+                dashboardData.recentActivity.map((activity) => (
+                  <div key={activity.id} className="flex items-center space-x-3">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-900">{activity.message}</p>
+                      <p className="text-xs text-gray-500">{activity.time}</p>
+                    </div>
                   </div>
+                ))
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-sm text-gray-500">Brak ostatniej aktywności</p>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>

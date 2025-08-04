@@ -1,9 +1,12 @@
 // src/components/ListingForm/EditListingView.js
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AlertCircle, Upload, X, Plus } from 'lucide-react';
 import AdsService from '../../services/ads';
-import { safeConsole } from '../../utils/debug';
+import apiClient from '../../services/api/client';
+import debugUtils from '../../utils/debug';
+
+const { safeConsole } = debugUtils;
 import PaymentModal from '../payment/PaymentModal';
 
 const EditListingView = () => {
@@ -29,29 +32,70 @@ const EditListingView = () => {
     mainImageIndex: 0
   });
   
+  // Funkcja do wymuszenia odświeżenia danych z czyszczeniem cache
+  const forceRefreshListing = useCallback(async () => {
+    try {
+      safeConsole.log('🔄 Wymuszam odświeżenie danych ogłoszenia z czyszczeniem cache...');
+      
+      // 1. Wyczyść cache dla tego ogłoszenia
+      const cacheKey = `/ads/${id}`;
+      apiClient.clearCache(cacheKey);
+      
+      // 2. Wyczyść cache przeglądarki dla tego endpointu
+      if ('caches' in window) {
+        try {
+          const cacheNames = await caches.keys();
+          for (const cacheName of cacheNames) {
+            const cache = await caches.open(cacheName);
+            await cache.delete(`/api/ads/${id}`);
+            await cache.delete(`http://localhost:5000/api/ads/${id}`);
+          }
+        } catch (cacheError) {
+          safeConsole.warn('Nie udało się wyczyścić cache przeglądarki:', cacheError);
+        }
+      }
+      
+      // 3. Dodaj timestamp do żądania aby wymusić świeże dane
+      const timestamp = Date.now();
+      const response = await apiClient.get(`/ads/${id}?_t=${timestamp}`, {
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
+      
+      if (response.data) {
+        safeConsole.log('✅ Pobrano świeże dane z serwera:', response.data);
+        setListing(response.data);
+        setSelectedImage(response.data.mainImageIndex || 0);
+        
+        // Ustawienie edytowalnych pól
+        setEditableFields({
+          description: response.data.description || '',
+          price: response.data.price || '',
+          city: response.data.city || '',
+          voivodeship: response.data.voivodeship || '',
+          color: response.data.color || '',
+          mainImageIndex: response.data.mainImageIndex || 0
+        });
+        
+        return response.data;
+      } else {
+        throw new Error('Brak danych w odpowiedzi');
+      }
+    } catch (err) {
+      safeConsole.error('❌ Błąd podczas wymuszenia odświeżenia:', err);
+      throw err;
+    }
+  }, [id]);
+
   // Pobieranie danych ogłoszenia
   useEffect(() => {
     const fetchListing = async () => {
       try {
         setLoading(true);
-        const response = await AdsService.getById(id);
-        
-        if (response.data) {
-          setListing(response.data);
-          setSelectedImage(response.data.mainImageIndex || 0);
-          
-          // Ustawienie edytowalnych pól
-          setEditableFields({
-            description: response.data.description || '',
-            price: response.data.price || '',
-            city: response.data.city || '',
-            voivodeship: response.data.voivodeship || '',
-            color: response.data.color || '',
-            mainImageIndex: response.data.mainImageIndex || 0
-          });
-        } else {
-          setError('Nie znaleziono ogłoszenia');
-        }
+        await forceRefreshListing();
       } catch (err) {
         safeConsole.error('Błąd podczas pobierania ogłoszenia:', err);
         setError('Nie udało się pobrać ogłoszenia. Spróbuj ponownie później.');
@@ -63,7 +107,7 @@ const EditListingView = () => {
     if (id) {
       fetchListing();
     }
-  }, [id]);
+  }, [id, forceRefreshListing]);
 
   // Obsługa zmiany głównego zdjęcia
   const handleSetMainImage = async (index) => {
@@ -229,16 +273,27 @@ const EditListingView = () => {
         mainImageIndex: selectedImage
       };
       
+      safeConsole.log('💾 Zapisuję zmiany w ogłoszeniu:', updateData);
+      
       // Aktualizacja ogłoszenia
       await AdsService.update(id, updateData);
       
-      setSuccess('Ogłoszenie zostało zaktualizowane');
+      safeConsole.log('✅ Ogłoszenie zaktualizowane, wymuszam odświeżenie danych...');
       
-      // Odświeżenie danych ogłoszenia
-      const response = await AdsService.getById(id);
-      if (response.data) {
-        setListing(response.data);
-      }
+      // 🔄 KLUCZOWE: Wymuś odświeżenie danych z czyszczeniem cache
+      await forceRefreshListing();
+      
+      // 📢 Powiadom inne komponenty o aktualizacji
+      localStorage.setItem(`listing_updated_${id}`, Date.now().toString());
+      
+      // Wyślij event do innych okien/tabów
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: `listing_updated_${id}`,
+        newValue: Date.now().toString(),
+        url: window.location.href
+      }));
+      
+      setSuccess('Ogłoszenie zostało zaktualizowane');
       
       setTimeout(() => {
         setSuccess('');

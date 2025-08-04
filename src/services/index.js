@@ -1,6 +1,6 @@
 import AuthService from './auth';
 import AdsService from './ads';
-import MessagesService from './messages';
+import MessagesService from './api/messagesApi';
 
 export {
   AuthService,

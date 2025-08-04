@@ -190,7 +190,7 @@ const ProfileNavigation = React.forwardRef(
     }
 
     return (
-      <div ref={ref} className="w-full border-b border-gray-200 mb-6 mt-8 bg-white relative">
+      <div ref={ref} className="w-full relative">
         <div className="flex justify-between flex-wrap gap-1">
           {navItems.map((item) => (
             <button
@@ -207,7 +207,7 @@ const ProfileNavigation = React.forwardRef(
               }}
             className={`whitespace-nowrap py-3 px-3 md:px-4 flex items-center transition-colors border-b-3 ${
               activeTab === item.id
-                ? 'text-[#35530A] border-[#35530A] font-medium bg-[#f5f8f0]'
+                ? 'text-[#35530A] border-[#35530A] font-medium bg-white'
                 : 'text-gray-600 hover:text-green-800 border-transparent hover:border-gray-300'
             }`}
             >

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { FaBars } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
@@ -18,6 +18,7 @@ const Navigation = () => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     setIsMobileMenuOpen(false);
@@ -47,10 +48,29 @@ const Navigation = () => {
     setIsMobileMenuOpen(false);
   };
 
-  const handleLogout = () => {
-    logout();
-    setIsUserMenuOpen(false);
-    setIsMobileMenuOpen(false);
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setIsUserMenuOpen(false);
+      setIsMobileMenuOpen(false);
+      
+      // Check if user is on a protected route and redirect to home
+      const protectedRoutes = ['/profil', '/profile', '/user', '/create-listing', '/add-listing-view', '/favorites', '/admin'];
+      const currentPath = location.pathname;
+      
+      if (protectedRoutes.some(route => currentPath.startsWith(route))) {
+        navigate('/');
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Even if logout fails, redirect from protected routes
+      const protectedRoutes = ['/profil', '/profile', '/user', '/create-listing', '/add-listing-view', '/favorites', '/admin'];
+      const currentPath = location.pathname;
+      
+      if (protectedRoutes.some(route => currentPath.startsWith(route))) {
+        navigate('/');
+      }
+    }
   };
 
   // Używamy rzeczywistych danych o nieprzeczytanych powiadomieniach

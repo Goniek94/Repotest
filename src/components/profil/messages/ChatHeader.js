@@ -1,201 +1,210 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Star, Trash2, ArrowLeft, MoreVertical, Archive, Reply, Flag, Paperclip } from 'lucide-react';
+import React, { memo } from 'react';
+import { ArrowLeft, Star, Archive, Trash2, MoreHorizontal, Phone, Video, Info } from 'lucide-react';
 
 /**
- * Nagłówek czatu z informacjami o konwersacji i opcjami zarządzania
+ * ChatHeader - Nagłówek panelu konwersacji
+ * Wyświetla informacje o rozmówcy i opcje zarządzania
  */
-const ChatHeader = ({ 
+const ChatHeader = memo(({ 
   conversation, 
-  onBack, 
   onStar, 
   onDelete, 
-  onReply, 
   onArchive, 
-  onReport,
-  onMarkAsRead
+  onBack,
+  showBackButton = false 
 }) => {
-  const [showActionMenu, setShowActionMenu] = useState(false);
-  const menuRef = useRef(null);
-  
-  // Zamykanie menu przy kliknięciu poza nim
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setShowActionMenu(false);
-      }
-    };
-    
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
+  if (!conversation) return null;
 
-  // Jeśli nie ma konwersacji, wyświetl pusty nagłówek
-  if (!conversation) {
-    return (
-      <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 h-16 bg-white">
-        <div className="flex items-center">
-          <button 
-            onClick={onBack} 
-            className="p-1 rounded-full hover:bg-[#35530A] hover:bg-opacity-10 text-gray-500 hover:text-[#35530A] md:hidden"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <h2 className="text-lg font-medium text-gray-900 ml-2">Wiadomości</h2>
-        </div>
-      </div>
-    );
-  }
+  const handleStar = (e) => {
+    e.stopPropagation();
+    onStar?.();
+  };
+
+  const handleDelete = (e) => {
+    e.stopPropagation();
+    if (window.confirm('Czy na pewno chcesz usunąć tę konwersację?')) {
+      onDelete?.();
+    }
+  };
+
+  const handleArchive = (e) => {
+    e.stopPropagation();
+    onArchive?.();
+  };
+
+  const handleBack = (e) => {
+    e.stopPropagation();
+    onBack?.();
+  };
+
+  // Status użytkownika
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'online': return 'bg-green-500';
+      case 'away': return 'bg-yellow-500';
+      case 'busy': return 'bg-red-500';
+      default: return 'bg-gray-400';
+    }
+  };
+
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'online': return 'Online';
+      case 'away': return 'Nieobecny';
+      case 'busy': return 'Zajęty';
+      default: return 'Offline';
+    }
+  };
 
   return (
-    <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 bg-[#35530A] text-white shadow-sm">
-      <div className="flex items-center">
-        {/* Przycisk powrotu/zamknięcia - widoczny na desktop i mobile */}
-        <button 
-          onClick={onBack} 
-          className="p-1 rounded-full hover:bg-white hover:bg-opacity-20 text-white hover:text-white mr-2"
-          title="Zamknij konwersację"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        
-        {/* Avatar rozmówcy */}
+    <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+      {/* Lewa strona - informacje o użytkowniku */}
+      <div className="flex items-center gap-3">
+        {/* Przycisk powrotu (mobile) */}
+        {showBackButton && (
+          <button
+            onClick={handleBack}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors md:hidden"
+            title="Powrót do listy"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-600" />
+          </button>
+        )}
+
+        {/* Avatar użytkownika */}
         <div className="relative">
-          <div className="w-10 h-10 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-white font-medium">
-            {conversation.sender?.name?.charAt(0).toUpperCase() || '?'}
+          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white font-semibold">
+            {conversation.userName?.charAt(0)?.toUpperCase() || 
+             conversation.senderName?.charAt(0)?.toUpperCase() || '?'}
           </div>
           
-          {/* Status (online/offline) */}
-          {conversation.sender?.status && (
-            <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
-              conversation.sender.status === 'online' ? 'bg-green-500' : 'bg-gray-400'
-            }`}></span>
+          {/* Status indicator */}
+          {conversation.userStatus && (
+            <div className={`
+              absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white
+              ${getStatusColor(conversation.userStatus)}
+            `}></div>
           )}
         </div>
-        
-        {/* Informacje o rozmówcy */}
-        <div className="ml-3">
-          <h2 className="text-base font-medium text-white">
-            {conversation.sender?.name || 'Nieznany użytkownik'}
-          </h2>
-          <p className="text-xs text-white text-opacity-80">
-            {conversation.sender?.lastSeen 
-              ? `Ostatnio online: ${new Date(conversation.sender.lastSeen).toLocaleString('pl-PL', {
-                  day: 'numeric', 
-                  month: 'short', 
-                  hour: '2-digit', 
-                  minute: '2-digit'
-                })}`
-              : 'Status nieznany'}
-          </p>
+
+        {/* Informacje o użytkowniku */}
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-gray-900 truncate">
+            {conversation.userName || conversation.senderName || 'Nieznany użytkownik'}
+          </h3>
+          
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            {/* Status */}
+            {conversation.userStatus && (
+              <span className="flex items-center gap-1">
+                <div className={`w-2 h-2 rounded-full ${getStatusColor(conversation.userStatus)}`}></div>
+                {getStatusText(conversation.userStatus)}
+              </span>
+            )}
+            
+            {/* Ostatnia aktywność */}
+            {conversation.lastSeen && !conversation.userStatus && (
+              <span>
+                Ostatnio widziany: {new Date(conversation.lastSeen).toLocaleDateString('pl-PL')}
+              </span>
+            )}
+            
+            {/* Informacje o ogłoszeniu */}
+            {conversation.adTitle && (
+              <span className="text-blue-600 truncate">
+                • {conversation.adTitle}
+              </span>
+            )}
+          </div>
         </div>
       </div>
-      
-      {/* Przyciski akcji */}
-      <div className="flex items-center space-x-1">
-        {/* Gwiazdka */}
-        <button 
-          onClick={() => onStar && onStar(conversation.id)}
-          className={`p-1.5 rounded-full hover:bg-white hover:bg-opacity-20 ${
-            conversation.isStarred 
-              ? 'text-yellow-300' 
-              : 'text-white hover:text-white'
-          }`}
+
+      {/* Prawa strona - akcje */}
+      <div className="flex items-center gap-1">
+        {/* Akcje komunikacyjne */}
+        <button
+          className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-600 hover:text-gray-800"
+          title="Zadzwoń"
+          onClick={(e) => {
+            e.stopPropagation();
+            // Tutaj można dodać funkcjonalność dzwonienia
+          }}
+        >
+          <Phone className="w-5 h-5" />
+        </button>
+
+        <button
+          className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-600 hover:text-gray-800"
+          title="Rozmowa wideo"
+          onClick={(e) => {
+            e.stopPropagation();
+            // Tutaj można dodać funkcjonalność wideo
+          }}
+        >
+          <Video className="w-5 h-5" />
+        </button>
+
+        <button
+          className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-600 hover:text-gray-800"
+          title="Informacje"
+          onClick={(e) => {
+            e.stopPropagation();
+            // Tutaj można dodać panel informacji
+          }}
+        >
+          <Info className="w-5 h-5" />
+        </button>
+
+        {/* Separator */}
+        <div className="w-px h-6 bg-gray-300 mx-1"></div>
+
+        {/* Akcje zarządzania */}
+        <button
+          onClick={handleStar}
+          className={`
+            p-2 rounded-full transition-colors
+            ${conversation.isStarred 
+              ? 'text-yellow-500 hover:text-yellow-600 bg-yellow-50 hover:bg-yellow-100' 
+              : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+            }
+          `}
           title={conversation.isStarred ? 'Usuń z ważnych' : 'Oznacz jako ważne'}
         >
-          <Star className="w-5 h-5" />
+          <Star className={`w-5 h-5 ${conversation.isStarred ? 'fill-current' : ''}`} />
         </button>
-        
-        {/* Odpowiedz */}
-        <button 
-          onClick={() => onReply && onReply(conversation.id)}
-          className="p-1.5 rounded-full text-white hover:bg-white hover:bg-opacity-20 hover:text-white"
-          title="Odpowiedz"
+
+        <button
+          onClick={handleArchive}
+          className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-600 hover:text-gray-800"
+          title="Archiwizuj"
         >
-          <Reply className="w-5 h-5" />
+          <Archive className="w-5 h-5" />
         </button>
-        
-        {/* Menu akcji */}
-        <div className="relative" ref={menuRef}>
-          <button 
-            onClick={() => setShowActionMenu(!showActionMenu)}
-            className="p-1.5 rounded-full text-white hover:bg-white hover:bg-opacity-20 hover:text-white"
-            title="Więcej opcji"
-          >
-            <MoreVertical className="w-5 h-5" />
-          </button>
-          
-          {showActionMenu && (
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-20 py-1 border border-gray-200">
-              {/* Archiwizuj */}
-              <button 
-                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                onClick={() => {
-                  onArchive && onArchive(conversation.id);
-                  setShowActionMenu(false);
-                }}
-              >
-                <Archive className="w-4 h-4 mr-2" />
-                Przenieś do archiwum
-              </button>
-              
-              {/* Oznacz jako ważne */}
-              <button 
-                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                onClick={() => {
-                  onStar && onStar(conversation.id);
-                  setShowActionMenu(false);
-                }}
-              >
-                <Star className="w-4 h-4 mr-2" />
-                {conversation.isStarred ? 'Usuń z ważnych' : 'Oznacz jako ważne'}
-              </button>
-              
-              {/* Oznacz jako przeczytane */}
-              <button 
-                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                onClick={() => {
-                  onMarkAsRead && onMarkAsRead(conversation.id);
-                  setShowActionMenu(false);
-                }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 mr-2">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                </svg>
-                Oznacz jako przeczytane
-              </button>
-              
-              {/* Zgłoś */}
-              <button 
-                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                onClick={() => {
-                  onReport && onReport(conversation.id);
-                  setShowActionMenu(false);
-                }}
-              >
-                <Flag className="w-4 h-4 mr-2" />
-                Zgłoś wiadomość
-              </button>
-              
-              {/* Usuń */}
-              <button 
-                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-100 flex items-center"
-                onClick={() => {
-                  onDelete && onDelete(conversation.id);
-                  setShowActionMenu(false);
-                }}
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Usuń konwersację
-              </button>
-            </div>
-          )}
-        </div>
+
+        <button
+          onClick={handleDelete}
+          className="p-2 hover:bg-red-50 rounded-full transition-colors text-gray-600 hover:text-red-600"
+          title="Usuń konwersację"
+        >
+          <Trash2 className="w-5 h-5" />
+        </button>
+
+        {/* Menu więcej opcji */}
+        <button
+          className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-600 hover:text-gray-800"
+          title="Więcej opcji"
+          onClick={(e) => {
+            e.stopPropagation();
+            // Tutaj można dodać dropdown menu
+          }}
+        >
+          <MoreHorizontal className="w-5 h-5" />
+        </button>
       </div>
     </div>
   );
-};
+});
+
+ChatHeader.displayName = 'ChatHeader';
 
 export default ChatHeader;

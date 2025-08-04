@@ -4,6 +4,7 @@ import { FiGrid, FiBarChart2, FiHeart, FiAlertCircle } from 'react-icons/fi';
 import { Heart, Eye, Edit, Trash, RefreshCw, AlertTriangle, CheckCircle, Plus, X, FileText } from 'lucide-react';
 import { toast } from 'react-toastify';
 import ListingsService from '../../../services/api/listingsApi';
+import FavoritesService from '../../../services/api/favoritesApi';
 import ListingListItem from '../../ListingsView/display/list/ListingListItem';
 import UserListingListItem from './UserListingListItem';
 import ListingTabs from './ListingTabs';
@@ -285,8 +286,8 @@ const UserListings = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
-      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-8">
+    <div className="bg-gradient-to-br from-gray-50 via-white to-blue-50">
+      <div className="max-w-6xl mx-auto px-4 py-4">
         {/* Nagłówek z gradientem - średni rozmiar */}
         <div className="bg-gradient-to-r from-green-600 via-emerald-600 to-green-800 rounded-xl shadow-lg p-6 mb-5" style={{background: 'linear-gradient(135deg, #35530A, #4a7c0c, #35530A)'}}>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -332,7 +333,8 @@ const UserListings = () => {
               <div className="p-4">
                 {/* Mobile - ikonki identyczne jak w wiadomościach */}
                 <div className="lg:hidden">
-                  <div className="grid grid-cols-4 gap-3">
+                  <div className="grid grid-cols-4 gap-3" style={{ transform: 'translateY(-10%)' }}>
+                    {/* Pierwszy rząd */}
                     <button
                       onClick={() => setActiveTab('active')}
                       className={`
@@ -347,7 +349,7 @@ const UserListings = () => {
                         ${activeTab === 'active' ? 'text-[#35530A]' : 'text-gray-400'}
                         transition-colors duration-200
                       `}>
-                        <CheckCircle className="w-5 h-5" />
+                        <CheckCircle className="w-6 h-6" />
                       </span>
                       {allListings.filter(listing => listing.status === 'active').length > 0 && (
                         <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
@@ -370,7 +372,7 @@ const UserListings = () => {
                         ${activeTab === 'drafts' ? 'text-[#35530A]' : 'text-gray-400'}
                         transition-colors duration-200
                       `}>
-                        <FileText className="w-5 h-5" />
+                        <FileText className="w-6 h-6" />
                       </span>
                       {(allListings.filter(listing => listing.status === 'pending' || listing.status === 'needs_changes' || listing.isVersionRobocza).length + localDrafts.length) > 0 && (
                         <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
@@ -393,7 +395,7 @@ const UserListings = () => {
                         ${activeTab === 'completed' ? 'text-[#35530A]' : 'text-gray-400'}
                         transition-colors duration-200
                       `}>
-                        <FiBarChart2 className="w-5 h-5" />
+                        <FiBarChart2 className="w-6 h-6" />
                       </span>
                       {allListings.filter(listing => listing.status === 'archived' || listing.status === 'sold').length > 0 && (
                         <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
@@ -416,13 +418,54 @@ const UserListings = () => {
                         ${activeTab === 'favorites' ? 'text-[#35530A]' : 'text-gray-400'}
                         transition-colors duration-200
                       `}>
-                        <Heart className="w-5 h-5" />
+                        <Heart className="w-6 h-6" />
                       </span>
                       {allListings.filter(listing => listing.isFavorite).length > 0 && (
                         <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
                           {allListings.filter(listing => listing.isFavorite).length > 99 ? '99+' : allListings.filter(listing => listing.isFavorite).length}
                         </span>
                       )}
+                    </button>
+
+                    {/* Drugi rząd */}
+                    <button
+                      onClick={() => navigate('/dodaj-ogloszenie')}
+                      className="relative flex items-center justify-center p-4 rounded-lg transition-all duration-200 hover:bg-gray-50 border border-transparent"
+                      title="Dodaj ogłoszenie"
+                    >
+                      <span className="text-gray-400 transition-colors duration-200 hover:text-[#35530A]">
+                        <Plus className="w-6 h-6" />
+                      </span>
+                    </button>
+
+                    <button
+                      onClick={() => window.location.reload()}
+                      className="relative flex items-center justify-center p-4 rounded-lg transition-all duration-200 hover:bg-gray-50 border border-transparent"
+                      title="Odśwież"
+                    >
+                      <span className="text-gray-400 transition-colors duration-200 hover:text-[#35530A]">
+                        <RefreshCw className="w-6 h-6" />
+                      </span>
+                    </button>
+
+                    <button
+                      onClick={() => navigate('/profil')}
+                      className="relative flex items-center justify-center p-4 rounded-lg transition-all duration-200 hover:bg-gray-50 border border-transparent"
+                      title="Profil"
+                    >
+                      <span className="text-gray-400 transition-colors duration-200 hover:text-[#35530A]">
+                        <Eye className="w-6 h-6" />
+                      </span>
+                    </button>
+
+                    <button
+                      onClick={() => navigate('/ustawienia')}
+                      className="relative flex items-center justify-center p-4 rounded-lg transition-all duration-200 hover:bg-gray-50 border border-transparent"
+                      title="Ustawienia"
+                    >
+                      <span className="text-gray-400 transition-colors duration-200 hover:text-[#35530A]">
+                        <FiGrid className="w-6 h-6" />
+                      </span>
                     </button>
                   </div>
                 </div>
@@ -698,6 +741,8 @@ const UserListings = () => {
                       power: listing.power || 'N/A',
                       engineCapacity: listing.engineSize || 'N/A',
                       drive: listing.drive || 'N/A',
+                      transmission: listing.transmission || listing.gearbox || 'N/A',
+                      countryOrigin: listing.countryOrigin || listing.origin || 'N/A',
                       sellerType: listing.sellerType || 'N/A',
                       city: listing.city || 'N/A',
                       location: listing.voivodeship || 'N/A',

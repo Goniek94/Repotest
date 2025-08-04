@@ -7,7 +7,14 @@ import apiClient from '../client';
 export const fetchUserSettings = async () => {
   try {
     // Use the profile endpoint which should return all user data including verification status
-    const response = await apiClient.get('/api/users/profile');
+    const response = await apiClient.get('/users/profile');
+    
+    // Backend returns { success: true, user: {...} }, so we need to extract the user data
+    if (response.data && response.data.success && response.data.user) {
+      return response.data.user;
+    }
+    
+    // Fallback - if the structure is different, return the whole response data
     return response.data;
   } catch (error) {
     console.error('Error fetching user settings:', error);
@@ -22,7 +29,7 @@ export const fetchUserSettings = async () => {
  */
 export const updateUserSettings = async (settings) => {
   try {
-    const response = await apiClient.put('/api/users/profile', settings);
+    const response = await apiClient.put('/users/profile', settings);
     return response.data;
   } catch (error) {
     console.error('Error updating user settings:', error);
@@ -37,7 +44,7 @@ export const updateUserSettings = async (settings) => {
  */
 export const updateUserProfile = async (profileData) => {
   try {
-    const response = await apiClient.put('/api/users/profile', profileData);
+    const response = await apiClient.put('/users/profile', profileData);
     return response.data;
   } catch (error) {
     console.error('Error updating user profile:', error);

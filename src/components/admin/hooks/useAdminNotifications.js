@@ -12,6 +12,17 @@ const useAdminNotifications = () => {
     return `notification_${Date.now()}_${nextId.current++}`;
   }, []);
 
+  // Remove notification
+  const removeNotification = useCallback((id) => {
+    setNotifications(prev => {
+      const notification = prev.find(n => n.id === id);
+      if (notification && !notification.read) {
+        setUnreadCount(count => Math.max(0, count - 1));
+      }
+      return prev.filter(n => n.id !== id);
+    });
+  }, []);
+
   // Add notification
   const addNotification = useCallback((notification) => {
     const newNotification = {
@@ -32,7 +43,7 @@ const useAdminNotifications = () => {
     }
 
     return newNotification.id;
-  }, [generateId]);
+  }, [generateId, removeNotification]);
 
   // Quick notification types
   const showSuccess = useCallback((message, options = {}) => {
@@ -94,17 +105,6 @@ const useAdminNotifications = () => {
       duration: 10000
     });
   }, [addNotification]);
-
-  // Remove notification
-  const removeNotification = useCallback((id) => {
-    setNotifications(prev => {
-      const notification = prev.find(n => n.id === id);
-      if (notification && !notification.read) {
-        setUnreadCount(count => Math.max(0, count - 1));
-      }
-      return prev.filter(n => n.id !== id);
-    });
-  }, []);
 
   // Mark as read
   const markAsRead = useCallback((id) => {
@@ -192,7 +192,7 @@ const useAdminNotifications = () => {
     } catch (err) {
       console.warn('Failed to save notifications to localStorage:', err);
     }
-  }, [notifications, unreadCount]);
+  }, []);
 
   const loadFromStorage = useCallback(() => {
     try {
@@ -286,7 +286,7 @@ const useAdminNotifications = () => {
     });
 
     return counts;
-  }, [notifications, unreadCount]);
+  }, []);
 
   // Filter and sort notifications
   const getFilteredNotifications = useCallback((filters = {}) => {

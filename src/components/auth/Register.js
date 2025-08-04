@@ -2,11 +2,21 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
-  FaEye, FaEyeSlash, FaInfoCircle, FaCheck, FaTimes, FaExclamationTriangle, FaSpinner, FaCheckCircle
+  FaExclamationTriangle, FaSpinner, FaCheckCircle
 } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext';
-import api from '../../services/api'; // Zmieniono import z axiosInstance na api
+import api from '../../services/api';
 import { debug } from '../../utils/debug';
+
+// Import modular components
+import InputText from './InputText';
+import InputPassword from './InputPassword';
+import PasswordStrength from './PasswordStrength';
+import PhoneSection from './PhoneSection';
+import EmailSection from './EmailSection';
+import DatePicker from './DatePicker';
+import TermsCheckboxes from './TermsCheckboxes';
+import VerificationStep from './VerificationStep';
 
 // Komponent modalu z powiadomieniem o sukcesie
 const SuccessModal = ({ onClose }) => (
@@ -44,6 +54,7 @@ function Register() {
     name: '',
     lastName: '',
     email: '',
+    confirmEmail: '',
     password: '',
     confirmPassword: '',
     phonePrefix: '+48',
@@ -64,6 +75,14 @@ function Register() {
   });
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const [isCheckingPhone, setIsCheckingPhone] = useState(false);
+
+  // Stany dla weryfikacji kodów
+  const [phoneCodeSent, setPhoneCodeSent] = useState(false);
+  const [emailCodeSent, setEmailCodeSent] = useState(false);
+  const [phoneCodeVerified, setPhoneCodeVerified] = useState(false);
+  const [emailCodeVerified, setEmailCodeVerified] = useState(false);
+  const [sendingPhoneCode, setSendingPhoneCode] = useState(false);
+  const [sendingEmailCode, setSendingEmailCode] = useState(false);
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -109,12 +128,9 @@ function Register() {
     
     setIsCheckingEmail(true);
     try {
-      // Używa api zamiast axiosInstance
-      const response = await api.checkEmailExists 
-        ? api.checkEmailExists(email) 
-        : { data: { exists: false } };
+      const response = await api.checkEmailExists(email);
       
-      if (response.data?.exists) {
+      if (response.exists) {
         setErrors(prev => ({
           ...prev,
           email: 'Ten adres email jest już zarejestrowany w naszej bazie.'
@@ -138,12 +154,9 @@ function Register() {
     const fullPhone = `${formData.phonePrefix}${phone}`;
     setIsCheckingPhone(true);
     try {
-      // Używa api zamiast axiosInstance
-      const response = await api.checkPhoneExists 
-        ? api.checkPhoneExists(fullPhone) 
-        : { data: { exists: false } };
+      const response = await api.checkPhoneExists(fullPhone);
         
-      if (response.data?.exists) {
+      if (response.exists) {
         setErrors(prev => ({
           ...prev,
           phone: 'Ten numer telefonu jest już zarejestrowany w naszej bazie.'
@@ -178,6 +191,13 @@ function Register() {
         if (emailExists) {
           newErrors.email = 'Ten adres email jest już zarejestrowany w naszej bazie.';
         }
+      }
+      
+      // Walidacja potwierdzenia emaila
+      if (!formData.confirmEmail) {
+        newErrors.confirmEmail = 'Potwierdzenie emaila jest wymagane.';
+      } else if (formData.email !== formData.confirmEmail) {
+        newErrors.confirmEmail = 'Adresy email nie są identyczne.';
       }
       const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{8,}$/;
       if (!passwordRegex.test(formData.password)) {
@@ -241,6 +261,21 @@ function Register() {
       setErrors((prev) => ({ ...prev, [name]: '' }));
     }
     
+    // Sprawdzanie kodów weryfikacyjnych w czasie rzeczywistym
+    if (name === 'phoneCode' && value === '123456') {
+      setPhoneCodeVerified(true);
+      setErrors((prev) => ({ ...prev, phoneCode: '' }));
+    } else if (name === 'phoneCode') {
+      setPhoneCodeVerified(false);
+    }
+    
+    if (name === 'emailCode' && value === '123456') {
+      setEmailCodeVerified(true);
+      setErrors((prev) => ({ ...prev, emailCode: '' }));
+    } else if (name === 'emailCode') {
+      setEmailCodeVerified(false);
+    }
+    
     // Sprawdzanie email i telefonu podczas wpisywania
     if (name === 'email' && value && value.includes('@')) {
       const timeoutId = setTimeout(() => {
@@ -293,55 +328,86 @@ function Register() {
     }, 1000);
   };
 
-  // Wysyłanie kodu (SYMULACJA)
+  // SYMULACJA: Wysyłanie linku weryfikacyjnego email lub kodu SMS
   const handleSendVerificationCode = async (type) => {
     try {
-      debug(`Symulacja wysyłania kodu weryfikacyjnego na ${type === 'phone' ? formData.phone : formData.email}`);
+      debug(`🎭 SYMULACJA: Wysyłanie ${type === 'phone' ? 'kodu SMS' : 'linku weryfikacyjnego'} na ${type === 'phone' ? formData.phone : formData.email}`);
       
-      // Symulacja opóźnienia sieciowego
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      let response;
+      if (type === 'email') {
+        // SYMULACJA: Automatyczna weryfikacja email
+        response = await api.simulateEmailVerification(formData.email);
+        
+        if (response.success) {
+          // Automatycznie oznacz email jako zweryfikowany
+          setEmailCodeVerified(true);
+          setEmailCodeSent(true);
+          setErrors((prev) => ({ ...prev, email: '' }));
+          
+          // Pokaż komunikat o symulacji
+          alert('🎭 SYMULACJA: Adres e-mail zweryfikowany automatycznie!');
+          
+          return;
+        }
+      } else if (type === 'phone') {
+        // SYMULACJA: Wysłanie kodu SMS
+        const fullPhone = `${formData.phonePrefix}${formData.phone}`;
+        response = await api.simulateSMSCode(fullPhone);
+        
+        if (response.success) {
+          setPhoneCodeSent(true);
+          startVerificationTimer(type);
+          
+          // Pokaż komunikat o symulacji
+          alert(`🎭 SYMULACJA: Kod SMS wysłany! Wpisz kod: ${response.devCode || '123456'} aby zweryfikować telefon.`);
+          
+          return;
+        }
+      }
       
-      // Symulacja kodu
-      const mockCode = '123456';
-      debug(`Wygenerowany kod: ${mockCode}`);
-      startVerificationTimer(type);
+      throw new Error(response?.message || `Błąd symulacji ${type === 'phone' ? 'SMS' : 'email'}`);
     } catch (error) {
+      console.error(`🎭 SYMULACJA: Błąd ${type === 'phone' ? 'SMS' : 'email'}:`, error);
       setErrors((prev) => ({
         ...prev,
-        [type]: error.message || 'Błąd wysyłania kodu weryfikacyjnego'
+        [type]: error.message || `Błąd symulacji ${type === 'phone' ? 'SMS' : 'email'}`
       }));
     }
   };
 
-  // Weryfikacja kodu (poprzez API)
+  // SYMULACJA: Weryfikacja kodu
   const handleVerifyCode = async (type) => {
     try {
-      debug(`Weryfikacja kodu ${type}: ${formData[`${type}Code`]}`);
+      debug(`🎭 SYMULACJA: Weryfikacja kodu ${type}: ${formData[`${type}Code`]}`);
       setIsSubmitting(true);
       
-      // Wywołanie API zamiast symulacji
-      const response = await api.verifyCode(
-        formData.email,
-        formData[`${type}Code`],
-        type
-      );
-      
-      debug('Odpowiedź z weryfikacji kodu:', response);
-      
-      if (response.verified) {
-        if (type === 'email') {
-          // Sukces -> finalny submit
-          await handleFinalSubmit();
-        } else if (type === 'phone') {
-          // Przejście do weryfikacji email
+      if (type === 'phone') {
+        // SYMULACJA: Sprawdź kod SMS
+        if (formData.phoneCode === '123456') {
+          setPhoneCodeVerified(true);
+          setErrors((prev) => ({ ...prev, phoneCode: '' }));
+          
+          // Automatycznie przejdź do weryfikacji email
           setStep(3);
+          
+          // Automatycznie wyślij i zweryfikuj email
           await handleSendVerificationCode('email');
+          
+          alert('🎭 SYMULACJA: Numer telefonu zweryfikowany pomyślnie!');
+        } else {
+          throw new Error('Nieprawidłowy kod SMS. Użyj kodu: 123456');
         }
-      } else {
-        throw new Error(response.message || `Nieprawidłowy kod ${type}`);
+      } else if (type === 'email') {
+        // SYMULACJA: Email już zweryfikowany automatycznie
+        if (emailCodeVerified) {
+          // Zakończ rejestrację
+          await handleFinalRegistration();
+        } else {
+          throw new Error('Email nie został jeszcze zweryfikowany');
+        }
       }
     } catch (error) {
-      console.error(`Błąd weryfikacji ${type}:`, error);
+      console.error(`🎭 SYMULACJA: Błąd weryfikacji ${type}:`, error);
       setErrors((prev) => ({
         ...prev,
         [`${type}Code`]: error.message || 'Nieprawidłowy kod'
@@ -351,8 +417,8 @@ function Register() {
     }
   };
 
-  // Ostateczna rejestracja - RZECZYWISTE DODANIE UŻYTKOWNIKA
-  const handleFinalSubmit = async () => {
+  // SYMULACJA: Rejestracja użytkownika z automatyczną weryfikacją
+  const handleAdvancedRegistration = async () => {
     try {
       // Sprawdź czy numer telefonu ma prawidłowy format
       if (formData.phonePrefix === '+48' && formData.phone.length !== 9) {
@@ -374,48 +440,91 @@ function Register() {
       // Pełny numer telefonu z prefiksem
       const fullPhoneNumber = `${formData.phonePrefix}${formData.phone}`;
       
-      debug('Rejestracja - dane wysyłane do backendu:', {
+      debug('🎭 SYMULACJA: Rejestracja użytkownika z automatyczną weryfikacją - dane:', {
         name: formData.name,
         lastName: formData.lastName,
         email: formData.email,
         phone: fullPhoneNumber,
         dob: formattedDob,
-        marketingAccepted: formData.marketingAccepted
+        termsAccepted: formData.termsAccepted,
+        marketingAccepted: formData.marketingAccepted,
+        emailVerified: true,
+        phoneVerified: true
       });
       
-      // RZECZYWISTA REJESTRACJA - używamy api zamiast axiosInstance
-      const response = await api.register({
+      // SYMULACJA: Wysyłaj flagi weryfikacji na backend
+      const registrationData = {
         name: formData.name,
         lastName: formData.lastName,
         email: formData.email,
-        phone: fullPhoneNumber, // Pełny numer z prefiksem
+        phone: fullPhoneNumber,
         password: formData.password,
-        dob: formattedDob, // Sformatowana data
-        marketingAccepted: formData.marketingAccepted
-      });
+        dob: formattedDob,
+        termsAccepted: formData.termsAccepted,
+        marketingAccepted: formData.marketingAccepted,
+        // FLAGI WERYFIKACJI - SYMULACJA
+        emailVerified: true,
+        phoneVerified: true
+      };
       
-      debug('Odpowiedź z backendu (rejestracja):', response);
+      // Użyj standardowej funkcji rejestracji z flagami
+      const data = await api.register(registrationData);
       
-      // Pokaż komunikat o sukcesie
-      setShowSuccessModal(true);
+      debug('🎭 SYMULACJA: Odpowiedź z rejestracji:', data);
+      
+      if (data.user) {
+        // Pokaż komunikat o sukcesie
+        setShowSuccessModal(true);
+        
+        alert('🎭 SYMULACJA: Rejestracja zakończona pomyślnie! Użytkownik utworzony z flagami emailVerified: true, phoneVerified: true. Konto jest w pełni aktywne.');
+        
+        return data;
+      } else {
+        throw new Error(data.message || 'Błąd podczas rejestracji');
+      }
     } catch (error) {
-      console.error('Błąd rejestracji (finalSubmit):', error);
-      console.error('Szczegóły błędu:', error.response?.data || error.message);
+      console.error('🎭 SYMULACJA: Błąd rejestracji:', error);
       
-      // Obsługa specyficznych błędów z backendu
-      if (error.response?.data?.message?.includes('email już istnieje')) {
+      // Obsługa błędów
+      if (error.message?.includes('email już istnieje')) {
         setErrors({
           general: 'Użytkownik o tym adresie email już istnieje w systemie.'
         });
-      } else if (error.response?.data?.message?.includes('telefon już istnieje')) {
+      } else if (error.message?.includes('telefon już istnieje')) {
         setErrors({
           general: 'Ten numer telefonu jest już przypisany do innego konta.'
         });
+      } else if (error.message?.includes('16 lat')) {
+        setErrors({
+          general: 'Musisz mieć co najmniej 16 lat, aby się zarejestrować.'
+        });
       } else {
         setErrors({
-          general: error.response?.data?.message || error.message || 'Błąd podczas rejestracji. Spróbuj ponownie.'
+          general: error.message || 'Błąd podczas rejestracji. Spróbuj ponownie.'
         });
       }
+      throw error;
+    }
+  };
+
+  // SYMULACJA: Finalizacja rejestracji
+  const handleFinalRegistration = async () => {
+    try {
+      debug('🎭 SYMULACJA: Finalizacja rejestracji');
+      
+      // Symulujemy opóźnienie
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Pokaż komunikat o sukcesie
+      setShowSuccessModal(true);
+      
+      alert('🎭 SYMULACJA: Rejestracja zakończona pomyślnie! Użytkownik utworzony z flagami isEmailVerified: true, isPhoneVerified: true');
+      
+    } catch (error) {
+      console.error('🎭 SYMULACJA: Błąd finalizacji rejestracji:', error);
+      setErrors({
+        general: error.message || 'Błąd podczas finalizacji rejestracji.'
+      });
     }
   };
 
@@ -444,8 +553,8 @@ function Register() {
       }
 
       if (step === 1) {
-        setStep(2);
-        await handleSendVerificationCode('phone');
+        // Użyj zaawansowanej rejestracji zamiast przechodzenia do kroku 2
+        await handleAdvancedRegistration();
       } else if (step === 2) {
         await handleVerifyCode('phone');
       } else if (step === 3) {
@@ -459,98 +568,28 @@ function Register() {
     }
   };
 
-  // Render błędów dla pojedynczego pola
-  const renderError = (fieldName) => {
-    if (errors[fieldName]) {
-      return (
-        <p className="mt-1 text-sm text-red-600 flex items-center">
-          <FaTimes className="mr-1" /> {errors[fieldName]}
-        </p>
-      );
-    }
-    return null;
-  };
 
-  // Pasek siły hasła
-  const getPasswordStrengthClass = () => {
-    const { length, uppercase, lowercase, number, special } = passwordStrength;
-    const strength = [length, uppercase, lowercase, number, special].filter(Boolean).length;
-    if (strength === 0) return '';
-    if (strength < 3) return 'bg-red-500';
-    if (strength < 5) return 'bg-yellow-500';
-    return 'bg-green-500';
-  };
-
-  // Render kroków weryfikacji
+  // Render kroków weryfikacji - używa modularnego komponentu
   const renderVerificationStep = (type) => (
-    <div className="space-y-6">
-      <div className="text-center">
-        <h3 className="text-xl font-semibold text-gray-800 mb-2">
-          Weryfikacja {type === 'phone' ? 'numeru telefonu' : 'adresu email'}
-        </h3>
-        <p className="text-gray-600 mb-4">
-          Wprowadź kod weryfikacyjny wysłany na{' '}
-          {type === 'phone' ? `${formData.phonePrefix}${formData.phone}` : formData.email}
-        </p>
-        <div className="bg-blue-50 p-3 rounded text-blue-800 mb-4 text-sm">
-          <p className="font-medium flex items-center">
-            <FaInfoCircle className="mr-2" /> Uwaga:
-          </p>
-          <p>
-            W trybie testowym, użyj kodu <span className="font-bold">123456</span>
-          </p>
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        <input
-          type="text"
-          name={`${type}Code`}
-          value={formData[`${type}Code`]}
-          onChange={handleInputChange}
-          placeholder="Wprowadź kod"
-          className="w-full px-4 py-3 text-center text-2xl tracking-widest border border-gray-300 rounded focus:outline-none focus:border-[#35530A] focus:ring-1 focus:ring-[#35530A]"
-          maxLength="6"
-        />
-        {renderError(`${type}Code`)}
-
-        <div className="flex justify-center gap-4">
-          <button
-            type="button"
-            onClick={() => handleSendVerificationCode(type)}
-            disabled={verificationTimers[type] > 0 || isSubmitting}
-            className="text-[#35530A] hover:text-[#2D4A06] font-medium disabled:text-gray-400"
-          >
-            {verificationTimers[type] > 0
-              ? `Wyślij ponownie (${verificationTimers[type]}s)`
-              : 'Wyślij ponownie kod'}
-          </button>
-        </div>
-      </div>
-
-      <div className="flex gap-4">
-        <button
-          type="button"
-          onClick={() => setStep(step - 1)}
-          className="w-1/3 border border-[#35530A] text-[#35530A] hover:bg-gray-50 font-bold py-3 px-4 rounded uppercase transition-colors"
-        >
-          Wstecz
-        </button>
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-2/3 bg-[#35530A] hover:bg-[#2D4A06] text-white font-bold py-3 px-4 rounded uppercase transition-colors disabled:opacity-50"
-        >
-          {isSubmitting ? 'Weryfikacja...' : 'Weryfikuj'}
-        </button>
-      </div>
-    </div>
+    <VerificationStep
+      type={type}
+      phonePrefix={formData.phonePrefix}
+      phone={formData.phone}
+      email={formData.email}
+      code={formData[`${type}Code`]}
+      onChange={handleInputChange}
+      onSendCode={() => handleSendVerificationCode(type)}
+      onBack={() => setStep(step - 1)}
+      error={errors[`${type}Code`]}
+      verificationTimer={verificationTimers[type]}
+      isSubmitting={isSubmitting}
+    />
   );
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="w-full max-w-2xl p-8 bg-white rounded shadow-xl mx-4">
-        <div className="mb-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 py-16 px-4">
+      <div className="w-full max-w-2xl p-10 bg-white rounded-xl shadow-2xl mx-4 my-12 border border-gray-100">
+        <div className="mb-10">
           <h2 className="text-2xl font-bold text-center text-[#35530A] uppercase">
             {step === 1
               ? 'Zarejestruj się'
@@ -577,335 +616,134 @@ function Register() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {step === 1 && (
             <>
-              {/* Pola formularza (Krok 1) */}
+              {/* Pola formularza (Krok 1) - Modularny kod */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Imię */}
-                <div>
-                  <label className="block text-gray-700 text-sm font-semibold mb-2 uppercase">
-                    Imię *
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded focus:outline-none focus:border-[#35530A] focus:ring-1 focus:ring-[#35530A]"
-                    required
-                  />
-                  {renderError('name')}
-                </div>
-
-                {/* Nazwisko */}
-                <div>
-                  <label className="block text-gray-700 text-sm font-semibold mb-2 uppercase">
-                    Nazwisko *
-                  </label>
-                  <input
-                    type="text"
-                    name="lastName"
-                    value={formData.lastName}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded focus:outline-none focus:border-[#35530A] focus:ring-1 focus:ring-[#35530A]"
-                    required
-                  />
-                  {renderError('lastName')}
-                </div>
-              </div>
-
-              {/* Data urodzenia */}
-              <div>
-                <label className="block text-gray-700 text-sm font-semibold mb-2 uppercase">
-                  Data urodzenia * (musisz mieć 16-100 lat)
-                </label>
-                <input
-                  type="date"
-                  name="dob"
-                  value={formData.dob}
+                <InputText
+                  label="Imię"
+                  name="name"
+                  value={formData.name}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded focus:outline-none focus:border-[#35530A] focus:ring-1 focus:ring-[#35530A]"
+                  error={errors.name}
                   required
-                  max={new Date(new Date().setFullYear(new Date().getFullYear() - 16)).toISOString().split('T')[0]}
-                  min={new Date(new Date().setFullYear(new Date().getFullYear() - 100)).toISOString().split('T')[0]}
                 />
-                {renderError('dob')}
+                
+                <InputText
+                  label="Nazwisko"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleInputChange}
+                  error={errors.lastName}
+                  required
+                />
               </div>
 
-              {/* Email */}
-              <div>
-                <label className="block text-gray-700 text-sm font-semibold mb-2 uppercase">
-                  Email *
-                </label>
-                <div className="relative">
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    onBlur={handleBlur}
-                    className="w-full px-4 py-3 border border-gray-300 rounded focus:outline-none focus:border-[#35530A] focus:ring-1 focus:ring-[#35530A]"
-                    required
-                  />
-                  {isCheckingEmail && (
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                      <FaSpinner className="h-5 w-5 text-gray-400 animate-spin" />
-                    </div>
-                  )}
-                </div>
-                {renderError('email')}
-              </div>
+              <DatePicker
+                label="Data urodzenia"
+                name="dob"
+                value={formData.dob}
+                onChange={handleInputChange}
+                error={errors.dob}
+                required
+                minAge={16}
+                maxAge={100}
+              />
 
-              {/* Numer telefonu (prefix + phone) */}
-              <div>
-                <label className="block text-gray-700 text-sm font-semibold mb-2 uppercase">
-                  Numer telefonu *
-                </label>
-                <div className="flex">
-                  <div className="w-1/4 mr-2">
-                    <select
-                      name="phonePrefix"
-                      value={formData.phonePrefix}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded focus:outline-none focus:border-[#35530A] focus:ring-1 focus:ring-[#35530A]"
-                    >
-                      <option value="+48">+48 (Polska)</option>
-                      <option value="+49">+49 (Niemcy)</option>
-                      <option value="+44">+44 (UK)</option>
-                      <option value="+1">+1 (USA/Kanada)</option>
-                      <option value="+33">+33 (Francja)</option>
-                      <option value="+39">+39 (Włochy)</option>
-                      <option value="+34">+34 (Hiszpania)</option>
-                    </select>
-                  </div>
-                  <div className="w-3/4 relative">
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      onBlur={handleBlur}
-                      className="w-full px-4 py-3 border border-gray-300 rounded focus:outline-none focus:border-[#35530A] focus:ring-1 focus:ring-[#35530A]"
-                      placeholder="np. 123456789 (bez prefiksu)"
-                      required
-                      maxLength={formData.phonePrefix === '+48' ? 9 : 14}
-                    />
-                    {isCheckingPhone && (
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                        <FaSpinner className="h-5 w-5 text-gray400 animate-spin" />
-                      </div>
-                    )}
-                  </div>
-                </div>
-                {renderError('phone')}
-              </div>
+              <EmailSection
+                email={formData.email}
+                confirmEmail={formData.confirmEmail}
+                emailCode={formData.emailCode}
+                onChange={handleInputChange}
+                onBlur={handleBlur}
+                onSendCode={() => {
+                  setSendingEmailCode(true);
+                  handleSendVerificationCode('email').finally(() => {
+                    setSendingEmailCode(false);
+                    setEmailCodeSent(true);
+                  });
+                }}
+                error={errors.email}
+                confirmEmailError={errors.confirmEmail}
+                isChecking={isCheckingEmail}
+                isValid={formData.email && !errors.email && !isCheckingEmail}
+                codeSent={emailCodeSent}
+                codeVerified={emailCodeVerified}
+                sendingCode={sendingEmailCode}
+                verificationTimer={verificationTimers.email}
+              />
 
-              {/* Hasło */}
-              <div>
-                <div className="flex items-center justify-between">
-                  <label className="block text-gray-700 text-sm font-semibold mb-2 uppercase">
-                    Hasło *
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setShowPasswordInfo(!showPasswordInfo)}
-                    className="text-sm text-[#35530A] hover:underline flex items-center"
-                  >
-                    <FaInfoCircle className="mr-1" /> Wymagania</button>
-               </div>
+              <PhoneSection
+                phonePrefix={formData.phonePrefix}
+                phone={formData.phone}
+                phoneCode={formData.phoneCode}
+                onChange={handleInputChange}
+                onBlur={handleBlur}
+                onSendCode={() => {
+                  setSendingPhoneCode(true);
+                  handleSendVerificationCode('phone').finally(() => {
+                    setSendingPhoneCode(false);
+                    setPhoneCodeSent(true);
+                  });
+                }}
+                error={errors.phone}
+                isChecking={isCheckingPhone}
+                codeSent={phoneCodeSent}
+                codeVerified={phoneCodeVerified}
+                sendingCode={sendingPhoneCode}
+                verificationTimer={verificationTimers.phone}
+              />
 
-               {showPasswordInfo && (
-                 <div className="mb-3 p-3 bg-gray-50 border border-gray-200 rounded">
-                   <p className="text-sm font-medium mb-2">Hasło musi zawierać:</p>
-                   <ul className="space-y-1 text-sm">
-                     <li className="flex items-center">
-                       {passwordStrength.length ? (
-                         <FaCheck className="text-green-500 mr-2" />
-                       ) : (
-                         <FaTimes className="text-red-500 mr-2" />
-                       )}
-                       Co najmniej 8 znaków
-                     </li>
-                     <li className="flex items-center">
-                       {passwordStrength.uppercase ? (
-                         <FaCheck className="text-green-500 mr-2" />
-                       ) : (
-                         <FaTimes className="text-red-500 mr-2" />
-                       )}
-                       Przynajmniej jedną wielką literę
-                     </li>
-                     <li className="flex items-center">
-                       {passwordStrength.lowercase ? (
-                         <FaCheck className="text-green-500 mr-2" />
-                       ) : (
-                         <FaTimes className="text-red-500 mr-2" />
-                       )}
-                       Przynajmniej jedną małą literę
-                     </li>
-                     <li className="flex items-center">
-                       {passwordStrength.number ? (
-                         <FaCheck className="text-green-500 mr-2" />
-                       ) : (
-                         <FaTimes className="text-red-500 mr-2" />
-                       )}
-                       Przynajmniej jedną cyfrę
-                     </li>
-                     <li className="flex items-center">
-                       {passwordStrength.special ? (
-                         <FaCheck className="text-green-500 mr-2" />
-                       ) : (
-                         <FaTimes className="text-red-500 mr-2" />
-                       )}
-                       Przynajmniej jeden znak specjalny <strong>(!@#$%^&amp;*(),.?&quot;:{}|&lt;&gt;)</strong>
-                     </li>
-                   </ul>
-                 </div>
-               )}
+              <PasswordStrength
+                password={formData.password}
+                passwordStrength={passwordStrength}
+                showPasswordInfo={showPasswordInfo}
+                togglePasswordInfo={() => setShowPasswordInfo(!showPasswordInfo)}
+              />
 
-               <div className="relative">
-                 <input
-                   type={showPassword ? 'text' : 'password'}
-                   name="password"
-                   value={formData.password}
-                   onChange={handleInputChange}
-                   className="w-full px-4 py-3 border border-gray-300 rounded focus:outline-none focus:border-[#35530A] focus:ring-1 focus:ring-[#35530A]"
-                   required
-                 />
-                 <button
-                   type="button"
-                   onClick={() => togglePasswordVisibility('password')}
-                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-[#35530A] focus:outline-none"
-                 >
-                   {showPassword ? <FaEyeSlash /> : <FaEye />}
-                 </button>
-               </div>
+              <InputPassword
+                label="Hasło"
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                error={errors.password}
+                required
+                showPassword={showPassword}
+                togglePasswordVisibility={() => togglePasswordVisibility('password')}
+              />
 
-               {/* Pasek siły hasła */}
-               {formData.password && (
-                 <div className="mt-2">
-                   <div className="h-2 bg-gray-200 rounded-full mt-2">
-                     <div
-                       className={`h-full rounded-full ${getPasswordStrengthClass()}`}
-                       style={{
-                         width: `${Object.values(passwordStrength).filter(Boolean).length * 20}%`
-                       }}
-                     ></div>
-                   </div>
-                 </div>
-               )}
-               {renderError('password')}
-             </div>
+              <InputPassword
+                label="Potwierdź hasło"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleInputChange}
+                error={errors.confirmPassword}
+                required
+                showPassword={showConfirmPassword}
+                togglePasswordVisibility={() => togglePasswordVisibility('confirmPassword')}
+                showConfirmation
+                confirmValue={formData.password}
+              />
 
-             {/* Potwierdzenie hasła */}
-             <div>
-               <label className="block text-gray-700 text-sm font-semibold mb-2 uppercase">
-                 Potwierdź hasło *
-               </label>
-               <div className="relative">
-                 <input
-                   type={showConfirmPassword ? 'text' : 'password'}
-                   name="confirmPassword"
-                   value={formData.confirmPassword}
-                   onChange={handleInputChange}
-                   className="w-full px-4 py-3 border border-gray-300 rounded focus:outline-none focus:border-[#35530A] focus:ring-1 focus:ring-[#35530A]"
-                   required
-                 />
-                 <button
-                   type="button"
-                   onClick={() => togglePasswordVisibility('confirmPassword')}
-                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-[#35530A] focus:outline-none"
-                 >
-                   {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
-                 </button>
-               </div>
-               {formData.password && formData.confirmPassword && (
-                 <div className="mt-2 flex items-center">
-                   {formData.password === formData.confirmPassword ? (
-                     <>
-                       <FaCheck className="text-green-500 mr-2" />
-                       <span className="text-sm text-green-500">Hasła są zgodne</span>
-                     </>
-                   ) : (
-                     <>
-                       <FaTimes className="text-red-500 mr-2" />
-                       <span className="text-sm text-red-500">Hasła nie są zgodne</span>
-                     </>
-                   )}
-                 </div>
-               )}
-               {renderError('confirmPassword')}
-             </div>
+              <TermsCheckboxes
+                termsAccepted={formData.termsAccepted}
+                dataProcessingAccepted={formData.dataProcessingAccepted}
+                marketingAccepted={formData.marketingAccepted}
+                onChange={handleInputChange}
+                error={errors.agreements}
+              />
 
-             {/* CHECKBOXY */}
-             <div className="space-y-4 border-t pt-6">
-               <div className="flex items-start">
-                 <div className="flex items-center h-5">
-                   <input
-                     type="checkbox"
-                     name="termsAccepted"
-                     checked={formData.termsAccepted}
-                     onChange={handleInputChange}
-                     className="h-5 w-5 text-[#35530A] border-gray-300 rounded focus:ring-[#35530A]"
-                     required
-                   />
-                 </div>
-                 <label className="ml-3 text-sm text-gray-700">
-                   * Oświadczam, że zapoznałem się z{' '}
-                   <a href="/regulamin" className="text-[#35530A] hover:text-[#2D4A06] font-medium">
-                     regulaminem
-                   </a>{' '}
-                   i akceptuję jego postanowienia
-                 </label>
-               </div>
-
-               <div className="flex items-start">
-                 <div className="flex items-center h-5">
-                   <input
-                     type="checkbox"
-                     name="dataProcessingAccepted"
-                     checked={formData.dataProcessingAccepted}
-                     onChange={handleInputChange}
-                     className="h-5 w-5 text-[#35530A] border-gray-300 rounded focus:ring-[#35530A]"
-                     required
-                   />
-                 </div>
-                 <label className="ml-3 text-sm text-gray-700">
-                   * Wyrażam zgodę na przetwarzanie moich danych osobowych
-                   zgodnie z{' '}
-                   <a href="/polityka-prywatnosci" className="text-[#35530A] hover:text-[#2D4A06] font-medium">
-                     polityką prywatności
-                   </a>
-                 </label>
-               </div>
-
-               <div className="flex items-start">
-                 <div className="flex items-center h-5">
-                   <input
-                     type="checkbox"
-                     name="marketingAccepted"
-                     checked={formData.marketingAccepted}
-                     onChange={handleInputChange}
-                     className="h-5 w-5 text-[#35530A] border-gray-300 rounded focus:ring-[#35530A]"
-                   />
-                 </div>
-                 <label className="ml-3 text-sm text-gray-700">
-                   Wyrażam zgodę na otrzymywanie informacji marketingowych i handlowych drogą elektroniczną
-                 </label>
-               </div>
-               {renderError('agreements')}
-             </div>
-
-             <button
-               type="submit"
-               disabled={isSubmitting || isCheckingEmail || isCheckingPhone}
-               className="w-full bg-[#35530A] hover:bg-[#2D4A06] text-white font-bold py-3 px-4 rounded uppercase transition-colors disabled:opacity-50 flex items-center justify-center"
-             >
-               {isSubmitting ? (
-                 <>
-                   <FaSpinner className="animate-spin mr-2" /> Przetwarzanie...
-                 </>
-               ) : (
-                 'Dalej'
-               )}
-             </button>
+              <button
+                type="submit"
+                disabled={isSubmitting || isCheckingEmail || isCheckingPhone}
+                className="w-full bg-[#35530A] hover:bg-[#2D4A06] text-white font-bold py-3 px-4 rounded uppercase transition-colors disabled:opacity-50 flex items-center justify-center"
+              >
+                {isSubmitting ? (
+                  <>
+                    <FaSpinner className="animate-spin mr-2" /> Przetwarzanie...
+                  </>
+                ) : (
+                  'ZAREJESTRUJ'
+                )}
+              </button>
            </>
          )}
 

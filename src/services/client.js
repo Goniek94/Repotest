@@ -3,7 +3,9 @@
 // Zapewnia to wsteczną kompatybilność z kodem, który importuje z ./services/client.js
 
 import apiClient from './api/client';
-import { safeConsole } from '../utils/debug';
+import debugUtils from '../utils/debug';
+
+const { safeConsole } = debugUtils;
 
 // Informacja o tym, że klient jest przestarzały
 if (process.env.NODE_ENV === 'development') {

@@ -13,7 +13,7 @@ const AdminPanel = () => {
   const [activeSection, setActiveSection] = useState('dashboard');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { user, logout, isAuthenticated, isLoading } = useAuth();
+  const { user, logout, isAuthenticated } = useAuth();
 
   // Initialize admin panel data
   useEffect(() => {

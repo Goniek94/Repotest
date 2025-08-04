@@ -65,16 +65,16 @@ const AdsService = {
     apiClient.put(`/ads/${id}/main-image`, { mainImageIndex }),
 
   // Dodawanie ogłoszenia do ulubionych
-  addToFavorites: (id) => apiClient.post(`/api/users/favorites/${id}`),
+  addToFavorites: (id) => apiClient.post(`/favorites/add/${id}`),
 
   // Usuwanie ogłoszenia z ulubionych
-  removeFromFavorites: (id) => apiClient.delete(`/api/users/favorites/${id}`),
+  removeFromFavorites: (id) => apiClient.delete(`/favorites/remove/${id}`),
 
   // Pobieranie ulubionych ogłoszeń użytkownika
-  getFavorites: () => apiClient.get('/api/users/favorites'),
+  getFavorites: () => apiClient.get('/favorites'),
 
   // Sprawdzanie czy ogłoszenie jest w ulubionych
-  checkIsFavorite: (id) => apiClient.get(`/api/users/favorites/${id}/check`),
+  checkIsFavorite: (id) => apiClient.get(`/favorites/check/${id}`),
   
   // Aktualizacja statusu ogłoszenia
   updateStatus: (id, status) => apiClient.put(`/ads/${id}/status`, { status }),

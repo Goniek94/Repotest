@@ -1,76 +1,64 @@
 /**
- * Bezpieczne funkcje debugowania i narzędzia konsolowe
- * Zaprojektowane do pracy we wszystkich środowiskach bez błędów
+ * Debug utility functions for development
  */
 
-// Sprawdzenie czy jesteśmy w środowisku produkcyjnym
-const IS_PRODUCTION = 
-  typeof process !== 'undefined' && 
-  process.env && 
-  process.env.NODE_ENV === 'production';
-
-// Dla ESLint: deklaracja, że używamy zmiennych globalnych
-/* global window */
+const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
- * Bezpieczna funkcja debugowania - nie wyświetla nic w produkcji
+ * Debug logging function - only logs in development mode
+ * @param {...any} args - Arguments to log
  */
 export const debug = (...args) => {
-  if (!IS_PRODUCTION) {
-    console.log(...args);
+  if (isDevelopment) {
+    console.log('[DEBUG]', ...args);
   }
 };
 
 /**
- * Bezpieczny wrapper konsolowy, który nie wyświetla logów w produkcji
- * Używaj: safeConsole.log(), safeConsole.error(), safeConsole.warn()
+ * Debug error logging function
+ * @param {...any} args - Arguments to log
+ */
+export const debugError = (...args) => {
+  if (isDevelopment) {
+    console.error('[DEBUG ERROR]', ...args);
+  }
+};
+
+/**
+ * Debug warning logging function
+ * @param {...any} args - Arguments to log
+ */
+export const debugWarn = (...args) => {
+  if (isDevelopment) {
+    console.warn('[DEBUG WARN]', ...args);
+  }
+};
+
+/**
+ * Safe console logging - prevents errors in production
  */
 export const safeConsole = {
   log: (...args) => {
-    if (!IS_PRODUCTION) {
-      console.log(...args);
+    if (isDevelopment && typeof console !== 'undefined') {
+      console.log('[SAFE]', ...args);
     }
   },
   error: (...args) => {
-    // W produkcji możemy przekierować błędy do serwisu monitorowania
-    if (IS_PRODUCTION) {
-      // W produkcji logujemy tylko pierwszy argument jako string (dla bezpieczeństwa)
-      console.error(typeof args[0] === 'string' ? args[0] : 'Błąd aplikacji');
-      
-      // Tutaj można dodać kod do wysyłania błędów do serwisu monitorowania
-      // np. Sentry, LogRocket, itp.
-    } else {
-      // W środowisku deweloperskim logujemy wszystkie szczegóły
-      console.error(...args);
+    if (isDevelopment && typeof console !== 'undefined') {
+      console.error('[SAFE ERROR]', ...args);
     }
   },
   warn: (...args) => {
-    if (!IS_PRODUCTION) {
-      console.warn(...args);
+    if (isDevelopment && typeof console !== 'undefined') {
+      console.warn('[SAFE WARN]', ...args);
     }
   },
   info: (...args) => {
-    if (!IS_PRODUCTION) {
-      console.info(...args);
+    if (isDevelopment && typeof console !== 'undefined') {
+      console.info('[SAFE INFO]', ...args);
     }
   }
 };
 
-// Eksportujemy flagę produkcyjną dla innych modułów
-export const isProduction = IS_PRODUCTION;
-
-// Bezpiecznie dołączamy do obiektu window tylko w środowisku przeglądarki
-try {
-  if (typeof window === 'object') {
-    window.debugUtils = { debug, safeConsole };
-  }
-} catch (err) {
-  // Ignorujemy błędy, które mogą wystąpić w niektórych środowiskach
-}
-
-// Eksportujemy domyślnie obiekt z wszystkimi narzędziami
-export default {
-  debug,
-  safeConsole,
-  isProduction
-};
+const debugUtils = { debug, debugError, debugWarn, safeConsole };
+export default debugUtils;

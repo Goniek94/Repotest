@@ -10,7 +10,9 @@ import {
   MAX_RETRIES,
   THROTTLE_REQUESTS
 } from './config';
-import { safeConsole } from '../../utils/debug';
+import debugUtils from '../../utils/debug';
+
+const { safeConsole } = debugUtils;
 
 // Globalna instancja cache
 const apiCache = new Map();

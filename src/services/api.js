@@ -93,16 +93,15 @@ export const dismissNotification = async (notificationId) => {
 
 /**
  * Pobiera dane panelu użytkownika
- * @param {string} userId - ID użytkownika
  * @returns {Promise} - Promise z danymi
  */
-export const getUserDashboard = async (userId) => {
+export const getUserDashboard = async () => {
   try {
-    const response = await api.get(`/users/${userId}/dashboard`);
+    const response = await api.get('/users/dashboard');
     return response.data;
   } catch (error) {
     console.error('Błąd podczas pobierania danych panelu użytkownika:', error);
-    return null;
+    return { error: error.message };
   }
 };
 

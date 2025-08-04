@@ -42,8 +42,13 @@ export default {
   logout: AuthService.logout,
   register: AuthService.register,
   verifyCode: AuthService.verifyCode,
-  checkEmailExists: (email) => apiClient.post('/users/check-email', { email }).then(r => r.data),
-  checkPhoneExists: (phone) => apiClient.post('/users/check-phone', { phone }).then(r => r.data),
+  checkEmailExists: AuthService.checkEmailExists,
+  checkPhoneExists: AuthService.checkPhoneExists,
+  verifyEmailAdvanced: AuthService.verifyEmailAdvanced,
+  verifySMSAdvanced: AuthService.verifySMSAdvanced,
+  resendEmailCode: AuthService.resendEmailCode,
+  resendSMSCode: AuthService.resendSMSCode,
+  sendEmailVerificationLink: AuthService.sendEmailVerificationLink,
   getCurrentUser: AuthService.getCurrentUser,
   updateUserProfile: AuthService.refreshUserData,
   changePassword: (data) => apiClient.put('/users/change-password', data).then(r => r.data),
@@ -80,5 +85,11 @@ export default {
   processPayment: TransactionsService.processPayment,
   
   // CEPiK - pobieranie danych pojazdu
-  getVehicleDataByVin: (vin) => apiClient.post('/api/cepik/checkVehicle', { vin }).then(r => r.data.vehicle)
+  getVehicleDataByVin: (vin) => apiClient.post('/api/cepik/checkVehicle', { vin }).then(r => r.data.vehicle),
+  
+  // SYMULACJA - funkcje mockowe dla rejestracji
+  simulateEmailVerification: AuthService.simulateEmailVerification,
+  simulateSMSCode: AuthService.simulateSMSCode,
+  simulateSMSVerification: AuthService.simulateSMSVerification,
+  simulateRegistration: AuthService.simulateRegistration
 };

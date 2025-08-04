@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import ConversationList from './ConversationList';
+import MessageList from './MessageList';
 import ConversationChat from './ConversationChat';
 import EmptyChat from './EmptyChat';
 import ChatHeader from './ChatHeader';
@@ -63,8 +64,8 @@ const MessagesLayout = ({
                   <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#35530A]"></div>
                 </div>
               ) : (
-                <ConversationList
-                  conversations={filteredConversations}
+                <MessageList
+                  messages={filteredConversations}
                   activeConversation={selectedConversation?.id}
                   onSelectConversation={onSelectConversation}
                   onStar={onStar}

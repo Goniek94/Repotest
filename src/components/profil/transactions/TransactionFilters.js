@@ -52,11 +52,12 @@ const TransactionFilters = ({
             onDateFilterChange(e.target.value);
           }}
         >
-          <option value="all">Wszystkie transakcje</option>
-          <option value="30days">Ostatnie 30 dni</option>
-          <option value="90days">Ostatnie 90 dni</option>
-          <option value="180days">Ostatnie 180 dni</option>
-          <option value="custom">Niestandardowy okres</option>
+          <option value="wszystkie">Wszystkie transakcje</option>
+          <option value="dzisiaj">Dzisiaj</option>
+          <option value="tydzien">Ostatni tydzień</option>
+          <option value="miesiac">Ostatni miesiąc</option>
+          <option value="rok">Ostatni rok</option>
+          <option value="zakres">Niestandardowy okres</option>
         </select>
         <button
           className="flex items-center gap-1 px-4 py-2 bg-green-100 text-green-800 rounded hover:bg-green-200"
@@ -67,7 +68,7 @@ const TransactionFilters = ({
         </button>
       </div>
     </div>
-    {dateFilter === "custom" && (
+    {dateFilter === "zakres" && (
       <div className="mb-6 flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -94,7 +95,7 @@ const TransactionFilters = ({
         <button
           className="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800"
           style={{ backgroundColor: primaryColor }}
-          onClick={onCustomDateFilter}
+          onClick={() => onCustomDateFilter(startDate, endDate)}
         >
           Zastosuj
         </button>

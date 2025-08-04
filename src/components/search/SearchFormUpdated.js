@@ -9,7 +9,9 @@ import AdsService from "../../services/ads";
 import useCarData from './hooks/useCarData';
 import useSearchStats from './hooks/useSearchStats';
 import useFilterCounts from './hooks/useFilterCounts';
-import { safeConsole } from '../../utils/debug';
+import debugUtils from '../../utils/debug';
+
+const { safeConsole } = debugUtils;
 
 /**
  * Zaktualizowany komponent formularza wyszukiwania

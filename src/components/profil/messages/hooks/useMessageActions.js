@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import MessagesService from '../../../../services/api/messages';
+import messagesApi from '../../../../services/api/messagesApi';
 
 /**
  * Hook providing actions for sending, deleting and archiving messages.
@@ -49,7 +49,7 @@ const useMessageActions = ({
       const conversationId = selectedConversation.id;
       
       try {
-        await MessagesService.delete(messageId);
+        await messagesApi.deleteMessage(messageId);
         
         setChatMessages((prev) => {
           const updated = prev.filter((m) => m.id !== messageId);
@@ -74,7 +74,7 @@ const useMessageActions = ({
       const conversationId = selectedConversation.id;
       
       try {
-        await MessagesService.moveToFolder(messageId, 'archived');
+        await messagesApi.archiveMessage(messageId);
         
         setChatMessages((prev) => {
           const updated = prev.filter((m) => m.id !== messageId);
@@ -106,16 +106,10 @@ const useMessageActions = ({
       const recipientUserId = selectedConversation.userId;
       
       try {
-        const formData = new FormData();
-        formData.append('content', content);
-        
-        attachments.forEach((attachment) => {
-          formData.append('attachments', attachment.file || attachment);
-        });
-        
-        const response = await MessagesService.replyToConversation(
+        const response = await messagesApi.replyToConversation(
           recipientUserId,
-          formData
+          content,
+          attachments
         );
         
         const newMessage = {
@@ -181,7 +175,48 @@ const useMessageActions = ({
     ]
   );
 
-  return { sendReply, deleteMessage, archiveMessage };
+  const editMessage = useCallback(
+    async (messageId, messageData) => {
+      if (!messageId || !messageData?.content?.trim()) {
+        return Promise.reject(new Error('Brak treści wiadomości'));
+      }
+      
+      if (!selectedConversation?.id) {
+        return Promise.reject(new Error('Nie wybrano konwersacji'));
+      }
+
+      try {
+        const response = await messagesApi.editMessage(messageId, {
+          content: messageData.content,
+          attachments: messageData.attachments || []
+        });
+        
+        // Update message in chat
+        setChatMessages((prevMessages) =>
+          prevMessages.map((msg) =>
+            msg.id === messageId
+              ? {
+                  ...msg,
+                  content: messageData.content,
+                  isEdited: true,
+                  attachments: messageData.attachments || msg.attachments || []
+                }
+              : msg
+          )
+        );
+        
+        showNotification('Wiadomość została zaktualizowana', 'success');
+        return Promise.resolve();
+      } catch (err) {
+        console.error('Błąd podczas edycji wiadomości:', err);
+        showNotification('Nie udało się zaktualizować wiadomości', 'error');
+        return Promise.reject(err);
+      }
+    },
+    [selectedConversation?.id, showNotification, setChatMessages]
+  );
+
+  return { sendReply, editMessage, deleteMessage, archiveMessage };
 };
 
 export default useMessageActions;

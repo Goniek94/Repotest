@@ -1,6 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import UserSettingsPanel from './UserSettingsPanel';
+import Settings from './Settings';
 
 /**
  * Komponent zarządzający ustawieniami użytkownika
@@ -8,9 +7,7 @@ import UserSettingsPanel from './UserSettingsPanel';
  */
 const UserSettings = () => {
   return (
-    <div>
-      <UserSettingsPanel />
-    </div>
+    <Settings />
   );
 };
 

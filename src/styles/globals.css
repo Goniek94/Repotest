@@ -87,3 +87,89 @@
     transform: translateY(-15px);
   }
 }
+
+/* Desktop spacing improvements - więcej przestrzeni między sekcjami */
+@media (min-width: 768px) {
+  /* Główne kontenery na desktopach */
+  .desktop-spacing {
+    padding-top: 1rem;
+    padding-bottom: 3rem;
+    min-height: calc(100vh - 200px);
+  }
+  
+  /* Zwiększone marginesy między sekcjami */
+  .section-spacing {
+    margin-bottom: 3rem;
+  }
+  
+  /* Dodatkowa przestrzeń dla głównego contentu */
+  .main-content-desktop {
+    min-height: 80vh;
+    padding-bottom: 4rem;
+    margin-top: 1rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .desktop-spacing {
+    padding-top: 1.5rem;
+    padding-bottom: 4rem;
+    min-height: calc(100vh - 180px);
+  }
+  
+  .section-spacing {
+    margin-bottom: 4rem;
+  }
+  
+  .main-content-desktop {
+    min-height: 85vh;
+    padding-bottom: 5rem;
+    margin-top: 1.5rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .desktop-spacing {
+    padding-top: 2rem;
+    padding-bottom: 5rem;
+    min-height: calc(100vh - 160px);
+  }
+  
+  .section-spacing {
+    margin-bottom: 5rem;
+  }
+  
+  .main-content-desktop {
+    min-height: 90vh;
+    padding-bottom: 6rem;
+    margin-top: 2rem;
+  }
+}
+
+/* Custom scrollbar styles */
+.scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thumb-gray-300::-webkit-scrollbar-thumb {
+  background-color: #d1d5db;
+  border-radius: 3px;
+}
+
+.scrollbar-thumb-gray-300::-webkit-scrollbar-thumb:hover {
+  background-color: #9ca3af;
+}
+
+.scrollbar-track-gray-100::-webkit-scrollbar-track {
+  background-color: #f3f4f6;
+  border-radius: 3px;
+}
+
+/* Firefox scrollbar */
+.scrollbar-thin {
+  scrollbar-color: #d1d5db #f3f4f6;
+}

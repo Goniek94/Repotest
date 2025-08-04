@@ -9,7 +9,9 @@ import {
   Power,
   Car,
   Box,
-  Medal
+  Medal,
+  Settings,
+  Globe
 } from 'lucide-react';
 import getImageUrl from '../../../../utils/responsive/getImageUrl';
 
@@ -91,67 +93,79 @@ const ListingCard = memo(({ listing, onNavigate, onFavorite, isFavorite, message
           </p>
         </div>
 
-        {/* Parametry w siatce 3x2 - podobnie jak w widoku listowym */}
-        <div className="grid grid-cols-3 gap-x-3 gap-y-3 mb-3 mt-4">
-          {/* Kolumna 1 */}
-          <div className="space-y-2">
-            {/* Paliwo */}
-            <div className="flex items-start gap-1.5 text-gray-700">
-              <Fuel className="w-4 h-4 text-black mt-2" />
-              <div>
-                <div className="text-xs text-gray-500">Paliwo</div>
-                <div className="text-sm font-medium">{listing.fuel || listing.fuelType || 'Nie podano'}</div>
-              </div>
+        {/* Parametry w siatce 2x4 - powiększone ikony */}
+        <div className="grid grid-cols-2 gap-x-2 gap-y-3 mb-3 mt-4">
+          {/* Paliwo */}
+          <div className="flex items-start gap-1.5 text-gray-700">
+            <Fuel className="w-5 h-5 text-black mt-1" />
+            <div>
+              <div className="text-xs text-gray-500">Paliwo</div>
+              <div className="text-sm font-medium">{listing.fuel || listing.fuelType || 'N/A'}</div>
             </div>
-            
-            {/* Przebieg */}
-            <div className="flex items-start gap-1.5 text-gray-700">
-              <Gauge className="w-4 h-4 text-black mt-2" />
-              <div>
-                <div className="text-xs text-gray-500">Przebieg</div>
-                <div className="text-sm font-medium">{listing.mileage} km</div>
-              </div>
+          </div>
+          
+          {/* Przebieg */}
+          <div className="flex items-start gap-1.5 text-gray-700">
+            <Gauge className="w-5 h-5 text-black mt-1" />
+            <div>
+              <div className="text-xs text-gray-500">Przebieg</div>
+              <div className="text-sm font-medium">{listing.mileage} km</div>
             </div>
           </div>
 
-          {/* Kolumna 2 */}
-          <div className="space-y-2">
-            {/* Pojemność */}
-            <div className="flex items-start gap-1.5 text-gray-700">
-              <Box className="w-4 h-4 text-black mt-2" />
-              <div>
-                <div className="text-xs text-gray-500">Pojemność</div>
-                <div className="text-sm font-medium">{listing.engineCapacity}</div>
-              </div>
-            </div>
-
-            {/* Rok */}
-            <div className="flex items-start gap-1.5 text-gray-700">
-              <Calendar className="w-4 h-4 text-black mt-2" />
-              <div>
-                <div className="text-xs text-gray-500">Rok</div>
-                <div className="text-sm font-medium">{listing.year}</div>
-              </div>
+          {/* Pojemność */}
+          <div className="flex items-start gap-1.5 text-gray-700">
+            <Box className="w-5 h-5 text-black mt-1" />
+            <div>
+              <div className="text-xs text-gray-500">Pojemność</div>
+              <div className="text-sm font-medium">{listing.engineCapacity || 'N/A'}</div>
             </div>
           </div>
 
-          {/* Kolumna 3 */}
-          <div className="space-y-2">
-            {/* Moc */}
-            <div className="flex items-start gap-1.5 text-gray-700">
-              <Power className="w-4 h-4 text-black mt-2" />
-              <div>
-                <div className="text-xs text-gray-500">Moc</div>
-                <div className="text-sm font-medium">{listing.power}</div>
-              </div>
+          {/* Rok */}
+          <div className="flex items-start gap-1.5 text-gray-700">
+            <Calendar className="w-5 h-5 text-black mt-1" />
+            <div>
+              <div className="text-xs text-gray-500">Rok</div>
+              <div className="text-sm font-medium">{listing.year}</div>
             </div>
-            
-            {/* Napęd */}
-            <div className="flex items-start gap-1.5 text-gray-700">
-              <Car className="w-4 h-4 text-black mt-2" />
-              <div>
-                <div className="text-xs text-gray-500">Napęd</div>
-                <div className="text-sm font-medium">{listing.drive || 'Nie podano'}</div>
+          </div>
+
+          {/* Moc */}
+          <div className="flex items-start gap-1.5 text-gray-700">
+            <Power className="w-5 h-5 text-black mt-1" />
+            <div>
+              <div className="text-xs text-gray-500">Moc</div>
+              <div className="text-sm font-medium">{listing.power || 'N/A'}</div>
+            </div>
+          </div>
+          
+          {/* Napęd */}
+          <div className="flex items-start gap-1.5 text-gray-700">
+            <Car className="w-5 h-5 text-black mt-1" />
+            <div>
+              <div className="text-xs text-gray-500">Napęd</div>
+              <div className="text-sm font-medium">{listing.drive || 'N/A'}</div>
+            </div>
+          </div>
+
+          {/* Skrzynia biegów */}
+          <div className="flex items-start gap-1.5 text-gray-700">
+            <Settings className="w-5 h-5 text-black mt-1" />
+            <div>
+              <div className="text-xs text-gray-500">Skrzynia</div>
+              <div className="text-sm font-medium">{listing.transmission || listing.gearbox || listing.transmissionType || 'N/A'}</div>
+            </div>
+          </div>
+
+          {/* Kraj pochodzenia */}
+          <div className="flex items-start gap-1.5 text-gray-700">
+            <Globe className="w-5 h-5 text-black mt-1" />
+            <div>
+              <div className="text-xs text-gray-500">Pochodzenie</div>
+              <div className="text-sm font-medium">
+                {listing.countryOfOrigin || 
+                 (listing.imported === 'Tak' || listing.imported === 'tak' ? 'Import' : 'Polska')}
               </div>
             </div>
           </div>
