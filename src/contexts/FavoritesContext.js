@@ -1,8 +1,8 @@
-// context/FavoritesContext.js
+// contexts/FavoritesContext.js
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import ActivityLogService from './services/activityLogService';
-import FavoritesService from './services/api/favoritesApi';
-import { useAuth } from './contexts/AuthContext';
+import ActivityLogService from '../services/activityLogService';
+import FavoritesService from '../services/api/favoritesApi';
+import { useAuth } from './AuthContext';
 
 const FavoritesContext = createContext();
 

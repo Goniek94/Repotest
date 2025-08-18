@@ -18,7 +18,7 @@ import LoginModal from './components/auth/LoginModal';
 import LoadingSpinner from './components/LoadingSpinner';
 import PWAInstallButton from './components/PWAInstallButton';
 
-import { FavoritesProvider } from './FavoritesContext';
+import { FavoritesProvider } from './contexts/FavoritesContext';
 import ScrollToTop from './ScrollToTop';
 import ErrorBoundary from './components/ErrorBoundary';
 // Import nowego ProtectedRoute

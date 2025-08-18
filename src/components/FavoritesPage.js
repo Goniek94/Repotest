@@ -1,5 +1,6 @@
 import React from 'react';
-import { useFavorites } from '../FavoritesContext';
+import { useFavorites } from '../contexts/FavoritesContext';
+
 
 const FavoritesPage = () => {
   const { favorites } = useFavorites();

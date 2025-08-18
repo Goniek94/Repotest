@@ -97,53 +97,19 @@ export const useFilterCounts = (formData, debounceMs = 300) => {
   }, [formData, fetchFilterCounts]);
 
   // Helper functions to get counts for specific filter types
-  const getBrandCount = useCallback((brand) => {
-    return filterCounts.brands?.[brand] || 0;
-  }, [filterCounts.brands]);
-
-  const getModelCount = useCallback((model) => {
-    return filterCounts.models?.[model] || 0;
-  }, [filterCounts.models]);
-
-  const getGenerationCount = useCallback((generation) => {
-    return filterCounts.generations?.[generation] || 0;
-  }, [filterCounts.generations]);
-
-  const getBodyTypeCount = useCallback((bodyType) => {
-    return filterCounts.bodyTypes?.[bodyType] || 0;
-  }, [filterCounts.bodyTypes]);
-
-  const getFuelTypeCount = useCallback((fuelType) => {
-    return filterCounts.fuelTypes?.[fuelType] || 0;
-  }, [filterCounts.fuelTypes]);
-
-  const getTransmissionCount = useCallback((transmission) => {
-    return filterCounts.transmissions?.[transmission] || 0;
-  }, [filterCounts.transmissions]);
-
-  const getDriveTypeCount = useCallback((driveType) => {
-    return filterCounts.driveTypes?.[driveType] || 0;
-  }, [filterCounts.driveTypes]);
-
-  const getColorCount = useCallback((color) => {
-    return filterCounts.colors?.[color] || 0;
-  }, [filterCounts.colors]);
-
-  const getConditionCount = useCallback((condition) => {
-    return filterCounts.conditions?.[condition] || 0;
-  }, [filterCounts.conditions]);
-
-  const getAccidentStatusCount = useCallback((accidentStatus) => {
-    return filterCounts.accidentStatuses?.[accidentStatus] || 0;
-  }, [filterCounts.accidentStatuses]);
-
-  const getRegionCount = useCallback((region) => {
-    return filterCounts.regions?.[region] || 0;
-  }, [filterCounts.regions]);
-
-  const getCityCount = useCallback((city) => {
-    return filterCounts.cities?.[city] || 0;
-  }, [filterCounts.cities]);
+  // Simple getters don't need useCallback - they're fast and don't cause re-renders
+  const getBrandCount = (brand) => filterCounts.brands?.[brand] || 0;
+  const getModelCount = (model) => filterCounts.models?.[model] || 0;
+  const getGenerationCount = (generation) => filterCounts.generations?.[generation] || 0;
+  const getBodyTypeCount = (bodyType) => filterCounts.bodyTypes?.[bodyType] || 0;
+  const getFuelTypeCount = (fuelType) => filterCounts.fuelTypes?.[fuelType] || 0;
+  const getTransmissionCount = (transmission) => filterCounts.transmissions?.[transmission] || 0;
+  const getDriveTypeCount = (driveType) => filterCounts.driveTypes?.[driveType] || 0;
+  const getColorCount = (color) => filterCounts.colors?.[color] || 0;
+  const getConditionCount = (condition) => filterCounts.conditions?.[condition] || 0;
+  const getAccidentStatusCount = (accidentStatus) => filterCounts.accidentStatuses?.[accidentStatus] || 0;
+  const getRegionCount = (region) => filterCounts.regions?.[region] || 0;
+  const getCityCount = (city) => filterCounts.cities?.[city] || 0;
 
   // Function to refresh counts manually
   const refreshCounts = useCallback(() => {

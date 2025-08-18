@@ -4,7 +4,7 @@ import { getUserDashboard, getListing } from '../../../../services/api';
 import NotificationsService from '../../../../services/api/notificationsApi';
 import NotificationContext from '../../../../contexts/NotificationContext';
 import ViewHistoryService from '../../../../services/viewHistoryService';
-import { useFavorites } from '../../../../FavoritesContext';
+import { useFavorites } from '../../../../contexts/FavoritesContext';
 import ActivityLogService from '../../../../services/activityLogService';
 import getImageUrl from '../../../../utils/responsive/getImageUrl';
 
