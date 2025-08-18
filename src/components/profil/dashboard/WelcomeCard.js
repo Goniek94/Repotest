@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
-import useBreakpoint from '../../../utils/responsive/useBreakpoint';
+import { useResponsiveContext } from '../../../contexts/ResponsiveContext';
 import { 
   Settings, 
   PlusCircle, 
@@ -26,10 +26,11 @@ const PRIMARY_COLOR = '#35530A';
  * @param {Array} props.recentAds - Lista ostatnio przeglądanych ogłoszeń
  * @param {Array} props.activities - Lista aktywności użytkownika
  */
-const WelcomeCard = ({ user, userStats, isMobile, recentAds = [], activities = [] }) => {
+const WelcomeCard = ({ user, userStats, recentAds = [], activities = [] }) => {
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
-  const { isMobileOrTablet } = useBreakpoint();
+  const { isMobile, isTablet } = useResponsiveContext();
+  const isMobileOrTablet = isMobile || isTablet;
   
   // Liczniki nieprzeczytanych wiadomości i powiadomień
   // W rzeczywistej implementacji te wartości powinny być pobierane z API

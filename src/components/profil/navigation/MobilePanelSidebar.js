@@ -11,7 +11,7 @@ import {
   UserCog
 } from 'lucide-react';
 import { useNotifications } from '../../../contexts/NotificationContext';
-import useBreakpoint from '../../../utils/responsive/useBreakpoint';
+import { useResponsiveContext } from '../../../contexts/ResponsiveContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useMobileMenu } from '../../../contexts/MobileMenuContext';
 
@@ -25,7 +25,7 @@ import { useMobileMenu } from '../../../contexts/MobileMenuContext';
  */
 const MobilePanelSidebar = ({ activeItem = 'panel' }) => {
   const { unreadCount } = useNotifications();
-  const { isMobile } = useBreakpoint();
+  const { isMobile } = useResponsiveContext();
   const { isAdmin } = useAuth();
   const { isMobileMenuOpen } = useMobileMenu();
   const navigate = useNavigate();

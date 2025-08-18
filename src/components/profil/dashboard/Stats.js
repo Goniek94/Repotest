@@ -1,9 +1,5 @@
 import React from 'react';
-import useBreakpoint from '../../../utils/responsive/useBreakpoint';
-
 const Stats = () => {
-const breakpoint = useBreakpoint();
-const isMobile = breakpoint === 'mobile' || breakpoint === 'tablet';
 
 return (
   <div className="bg-white p-4 sm:p-6 rounded shadow-sm">
