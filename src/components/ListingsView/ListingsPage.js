@@ -10,6 +10,7 @@ import ListingCard from './display/grid/ListingCard';
 import AdsService from '../../services/ads';
 import getImageUrl from '../../utils/responsive/getImageUrl';
 import { useAuth } from '../../contexts/AuthContext';
+import { useResponsiveContext } from '../../contexts/ResponsiveContext';
 
 function ListingsPage() {
   const location = useLocation();
@@ -33,7 +34,6 @@ function ListingsPage() {
   const [itemsPerPage] = useState(30);
   const [favorites, setFavorites] = useState([]);
   const [favMessages, setFavMessages] = useState({});
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
   const [favoritesLoading, setFavoritesLoading] = useState(false);
 
   // Inicjalizuj filtry z parametrów URL
@@ -59,13 +59,7 @@ function ListingsPage() {
     setCurrentPage(page);
   }, [location.search]);
 
-  useEffect(() => {
-    function handleResize() {
-      setIsMobile(window.innerWidth < 640);
-    }
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  const { isMobile } = useResponsiveContext();
 
   // Usunięto funkcję getDefaultDataByMake - będziemy używać rzeczywistych danych z API
 
@@ -302,7 +296,7 @@ function ListingsPage() {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="wrapper section">
         <div className="flex justify-center mb-6">
           <button
             onClick={() => setSearchOpen(!searchOpen)}
@@ -328,7 +322,6 @@ function ListingsPage() {
           setOnlyFeatured={setOnlyFeatured}
           viewMode={viewMode}
           setViewMode={setViewMode}
-          isMobile={isMobile}
         />
 
         {loading && currentPage === 1 ? (
@@ -352,7 +345,7 @@ function ListingsPage() {
               <div
                 className={
                   finalViewMode === 'grid'
-                    ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-6'
+                    ? 'grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 mt-6'
                     : 'space-y-4 mt-6'
                 }
               >

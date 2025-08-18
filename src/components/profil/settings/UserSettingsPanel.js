@@ -30,11 +30,9 @@ import {
   sendVerificationCode, 
   verifyVerificationCode 
 } from '../../../services/api/verificationApi';
-import useBreakpoint from '../../../utils/responsive/useBreakpoint';
 
 const UserSettingsPanel = () => {
   const { user: authUser } = useAuth();
-  const { isMobile, isTablet } = useBreakpoint();
   const [activeTab, setActiveTab] = useState('profile');
   const [editingField, setEditingField] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
