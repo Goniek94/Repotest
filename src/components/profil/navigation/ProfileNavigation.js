@@ -44,49 +44,52 @@ const ProfileNavigation = React.forwardRef(
     },
     ref
   ) => {
-  const { isMobile, isTablet } = useResponsiveContext();
-  const isMobileView = isMobile || isTablet;
-  const { isAdmin } = useAuth();
-  const { unreadCount = { notifications: 0, messages: 0 } } = useNotifications();
-  const { isExpanded } = useSidebar();
-  const location = useLocation();
-  const navigate = useNavigate();
-  
-  // Jeśli nie przekazano handleRaisePanel i isPanelRaised, używamy lokalnego stanu
-  const [localIsPanelRaised, setLocalIsPanelRaised] = useState(false);
-  
-  // Funkcja do podnoszenia panelu użytkownika
-  const handleRaisePanelLocal = () => {
-    if (handleRaisePanel) {
-      // Używamy funkcji przekazanej przez props
-      handleRaisePanel();
-    } else {
-      // Używamy lokalnego stanu
-      setLocalIsPanelRaised(!localIsPanelRaised);
-      // Dodajemy lub usuwamy klasę do body, która podnosi panel
-      if (!localIsPanelRaised) {
-        document.body.classList.add('panel-raised');
+    const { isMobile, isTablet } = useResponsiveContext();
+    const isMobileView = isMobile || isTablet;
+
+    const { isAdmin } = useAuth();
+    const { unreadCount = { notifications: 0, messages: 0 } } = useNotifications();
+    const { isExpanded } = useSidebar();
+    const location = useLocation();
+    const navigate = useNavigate();
+
+    // Jeśli nie przekazano handleRaisePanel i isPanelRaised, używamy lokalnego stanu
+    const [localIsPanelRaised, setLocalIsPanelRaised] = useState(false);
+
+    // Funkcja do podnoszenia panelu użytkownika
+    const handleRaisePanelLocal = () => {
+      if (handleRaisePanel) {
+        handleRaisePanel();
       } else {
-        document.body.classList.remove('panel-raised');
+        setLocalIsPanelRaised((prev) => {
+          const next = !prev;
+          if (next) {
+            document.body.classList.add('panel-raised');
+          } else {
+            document.body.classList.remove('panel-raised');
+          }
+          return next;
+        });
       }
-    }
-  };
-  
-  // Używamy albo przekazanego stanu, albo lokalnego
-  const isRaised = isPanelRaised !== undefined ? isPanelRaised : localIsPanelRaised;
+    };
 
-  const navItems = React.useMemo(() => {
-    // Usuwamy opcję Admin z nawigacji na desktopach
-    return [...BASE_ITEMS];
-  }, []);
+    // Używamy albo przekazanego stanu, albo lokalnego
+    const isRaised = isPanelRaised !== undefined ? isPanelRaised : localIsPanelRaised;
 
-  const counts = notifications || unreadCount;
-  // Używamy activeTab z props, jeśli jest dostępny, w przeciwnym razie określamy go na podstawie ścieżki
-  const activeTab = propActiveTab || navItems.find(
-    (item) =>
-      location.pathname === item.path ||
-      location.pathname.startsWith(item.path + '/')
-  )?.id;
+    const navItems = React.useMemo(() => {
+      return [...BASE_ITEMS];
+    }, []);
+
+    const counts = notifications || unreadCount;
+
+    // Używamy activeTab z props, jeśli jest dostępny, w przeciwnym razie określamy go na podstawie ścieżki
+    const activeTab =
+      propActiveTab ||
+      navItems.find(
+        (item) =>
+          location.pathname === item.path ||
+          location.pathname.startsWith(item.path + '/')
+      )?.id;
 
     if (isDropdown) {
       return (
@@ -204,11 +207,11 @@ const ProfileNavigation = React.forwardRef(
                   navigate(item.path);
                 }
               }}
-            className={`whitespace-nowrap py-3 px-3 md:px-4 flex items-center transition-colors border-b-3 ${
-              activeTab === item.id
-                ? 'text-[#35530A] border-[#35530A] font-medium bg-white'
-                : 'text-gray-600 hover:text-green-800 border-transparent hover:border-gray-300'
-            }`}
+              className={`whitespace-nowrap py-3 px-3 md:px-4 flex items-center transition-colors border-b-3 ${
+                activeTab === item.id
+                  ? 'text-[#35530A] border-[#35530A] font-medium bg-white'
+                  : 'text-gray-600 hover:text-green-800 border-transparent hover:border-gray-300'
+              }`}
             >
               <item.icon className="w-4 h-4 mr-2" />
               {item.name}
@@ -225,4 +228,5 @@ const ProfileNavigation = React.forwardRef(
   }
 );
 
+ProfileNavigation.displayName = 'ProfileNavigation';
 export default ProfileNavigation;

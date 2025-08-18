@@ -22,7 +22,6 @@ import PWAInstallButton from './components/PWAInstallButton';
 import { FavoritesProvider } from './contexts/FavoritesContext';
 import ScrollToTop from './ScrollToTop';
 import ErrorBoundary from './components/ErrorBoundary';
-// Import nowego ProtectedRoute
 import ProtectedRoute, { AdminRoute } from './components/ProtectedRoute';
 
 // Komponenty ładowane leniwie dla optymalizacji
@@ -39,7 +38,6 @@ const ListingDetails = lazy(() => import('./components/listings/details/ListingD
 const AdminPanel = lazy(() => import('./components/admin/AdminPanel'));
 const UserProfileRoutes = lazy(() => import('./components/profil/UserProfileRoutes'));
 
-
 // Zawartość strony głównej
 const HomePageContent = () => (
   <div className="wrapper space-y-6">
@@ -52,10 +50,9 @@ const HomePageContent = () => (
   </div>
 );
 
-// Komponent strony logowania wyświetlany na tle strony głównej
+// Komponent strony logowania
 const LoginPage = () => {
   const navigate = useNavigate();
-  
   const handleCloseModal = () => {
     navigate('/');
   };
@@ -83,10 +80,6 @@ const AddListingViewWithProvider = () => (
 );
 
 const App = () => {
-  // Usunięto efekt automatycznie wylogowujący użytkownika przy każdym
-  // odświeżeniu strony, dzięki czemu stan logowania jest zachowywany
-  // między odświeżeniami aplikacji.
-
   return (
     <AuthProvider>
       <SocketProvider>
@@ -95,115 +88,84 @@ const App = () => {
             <SidebarProvider>
               <MobileMenuProvider>
                 <ResponsiveProvider>
-          <Router>
-            <ScrollToTop />
-            <ToastNotification />
-            <ErrorBoundary>
-              <div className="flex flex-col min-h-screen">
-              <Navigation />
-              <main className="flex-grow">
-                <Suspense fallback={<LoadingSpinner message="Ładowanie strony..." />}>
-                <Routes>
-                {/* Strona główna */}
-                <Route path="/" element={<HomePageContent />} />
+                  <Router>
+                    <ScrollToTop />
+                    <ToastNotification />
+                    <ErrorBoundary>
+                      <div className="flex flex-col min-h-screen">
+                        <Navigation />
+                        <main className="flex-grow">
+                          <Suspense fallback={<LoadingSpinner message="Ładowanie strony..." />}>
+                            <Routes>
+                              <Route path="/" element={<HomePageContent />} />
+                              <Route path="/login" element={<LoginPage />} />
+                              <Route path="/listings" element={<ListingsPage />} />
 
-                {/* Logowanie */}
-                <Route path="/login" element={<LoginPage />} />
+                              <Route
+                                path="/create-listing"
+                                element={
+                                  <ProtectedRoute>
+                                    <CreateListingWithProvider />
+                                  </ProtectedRoute>
+                                }
+                              />
 
-                {/* Ogłoszenia */}
-                <Route path="/listings" element={<ListingsPage />} />
-                <Route
-                  path="/create-listing"
-                  element={
-                    <ProtectedRoute>
-                      <CreateListingWithProvider />
-                    </ProtectedRoute>
-                  }
-                />
-                {/* Poprawiona ścieżka i komponent opakowania dla AddListingView */}
-                <Route
-                  path="/add-listing-view"
-                  element={
-                    <ProtectedRoute>
-                      <AddListingViewWithProvider />
-                    </ProtectedRoute>
-                  }
-                />
-                
-                {/* Zachowanie starej ścieżki dla kompatybilności */}
-                <Route
-                  path="/createlisting"
-                  element={<Navigate to="/create-listing" replace />}
-                />
-                <Route
-                  path="/addlistingview"
-                  element={<Navigate to="/add-listing-view" replace />}
-                />
-                
-                {/* Szczegóły ogłoszenia */}
-                <Route path="/listing/:id" element={<ListingDetails />} />
+                              <Route
+                                path="/add-listing-view"
+                                element={
+                                  <ProtectedRoute>
+                                    <AddListingViewWithProvider />
+                                  </ProtectedRoute>
+                                }
+                              />
 
-                {/* Konto użytkownika */}
-                <Route path="/register" element={<Register />} />
-                <Route path="/contact" element={<Contact />} />
-                
-                {/* Ulubione */}
-                <Route
-                  path="/favorites"
-                  element={
-                    <ProtectedRoute>
-                      <FavoritesPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route path="/faq" element={<FAQ />} />
-                <Route path="/about-company" element={<AboutCompany />} />
+                              <Route path="/createlisting" element={<Navigate to="/create-listing" replace />} />
+                              <Route path="/addlistingview" element={<Navigate to="/add-listing-view" replace />} />
+                              <Route path="/listing/:id" element={<ListingDetails />} />
+                              <Route path="/register" element={<Register />} />
+                              <Route path="/contact" element={<Contact />} />
 
-                {/* Panel Admina */}
-                <Route
-                  path="/admin"
-                  element={
-                    <AdminRoute>
-                      <AdminPanel />
-                    </AdminRoute>
-                  }
-                />
+                              <Route
+                                path="/favorites"
+                                element={
+                                  <ProtectedRoute>
+                                    <FavoritesPage />
+                                  </ProtectedRoute>
+                                }
+                              />
 
-                {/* Panel użytkownika i wszystkie jego podstrony */}
-                <Route
-                  path="/profil/*"
-                  element={
-                    <ProtectedRoute>
-                      <UserProfileRoutes />
-                    </ProtectedRoute>
-                  }
-                />
+                              <Route path="/faq" element={<FAQ />} />
+                              <Route path="/about-company" element={<AboutCompany />} />
 
-                {/* Stara ścieżka "/profile" przekierowuje do "/profil" */}
-                <Route 
-                  path="/profile" 
-                  element={<Navigate to="/profil" replace />} 
-                />
+                              <Route
+                                path="/admin"
+                                element={
+                                  <AdminRoute>
+                                    <AdminPanel />
+                                  </AdminRoute>
+                                }
+                              />
 
-                {/* Stare ścieżki "/user/*" przekierowują do "/profil/*" */}
-                <Route 
-                  path="/user" 
-                  element={<Navigate to="/profil" replace />} 
-                />
-                <Route 
-                  path="/user/:subpage" 
-                  element={<Navigate to="/profil/:subpage" replace />} 
-                />
-                </Routes>
-                </Suspense>
-              </main>
-              <Footer />
-              
-              {/* PWA Install Button */}
-              <PWAInstallButton />
-            </div>
-            </ErrorBoundary>
-          </Router>
+                              <Route
+                                path="/profil/*"
+                                element={
+                                  <ProtectedRoute>
+                                    <UserProfileRoutes />
+                                  </ProtectedRoute>
+                                }
+                              />
+
+                              <Route path="/profile" element={<Navigate to="/profil" replace />} />
+                              <Route path="/user" element={<Navigate to="/profil" replace />} />
+                              <Route path="/user/:subpage" element={<Navigate to="/profil/:subpage" replace />} />
+                            </Routes>
+                          </Suspense>
+                        </main>
+                        <Footer />
+                        <PWAInstallButton />
+                      </div>
+                    </ErrorBoundary>
+                  </Router>
                 </ResponsiveProvider>
               </MobileMenuProvider>
             </SidebarProvider>
