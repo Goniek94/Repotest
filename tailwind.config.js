@@ -8,14 +8,31 @@ module.exports = {
     './src/styles/**/*.css',
   ],
   theme: {
+    screens: {
+      xs: "360px",
+      sm: "640px",
+      md: "768px",
+      lg: "1024px",
+      xl: "1280px",
+      "2xl": "1536px",
+    },
     container: {
       center: true,
-      padding: "2rem",
-      screens: {
-        "2xl": "1400px",
+      padding: {
+        DEFAULT: "1rem",
+        md: "1.25rem",
+        lg: "1.5rem",
       },
     },
     extend: {
+      fontSize: {
+        display: "clamp(28px,4vw,48px)",
+        h1: "clamp(24px,3.2vw,40px)",
+        h2: "clamp(20px,2.6vw,32px)",
+        h3: "clamp(18px,2.2vw,28px)",
+        body: "clamp(14px,1.4vw,16px)",
+        small: "clamp(12px,1.2vw,14px)",
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -72,5 +89,9 @@ module.exports = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("@tailwindcss/typography"),
+    require("@tailwindcss/aspect-ratio"),
+    require("tailwindcss-animate"),
+  ],
 };

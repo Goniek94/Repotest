@@ -12,10 +12,10 @@ import {
   Sliders,
   ArrowUp,
 } from 'lucide-react';
-import useBreakpoint from '../../../utils/responsive/useBreakpoint';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useNotifications } from '../../../contexts/NotificationContext';
 import { useSidebar } from '../../../contexts/SidebarContext';
+import { useResponsiveContext } from '../../../contexts/ResponsiveContext';
 
 const BASE_ITEMS = [
   { id: 'panel', name: 'Panel', path: '/profil', icon: Eye },
@@ -44,7 +44,8 @@ const ProfileNavigation = React.forwardRef(
     },
     ref
   ) => {
-  const breakpoint = useBreakpoint();
+  const { isMobile, isTablet } = useResponsiveContext();
+  const isMobileView = isMobile || isTablet;
   const { isAdmin } = useAuth();
   const { unreadCount = { notifications: 0, messages: 0 } } = useNotifications();
   const { isExpanded } = useSidebar();
@@ -86,8 +87,6 @@ const ProfileNavigation = React.forwardRef(
       location.pathname === item.path ||
       location.pathname.startsWith(item.path + '/')
   )?.id;
-
-    const isMobile = breakpoint === 'mobile' || breakpoint === 'tablet';
 
     if (isDropdown) {
       return (
@@ -154,7 +153,7 @@ const ProfileNavigation = React.forwardRef(
       );
     }
 
-    if (isMobile) {
+    if (isMobileView) {
       return (
         <nav ref={ref} className="flex flex-col mt-4 space-y-4">
           {navItems.map((item) => (

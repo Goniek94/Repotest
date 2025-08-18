@@ -2,7 +2,6 @@ import React, { useState, useEffect, useContext } from 'react';
 import { ResponsiveCard } from '../ui/ResponsiveCard';
 import { Heading2, Text } from '../ui/Typography';
 import { ResponsiveStack } from '../layout/ResponsiveStack';
-import useBreakpoint from '../../utils/responsive/useBreakpoint';
 import { getNotificationTypeName, getNotificationIcon, getNotificationColor } from '../../utils/NotificationTypes';
 import { SocketContext } from '../../contexts/SocketContext';
 import axios from 'axios';
@@ -17,7 +16,6 @@ const NotificationsPanel = () => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { isMobile } = useBreakpoint();
   const socket = useContext(SocketContext);
   
   // Pobieranie powiadomień

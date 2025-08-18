@@ -1,6 +1,6 @@
 import React from 'react';
 import { useSidebar } from '../../contexts/SidebarContext';
-import useBreakpoint from '../../utils/responsive/useBreakpoint';
+import { useResponsiveContext } from '../../contexts/ResponsiveContext';
 
 /**
  * Wrapper dla głównej zawartości strony
@@ -13,7 +13,8 @@ import useBreakpoint from '../../utils/responsive/useBreakpoint';
  */
 const MainContentWrapper = ({ children, className = "" }) => {
   const { isExpanded } = useSidebar();
-  const { isMobileOrTablet } = useBreakpoint();
+  const { isMobile, isTablet } = useResponsiveContext();
+  const isMobileOrTablet = isMobile || isTablet;
   
   // Dynamiczne marginesy w zależności od stanu sidebara i rozmiaru ekranu
   const marginClass = isMobileOrTablet ? (isExpanded ? 'ml-10' : 'ml-3') : '';

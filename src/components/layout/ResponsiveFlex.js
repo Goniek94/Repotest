@@ -1,5 +1,5 @@
 import React from 'react';
-import useBreakpoint from '../../utils/responsive/useBreakpoint';
+import { useResponsiveContext } from '../../contexts/ResponsiveContext';
 
 /**
  * Responsywny kontener flex, który automatycznie dostosowuje układ do różnych rozmiarów ekranu
@@ -24,7 +24,25 @@ const ResponsiveFlex = ({
   gap = 4,
   className = "" 
 }) => {
-  const { breakpoint } = useBreakpoint();
+  const {
+    isXs,
+    isSm,
+    isMd,
+    isLg,
+    isXl,
+    is2Xl,
+  } = useResponsiveContext();
+  const breakpoint = is2Xl
+    ? '2xl'
+    : isXl
+      ? 'xl'
+      : isLg
+        ? 'lg'
+        : isMd
+          ? 'md'
+          : isSm
+            ? 'sm'
+            : 'xs';
   
   // Obsługa responsywnego kierunku
   const getDirectionClass = () => {

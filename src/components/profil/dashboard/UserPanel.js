@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { User, MessageSquare, ShoppingBag, BellRing, History, Phone, LayoutDashboard } from 'lucide-react';
-import useBreakpoint from '../../../utils/responsive/useBreakpoint';
+import { useResponsiveContext } from '../../../contexts/ResponsiveContext';
 import { useNotifications } from '../../../contexts/NotificationContext';
 import Messages from '../messages/Messages';
 import UserListings from '../listings/UserListings';
@@ -30,8 +30,8 @@ const TABS = {
  */
 const UserPanel = () => {
   // Stan dla breakpointów
-  const breakpoint = useBreakpoint();
-  const isMobile = breakpoint === 'mobile' || breakpoint === 'tablet';
+  const { isMobile, isTablet } = useResponsiveContext();
+  const isMobileView = isMobile || isTablet;
   
   // Stan aktywnej zakładki
   const [activeTab, setActiveTab] = useState(TABS.PANEL);
@@ -49,12 +49,12 @@ const UserPanel = () => {
 
   // Konfiguracja zakładek głównej nawigacji
   const navigationTabs = [
-    { id: TABS.PANEL, label: 'Panel', icon: <LayoutDashboard size={isMobile ? 18 : 20} /> },
-    { id: TABS.MESSAGES, label: 'Wiadomości', icon: <MessageSquare size={isMobile ? 18 : 20} /> },
-    { id: TABS.LISTINGS, label: 'Moje ogłoszenia', icon: <ShoppingBag size={isMobile ? 18 : 20} /> },
-    { id: TABS.NOTIFICATIONS, label: 'Powiadomienia', icon: <BellRing size={isMobile ? 18 : 20} /> },
-    { id: TABS.TRANSACTIONS, label: 'Historia transakcji', icon: <History size={isMobile ? 18 : 20} /> },
-    { id: TABS.CONTACT, label: 'Kontakt', icon: <Phone size={isMobile ? 18 : 20} /> }
+    { id: TABS.PANEL, label: 'Panel', icon: <LayoutDashboard size={isMobileView ? 18 : 20} /> },
+    { id: TABS.MESSAGES, label: 'Wiadomości', icon: <MessageSquare size={isMobileView ? 18 : 20} /> },
+    { id: TABS.LISTINGS, label: 'Moje ogłoszenia', icon: <ShoppingBag size={isMobileView ? 18 : 20} /> },
+    { id: TABS.NOTIFICATIONS, label: 'Powiadomienia', icon: <BellRing size={isMobileView ? 18 : 20} /> },
+    { id: TABS.TRANSACTIONS, label: 'Historia transakcji', icon: <History size={isMobileView ? 18 : 20} /> },
+    { id: TABS.CONTACT, label: 'Kontakt', icon: <Phone size={isMobileView ? 18 : 20} /> }
   ];
 
   // Stan dla usuniętych aktywności
@@ -111,9 +111,8 @@ const UserPanel = () => {
         )}
         {/* Karta powitalna */}
         <WelcomeCard 
-          user={user} 
-          userStats={userStats} 
-          isMobile={isMobile} 
+          user={user}
+          userStats={userStats}
         />
 
         {/* Sekcja aktywności */}

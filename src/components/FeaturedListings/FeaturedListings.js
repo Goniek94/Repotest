@@ -182,7 +182,7 @@ const FeaturedListings = () => {
   }
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-white min-h-screen">
       {/* Komunikat o wylogowaniu */}
       {showLogoutMessage && (
         <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 bg-green-100 border border-green-400 text-green-700 px-6 py-3 rounded shadow-lg flex items-center">

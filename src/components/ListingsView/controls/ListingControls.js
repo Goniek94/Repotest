@@ -1,5 +1,6 @@
 import React from 'react';
-import ViewToggle from './ViewToggle'; 
+import ViewToggle from './ViewToggle';
+import { useResponsiveContext } from '../../../contexts/ResponsiveContext';
 
 const ListingControls = ({ 
   sortType, 
@@ -9,11 +10,11 @@ const ListingControls = ({
   onlyFeatured,
   setOnlyFeatured,
   viewMode,
-  setViewMode,
-  isMobile
+  setViewMode
 }) => {
+  const { isMobile } = useResponsiveContext();
   return (
-    <div className="mt-6 bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+    <div className="mt-6 p-6">
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
         
         {/* Filtry i sortowanie */}
