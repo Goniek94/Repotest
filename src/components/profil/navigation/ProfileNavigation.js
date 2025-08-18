@@ -77,7 +77,6 @@ const ProfileNavigation = React.forwardRef(
     const isRaised = isPanelRaised !== undefined ? isPanelRaised : localIsPanelRaised;
 
     const navItems = React.useMemo(() => {
-      // (Ewentualna modyfikacja listy pozycji – tu bez Admina w desktopowej nawigacji)
       return [...BASE_ITEMS];
     }, []);
 

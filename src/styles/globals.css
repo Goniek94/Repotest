@@ -67,7 +67,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-white text-foreground;
   }
 }
 
@@ -90,7 +90,8 @@
 
 @layer components {
   .section {
-    @apply py-8 sm:py-10 md:py-12 lg:py-16;
+    /* białe tło + delikatny border + spójne odstępy */
+    @apply py-8 sm:py-10 md:py-12 lg:py-16 bg-white border border-gray-200 rounded-lg;
   }
   .wrapper {
     @apply container mx-auto;
