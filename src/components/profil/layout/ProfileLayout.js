@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import useBreakpoint from '../../../utils/responsive/useBreakpoint';
+import { useResponsiveContext } from '../../../contexts/ResponsiveContext';
 import MobileSidebar from '../../layout/MobileSidebar';
 import MainContentWrapper from '../../layout/MainContentWrapper';
 import ProfileNavigation from '../navigation/ProfileNavigation';
@@ -15,7 +15,8 @@ import { ResponsiveContainer } from '../../layout';
  * @returns {JSX.Element}
  */
 const ProfileLayout = () => {
-  const { isMobileOrTablet, isMobile } = useBreakpoint();
+  const { isMobile, isTablet } = useResponsiveContext();
+  const isMobileOrTablet = isMobile || isTablet;
   const [isPanelRaised, setIsPanelRaised] = useState(false);
   const location = useLocation();
   
@@ -55,13 +56,13 @@ const ProfileLayout = () => {
         </div>
       )}
       
-      <ResponsiveContainer className={`bg-white relative ${isPanelRaised ? 'raised-panel' : ''} desktop-spacing`}>
+      <ResponsiveContainer className={`bg-white relative ${isPanelRaised ? 'raised-panel' : ''}`}>
         {/* Mobilny sidebar panelu użytkownika - widoczny tylko na mobile */}
         {isMobile && <MobilePanelSidebar activeItem={getActiveItem()} />}
-        
+
         <MainContentWrapper className={isMobileOrTablet ? "ml-12 sm:ml-14 lg:ml-0" : ""}>
-          <main className="space-y-6 mt-0 pl-[10%] main-content-desktop">
-            <div className="section-spacing">
+          <main className="space-y-6 mt-0 pl-[10%]">
+            <div className="section">
               <Outlet />
             </div>
           </main>

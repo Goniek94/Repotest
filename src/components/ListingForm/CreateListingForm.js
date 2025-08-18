@@ -224,40 +224,40 @@ const SectionHeader = ({ id, title, isOpen, onClick }) => (
 );
 
 // Usunięto renderowanie komponentu ListingSummary
+ 
+  return (
+    <div className="min-h-screen bg-gray-50 py-6">
+      <div className="max-w-[1100px] mx-auto px-6">
+        <div className="flex items-center justify-center gap-4 mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">Dodaj nowe ogłoszenie</h1>
 
-return (
-  <div className="min-h-screen bg-gray-50 py-6">
-    <div className="max-w-[1100px] mx-auto px-6">
-      <div className="flex items-center justify-center gap-4 mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Dodaj nowe ogłoszenie</h1>
-        
-        {/* Wskaźnik auto-save - tylko gdy jest aktywny */}
-        {shouldAutoSave && (
-          <div className="flex items-center gap-2 text-sm">
-            {autoSaveStatus === 'saving' && (
-              <div className="flex items-center gap-2 text-blue-600">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                <span>Zapisywanie...</span>
-              </div>
-            )}
-            {autoSaveStatus === 'saved' && (
-              <div className="flex items-center gap-2 text-green-600">
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span>Zapisano</span>
-              </div>
-            )}
-            {autoSaveStatus === 'error' && (
-              <div className="flex items-center gap-2 text-red-600">
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                <span>Błąd zapisu</span>
-              </div>
-            )}
-            {autoSaveStatus === '' && (
-              <div className="flex items-center gap-2 text-gray-500">
+          {/* Wskaźnik auto-save - tylko gdy jest aktywny */}
+          {shouldAutoSave && (
+            <div className="flex items-center gap-2 text-sm">
+              {autoSaveStatus === 'saving' && (
+                <div className="flex items-center gap-2 text-blue-600">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                  <span>Zapisywanie...</span>
+                </div>
+              )}
+              {autoSaveStatus === 'saved' && (
+                <div className="flex items-center gap-2 text-green-600">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>Zapisano</span>
+                </div>
+              )}
+              {autoSaveStatus === 'error' && (
+                <div className="flex items-center gap-2 text-red-600">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  <span>Błąd zapisu</span>
+                </div>
+              )}
+              {autoSaveStatus === '' && (
+                <div className="flex items-center gap-2 text-gray-500">
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12" />
                 </svg>

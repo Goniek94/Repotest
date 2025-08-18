@@ -277,7 +277,7 @@ export default function SearchFormUpdated({ initialValues = {}, onFilterChange }
   };
 
   return (
-    <section className="bg-[#F5F7F9] py-6 px-3 sm:px-4">
+    <section>
       <div className="max-w-7xl mx-auto">
         {/* Komunikat o ładowaniu */}
         {loading && (
@@ -286,7 +286,7 @@ export default function SearchFormUpdated({ initialValues = {}, onFilterChange }
           </div>
         )}
         
-        <div className="bg-white p-5 shadow-md rounded-[2px] mb-4">
+        <div className="p-5 mb-4">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold text-gray-800">Filtry wyszukiwania</h2>
             <button

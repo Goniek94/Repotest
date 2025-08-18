@@ -6,6 +6,7 @@ import { SidebarProvider } from './contexts/SidebarContext';
 import { ListingFormProvider } from './contexts/ListingFormContext';
 import { SocketProvider } from './contexts/SocketContext';
 import { MobileMenuProvider } from './contexts/MobileMenuContext';
+import { ResponsiveProvider } from './contexts/ResponsiveContext';
 import ToastNotification from './components/notifications/ToastNotification';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -41,11 +42,11 @@ const UserProfileRoutes = lazy(() => import('./components/profil/UserProfileRout
 
 // Zawartość strony głównej
 const HomePageContent = () => (
-  <div className="desktop-spacing">
-    <div className="section-spacing">
+  <div className="wrapper space-y-6">
+    <div className="section">
       <SearchFormUpdated />
     </div>
-    <div className="section-spacing">
+    <div className="section">
       <FeaturedListings />
     </div>
   </div>
@@ -93,13 +94,14 @@ const App = () => {
           <FavoritesProvider>
             <SidebarProvider>
               <MobileMenuProvider>
+                <ResponsiveProvider>
           <Router>
             <ScrollToTop />
             <ToastNotification />
             <ErrorBoundary>
               <div className="flex flex-col min-h-screen">
               <Navigation />
-              <main className="flex-grow main-content-desktop">
+              <main className="flex-grow">
                 <Suspense fallback={<LoadingSpinner message="Ładowanie strony..." />}>
                 <Routes>
                 {/* Strona główna */}
@@ -202,6 +204,7 @@ const App = () => {
             </div>
             </ErrorBoundary>
           </Router>
+                </ResponsiveProvider>
               </MobileMenuProvider>
             </SidebarProvider>
           </FavoritesProvider>

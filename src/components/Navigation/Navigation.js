@@ -81,28 +81,27 @@ const Navigation = () => {
 
   return (
     <header className="bg-white text-gray-800 sticky top-0 z-50 shadow-md">
-      {/* Logo przy samej lewej krawędzi */}
-      <div className="w-full h-16 flex items-center justify-between pl-0 pr-4 lg:pl-0 lg:pr-8">
-        <Logo />
+      {/* Logo i linki nawigacyjne */}
+      <div className="wrapper h-16 flex items-center justify-between">
+        <div className="flex items-center gap-6">
+          <Logo />
+          <div className="hidden md:flex gap-6">
+            <DesktopNav user={user} />
+          </div>
+        </div>
 
-        <div className="hidden md:flex items-center space-x-6">
-          <DesktopNav user={user} />
+        <div className="hidden md:flex items-center gap-4">
           <AddListingButton user={user} setIsLoginModalOpen={setIsLoginModalOpen} />
 
           {isAuthenticated && user ? (
-            <div className="flex items-center space-x-4">
-              {/* Menu profilu */}
-              <div className="relative">
-                <ProfileNavigation
-                  notifications={notifications}
-                  handleLogout={handleLogout}
-                  isDropdown={true}
-                  isOpen={isUserMenuOpen}
-                  setIsOpen={setIsUserMenuOpen}
-                  user={user}
-                />
-              </div>
-            </div>
+            <ProfileNavigation
+              notifications={notifications}
+              handleLogout={handleLogout}
+              isDropdown={true}
+              isOpen={isUserMenuOpen}
+              setIsOpen={setIsUserMenuOpen}
+              user={user}
+            />
           ) : (
             <button
               onClick={handleOpenLogin}

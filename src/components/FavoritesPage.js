@@ -6,11 +6,12 @@ const FavoritesPage = () => {
   const { favorites } = useFavorites();
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="wrapper py-8 sm:py-10 md:py-12 lg:py-16">
+      <div className="section">
       {/* Nagłówek */}
       <header className="mb-6 text-center">
-        <h1 className="text-3xl font-bold text-green-800">Twoje Ulubione Ogłoszenia</h1>
-        <p className="text-gray-600 mt-2">
+        <h1 className="text-h1 font-bold text-green-800">Twoje Ulubione Ogłoszenia</h1>
+        <p className="text-body text-gray-600 mt-2">
           Przeglądaj swoje ulubione ogłoszenia i wróć do nich w dowolnym momencie.
         </p>
       </header>
@@ -23,12 +24,12 @@ const FavoritesPage = () => {
             alt="Brak ulubionych"
             className="w-64 h-64 object-contain mb-6"
           />
-          <p className="text-gray-600 text-lg">
+          <p className="text-gray-600 text-body">
             Nie masz jeszcze ulubionych ogłoszeń. Dodaj je, klikając ikonę 🚗 w liście ogłoszeń!
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
           {favorites.map((fav) => (
             <div
               key={fav.id}
@@ -59,6 +60,7 @@ const FavoritesPage = () => {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 };

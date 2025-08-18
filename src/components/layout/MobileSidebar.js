@@ -1,15 +1,15 @@
 import React from 'react';
 import { ChevronDown, Sliders, X } from 'lucide-react';
-import useBreakpoint from '../../utils/responsive/useBreakpoint';
+import { useResponsiveContext } from '../../contexts/ResponsiveContext';
 import { useSidebar } from '../../contexts/SidebarContext';
 import { useAuth } from '../../contexts/AuthContext';
 
 const MobileSidebar = ({ children }) => {
   const { isExpanded, toggleSidebar } = useSidebar();
-  const breakpoint = useBreakpoint();
+  const { isMobile, isTablet } = useResponsiveContext();
   const { isAdmin } = useAuth();
 
-  const isMobileOrTablet = breakpoint === 'mobile' || breakpoint === 'tablet';
+  const isMobileOrTablet = isMobile || isTablet;
   if (!isMobileOrTablet) return null;
 
   const sidebarWidth = 'w-16';
