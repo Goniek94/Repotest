@@ -22,7 +22,7 @@ Otwórz w przeglądarce: `http://localhost:3000/admin`
 - Dodano brakującą funkcję `validateForm` do `adminHelpers.js`
 
 ### ✅ Endpointy API
-- Zmieniono z `/api/admin/` na `/api/admin-panel/`
+- Wszystkie endpointy korzystają z prefixu `/api/admin-panel/`
 - Naprawiono `useAdminApi.js` i `useAdminAuth.js`
 
 ### ✅ Autentykacja
@@ -52,8 +52,6 @@ Otwórz w przeglądarce: `http://localhost:3000/admin`
 - `POST /users/:id/block` - Blokowanie użytkownika
 - `DELETE /users/:id` - Usuwanie użytkownika
 
-### Legacy Admin API (`/api/admin/`)
-- Podstawowe endpointy (przekierowanie do nowego systemu)
 
 ## 🛠️ Rozwój
 
