@@ -82,7 +82,7 @@ const Navigation = () => {
   return (
     <header className="bg-white text-gray-800 sticky top-0 z-50 shadow-md">
       {/* Logo przy samej lewej krawędzi */}
-      <div className="wrapper h-16 flex items-center justify-between">
+      <div className="w-full h-16 flex items-center justify-between pr-4">
         <Logo />
 
         <div className="hidden md:flex items-center space-x-6">

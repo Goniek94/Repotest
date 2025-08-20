@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { regionToCities, priceRanges, mileageRanges, generateYearOptions } from "./SearchFormConstants";
 import useFilterCounts from './hooks/useFilterCounts';
+import SearchableDropdown from './SearchableDropdown';
 
 /**
  * BasicFilters component with optimized checklist filters
@@ -245,32 +246,54 @@ export default function BasicFilters({
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-4">
       
-      {/* Nadwozie - Checklist */}
-      <ChecklistFilter
+      {/* Nadwozie - SearchableDropdown */}
+      <SearchableDropdown
         name="bodyType"
         label="Nadwozie"
         options={bodyTypes}
         placeholder="Wybierz typ nadwozia"
+        value={formData.bodyType || []}
+        onChange={handleInputChange}
+        multiSelect={true}
+        formatOption={(option) => {
+          const count = getBodyTypeCount(option);
+          return count > 0 ? `${option} (${count})` : option;
+        }}
       />
 
-      {/* Marka - Checklist */}
-      <ChecklistFilter
+      {/* Marka - SearchableDropdown */}
+      <SearchableDropdown
         name="make"
         label="Marka"
         options={Object.keys(carData)}
         placeholder="Wybierz markę"
+        value={formData.make || []}
+        onChange={handleInputChange}
+        multiSelect={true}
+        formatOption={(option) => {
+          const count = getBrandCount(option);
+          return count > 0 ? `${option} (${count})` : option;
+        }}
       />
 
-      {/* Model - Checklist (zależny od marki) */}
-      <ChecklistFilter
+      {/* Model - SearchableDropdown (zależny od marki) */}
+      <SearchableDropdown
         name="model"
         label="Model"
         options={availableModels}
         placeholder={formData.make?.length > 0 ? "Wybierz model" : "Najpierw wybierz markę"}
+        value={formData.model || []}
+        onChange={handleInputChange}
+        multiSelect={true}
+        disabled={formData.make?.length === 0}
+        formatOption={(option) => {
+          const count = formData.make && formData.make.length === 1 ? getModelCount(option) : 0;
+          return count > 0 ? `${option} (${count})` : option;
+        }}
       />
 
-      {/* Generacja - Checklist (zależny od marki i modelu) */}
-      <ChecklistFilter
+      {/* Generacja - SearchableDropdown (zależny od marki i modelu) */}
+      <SearchableDropdown
         name="generation"
         label="Generacja"
         options={availableGenerations}
@@ -279,6 +302,10 @@ export default function BasicFilters({
             ? "Wybierz generację" 
             : "Najpierw wybierz jedną markę i jeden model"
         }
+        value={formData.generation || []}
+        onChange={handleInputChange}
+        multiSelect={true}
+        disabled={!(formData.make?.length === 1 && formData.model?.length === 1)}
       />
 
       {/* Rok produkcji - Od/Do Selecty z ograniczoną wysokością */}
@@ -557,44 +584,80 @@ export default function BasicFilters({
         </div>
       </div>
 
-      {/* Rodzaj paliwa - Checklist */}
-      <ChecklistFilter
+      {/* Rodzaj paliwa - SearchableDropdown */}
+      <SearchableDropdown
         name="fuelType"
         label="Rodzaj paliwa"
         options={advancedOptions?.fuelType || []}
         placeholder="Wybierz rodzaj paliwa"
+        value={formData.fuelType || []}
+        onChange={handleInputChange}
+        multiSelect={true}
+        formatOption={(option) => {
+          const count = getFuelTypeCount(option);
+          return count > 0 ? `${option} (${count})` : option;
+        }}
       />
 
-      {/* Skrzynia biegów - Checklist */}
-      <ChecklistFilter
+      {/* Skrzynia biegów - SearchableDropdown */}
+      <SearchableDropdown
         name="transmission"
         label="Skrzynia biegów"
         options={advancedOptions?.transmission || []}
         placeholder="Wybierz skrzynię biegów"
+        value={formData.transmission || []}
+        onChange={handleInputChange}
+        multiSelect={true}
+        formatOption={(option) => {
+          const count = getTransmissionCount(option);
+          return count > 0 ? `${option} (${count})` : option;
+        }}
       />
 
-      {/* Województwo - Checklist */}
-      <ChecklistFilter
+      {/* Województwo - SearchableDropdown */}
+      <SearchableDropdown
         name="region"
         label="Województwo"
         options={regions || []}
         placeholder="Wybierz województwo"
+        value={formData.region || []}
+        onChange={handleInputChange}
+        multiSelect={true}
+        formatOption={(option) => {
+          const count = getRegionCount(option);
+          return count > 0 ? `${option} (${count})` : option;
+        }}
       />
 
-      {/* Miasto - Checklist */}
-      <ChecklistFilter
+      {/* Miasto - SearchableDropdown */}
+      <SearchableDropdown
         name="city"
         label="Miasto"
         options={availableCities}
         placeholder={formData.region?.length > 0 ? "Wybierz miasto" : "Najpierw wybierz województwo"}
+        value={formData.city || []}
+        onChange={handleInputChange}
+        multiSelect={true}
+        disabled={formData.region?.length === 0}
+        formatOption={(option) => {
+          const count = getCityCount(option);
+          return count > 0 ? `${option} (${count})` : option;
+        }}
       />
 
-      {/* Napęd - Checklist */}
-      <ChecklistFilter
+      {/* Napęd - SearchableDropdown */}
+      <SearchableDropdown
         name="driveType"
         label="Napęd"
         options={advancedOptions?.driveType || []}
         placeholder="Wybierz napęd"
+        value={formData.driveType || []}
+        onChange={handleInputChange}
+        multiSelect={true}
+        formatOption={(option) => {
+          const count = getDriveTypeCount(option);
+          return count > 0 ? `${option} (${count})` : option;
+        }}
       />
       
     </div>

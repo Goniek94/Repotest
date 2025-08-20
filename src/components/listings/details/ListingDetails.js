@@ -13,6 +13,10 @@ import CollapsibleSection from "./CollapsibleSection";
 import AuthService from "../../../services/api/authApi";
 import ViewHistoryService from "../../../services/viewHistoryService";
 
+// --- NOWE: bazowy URL API z env + helper ---
+const API_URL = (process.env.REACT_APP_API_URL || "https://api.autosell.pl").replace(/\/$/, "");
+const api = (path) => `${API_URL}${path.startsWith("/") ? "" : "/"}${path}`;
+
 const ListingDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -31,21 +35,16 @@ const ListingDetails = () => {
       setLoading(true);
       try {
         // Pobierz ogłoszenie
-        const response = await fetch(`http://localhost:5000/api/ads/${id}`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
+        const response = await fetch(api(`/api/ads/${id}`)); // GET bez zbędnych nagłówków
         if (!response.ok) throw new Error("Nie znaleziono ogłoszenia");
         const data = await response.json();
         setListing(data);
-        
-        // Dodaj oglądane ogłoszenie do historii przeglądania
+
+        // Dodaj do historii
         ViewHistoryService.addToViewHistory(data);
 
         // Pobierz komentarze
-        const res = await fetch(`http://localhost:5000/api/comments/${id}`, {
-          credentials: "include",
-        });
+        const res = await fetch(api(`/api/comments/${id}`), { credentials: "include" });
         if (res.ok) {
           const data = await res.json();
           setComments(
@@ -57,21 +56,18 @@ const ListingDetails = () => {
               userId: c.user?._id || c.user?.id,
               text: c.content,
               image: c.image,
-              date: c.createdAt
-                ? new Date(c.createdAt).toISOString().split("T")[0]
-                : "",
+              date: c.createdAt ? new Date(c.createdAt).toISOString().split("T")[0] : "",
               isEditing: false,
             }))
           );
         }
-        // Pobierz podobne ogłoszenia (przykład)
+
+        // Podobne ogłoszenia
         const searchParams = new URLSearchParams({
           brand: data.brand || data.make,
           model: data.model || "",
         });
-        const similarResponse = await fetch(
-          `http://localhost:5000/api/ads/search?${searchParams}`
-        );
+        const similarResponse = await fetch(api(`/api/ads/search?${searchParams}`));
         const similarData = await similarResponse.json();
         setSimilarListings(
           (similarData.ads || []).slice(0, 4).map((ad) => ({
@@ -84,7 +80,7 @@ const ListingDetails = () => {
               ad.images && ad.images.length > 0
                 ? ad.images[0].startsWith("http")
                   ? ad.images[0]
-                  : `http://localhost:5000${ad.images[0]}`
+                  : api(ad.images[0])
                 : "/images/auto-788747_1280.jpg",
           }))
         );
@@ -106,20 +102,18 @@ const ListingDetails = () => {
     if (imageFile) formData.append("image", imageFile);
 
     try {
-      const resp = await fetch(`http://localhost:5000/api/comments/${id}`, {
+      const resp = await fetch(api(`/api/comments/${id}`), {
         method: "POST",
         credentials: "include",
-        body: formData,
+        body: formData, // nie ustawiaj ręcznie Content-Type przy FormData
       });
       if (!resp.ok) {
-        const errData = await resp.json();
+        const errData = await resp.json().catch(() => ({}));
         setCommentError(errData.message || "Błąd dodawania komentarza");
         return;
       }
       // Odśwież komentarze
-      const res = await fetch(`http://localhost:5000/api/comments/${id}`, {
-        credentials: "include",
-      });
+      const res = await fetch(api(`/api/comments/${id}`), { credentials: "include" });
       if (res.ok) {
         const data = await res.json();
         setComments(
@@ -131,9 +125,7 @@ const ListingDetails = () => {
             userId: c.user?._id || c.user?.id,
             text: c.content,
             image: c.image,
-            date: c.createdAt
-              ? new Date(c.createdAt).toISOString().split("T")[0]
-              : "",
+            date: c.createdAt ? new Date(c.createdAt).toISOString().split("T")[0] : "",
             isEditing: false,
           }))
         );
@@ -167,9 +159,8 @@ const ListingDetails = () => {
   }
   if (!listing) return null;
 
-  // Get data needed for mobile header
-  const brand = listing.make || listing.brand || '';
-  const model = listing.model || '';
+  const brand = listing.make || listing.brand || "";
+  const model = listing.model || "";
   const vehicleTitle = `${brand} ${model}`.trim();
   const price = listing.price ? `${listing.price.toLocaleString()} zł` : "Cena na żądanie";
 
@@ -183,36 +174,29 @@ const ListingDetails = () => {
         Powrót
       </button>
       <div className="max-w-7xl mx-auto">
-        {/* Desktop Layout - unchanged */}
+        {/* Desktop */}
         <div className="hidden lg:flex flex-row gap-8">
-          {/* Lewa kolumna: galeria, nagłówek, opis, komentarze */}
           <div className="w-full lg:w-[60%] space-y-8">
             <ListingHeader listing={listing} />
-            <ImageGallery 
-              images={listing.images && listing.images.length > 0 
-                ? listing.images.map(img => 
-                    img.startsWith('http') 
-                      ? img 
-                      : `http://localhost:5000${img.startsWith('/') ? '' : '/'}${img}`
-                  )
-                : []
-              } 
+            <ImageGallery
+              images={
+                listing.images && listing.images.length > 0
+                  ? listing.images.map((img) =>
+                      img.startsWith("http") ? img : api(img.startsWith("/") ? img : `/${img}`)
+                    )
+                  : []
+              }
             />
-            
-            {/* Nagłówek ogłoszenia - jeśli istnieje */}
+
             {listing.headline && (
               <div className="bg-white p-6 shadow-md rounded-sm">
-                <h2 className="text-xl font-bold mb-4 text-black">
-                  Nagłówek ogłoszenia
-                </h2>
+                <h2 className="text-xl font-bold mb-4 text-black">Nagłówek ogłoszenia</h2>
                 <div className="bg-gray-50 p-4 rounded-md border-l-4 border-[#35530A]">
-                  <p className="text-lg font-medium text-gray-800">
-                    {listing.headline}
-                  </p>
+                  <p className="text-lg font-medium text-gray-800">{listing.headline}</p>
                 </div>
               </div>
             )}
-            
+
             <Description description={listing.description} />
             <CommentSection
               comments={comments}
@@ -221,77 +205,56 @@ const ListingDetails = () => {
               commentError={commentError}
             />
           </div>
-          {/* Prawa kolumna: dane techniczne, kontakt */}
+
           <div className="w-full lg:w-[40%] space-y-8">
             <TechnicalDetails listing={listing} />
             <ContactInfo listing={listing} />
           </div>
         </div>
 
-        {/* Mobile Layout - with collapsible sections */}
+        {/* Mobile */}
         <div className="lg:hidden space-y-4">
-          {/* 1. Zdjęcia */}
-          <ImageGallery 
-            images={listing.images && listing.images.length > 0 
-              ? listing.images.map(img => 
-                  img.startsWith('http') 
-                    ? img 
-                    : `http://localhost:5000${img.startsWith('/') ? '' : '/'}${img}`
-                )
-              : []
-            } 
+          <ImageGallery
+            images={
+              listing.images && listing.images.length > 0
+                ? listing.images.map((img) =>
+                    img.startsWith("http") ? img : api(img.startsWith("/") ? img : `/${img}`)
+                  )
+                : []
+            }
           />
 
-          {/* 2. Marka, model i cena */}
           <div className="bg-white p-6 shadow-md rounded-sm">
             <div className="text-center">
               {vehicleTitle && (
-                <h1 className="text-2xl font-bold text-black mb-4">
-                  {vehicleTitle}
-                </h1>
+                <h1 className="text-2xl font-bold text-black mb-4">{vehicleTitle}</h1>
               )}
-              <div className="text-2xl font-bold text-[#35530A]">
-                {price}
-              </div>
+              <div className="text-2xl font-bold text-[#35530A]">{price}</div>
             </div>
           </div>
 
-          {/* 3. Nagłówek ogłoszenia - taki jak na desktop */}
           <ListingHeader listing={listing} />
 
-          {/* 3. Nagłówek - jeśli istnieje, taki jak na desktop */}
           {listing.headline && (
             <div className="bg-white p-6 shadow-md rounded-sm">
-              <h2 className="text-xl font-bold mb-4 text-black">
-                Nagłówek ogłoszenia
-              </h2>
+              <h2 className="text-xl font-bold mb-4 text-black">Nagłówek ogłoszenia</h2>
               <div className="bg-gray-50 p-4 rounded-md border-l-4 border-[#35530A]">
-                <p className="text-lg font-medium text-gray-800">
-                  {listing.headline}
-                </p>
+                <p className="text-lg font-medium text-gray-800">{listing.headline}</p>
               </div>
             </div>
           )}
 
-          {/* 4. Dane techniczne - zwijane sekcje (tylko te z prawej kolumny) */}
           <TechnicalDetails listing={listing} />
-
-          {/* 5. Opis - taki jak na desktop */}
           <Description description={listing.description} />
-
-          {/* 6. Komentarze - takie jak na desktop */}
           <CommentSection
             comments={comments}
             onAddComment={handleAddComment}
             userId={userId}
             commentError={commentError}
           />
-
-          {/* 7. Lokalizacja i kontakt - taka jak na desktop */}
           <ContactInfo listing={listing} />
         </div>
 
-        {/* 8. Podobne ogłoszenia - zawsze na dole */}
         <div className="mt-10">
           <SimilarListings listings={similarListings} />
         </div>

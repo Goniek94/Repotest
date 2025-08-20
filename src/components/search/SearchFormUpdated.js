@@ -278,57 +278,56 @@ export default function SearchFormUpdated({ initialValues = {}, onFilterChange }
 
   return (
     <section>
-      <div className="max-w-7xl mx-auto">
-        {/* Komunikat o ładowaniu */}
-        {loading && (
-          <div className="bg-blue-50 p-3 mb-4 rounded-md text-blue-700 text-center">
-            Ładowanie danych o markach i modelach...
-          </div>
-        )}
+      {/* Komunikat o ładowaniu */}
+      {loading && (
+        <div className="bg-blue-50 p-3 mb-4 rounded-md text-blue-700 text-center">
+          Ładowanie danych o markach i modelach...
+        </div>
+      )}
+      
+      <div className="bg-white p-5 shadow-xl shadow-gray-300/60 rounded-[2px] mb-4 max-w-7xl mx-auto border border-gray-100">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-bold text-[#35530A]">Filtry wyszukiwania</h2>
+          <button
+            type="button"
+            onClick={resetAllFilters}
+            className="text-sm text-[#35530A] hover:text-[#2a4208] hover:underline"
+          >
+            Wyczyść wszystkie filtry
+          </button>
+        </div>
         
-        <div className="p-5 mb-4">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-bold text-gray-800">Filtry wyszukiwania</h2>
-            <button
-              type="button"
-              onClick={resetAllFilters}
-              className="text-sm text-gray-600 hover:text-red-600 hover:underline"
-            >
-              Wyczyść wszystkie filtry
-            </button>
-          </div>
-          
-          <BasicFilters
+        <BasicFilters
+          formData={formData}
+          handleInputChange={handleInputChange}
+          carData={carData}
+          bodyTypes={bodyTypes}
+          availableModels={availableModels}
+          generateYearOptions={generateYearOptions}
+          advancedOptions={advancedOptions}
+          regions={regions}
+          getGenerationsForModel={getGenerationsForModel}
+        />
+        
+        {showAdvanced && (
+          <AdvancedFilters
             formData={formData}
             handleInputChange={handleInputChange}
-            carData={carData}
-            bodyTypes={bodyTypes}
-            availableModels={availableModels}
-            generateYearOptions={generateYearOptions}
             advancedOptions={advancedOptions}
             regions={regions}
-            getGenerationsForModel={getGenerationsForModel}
+            carData={carData}
+            resetAllFilters={resetAllFilters}
           />
-          
-          {showAdvanced && (
-            <AdvancedFilters
-              formData={formData}
-              handleInputChange={handleInputChange}
-              advancedOptions={advancedOptions}
-              regions={regions}
-              carData={carData}
-            />
-          )}
-          
-          <SearchFormButtons
-            formData={formData}
-            showAdvanced={showAdvanced}
-            setShowAdvanced={setShowAdvanced}
-            handleSearch={handleSearch}
-            matchingResults={matchingResults}
-            totalResults={stats.totalCount}
-          />
-        </div>
+        )}
+        
+        <SearchFormButtons
+          formData={formData}
+          showAdvanced={showAdvanced}
+          setShowAdvanced={setShowAdvanced}
+          handleSearch={handleSearch}
+          matchingResults={matchingResults}
+          totalResults={stats.totalCount}
+        />
       </div>
     </section>
   );

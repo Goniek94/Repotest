@@ -5,28 +5,32 @@ import FeaturedListings from '../components/FeaturedListings/FeaturedListings';
 const HomePage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Section with Search */}
+      {/* Hero Section with Title and Featured Listings */}
       <div className="bg-white shadow-sm">
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+        <div className="container mx-auto px-4 py-4">
+          <div className="text-center mb-4">
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">
               Znajdź swój wymarzony samochód
             </h1>
             <p className="text-xl text-gray-600">
               Tysiące ofert samochodów używanych i nowych w jednym miejscu
             </p>
           </div>
-          
-          {/* Search Form */}
+        </div>
+        
+        {/* Featured Listings - moved higher */}
+        <div className="container mx-auto px-4 pt-0 pb-4">
+          <FeaturedListings />
+        </div>
+      </div>
+
+      {/* Search Form - moved down */}
+      <div className="bg-white shadow-sm">
+        <div className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto">
             <SearchFormUpdated />
           </div>
         </div>
-      </div>
-
-      {/* Featured Listings */}
-      <div className="container mx-auto px-4 py-12">
-        <FeaturedListings />
       </div>
 
       {/* Additional Content */}

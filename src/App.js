@@ -40,7 +40,7 @@ const UserProfileRoutes = lazy(() => import('./components/profil/UserProfileRout
 
 // Zawartość strony głównej
 const HomePageContent = () => (
-  <div className="wrapper space-y-6">
+  <div className="wrapper space-y-3">
     <div className="section">
       <SearchFormUpdated />
     </div>

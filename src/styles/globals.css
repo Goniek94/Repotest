@@ -90,8 +90,8 @@
 
 @layer components {
   .section {
-    /* białe tło + delikatny border + spójne odstępy */
-    @apply py-8 sm:py-10 md:py-12 lg:py-16 bg-white border border-gray-200 rounded-lg;
+    /* usunięto białe tło i cień - tylko padding */
+    @apply py-8 sm:py-10 md:py-12 lg:py-16;
   }
   .wrapper {
     @apply container mx-auto;

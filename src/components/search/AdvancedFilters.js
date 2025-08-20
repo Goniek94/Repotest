@@ -1,6 +1,7 @@
 // AdvancedFilters.js
 import React, { useState } from "react";
 import { enginePowerRanges, engineCapacityRanges, weightRanges } from "./SearchFormConstants";
+import SearchableDropdown from './SearchableDropdown';
 
 /**
  * AdvancedFilters component - zoptymalizowany z checklistami jak w BasicFilters
@@ -12,7 +13,8 @@ export default function AdvancedFilters({
   handleInputChange,
   advancedOptions,
   regions,
-  carData = {}
+  carData = {},
+  resetAllFilters
 }) {
   // State do zarządzania otwartymi/zamkniętymi checklistami
   const [openChecklists, setOpenChecklists] = useState({});
@@ -238,18 +240,26 @@ export default function AdvancedFilters({
           options={bodyTypes || []}
         />
         
-        {/* Kolor */}
-        <RadioFilter
+        {/* Kolor - SearchableDropdown */}
+        <SearchableDropdown
           name="color"
           label="Kolor"
           options={colors || []}
+          placeholder="Wybierz kolor"
+          value={formData.color ? [formData.color] : []}
+          onChange={(e) => handleInputChange({ target: { name: e.target.name, value: e.target.value[0] || '' } })}
+          multiSelect={false}
         />
         
-        {/* Wykończenie lakieru */}
-        <RadioFilter
+        {/* Wykończenie lakieru - SearchableDropdown */}
+        <SearchableDropdown
           name="finish"
           label="Wykończenie lakieru"
           options={finishTypes || []}
+          placeholder="Wybierz wykończenie"
+          value={formData.finish ? [formData.finish] : []}
+          onChange={(e) => handleInputChange({ target: { name: e.target.name, value: e.target.value[0] || '' } })}
+          multiSelect={false}
         />
         
         {/* Liczba drzwi */}
@@ -478,18 +488,26 @@ export default function AdvancedFilters({
           options={tuningOptions || []}
         />
         
-        {/* Kraj pochodzenia */}
-        <RadioFilter
+        {/* Kraj pochodzenia - SearchableDropdown */}
+        <SearchableDropdown
           name="countryOfOrigin"
           label="Kraj pochodzenia"
           options={countriesOfOrigin || []}
+          placeholder="Wybierz kraj pochodzenia"
+          value={formData.countryOfOrigin ? [formData.countryOfOrigin] : []}
+          onChange={(e) => handleInputChange({ target: { name: e.target.name, value: e.target.value[0] || '' } })}
+          multiSelect={false}
         />
         
-        {/* Typ sprzedawcy */}
-        <RadioFilter
+        {/* Typ sprzedawcy - SearchableDropdown */}
+        <SearchableDropdown
           name="sellerType"
           label="Typ sprzedawcy"
           options={sellerTypes || []}
+          placeholder="Wybierz typ sprzedawcy"
+          value={formData.sellerType ? [formData.sellerType] : []}
+          onChange={(e) => handleInputChange({ target: { name: e.target.name, value: e.target.value[0] || '' } })}
+          multiSelect={false}
         />
         
         {/* Waga pojazdu - Od/Do Selecty z ograniczoną wysokością */}
@@ -617,31 +635,8 @@ export default function AdvancedFilters({
       <div className="pt-4 mt-6 border-t border-gray-200">
         <button
           type="button"
-          onClick={() => {
-            // Lista pól w zaawansowanych filtrach do zresetowania
-            const advancedFilterFields = [
-              'fuelType', 'transmission', 'bodyType', 'color', 'finish', 
-              'doorCount', 'seats', 'enginePowerFrom', 'enginePowerTo', 'engineCapacityFrom', 'engineCapacityTo',
-              'condition', 'accidentStatus', 'damageStatus', 'tuning', 'countryOfOrigin',
-              'weightFrom', 'weightTo', 'sellerType', 'imported', 
-              'registeredInPL', 'firstOwner', 'disabledAdapted'
-            ];
-            
-            // Stwórz obiekt z wyzerowanymi wartościami
-            const resetValues = advancedFilterFields.reduce((acc, field) => {
-              // Dla wszystkich pól - pustą wartość (teraz wszystkie są pojedynczym wyborem)
-              acc[field] = '';
-              return acc;
-            }, {});
-            
-            // Zresetuj każde pole używając handleInputChange
-            Object.entries(resetValues).forEach(([name, value]) => {
-              handleInputChange({
-                target: { name, value }
-              });
-            });
-          }}
-          className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-[2px] hover:bg-gray-50 transition-colors"
+          onClick={resetAllFilters}
+          className="px-4 py-2 text-sm text-[#35530A] hover:text-[#2a4208] border border-[#35530A] rounded-[2px] hover:bg-[#35530A]/5 transition-colors"
         >
           Wyczyść wszystkie filtry
         </button>

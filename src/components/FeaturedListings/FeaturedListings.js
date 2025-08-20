@@ -112,7 +112,7 @@ const FeaturedListings = () => {
             if (!ad.listingType) return false;
             const type = ad.listingType.toLowerCase();
             return type === 'wyróżnione' || type === 'featured' || type === 'premium';
-          }).slice(2, 6);
+          }).slice(2, 8);
 
           const regular = validAds.filter(ad => {
             if (!ad.listingType) return true;
@@ -197,71 +197,86 @@ const FeaturedListings = () => {
         </div>
       )}
       
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-8">
-        <div className="flex justify-between items-center mb-4 sm:mb-6 md:mb-8">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-gray-800 flex-grow">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 pt-0 pb-2 sm:pb-3 md:pb-4">
+        {/* Nagłówek poza kontenerem - podniesiony */}
+        <div className="text-center mb-4 sm:mb-5 md:mb-6">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800">
             OGŁOSZENIA
             <div className="w-16 sm:w-24 h-0.5 bg-[#35530A] mx-auto mt-2" />
           </h1>
-          <button 
-            onClick={handleRefresh}
-            disabled={loading || refreshing}
-            className="bg-[#35530A] text-white px-3 py-2 rounded-[2px] hover:bg-[#2A4208] transition-colors text-sm font-medium flex items-center"
-          >
-            <FaSync className={`mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-            Odśwież
-          </button>
         </div>
 
-        {/* ✅ Sprawdzanie czy są ogłoszenia */}
-        {featuredListings.length === 0 && hotListings.length === 0 && normalListings.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="text-6xl mb-4">📭</div>
-            <div className="text-xl text-gray-600 mb-4">Brak ogłoszeń do wyświetlenia</div>
-            <p className="text-gray-500">Dodaj pierwsze ogłoszenia lub sprawdź połączenie z bazą danych</p>
-          </div>
-        ) : (
-          <>
-            {/* 2 duże ogłoszenia */}
-            {featuredListings.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
-                {featuredListings.map((listing) => (
-                  <MainFeatureListing key={listing._id} listing={listing} />
-                ))}
-              </div>
-            )}
-            
-            {/* 4 mniejsze ogłoszenia - "gorące oferty" */}
-            {hotListings.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6 lg:mb-8">
-                {hotListings.map((listing) => (
-                  <SmallListingCard 
-                    key={listing._id} 
-                    listing={listing} 
-                    showHotOffer={true} 
-                  />
-                ))}
-              </div>
-            )}
-            
-            {/* Pasek reklamowy */}
-            <div className="bg-white shadow-md rounded-[2px] h-32 sm:h-40 lg:h-48 mb-4 sm:mb-6 lg:mb-8 flex items-center justify-center">
-              <span className="text-lg sm:text-xl text-gray-400">Miejsce na reklamę</span>
+        {/* Kontener z ogłoszeniami - styl jak wyszukiwarka */}
+        <div className="bg-white p-5 shadow-xl shadow-gray-300/60 rounded-[2px] mb-6 border border-gray-100">
+          {/* ✅ Sprawdzanie czy są ogłoszenia */}
+          {featuredListings.length === 0 && hotListings.length === 0 && normalListings.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="text-6xl mb-4">📭</div>
+              <div className="text-xl text-gray-600 mb-4">Brak ogłoszeń do wyświetlenia</div>
+              <p className="text-gray-500">Dodaj pierwsze ogłoszenia lub sprawdź połączenie z bazą danych</p>
             </div>
-            
-            {/* 6 małych ogłoszeń - standardowe */}
-            {normalListings.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-4 sm:mb-6">
-                {normalListings.map((listing) => (
-                  <SmallListingCard key={listing._id} listing={listing} />
-                ))}
+          ) : (
+            <>
+              {/* 2 duże ogłoszenia */}
+              {featuredListings.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 lg:gap-10 mb-6 sm:mb-8 lg:mb-10">
+                  {featuredListings.map((listing) => (
+                    <MainFeatureListing key={listing._id} listing={listing} />
+                  ))}
+                </div>
+              )}
+              
+              {/* 4 mniejsze ogłoszenia - "gorące oferty" w układzie 1x4 */}
+              {hotListings.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5 mb-6 sm:mb-8 lg:mb-10">
+                  {hotListings.slice(0, 4).map((listing) => (
+                    <SmallListingCard 
+                      key={listing._id} 
+                      listing={listing} 
+                      showHotOffer={true} 
+                    />
+                  ))}
+                </div>
+              )}
+              
+              {/* Baner AutoSell z tłem */}
+              <div className="relative shadow-lg rounded-[2px] h-32 sm:h-40 lg:h-48 mb-4 sm:mb-6 lg:mb-8 flex items-center justify-center border border-gray-200 overflow-hidden">
+                {/* Tło ze zdjęciem samochodu */}
+                <div 
+                  className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                  style={{
+                    backgroundImage: 'url(/automobile-1834278_1920.jpg)'
+                  }}
+                ></div>
+                
+                {/* Ciemna nakładka dla lepszej czytelności */}
+                <div className="absolute inset-0 bg-black bg-opacity-50"></div>
+                
+                {/* Zawartość banera - nazwa w kolorach logo bez tła */}
+                <div className="relative z-10 text-center">
+                  <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold drop-shadow-lg mb-2">
+                    <span className="text-yellow-400">Auto</span><span className="text-white">sell.pl</span>
+                  </h2>
+                  <p className="text-lg sm:text-xl lg:text-2xl font-medium drop-shadow-lg text-white opacity-90">
+                    Znajdź swój wymarzony samochód
+                  </p>
+                </div>
               </div>
-            )}
-          </>
-        )}
+              
+              {/* 6 małych ogłoszeń - standardowe */}
+              {normalListings.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8">
+                  {normalListings.map((listing) => (
+                    <SmallListingCard key={listing._id} listing={listing} />
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </div>
 
-        {/* Przycisk na dole sekcji */}
-        <div className="flex justify-center mt-8">
+        {/* Przycisk poza kontenerem - obniżony */}
+        <div className="flex justify-center mt-8 sm:mt-10 lg:mt-12">
           <Link
             to="/listings"
             className="bg-[#35530A] text-white px-6 py-2.5 rounded-[2px] hover:bg-[#2A4208] transition-colors text-sm font-medium"

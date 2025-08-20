@@ -6,6 +6,8 @@ import MileageIcon from '../icons/MileageIcon';
 import PowerIcon from '../icons/PowerIcon';
 import GearboxIcon from '../icons/GearboxIcon';
 import CapacityIcon from '../icons/CapacityIcon';
+import DriveIcon from '../icons/DriveIcon';
+import { MapPin, User, Globe } from 'lucide-react';
 import SpecItem from './SpecItem';
 import getImageUrl from '../../utils/responsive/getImageUrl';
 
@@ -27,6 +29,10 @@ const SmallListingCard = ({ listing, showHotOffer = false }) => {
   const power = listing.power || '150';
   const capacity = listing.capacity || 2000;
   const transmission = listing.transmission || 'manualna';
+  const drive = listing.drive || 'Na przednie koła';
+  const sellerType = listing.sellerType || 'Prywatny';
+  const city = listing.city || listing.location || 'Polska';
+  const countryOfOrigin = listing.countryOfOrigin || (listing.imported === 'Tak' ? 'Import' : 'Polska');
   
   // Bezpieczny dostęp do obrazu (główne zdjęcie ustawione przez użytkownika)
   let imageUrl = null;
@@ -47,23 +53,23 @@ const SmallListingCard = ({ listing, showHotOffer = false }) => {
 
   return (
     <div 
-      className="bg-white shadow-md rounded-[2px] overflow-hidden flex flex-col cursor-pointer h-full hover:shadow-lg transition-shadow duration-200 min-w-[260px]" 
+      className="bg-white shadow-xl shadow-gray-400/50 hover:shadow-2xl hover:shadow-gray-500/60 rounded-[2px] overflow-hidden flex flex-col cursor-pointer h-full transition-shadow duration-200 w-full" 
       onClick={() => navigate(`/listing/${listing._id}`)}
     >
       {/* Zdjęcie */}
-      <div className="relative h-48">
+      <div className="relative h-36">
         {imageUrl ? (
           <img
             src={imageUrl}
             alt={title}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover rounded-t-[2px]"
             onError={(e) => {
               e.target.onerror = null;
               e.target.src = '/images/auto-788747_1280.jpg';
             }}
           />
         ) : (
-          <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-sm">
+          <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-sm rounded-t-[2px]">
             Brak zdjęcia
           </div>
         )}
@@ -75,36 +81,62 @@ const SmallListingCard = ({ listing, showHotOffer = false }) => {
       </div>
 
       {/* Tytuł i opis */}
-      <div className="p-4 flex-1">
-        <h3 className="text-base font-bold text-gray-900 mb-2">
+      <div className="p-3 flex-1">
+        <h3 className="text-sm font-bold text-gray-900 mb-1">
           {title}
         </h3>
-        <p className="text-sm text-gray-600 mb-3">
+        <p className="text-xs text-gray-600 mb-2">
           {description || 'Ogłoszenie: ' + title}
         </p>
         
         {/* Specyfikacje w 2 kolumny z odpowiednim odstępem */}
-        <div className="grid grid-cols-2 gap-x-3 gap-y-2.5">
-          <SpecItem icon={<YearIcon className="w-4 h-4" />} label="Rok" value={year} />
-          <SpecItem icon={<FuelIcon className="w-4 h-4" />} label="Paliwo" value={fuelType} />
-          <SpecItem icon={<MileageIcon className="w-4 h-4" />} label="Przebieg" value={`${mileage.toLocaleString('pl-PL')} km`} />
-          <SpecItem icon={<PowerIcon className="w-4 h-4" />} label="Moc" value={power} />
-          <SpecItem icon={<CapacityIcon className="w-4 h-4" />} label="Pojemność" value={`${capacity} cm³`} />
-          <SpecItem icon={<GearboxIcon className="w-4 h-4" />} label="Skrzynia" value={transmission} />
+        <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 mb-2">
+          <SpecItem icon={<YearIcon className="w-3 h-3" />} label="Rok" value={year} />
+          <SpecItem icon={<FuelIcon className="w-3 h-3" />} label="Paliwo" value={fuelType} />
+          <SpecItem icon={<MileageIcon className="w-3 h-3" />} label="Przebieg" value={`${mileage.toLocaleString('pl-PL')} km`} />
+          <SpecItem icon={<PowerIcon className="w-3 h-3" />} label="Moc" value={power} />
+          <SpecItem icon={<CapacityIcon className="w-3 h-3" />} label="Pojemność" value={`${capacity} cm³`} />
+          <SpecItem icon={<GearboxIcon className="w-3 h-3" />} label="Skrzynia" value={transmission} />
+          <SpecItem icon={<DriveIcon className="w-3 h-3" />} label="Napęd" value={drive} />
+          <SpecItem icon={<Globe className="w-3 h-3" />} label="Pochodzenie" value={countryOfOrigin} />
         </div>
+        
       </div>
 
-      {/* Cena i przycisk */}
-      <div className="bg-gray-50 px-4 py-3 flex justify-between items-center">
-        <span className="text-base font-bold text-[#35530A]">
-          {price.toLocaleString('pl-PL')} zł
-        </span>
+      {/* Sprzedawca i lokalizacja - białe tło */}
+      <div className="bg-white px-3 py-2 border-t border-gray-100">
+        <div className="grid grid-cols-2 gap-x-3">
+          <div className="flex items-center gap-1.5">
+            <User className="w-3 h-3 text-[#35530A]" />
+            <div>
+              <div className="text-xs text-gray-500 font-medium">Sprzedawca</div>
+              <div className="text-xs font-semibold text-gray-800">{sellerType}</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <MapPin className="w-3 h-3 text-[#35530A]" />
+            <div>
+              <div className="text-xs text-gray-500 font-medium">Lokalizacja</div>
+              <div className="text-xs font-semibold text-gray-800">{city}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Cena i przycisk - zielone tło */}
+      <div className="bg-[#35530A] px-3 py-3 flex justify-between items-center">
+        <div className="text-white">
+          <div className="text-xs font-medium opacity-80">Cena</div>
+          <div className="text-lg font-bold">
+            {price.toLocaleString('pl-PL')} zł
+          </div>
+        </div>
         <button
           onClick={(e) => {
             e.stopPropagation();
             navigate(`/listing/${listing._id}`);
           }}
-          className="bg-[#35530A] text-white px-3 py-1.5 rounded-[2px] text-sm font-semibold hover:bg-[#2A4208] transition-colors"
+          className="bg-white text-[#35530A] px-3 py-1.5 rounded-[2px] text-xs font-semibold hover:bg-gray-100 transition-colors shadow-sm"
         >
           Szczegóły
         </button>
