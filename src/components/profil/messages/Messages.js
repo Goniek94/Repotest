@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { MessageCircle, Bell } from 'lucide-react';
 import { useNotifications } from '../../../contexts/NotificationContext';
 import { useAuth } from '../../../contexts/AuthContext';
-import { DEFAULT_FOLDER, FOLDER_MAP } from '../../../constants/messageFolders';
+import { DEFAULT_FOLDER, FOLDER_MAP } from '../../../contexts/constants/messageFolders';
 import useConversations from './hooks/useConversations';
 import MessagesHeader from './MessagesHeader';
 import CategoriesPanel from './CategoriesPanel';
@@ -13,10 +13,10 @@ import ChatPanel from './ChatPanel';
 /**
  * 💬 MESSAGES - Główny komponent panelu wiadomości
  * 
- * 3-panelowy layout w stylu Messenger:
- * 1. Panel kategorii (stały sidebar)
- * 2. Panel konwersacji (slide-in z prawej)
- * 3. Panel chatu (slide-in z prawej)
+ * 3-panelowy layout w stylu Messenger z pełną responsywnością:
+ * 1. Panel kategorii (lewy)
+ * 2. Panel konwersacji (środkowy)
+ * 3. Panel chatu (prawy)
  */
 const Messages = memo(() => {
   // ===== HOOKS =====
@@ -63,8 +63,17 @@ const Messages = memo(() => {
    * Obsługa wyboru konwersacji
    */
   const handleSelectConversation = (conversation) => {
-    conversationsData.selectConversation(conversation.id);
+    console.log('🔄 Messages.js - handleSelectConversation wywołane z:', conversation);
+    console.log('🔄 Messages.js - conversation.id:', conversation.id);
+    console.log('🔄 Messages.js - conversation.userId:', conversation.userId);
+    
+    const conversationId = conversation.id || conversation.userId;
+    console.log('🔄 Messages.js - używane conversationId:', conversationId);
+    
+    conversationsData.selectConversation(conversationId);
     setPanelState('chat'); // Pokaż panel chatu
+    
+    console.log('🔄 Messages.js - setPanelState na chat');
   };
 
   /**
@@ -81,63 +90,66 @@ const Messages = memo(() => {
 
   // ===== RENDER =====
   return (
-    <div className="bg-gradient-to-br from-gray-50 via-white to-blue-50 overflow-x-hidden">
-      <div className="max-w-6xl mx-auto px-4 py-4">
-        {/* Nagłówek z tytułem i licznikami - złączony z nawigacją */}
-        <div className="mb-5">
+    <div className="bg-white overflow-x-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Nagłówek z tytułem i licznikami - połączony z panelami */}
+        <div>
           <MessagesHeader 
             unreadCount={unreadCount.messages}
           />
         </div>
 
-        {/* Główny kontener - jeden spójny panel */}
-        <div className="flex gap-5 h-[600px]">
+        {/* Główny kontener - responsywny 3-panelowy layout - połączony z nagłówkiem */}
+        <div className="
+          flex flex-col lg:flex-row
+          min-h-[calc(100vh-200px)] sm:min-h-[600px] lg:h-[600px]
+          bg-white rounded-b-lg shadow-sm border border-gray-200 border-t-0 overflow-hidden
+        ">
           
-          {/* Panel kategorii - zawsze widoczny po lewej */}
-          <div className="w-64 flex-shrink-0">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-full overflow-hidden">
-              <CategoriesPanel
-                activeTab={activeTab}
-                unreadCount={unreadCount}
-                onTabChange={handleTabChange}
-              />
-            </div>
+          {/* Panel kategorii - lewy (mniejszy) */}
+          <div className="
+            w-full lg:w-64 xl:w-72
+            flex-shrink-0 
+            border-b lg:border-b-0 lg:border-r border-gray-200
+            max-h-[180px] lg:max-h-none
+            overflow-y-auto lg:overflow-y-visible
+          ">
+            <CategoriesPanel
+              activeTab={activeTab}
+              unreadCount={unreadCount}
+              onTabChange={handleTabChange}
+            />
           </div>
 
-          {/* Obszar wysuwanych paneli - po prawej stronie */}
-          <div className="flex-1 relative overflow-hidden bg-white rounded-lg shadow-sm border border-gray-200">
-            
-            {/* Panel konwersacji - wysuwa się z prawej */}
-            <div className={`
-              absolute inset-0 transition-transform duration-300 ease-out
-              ${panelState === 'conversations' || panelState === 'chat' 
-                ? 'transform translate-x-0' 
-                : 'transform translate-x-full'
-              }
-            `}>
-              <ConversationsPanel
-                isVisible={true}
-                conversations={conversationsData.conversations}
-                loading={conversationsData.loading}
-                error={conversationsData.error}
-                activeConversation={conversationsData.selectedConversation?.id}
-                onSelectConversation={handleSelectConversation}
-                onStar={conversationsData.toggleStar}
-                onDelete={conversationsData.deleteConversation}
-                onMove={conversationsData.moveToFolder}
-                onBack={handleBack}
-                activeTab={activeTab}
-              />
-            </div>
+          {/* Panel konwersacji - środkowy (mniejszy) */}
+          <div className="
+            w-full lg:w-72 xl:w-80
+            flex-shrink-0 
+            border-b lg:border-b-0 lg:border-r border-gray-200
+            min-h-[280px] lg:min-h-0
+          ">
+            <ConversationsPanel
+              isVisible={true}
+              conversations={conversationsData.conversations}
+              loading={conversationsData.loading}
+              error={conversationsData.error}
+              activeConversation={conversationsData.selectedConversation?.id}
+              onSelectConversation={handleSelectConversation}
+              onStar={conversationsData.toggleStar}
+              onDelete={conversationsData.deleteConversation}
+              onMove={conversationsData.moveToFolder}
+              onBack={handleBack}
+              activeTab={activeTab}
+            />
+          </div>
 
-            {/* Panel chatu - wysuwa się z prawej nad panelem konwersacji */}
-            <div className={`
-              absolute inset-0 transition-transform duration-300 ease-out
-              ${panelState === 'chat' 
-                ? 'transform translate-x-0' 
-                : 'transform translate-x-full'
-              }
-            `}>
+          {/* Panel chatu - prawy */}
+          <div className="
+            flex-1 
+            relative overflow-hidden
+            min-h-[400px] lg:min-h-0
+          ">
+            {conversationsData.selectedConversation ? (
               <ChatPanel
                 isVisible={true}
                 conversation={conversationsData.selectedConversation}
@@ -151,25 +163,21 @@ const Messages = memo(() => {
                 onBack={handleBack}
                 showNotification={conversationsData.showNotification}
               />
-            </div>
-
-            {/* Domyślny widok gdy żaden panel nie jest aktywny */}
-            {panelState === 'categories' && (
-              <div className="h-full flex items-center justify-center">
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <MessageCircle className="w-8 h-8 text-gray-400" />
+            ) : (
+              <div className="h-full flex items-center justify-center bg-gray-50">
+                <div className="text-center p-4">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <MessageCircle className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400" />
                   </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    Zarządzaj swoimi wiadomościami
+                  <h3 className="text-lg sm:text-xl font-medium text-gray-900 mb-2">
+                    Wybierz konwersację
                   </h3>
                   <p className="text-gray-500 text-sm">
-                    Kliknij na jedną z kategorii po lewej stronie, aby zobaczyć swoje wiadomości
+                    Kliknij na użytkownika z listy, aby rozpocząć rozmowę
                   </p>
                 </div>
               </div>
             )}
-
           </div>
         </div>
       </div>

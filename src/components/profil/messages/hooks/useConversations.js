@@ -4,7 +4,7 @@ import useMessageActions from './useMessageActions';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../../../contexts/AuthContext';
 import { useNotifications } from '../../../../contexts/NotificationContext';
-import { FOLDER_MAP, DEFAULT_FOLDER } from '../../../../constants/messageFolders';
+import { FOLDER_MAP, DEFAULT_FOLDER } from '../../../../contexts/constants/messageFolders';
 
 /**
  * Hook zarządzający stanem i akcjami konwersacji
@@ -29,7 +29,12 @@ const useConversations = (activeTab) => {
   const { user } = useAuth();
   
   // Memoize currentUserId to prevent unnecessary re-renders
-  const currentUserId = useMemo(() => user?._id || user?.id, [user?._id, user?.id]);
+  const currentUserId = useMemo(() => {
+    const userId = user?._id || user?.id;
+    console.log('🔄 useConversations - currentUserId:', userId);
+    console.log('🔄 useConversations - user object:', user);
+    return userId;
+  }, [user?._id, user?.id]);
   
   const notificationContext = useNotifications();
   const decreaseMessageCount = notificationContext?.decreaseMessageCount;
@@ -53,123 +58,45 @@ const useConversations = (activeTab) => {
   );
 
   /**
-   * Pobieranie konwersacji z aktywnego folderu
-   * Fixed dependencies and removed potential infinite loop causes
+   * Pobieranie konwersacji z aktywnego folderu - PRAWDZIWE API
    */
   const fetchConversations = useCallback(async (signal) => {
     try {
       setLoading(true);
       setError(null);
       
-      console.log(`Pobieranie konwersacji z folderu: ${backendFolder}`);
+      console.log(`🔄 fetchConversations - Pobieranie konwersacji z folderu: ${backendFolder}`);
+      console.log(`🔄 fetchConversations - currentUserId: ${currentUserId}`);
       
-      // Bezpośrednie wywołanie API - zapewnia pobieranie rzeczywistych danych
-      let response = await messagesApi.getConversations(backendFolder, { signal });
-
-      console.log('Otrzymana odpowiedź z API:', response);
-
-      // Sprawdź czy odpowiedź jest poprawna
-      if (!response || (!Array.isArray(response) && !Array.isArray(response.data))) {
-        console.error('Nieprawidłowa odpowiedź z API:', response);
-        throw new Error('Nieprawidłowa odpowiedź z API');
-      }
-
-      // Normalizacja odpowiedzi - może być bezpośrednio tablica lub w property data
-      let data = Array.isArray(response) ? response : (Array.isArray(response.data) ? response.data : []);
-
-      console.log('Znormalizowane dane:', data);
-
-      // Jeśli API konwersacji zwróci pustą tablicę, próbujemy fallbacku do zwykłych wiadomości
-      if (Array.isArray(data) && data.length === 0) {
-        console.log('Brak konwersacji z API, próba pobrania wiadomości z folderu.');
-        const messagesFallback = await messagesApi.searchMessages('', { folder: backendFolder });
-
-        if (Array.isArray(messagesFallback) && messagesFallback.length > 0) {
-          const convMap = {};
-          messagesFallback.forEach(msg => {
-            const otherUser = (msg.sender?._id || msg.sender) === currentUserId ? msg.recipient : msg.sender;
-            const userId = otherUser?._id || otherUser?.id;
-            if (!userId) return;
-
-            if (!convMap[userId]) {
-              convMap[userId] = {
-                _id: userId,
-                user: otherUser,
-                lastMessage: msg,
-                unreadCount: msg.read ? 0 : 1,
-                starred: msg.starred || false,
-                folder: msg.folder || backendFolder,
-              };
-            } else {
-              const existing = convMap[userId];
-              const msgDate = new Date(msg.createdAt);
-              const lastDate = new Date(existing.lastMessage.createdAt);
-              if (msgDate > lastDate) {
-                existing.lastMessage = msg;
-              }
-              if (!msg.read) {
-                existing.unreadCount += 1;
-              }
-            }
-          });
-          data = Object.values(convMap);
-          console.log('Dane z fallbacku:', data);
-        }
+      // Wywołanie prawdziwego API
+      const response = await messagesApi.getConversations(backendFolder, { signal });
+      
+      console.log('✅ fetchConversations - Otrzymana odpowiedź z API:', response);
+      console.log('✅ fetchConversations - Typ odpowiedzi:', typeof response);
+      console.log('✅ fetchConversations - Czy jest tablicą:', Array.isArray(response));
+      console.log('✅ fetchConversations - Długość:', response?.length);
+      
+      // API już zwraca sformatowane dane
+      if (Array.isArray(response)) {
+        console.log('✅ fetchConversations - Ustawianie konwersacji:', response);
+        setConversations(response);
+      } else {
+        console.log('❌ fetchConversations - Odpowiedź nie jest tablicą, ustawianie pustej tablicy');
+        setConversations([]);
       }
       
-      // Formatowanie konwersacji do jednolitego formatu
-      const formattedConversations = data.map(conversation => {
-        const userInfo = conversation.user || conversation.participant || conversation.partner || {};
-        const userId =
-          userInfo._id ||
-          userInfo.id ||
-          conversation.userId ||
-          conversation.otherUserId ||
-          conversation._id;
-
-        // Lepsze wyciąganie nazwy użytkownika
-        let userName = 'Nieznany użytkownik';
-        if (userInfo.name && userInfo.name.trim()) {
-          userName = userInfo.name.trim();
-        } else if (userInfo.email && userInfo.email.trim()) {
-          // Jeśli nie ma imienia, użyj części przed @ z emaila
-          const emailPart = userInfo.email.split('@')[0];
-          userName = emailPart.charAt(0).toUpperCase() + emailPart.slice(1);
-        }
-
-        return {
-          id: conversation._id || userId,
-          userId,
-          userName,
-          lastMessage: {
-            content: conversation.lastMessage?.content || '',
-            date: conversation.lastMessage?.createdAt || conversation.lastMessage?.date 
-              ? new Date(conversation.lastMessage.createdAt || conversation.lastMessage.date)
-              : new Date(),
-            isRead: conversation.lastMessage?.read || false,
-          },
-          unreadCount: conversation.unreadCount || 0,
-          isStarred: conversation.lastMessage?.starred || conversation.starred || false,
-          folder: backendFolder,
-          adInfo: conversation.adInfo || null,
-        };
-      });
-
-      console.log('Sformatowane konwersacje:', formattedConversations);
-      
-      setConversations(formattedConversations);
     } catch (err) {
       if (err.name === 'AbortError') {
-        console.log('Request was aborted');
+        console.log('⏹️ fetchConversations - Request was aborted');
         return;
       }
-      console.error('Błąd podczas pobierania konwersacji:', err);
+      console.error('❌ fetchConversations - Błąd podczas pobierania konwersacji:', err);
       setError('Nie udało się pobrać konwersacji. Spróbuj ponownie później.');
       showNotification('Nie udało się pobrać konwersacji', 'error');
     } finally {
       setLoading(false);
     }
-  }, [currentUserId, backendFolder, showNotification]);
+  }, [backendFolder, showNotification, currentUserId]);
 
   /**
    * Oznaczenie konwersacji jako przeczytanej
@@ -492,9 +419,14 @@ const useConversations = (activeTab) => {
 
   // Wybór konwersacji
   const selectConversation = useCallback((conversationId) => {
-    const conversation = conversations.find(c => c.id === conversationId);
-    if (!conversation) return;
+    console.log('🔄 selectConversation wywołane z ID:', conversationId);
+    const conversation = conversations.find(c => c.id === conversationId || c.userId === conversationId);
+    if (!conversation) {
+      console.log('❌ Nie znaleziono konwersacji o ID:', conversationId);
+      return;
+    }
     
+    console.log('✅ Znaleziono konwersację:', conversation);
     setSelectedConversation(conversation);
   }, [conversations]);
 
@@ -521,9 +453,10 @@ const useConversations = (activeTab) => {
   }, []);
 
   // Pobieranie konwersacji przy zmianie aktywnego folderu lub użytkownika
-  // Fixed: Działa również dla niezalogowanych użytkowników (pokazuje przykładowe dane)
   useEffect(() => {
     const controller = new AbortController();
+    
+    // Użyj istniejącej funkcji fetchConversations zamiast duplikowania logiki
     fetchConversations(controller.signal);
     
     // Reset search when changing tabs
@@ -535,21 +468,126 @@ const useConversations = (activeTab) => {
         clearTimeout(searchTimeoutRef.current);
       }
     };
-  }, [activeTab, fetchConversations]);
+  }, [activeTab, backendFolder, fetchConversations]);
   
   // Pobieranie wiadomości przy wyborze konwersacji
   // Fixed: Proper dependency management and AbortController usage
   useEffect(() => {
-    if (!selectedConversation?.id) {
+    console.log('🔄 useEffect dla selectedConversation:', selectedConversation);
+    
+    if (!selectedConversation?.id && !selectedConversation?.userId) {
+      console.log('❌ Brak selectedConversation - czyszczenie wiadomości');
       setChatMessages([]);
       return;
     }
     
     const controller = new AbortController();
-    fetchConversationMessages(selectedConversation, controller.signal);
     
-    return () => controller.abort();
-  }, [selectedConversation?.id, fetchConversationMessages]);
+    const loadMessages = async () => {
+      // Użyj userId lub id jako fallback
+      const userIdToUse = selectedConversation.userId || selectedConversation.id;
+      
+      if (!userIdToUse) {
+        console.log('❌ Brak userId do pobrania wiadomości');
+        return;
+      }
+      
+      try {
+        setLoading(true);
+        setError(null);
+        
+        console.log(`🔄 Pobieranie wiadomości dla konwersacji z użytkownikiem ${userIdToUse}`);
+        console.log('📋 Pełny obiekt selectedConversation:', selectedConversation);
+        
+        const response = await messagesApi.getConversation(userIdToUse, { signal: controller.signal });
+        
+        console.log('✅ Otrzymana odpowiedź z API dla wiadomości:', response);
+        
+        if (!response) {
+          console.error('❌ Brak odpowiedzi przy pobieraniu wiadomości');
+          throw new Error('Nie udało się pobrać wiadomości z konwersacji');
+        }
+        
+        let allMessages = [];
+        
+        // Obsługa różnych formatów odpowiedzi
+        if (response.conversations) {
+          // Format z grupowaniem według ogłoszeń
+          console.log('📁 Format odpowiedzi: grupowanie według ogłoszeń');
+          Object.values(response.conversations).forEach(convo => {
+            if (convo.messages && Array.isArray(convo.messages)) {
+              allMessages = [...allMessages, ...convo.messages];
+            }
+          });
+        } else if (Array.isArray(response)) {
+          // Bezpośrednia tablica wiadomości
+          console.log('📁 Format odpowiedzi: bezpośrednia tablica wiadomości');
+          allMessages = response;
+        } else if (response.messages && Array.isArray(response.messages)) {
+          // Wiadomości w property messages
+          console.log('📁 Format odpowiedzi: wiadomości w property messages');
+          allMessages = response.messages;
+        } else if (response.data && Array.isArray(response.data)) {
+          // Wiadomości w property data
+          console.log('📁 Format odpowiedzi: wiadomości w property data');
+          allMessages = response.data;
+        }
+        
+        console.log(`📨 Znaleziono ${allMessages.length} wiadomości przed formatowaniem:`, allMessages);
+        
+        if (allMessages.length === 0) {
+          console.log('⚠️ Brak wiadomości w odpowiedzi API');
+          setChatMessages([]);
+          return;
+        }
+        
+        // Formatowanie wiadomości do jednolitego formatu
+        const formattedChatMessages = allMessages.map(msg => ({
+          id: msg._id,
+          sender: msg.sender?._id || msg.sender,
+          senderName: msg.sender?.name || 'Nieznany użytkownik',
+          content: msg.content || '',
+          createdAt: msg.createdAt || msg.date,
+          timestamp: msg.createdAt || msg.date 
+            ? new Date(msg.createdAt || msg.date)
+            : new Date(),
+          isRead: msg.read || false,
+          isDelivered: true,
+          isDelivering: false,
+          attachments: (msg.attachments || []).map(att => ({
+            id: att._id,
+            name: att.name || att.originalname || 'Załącznik',
+            url: att.path || att.url,
+            type: att.mimetype || att.type || 'application/octet-stream'
+          }))
+        }));
+        
+        // Sortowanie wiadomości według czasu
+        formattedChatMessages.sort((a, b) => a.timestamp - b.timestamp);
+        
+        console.log(`✅ Sformatowano ${formattedChatMessages.length} wiadomości:`, formattedChatMessages);
+        
+        setChatMessages(formattedChatMessages);
+        
+      } catch (err) {
+        if (err.name === 'AbortError') {
+          console.log('⏹️ Request was aborted');
+          return;
+        }
+        console.error('💥 Błąd podczas pobierania wiadomości:', err);
+        showNotification('Nie udało się pobrać wiadomości z konwersacji', 'error');
+        setChatMessages([]); // Wyczyść wiadomości w przypadku błędu
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadMessages();
+    
+    return () => {
+      controller.abort();
+    };
+  }, [selectedConversation?.id, selectedConversation?.userId, showNotification]);
 
   // Memoize the return object to prevent unnecessary re-renders of consuming components
   return useMemo(() => ({

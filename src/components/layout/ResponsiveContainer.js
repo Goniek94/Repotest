@@ -1,30 +1,31 @@
 import React from 'react';
+import useResponsiveLayout from '../../hooks/useResponsiveLayout';
 
 /**
- * Responsywny kontener, który automatycznie dostosowuje się do różnych rozmiarów ekranu
+ * 📦 RESPONSIVE CONTAINER
  * 
- * @param {Object} props
- * @param {React.ReactNode} props.children - Zawartość kontenera
- * @param {boolean} props.fluid - Czy kontener ma być pełnej szerokości (true) czy z maksymalną szerokością (false)
- * @param {string} props.className - Dodatkowe klasy CSS
- * @param {string} props.as - Element HTML, który ma być użyty (domyślnie div)
- * @returns {JSX.Element}
+ * Uniwersalny kontener responsywny dla całej aplikacji
+ * Zapewnia spójne marginesy, padding i max-width
  */
 const ResponsiveContainer = ({ 
   children, 
-  fluid = false, 
-  className = "", 
-  as: Component = 'div' 
+  className = '', 
+  noPadding = false,
+  fullHeight = false 
 }) => {
+  const { container, height } = useResponsiveLayout();
+
+  const containerClass = `
+    ${container.main}
+    ${!noPadding ? container.padding : ''}
+    ${fullHeight ? height.fullSection : ''}
+    ${className}
+  `.trim();
+
   return (
-    <Component className={`
-      mx-auto 
-      px-2 sm:px-4 lg:px-6 
-      ${fluid ? 'w-full' : 'max-w-7xl'} 
-      ${className}
-    `}>
+    <div className={containerClass}>
       {children}
-    </Component>
+    </div>
   );
 };
 

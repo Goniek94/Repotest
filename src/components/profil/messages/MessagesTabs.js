@@ -1,6 +1,6 @@
 import React from 'react';
 import { Inbox, Send, Star, Archive } from 'lucide-react';
-import { UI_FOLDERS } from '../../../constants/messageFolders';
+import { UI_FOLDERS } from '../../../contexts/constants/messageFolders';
 
 /**
  * Komponent zakładek wiadomości

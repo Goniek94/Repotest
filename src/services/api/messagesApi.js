@@ -515,32 +515,42 @@ class MessagesApi {
       return [];
     }
 
-    return data.map(conversation => ({
-      id: conversation.user?._id || conversation.userId,
-      userName: conversation.user?.name || conversation.user?.email || 'Nieznany użytkownik',
-      userEmail: conversation.user?.email,
-      lastMessage: {
-        id: conversation.lastMessage?._id,
-        content: conversation.lastMessage?.content || '',
-        date: conversation.lastMessage?.createdAt || new Date().toISOString(),
-        type: this.getMessageType(conversation.lastMessage),
-        isFromMe: conversation.lastMessage?.sender === conversation.currentUserId
-      },
-      unreadCount: conversation.unreadCount || 0,
-      isStarred: conversation.lastMessage?.starred || false,
-      isArchived: conversation.lastMessage?.archived || false,
-      isPinned: false, // Backend nie ma tego pola, można dodać później
-      isOnline: false, // Backend nie ma tego pola, można dodać później
-      hasAttachments: conversation.lastMessage?.attachments?.length > 0,
-      adInfo: conversation.adInfo ? {
-        id: conversation.adInfo._id,
-        headline: conversation.adInfo.headline,
-        brand: conversation.adInfo.brand,
-        model: conversation.adInfo.model
-      } : null,
-      participantCount: 2, // Zawsze 2 w konwersacji 1-na-1
-      lastMessageRead: conversation.lastMessage?.read || false
-    }));
+    return data.map(conversation => {
+      // Sprawdź czy mamy dane użytkownika
+      const user = conversation.user || {};
+      const lastMessage = conversation.lastMessage || {};
+      
+      return {
+        id: user._id || user.id,
+        userId: user._id || user.id,
+        userName: user.name || user.email || 'Nieznany użytkownik',
+        userEmail: user.email || '',
+        lastMessage: {
+          id: lastMessage._id,
+          content: lastMessage.content || lastMessage.subject || '',
+          date: lastMessage.createdAt || lastMessage.date || new Date().toISOString(),
+          type: this.getMessageType(lastMessage),
+          isFromMe: lastMessage.sender && lastMessage.sender._id ? 
+            lastMessage.sender._id.toString() === conversation.currentUserId : false,
+          isRead: lastMessage.read || false
+        },
+        unreadCount: conversation.unreadCount || 0,
+        isStarred: lastMessage.starred || false,
+        isArchived: lastMessage.archived || false,
+        isPinned: false, // Backend nie ma tego pola, można dodać później
+        isOnline: false, // Backend nie ma tego pola, można dodać później
+        hasAttachments: lastMessage.attachments && lastMessage.attachments.length > 0,
+        adInfo: conversation.adInfo ? {
+          id: conversation.adInfo._id,
+          headline: conversation.adInfo.headline,
+          brand: conversation.adInfo.brand,
+          model: conversation.adInfo.model,
+          title: conversation.adInfo.headline || `${conversation.adInfo.brand} ${conversation.adInfo.model}`.trim()
+        } : null,
+        participantCount: 2, // Zawsze 2 w konwersacji 1-na-1
+        lastMessageRead: lastMessage.read || false
+      };
+    });
   }
 
   /**

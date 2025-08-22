@@ -19,7 +19,7 @@ import {
   REGISTERED_IN_PL_OPTIONS,
   FIRST_OWNER_OPTIONS,
   DISABLED_ADAPTED_OPTIONS
-} from '../../constants/vehicleOptions';
+} from '../../contexts/constants/vehicleOptions';
 
 // Mapowanie województw do miast
 export const regionToCities = {

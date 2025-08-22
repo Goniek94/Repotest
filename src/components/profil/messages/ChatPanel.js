@@ -1,5 +1,6 @@
 import React, { memo, useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Send, MoreVertical, Phone, Video } from 'lucide-react';
+import useResponsiveLayout from '../../../hooks/useResponsiveLayout';
 
 /**
  * 💬 CHAT PANEL - Panel konwersacji w stylu Messenger
@@ -16,6 +17,16 @@ const ChatPanel = memo(({
   onBack,
   showNotification
 }) => {
+  console.log('🔄 ChatPanel - otrzymane props:');
+  console.log('🔄 ChatPanel - conversation:', conversation);
+  console.log('🔄 ChatPanel - messages:', messages);
+  console.log('🔄 ChatPanel - messages.length:', messages.length);
+  console.log('🔄 ChatPanel - currentUser:', currentUser);
+  console.log('🔄 ChatPanel - loading:', loading);
+  
+  // ===== HOOKS =====
+  const { isMobile, text } = useResponsiveLayout();
+  
   // ===== REFS =====
   const messagesEndRef = useRef(null);
   
@@ -97,6 +108,52 @@ const ChatPanel = memo(({
     });
   };
 
+  // ===== ONLINE STATUS FUNCTIONS =====
+  const getOnlineStatus = (conversation) => {
+    // Sprawdź czy użytkownik jest online (można rozszerzyć o prawdziwe dane z API)
+    const lastSeen = conversation.lastSeen || conversation.user?.lastSeen;
+    const isOnline = conversation.isOnline || conversation.user?.isOnline;
+    
+    if (isOnline) {
+      return { status: 'online', text: 'Aktywny', color: 'text-[#35530A]' };
+    }
+    
+    if (lastSeen) {
+      const lastSeenDate = new Date(lastSeen);
+      const now = new Date();
+      const diffInMinutes = Math.floor((now - lastSeenDate) / (1000 * 60));
+      
+      if (diffInMinutes < 1) {
+        return { status: 'recent', text: 'Aktywny przed chwilą', color: 'text-[#35530A]' };
+      } else if (diffInMinutes < 60) {
+        return { status: 'minutes', text: `Aktywny ${diffInMinutes} min temu`, color: 'text-gray-500' };
+      } else if (diffInMinutes < 1440) { // 24 godziny
+        const hours = Math.floor(diffInMinutes / 60);
+        return { status: 'hours', text: `Aktywny ${hours}h temu`, color: 'text-gray-500' };
+      } else {
+        const days = Math.floor(diffInMinutes / 1440);
+        return { status: 'days', text: `Aktywny ${days} dni temu`, color: 'text-gray-500' };
+      }
+    }
+    
+    return { status: 'unknown', text: 'Ostatnio widziany dawno temu', color: 'text-gray-400' };
+  };
+
+  const renderOnlineIndicator = (status) => {
+    if (status.status === 'online' || status.status === 'recent') {
+      return (
+        <div className="flex items-center gap-1">
+          <div className="w-2 h-2 bg-[#35530A] rounded-full animate-pulse"></div>
+          <span className={`text-xs ${status.color} font-medium`}>{status.text}</span>
+        </div>
+      );
+    }
+    
+    return (
+      <span className={`text-xs ${status.color}`}>{status.text}</span>
+    );
+  };
+
   // ===== RENDER EMPTY STATE =====
   const renderEmptyState = () => (
     <div className="flex-1 flex items-center justify-center p-8">
@@ -116,18 +173,36 @@ const ChatPanel = memo(({
 
   // ===== RENDER MESSAGE =====
   const renderMessage = (message) => {
+    console.log('🔄 ChatPanel - renderMessage dla wiadomości:', message);
+    console.log('🔄 ChatPanel - currentUser:', currentUser);
+    console.log('🔄 ChatPanel - message.sender:', message.sender);
+    console.log('🔄 ChatPanel - currentUser?.id:', currentUser?.id);
+    console.log('🔄 ChatPanel - currentUser?._id:', currentUser?._id);
+    
     const isOwn = message.sender === currentUser?.id || message.sender === currentUser?._id;
+    console.log('🔄 ChatPanel - isOwn:', isOwn);
+    
+    // Responsywne szerokości wiadomości - lepsze proporcje
+    const messageMaxWidth = isMobile 
+      ? 'max-w-[85%]' 
+      : 'max-w-[70%] sm:max-w-md lg:max-w-lg';
     
     return (
-      <div key={message.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-4`}>
-        <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-          isOwn 
-            ? 'bg-blue-500 text-white' 
-            : 'bg-gray-200 text-gray-900'
-        }`}>
-          <p className="text-sm">{message.content}</p>
+      <div key={message.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-3 sm:mb-4`}>
+        <div className={`
+          ${messageMaxWidth} 
+          px-3 sm:px-4 py-2 sm:py-2.5 
+          rounded-lg shadow-sm
+          ${isOwn 
+            ? 'bg-[#35530A] text-white rounded-br-sm' 
+            : 'bg-gray-200 text-gray-900 rounded-bl-sm'
+          }
+        `}>
+          <p className="text-sm sm:text-base leading-relaxed break-words">
+            {message.content}
+          </p>
           <p className={`text-xs mt-1 ${
-            isOwn ? 'text-blue-100' : 'text-gray-500'
+            isOwn ? 'text-white/80' : 'text-gray-500'
           }`}>
             {formatMessageTime(message.createdAt || message.timestamp)}
           </p>
@@ -154,52 +229,52 @@ const ChatPanel = memo(({
 
   return (
     <div className="flex-1 bg-white h-full flex flex-col overflow-hidden">
-      {/* Header chatu */}
-      <div className="flex items-center gap-3 p-4 border-b border-gray-200">
-        <button
-          onClick={onBack}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5 text-gray-600" />
-        </button>
-        
-        {/* Avatar i nazwa */}
-        <div className={`
-          w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm
-          ${getAvatarColor(participantName)}
-        `}>
-          {getInitials(participantName)}
-        </div>
-        
-        <div className="flex-1">
-          <h3 className="font-semibold text-gray-900">{participantName}</h3>
-          <p className="text-xs text-gray-500">Aktywny</p>
+      {/* Header chatu - bez awatara, wyrównany - bez przerwy */}
+      <div className="p-4 flex-shrink-0 min-h-[64px] flex items-center justify-between bg-gray-50">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          {/* Przycisk wstecz - tylko na mobile */}
+          <button
+            onClick={onBack}
+            className="lg:hidden flex items-center justify-center w-8 h-8 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-600" />
+          </button>
+          
+          {/* Informacje o użytkowniku - bez awatara */}
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-gray-900 text-base truncate leading-tight">{participantName}</h3>
+            <div className="leading-tight">
+              {renderOnlineIndicator(getOnlineStatus(conversation))}
+            </div>
+          </div>
         </div>
 
-        {/* Akcje */}
-        <div className="flex items-center gap-2">
-          <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-            <Phone className="w-5 h-5 text-gray-600" />
-          </button>
-          <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-            <Video className="w-5 h-5 text-gray-600" />
-          </button>
-          <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+        {/* Akcje - wyrównane po prawej */}
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <div className="hidden sm:flex items-center gap-1">
+            <button className="flex items-center justify-center w-8 h-8 hover:bg-gray-100 rounded-lg transition-colors">
+              <Phone className="w-5 h-5 text-gray-600" />
+            </button>
+            <button className="flex items-center justify-center w-8 h-8 hover:bg-gray-100 rounded-lg transition-colors">
+              <Video className="w-5 h-5 text-gray-600" />
+            </button>
+          </div>
+          <button className="flex items-center justify-center w-8 h-8 hover:bg-gray-100 rounded-lg transition-colors">
             <MoreVertical className="w-5 h-5 text-gray-600" />
           </button>
         </div>
       </div>
 
-      {/* Obszar wiadomości */}
-      <div className="flex-1 overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+      {/* Obszar wiadomości - responsywny */}
+      <div className="flex-1 overflow-y-auto p-3 sm:p-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
         {loading ? (
-          <div className="flex justify-center py-8">
-            <div className="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+          <div className="flex justify-center py-6 sm:py-8">
+            <div className="animate-spin w-5 h-5 sm:w-6 sm:h-6 border-2 border-[#35530A] border-t-transparent rounded-full"></div>
           </div>
         ) : messages.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-gray-500">Brak wiadomości w tej konwersacji</p>
-            <p className="text-sm text-gray-400 mt-1">Napisz pierwszą wiadomość!</p>
+          <div className="text-center py-6 sm:py-8 px-4">
+            <p className="text-gray-500 text-sm sm:text-base">Brak wiadomości w tej konwersacji</p>
+            <p className="text-xs sm:text-sm text-gray-400 mt-1">Napisz pierwszą wiadomość!</p>
           </div>
         ) : (
           <div>
@@ -209,9 +284,9 @@ const ChatPanel = memo(({
         )}
       </div>
 
-      {/* Input do pisania wiadomości */}
-      <div className="p-4 border-t border-gray-200">
-        <div className="flex items-center gap-3">
+      {/* Input do pisania wiadomości - responsywny i elegancki */}
+      <div className="p-3 sm:p-4 border-t border-gray-200 bg-white">
+        <div className="flex items-center gap-2 sm:gap-3">
           <input
             type="text"
             value={messageText}
@@ -219,14 +294,30 @@ const ChatPanel = memo(({
             onKeyPress={handleKeyPress}
             placeholder="Napisz wiadomość..."
             disabled={sending}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="
+              flex-1 
+              px-3 sm:px-4 py-2 sm:py-2.5
+              text-sm sm:text-base
+              border border-gray-300 rounded-full 
+              focus:outline-none focus:ring-2 focus:ring-[#35530A] focus:border-transparent
+              disabled:bg-gray-50 disabled:cursor-not-allowed
+              transition-all duration-200
+            "
           />
           <button
             onClick={handleSendMessage}
             disabled={!messageText.trim() || sending}
-            className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="
+              p-2 sm:p-2.5
+              bg-[#35530A] text-white rounded-full 
+              hover:bg-[#2a4208] active:bg-[#1f3006]
+              disabled:opacity-50 disabled:cursor-not-allowed 
+              transition-all duration-200
+              flex-shrink-0
+              shadow-sm hover:shadow-md
+            "
           >
-            <Send className="w-5 h-5" />
+            <Send className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         </div>
       </div>

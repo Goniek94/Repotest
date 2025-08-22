@@ -278,12 +278,12 @@ export default function SearchFormUpdated({ initialValues = {}, onFilterChange }
 
   return (
     <section>
-      {/* Komunikat o ładowaniu */}
-      {loading && (
+      {/* Komunikat o ładowaniu - ukryty */}
+      {/* {loading && (
         <div className="bg-blue-50 p-3 mb-4 rounded-md text-blue-700 text-center">
           Ładowanie danych o markach i modelach...
         </div>
-      )}
+      )} */}
       
       <div className="bg-white p-5 shadow-xl shadow-gray-300/60 rounded-[2px] mb-4 max-w-7xl mx-auto border border-gray-100">
         <div className="flex justify-between items-center mb-6">

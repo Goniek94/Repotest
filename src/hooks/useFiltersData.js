@@ -8,7 +8,7 @@ import {
   PRICE_RANGES,
   MILEAGE_RANGES,
   BOOLEAN_OPTIONS
-} from '../constants/vehicleOptions';
+} from '../contexts/constants/vehicleOptions';
 
 /**
  * Hook do zarządzania wszystkimi danymi filtrów
