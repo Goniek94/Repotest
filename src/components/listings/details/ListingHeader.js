@@ -1,5 +1,3 @@
-import React from "react";
-
 /**
  * ListingHeader is now empty - all information is shown above technical details
  * @param {Object} props

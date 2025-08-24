@@ -520,9 +520,12 @@ class MessagesApi {
       const user = conversation.user || {};
       const lastMessage = conversation.lastMessage || {};
       
+      // Użyj ID użytkownika jako ID konwersacji - to jest klucz do pobierania szczegółów
+      const userId = user._id || user.id;
+      
       return {
-        id: user._id || user.id,
-        userId: user._id || user.id,
+        id: userId, // ID konwersacji = ID użytkownika z którym rozmawiamy
+        userId: userId, // ID użytkownika do pobierania szczegółów
         userName: user.name || user.email || 'Nieznany użytkownik',
         userEmail: user.email || '',
         lastMessage: {

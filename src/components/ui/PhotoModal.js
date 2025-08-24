@@ -107,11 +107,12 @@ const PhotoModal = ({
             </>
           )}
 
-          {/* Image */}
+          {/* Image - ograniczony rozmiar na desktopach */}
           <img
             src={currentPhoto}
             alt={`Zdjęcie powiększone ${photoIndex + 1}`}
-            className="max-w-full max-h-full object-contain select-none"
+            className="max-w-[90vw] max-h-[80vh] w-auto h-auto object-contain select-none"
+            style={{ maxWidth: '90vw', maxHeight: '80vh' }}
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}

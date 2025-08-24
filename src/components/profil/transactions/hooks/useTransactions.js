@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getTransactionHistory } from '../../../../services/api';
+import TransactionsService from '../../../../services/api/transactionsApi';
 
 /**
  * 🔄 useTransactions - Custom hook do zarządzania transakcjami
@@ -99,6 +99,53 @@ const useTransactions = (activeCategory, userId) => {
 
   // ===== FUNKCJE POMOCNICZE =====
   
+  /**
+   * Formatuje kwotę transakcji
+   */
+  const formatAmount = useCallback((amount) => {
+    const numAmount = parseFloat(amount);
+    const sign = numAmount >= 0 ? '+' : '-';
+    return `${sign}${Math.abs(numAmount).toFixed(2)} PLN`;
+  }, []);
+
+  /**
+   * Formatuje status transakcji
+   */
+  const formatStatus = useCallback((status) => {
+    const statusMap = {
+      'completed': 'Zakończona',
+      'pending': 'W trakcie',
+      'failed': 'Nieudana',
+      'cancelled': 'Anulowana',
+      'refunded': 'Zwrócona'
+    };
+    return statusMap[status] || status;
+  }, []);
+
+  /**
+   * Pobiera nazwę kategorii na podstawie typu transakcji
+   */
+  const getCategoryName = useCallback((type) => {
+    const categoryMap = {
+      'standard_listing': 'Ogłoszenie standardowe',
+      'featured_listing': 'Ogłoszenie wyróżnione',
+      'refund': 'Zwrot'
+    };
+    return categoryMap[type] || 'Inne';
+  }, []);
+
+  /**
+   * Pobiera opis usługi na podstawie typu transakcji
+   */
+  const getServiceDescription = useCallback((type) => {
+    const descriptionMap = {
+      'standard_listing': 'Opłata za publikację ogłoszenia',
+      'featured_listing': 'Opłata za wyróżnienie ogłoszenia',
+      'refund': 'Zwrot za anulowane ogłoszenie'
+    };
+    return descriptionMap[type] || 'Opłata za usługę';
+  }, []);
+
   /**
    * Filtruje transakcje według kategorii
    */
@@ -213,18 +260,39 @@ const useTransactions = (activeCategory, userId) => {
       setError(null);
       
       try {
-        // Próba pobrania z API
-        const apiData = await getTransactionHistory(userId);
+        // Pobierz transakcje z API
+        const response = await TransactionsService.getHistory({
+          page: 1,
+          limit: 100 // Pobierz wszystkie transakcje na raz
+        });
         
-        if (apiData && apiData.length > 0) {
-          setTransactions(apiData);
+        if (response && response.transactions && response.transactions.length > 0) {
+          // Konwertuj format API na format używany przez komponent
+          const formattedTransactions = response.transactions.map(transaction => ({
+            id: transaction.transactionId || transaction.id,
+            description: transaction.description || getServiceDescription(transaction.type),
+            amount: formatAmount(transaction.amount),
+            date: transaction.createdAt || transaction.date,
+            status: formatStatus(transaction.status),
+            category: getCategoryName(transaction.type),
+            type: transaction.type,
+            paymentMethod: transaction.paymentMethod,
+            adTitle: transaction.ad?.headline || transaction.metadata?.adTitle,
+            adId: transaction.ad?.id || transaction.adId,
+            invoiceRequested: transaction.invoiceRequested,
+            invoiceGenerated: transaction.invoiceGenerated
+          }));
+          
+          setTransactions(formattedTransactions);
+          console.log(`Pobrano ${formattedTransactions.length} transakcji z API`);
         } else {
-          // Fallback na mock data
-          console.log('Używam mock data dla transakcji');
+          // Fallback na mock data jeśli brak transakcji
+          console.log('Brak transakcji w API, używam mock data');
           setTransactions(mockTransactions);
         }
       } catch (err) {
-        console.error('Błąd pobierania transakcji:', err);
+        console.error('Błąd pobierania transakcji z API:', err);
+        setError('Nie udało się pobrać historii transakcji');
         // Fallback na mock data w przypadku błędu
         setTransactions(mockTransactions);
       } finally {
@@ -278,38 +346,138 @@ const useTransactions = (activeCategory, userId) => {
   /**
    * Eksportuje transakcje do CSV
    */
-  const exportTransactions = useCallback(() => {
-    const csvContent = [
-      ['ID', 'Opis', 'Kwota', 'Data', 'Status', 'Kategoria', 'Typ'].join(','),
-      ...filteredTransactions.map(t => [
-        t.id,
-        `"${t.description}"`,
-        t.amount,
-        t.date,
-        t.status,
-        t.category,
-        t.type
-      ].join(','))
-    ].join('\n');
+  const exportTransactions = useCallback(async () => {
+    try {
+      setLoading(true);
+      
+      // Przygotuj filtry dla API
+      const filters = {};
+      if (startDate) filters.startDate = startDate;
+      if (endDate) filters.endDate = endDate;
+      if (dateFilter !== 'wszystkie' && dateFilter !== 'zakres') {
+        const now = new Date();
+        switch (dateFilter) {
+          case 'dzisiaj':
+            filters.startDate = now.toISOString().split('T')[0];
+            filters.endDate = now.toISOString().split('T')[0];
+            break;
+          case 'tydzien':
+            const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            filters.startDate = weekAgo.toISOString().split('T')[0];
+            break;
+          case 'miesiac':
+            const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            filters.startDate = monthAgo.toISOString().split('T')[0];
+            break;
+          case 'rok':
+            const yearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+            filters.startDate = yearAgo.toISOString().split('T')[0];
+            break;
+        }
+      }
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `transakcje_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }, [filteredTransactions]);
+      try {
+        // Spróbuj pobrać z API
+        const blob = await TransactionsService.exportTransactions(filters);
+        
+        // Utwórz link do pobrania
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `transakcje_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        console.log('Eksport transakcji z API zakończony pomyślnie');
+      } catch (apiError) {
+        console.warn('Eksport z API nieudany, używam lokalnych danych:', apiError);
+        
+        // Fallback - eksport lokalnych danych
+        const csvContent = [
+          ['ID', 'Opis', 'Kwota', 'Data', 'Status', 'Kategoria', 'Typ'].join(','),
+          ...filteredTransactions.map(t => [
+            t.id,
+            `"${t.description}"`,
+            t.amount,
+            t.date,
+            t.status,
+            t.category,
+            t.type
+          ].join(','))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `transakcje_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
+      
+    } catch (error) {
+      console.error('Błąd podczas eksportu transakcji:', error);
+      setError('Nie udało się wyeksportować transakcji');
+    } finally {
+      setLoading(false);
+    }
+  }, [filteredTransactions, startDate, endDate, dateFilter]);
 
   /**
-   * Pobiera paragon dla transakcji
+   * Pobiera fakturę/paragon dla transakcji
    */
-  const downloadReceipt = useCallback((transaction) => {
-    // Mock implementacja - w przyszłości połączenie z API
-    console.log('Pobieranie paragonu dla transakcji:', transaction.id);
-    alert(`Pobieranie paragonu dla transakcji ${transaction.id}`);
+  const downloadReceipt = useCallback(async (transaction) => {
+    try {
+      setLoading(true);
+      
+      console.log('Pobieranie faktury dla transakcji:', transaction.id);
+      
+      try {
+        // Spróbuj pobrać fakturę z API
+        const blob = await TransactionsService.downloadInvoice(transaction.id);
+        
+        // Utwórz link do pobrania
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `Faktura_${transaction.id}.pdf`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        console.log('Faktura pobrana pomyślnie');
+      } catch (apiError) {
+        console.warn('Pobieranie faktury z API nieudane:', apiError);
+        
+        // Jeśli faktura nie istnieje, spróbuj ją zażądać
+        if (apiError.response?.status === 404 || apiError.response?.status === 400) {
+          try {
+            await TransactionsService.requestInvoice(transaction.id);
+            alert('Faktura została zażądana i zostanie wysłana na Twój adres email w ciągu kilku minut.');
+          } catch (requestError) {
+            console.error('Błąd podczas żądania faktury:', requestError);
+            alert('Nie udało się zażądać faktury. Spróbuj ponownie później.');
+          }
+        } else {
+          throw apiError;
+        }
+      }
+      
+    } catch (error) {
+      console.error('Błąd podczas pobierania faktury:', error);
+      setError('Nie udało się pobrać faktury');
+      alert('Nie udało się pobrać faktury. Spróbuj ponownie później.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   // ===== RETURN =====

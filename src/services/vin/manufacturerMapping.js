@@ -10,10 +10,10 @@ export const getManufacturerFromWMI = (wmi) => {
   // Pełniejsza mapa kodów WMI dla europejskich i światowych producentów
   const manufacturerMap = {
     // Europa - Niemcy
-    'WVW': 'Volkswagen', 'WV1': 'Volkswagen', 'WV2': 'Volkswagen', '1VW': 'Volkswagen', '3VW': 'Volkswagen',
+    'WVW': 'Volkswagen', 'WV1': 'Volkswagen', 'WV2': 'Volkswagen', '1VW': 'Volkswagen',
     'WAU': 'Audi', 'TRU': 'Audi', '93U': 'Audi', 'WUA': 'Audi',
     'WBA': 'BMW', 'WBS': 'BMW', 'WBX': 'BMW', 'WBY': 'BMW', '4US': 'BMW', 'X4X': 'BMW',
-    'WDD': 'Mercedes-Benz', 'WMX': 'Mercedes-Benz', 'WDF': 'Mercedes-Benz', 'WDB': 'Mercedes-Benz',
+    'WDD': 'Mercedes-Benz', 'WMX': 'Mercedes-Benz', 'WDF': 'Mercedes-Benz',
     'WEB': 'Mercedes-Benz AMG', 'WME': 'Smart',
     'WP0': 'Porsche', 'WP1': 'Porsche',
     'W0L': 'Opel', 'WOL': 'Opel', 'KL1': 'Opel',

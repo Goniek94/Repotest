@@ -15,8 +15,8 @@ import TransactionFilters from './TransactionFilters';
 /**
  * 📋 TRANSACTION LIST PANEL - Panel listy transakcji
  * 
- * Wyświetla listę transakcji z możliwością filtrowania i sortowania
- * Slide-in panel podobny do ConversationsPanel
+ * Wzorowany na NotificationsListPanel.js z powiadomień
+ * Dopasowany do stylu powiadomień z podobnym układem
  */
 const TransactionListPanel = memo(({ 
   isVisible,
@@ -27,6 +27,7 @@ const TransactionListPanel = memo(({
   onSelectTransaction,
   onBack,
   onExport,
+  showBackButton = false,
   // Filtry
   searchTerm,
   setSearchTerm,
@@ -80,52 +81,55 @@ const TransactionListPanel = memo(({
     }
   };
 
-  // Render pojedynczej transakcji
+  // Render pojedynczej transakcji - wzorowany na NotificationItem
   const renderTransaction = (transaction, index) => (
     <div
       key={transaction.id || index}
       onClick={() => onSelectTransaction(transaction)}
-      className="p-4 border-b border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors"
+      className="p-4 border-b border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors last:border-b-0"
     >
-      <div className="flex items-center justify-between">
-        {/* Lewa strona - ikona i opis */}
-        <div className="flex items-center space-x-3 flex-1">
-          <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-            {getTransactionIcon(transaction.type, transaction.amount)}
-          </div>
-          
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">
-              {transaction.description}
-            </p>
-            <div className="flex items-center space-x-2 mt-1">
-              <span className="text-xs text-gray-500">
-                {formatDate(transaction.date)}
+      <div className="flex items-start gap-3">
+        {/* Ikona transakcji */}
+        <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+          {getTransactionIcon(transaction.type, transaction.amount)}
+        </div>
+        
+        {/* Główna zawartość */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 truncate">
+                {transaction.description}
+              </p>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-xs text-gray-500">
+                  {formatDate(transaction.date)}
+                </span>
+                {transaction.category && (
+                  <>
+                    <span className="text-xs text-gray-400">•</span>
+                    <span className="text-xs text-gray-500">
+                      {transaction.category}
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+            
+            {/* Kwota i status */}
+            <div className="text-right flex-shrink-0 ml-3">
+              <p className={`text-sm font-bold ${
+                transaction.amount.includes('+') ? 'text-green-600' : 'text-red-600'
+              }`}>
+                {transaction.amount.includes('+') ? '+' : '-'}{formatCurrency(transaction.amount)}
+              </p>
+              <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full mt-1 ${
+                getStatusColor(transaction.status)
+              }`}>
+                {transaction.status}
               </span>
-              {transaction.category && (
-                <>
-                  <span className="text-xs text-gray-400">•</span>
-                  <span className="text-xs text-gray-500">
-                    {transaction.category}
-                  </span>
-                </>
-              )}
             </div>
           </div>
-        </div>
-
-        {/* Prawa strona - kwota i status */}
-        <div className="text-right">
-          <p className={`text-sm font-bold ${
-            transaction.amount.includes('+') ? 'text-green-600' : 'text-red-600'
-          }`}>
-            {transaction.amount.includes('+') ? '+' : '-'}{formatCurrency(transaction.amount)}
-          </p>
-          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full mt-1 ${
-            getStatusColor(transaction.status)
-          }`}>
-            {transaction.status}
-          </span>
         </div>
       </div>
     </div>
@@ -134,10 +138,9 @@ const TransactionListPanel = memo(({
   // Loading state
   if (loading) {
     return (
-      <div className="h-full bg-white rounded-lg shadow-sm border border-gray-200 flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mb-4"></div>
-          <p className="text-gray-600">Ładowanie transakcji...</p>
+      <div className="h-full flex flex-col bg-white">
+        <div className="flex justify-center py-8">
+          <div className="animate-spin w-6 h-6 border-2 border-[#35530A] border-t-transparent rounded-full"></div>
         </div>
       </div>
     );
@@ -146,16 +149,16 @@ const TransactionListPanel = memo(({
   // Error state
   if (error) {
     return (
-      <div className="h-full bg-white rounded-lg shadow-sm border border-gray-200 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CreditCard className="w-6 h-6 text-red-600" />
+      <div className="h-full flex flex-col bg-white">
+        <div className="flex flex-col items-center justify-center py-16 px-4">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CreditCard className="w-8 h-8 sm:w-10 sm:h-10 text-red-600" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Błąd ładowania</h3>
-          <p className="text-gray-600 mb-4">{error}</p>
+          <h3 className="text-lg sm:text-xl font-medium text-gray-900 mb-2">Błąd ładowania</h3>
+          <p className="text-gray-500 text-sm text-center mb-4">{error}</p>
           <button 
             onClick={() => window.location.reload()} 
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            className="px-4 py-2 bg-[#35530A] text-white rounded-lg hover:bg-[#2a4208] transition-colors"
           >
             Spróbuj ponownie
           </button>
@@ -165,90 +168,93 @@ const TransactionListPanel = memo(({
   }
 
   return (
-    <div className="h-full bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col">
-      {/* Nagłówek panelu */}
-      <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={onBack}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors lg:hidden"
-            >
-              <ArrowLeft className="w-5 h-5 text-gray-600" />
-            </button>
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">
-                Transakcje
-              </h2>
-              <p className="text-sm text-gray-600">
-                {activeCategory === 'wszystkie' ? 'Wszystkie transakcje' : 
-                 activeCategory === 'przychody' ? 'Przychody' :
-                 activeCategory === 'wydatki' ? 'Wydatki' :
-                 activeCategory === 'premium' ? 'Opłaty premium' :
-                 activeCategory === 'promocje' ? 'Opłaty za promocje' :
-                 activeCategory === 'zwroty' ? 'Zwroty' :
-                 activeCategory === 'miesiac' ? 'Ten miesiąc' : 'Transakcje'}
-              </p>
-            </div>
+    <div className="h-full flex flex-col bg-white">
+      {/* Header z przyciskiem powrotu i akcjami - wzorowany na powiadomieniach */}
+      <div className="flex-shrink-0 p-3 sm:p-4 border-b border-gray-200 bg-white">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {showBackButton && (
+              <button
+                onClick={onBack}
+                className="flex items-center justify-center w-8 h-8 hover:bg-[#35530A]/10 rounded-lg transition-colors flex-shrink-0"
+              >
+                <ArrowLeft className="w-5 h-5 text-[#35530A]" />
+              </button>
+            )}
+            <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wide">
+              {activeCategory === 'wszystkie' && 'WSZYSTKIE TRANSAKCJE'}
+              {activeCategory === 'wydatki' && 'WYDATKI'}
+              {activeCategory === 'zwroty' && 'ZWROTY'}
+              {activeCategory === 'standardowe' && 'STANDARDOWE'}
+              {activeCategory === 'wyrozione' && 'WYRÓŻNIONE'}
+              {activeCategory === 'miesiac' && 'TEN MIESIĄC'}
+            </h3>
           </div>
           
+          {/* Przycisk eksportu */}
           <button
             onClick={onExport}
-            className="flex items-center space-x-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-[#35530A] hover:bg-[#35530A]/10 rounded-lg transition-colors"
+            title="Eksportuj transakcje"
           >
             <Download className="w-4 h-4" />
             <span className="hidden sm:inline">Eksportuj</span>
           </button>
         </div>
 
-        {/* Filtry */}
-        <TransactionFilters
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          dateFilter={dateFilter}
-          setDateFilter={setDateFilter}
-          startDate={startDate}
-          setStartDate={setStartDate}
-          endDate={endDate}
-          setEndDate={setEndDate}
-          onCustomDateFilter={onCustomDateFilter}
-          onDateFilterChange={onDateFilterChange}
-          primaryColor="#35530A"
-        />
+        {/* Filtry - kompaktowe */}
+        <div className="mt-3">
+          <TransactionFilters
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            dateFilter={dateFilter}
+            setDateFilter={setDateFilter}
+            startDate={startDate}
+            setStartDate={setStartDate}
+            endDate={endDate}
+            setEndDate={setEndDate}
+            onCustomDateFilter={onCustomDateFilter}
+            onDateFilterChange={onDateFilterChange}
+            primaryColor="#35530A"
+          />
+        </div>
       </div>
 
-      {/* Lista transakcji */}
-      <div className="flex-1 overflow-y-auto">
+      {/* Lista transakcji z suwakiem - wzorowana na powiadomieniach */}
+      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
         {transactions.length === 0 ? (
-          <div className="h-full flex items-center justify-center">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CreditCard className="w-6 h-6 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Brak transakcji
-              </h3>
-              <p className="text-gray-600">
-                {activeCategory === 'wszystkie' 
-                  ? 'Nie masz jeszcze żadnych transakcji'
-                  : `Brak transakcji w kategorii "${activeCategory}"`
-                }
-              </p>
+          <div className="flex flex-col items-center justify-center py-16 px-4">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CreditCard className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400" />
             </div>
+            <h3 className="text-lg sm:text-xl font-medium text-gray-900 mb-2">
+              Brak transakcji
+            </h3>
+            <p className="text-gray-500 text-sm text-center">
+              {activeCategory === 'wszystkie' 
+                ? 'Gdy pojawią się nowe transakcje, zobaczysz je tutaj'
+                : `Brak transakcji w kategorii "${activeCategory}"`
+              }
+            </p>
           </div>
         ) : (
-          <div>
+          <div className="space-y-0">
             {transactions.map(renderTransaction)}
           </div>
         )}
       </div>
 
-      {/* Stopka z liczbą transakcji */}
+      {/* Footer z informacją o liczbie transakcji - wzorowany na powiadomieniach */}
       {transactions.length > 0 && (
-        <div className="p-4 border-t border-gray-200 bg-gray-50">
-          <p className="text-sm text-gray-600 text-center">
-            Wyświetlono {transactions.length} {transactions.length === 1 ? 'transakcję' : 'transakcji'}
-          </p>
+        <div className="flex-shrink-0 p-3 border-t border-gray-200 bg-gray-50">
+          <div className="flex items-center justify-between text-xs text-gray-500">
+            <span>
+              {transactions.length} {transactions.length === 1 ? 'transakcja' : 'transakcji'}
+            </span>
+            <span className="text-[#35530A] font-medium">
+              {activeCategory === 'wszystkie' ? 'Wszystkie kategorie' : activeCategory}
+            </span>
+          </div>
         </div>
       )}
     </div>

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Mail } from "lucide-react";
-import MessagesService from "../../../services/api/messagesApi";
+import messagesApi from "../../../services/api/messagesApi";
 import { useAuth } from "../../../contexts/AuthContext";
 
 /**
@@ -17,6 +17,26 @@ const MessageButton = ({ listing }) => {
 
   const { isAuthenticated } = useAuth();
 
+  // Automatyczne tworzenie tematu z nazwy ogłoszenia
+  const getAutoSubject = () => {
+    const brand = listing?.make || listing?.brand || '';
+    const model = listing?.model || '';
+    const year = listing?.year || '';
+    const headline = listing?.headline || '';
+    
+    if (headline) {
+      return headline;
+    }
+    
+    return `${brand} ${model} ${year}`.trim() || 'Zapytanie o ogłoszenie';
+  };
+
+  // Ustawienie automatycznego tematu przy otwieraniu modala
+  const handleOpenModal = () => {
+    setSubject(getAutoSubject());
+    setShowModal(true);
+  };
+
   const handleSend = async (e) => {
     e.preventDefault();
     if (!isAuthenticated) {
@@ -27,7 +47,7 @@ const MessageButton = ({ listing }) => {
     setStatus(null);
 
     try {
-      await MessagesService.sendMessageToAd(listing._id, subject, content);
+      await messagesApi.sendMessageToAd(listing._id, subject, content);
 
       setStatus({ type: "success", msg: "Wiadomość została wysłana!" });
       setSubject("");
@@ -42,7 +62,7 @@ const MessageButton = ({ listing }) => {
   return (
     <>
       <button
-        onClick={() => setShowModal(true)}
+        onClick={handleOpenModal}
         className="w-full flex items-center justify-center gap-2 bg-gray-100 text-gray-700 py-3 px-4 hover:bg-gray-200 transition-colors text-lg rounded-sm mb-2"
       >
         <Mail className="w-6 h-6" />

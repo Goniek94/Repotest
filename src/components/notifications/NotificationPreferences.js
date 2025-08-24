@@ -226,24 +226,15 @@ const NotificationPreferences = () => {
             </h3>
             <div className="space-y-3">
               <label className="flex items-center cursor-pointer group">
-                <input type="radio" name="emailFrequency" value="instant" className="sr-only" defaultChecked />
-                <div className="w-4 h-4 border-2 border-green-500 rounded-full mr-3 flex items-center justify-center group-hover:border-green-600">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                </div>
+                <input type="radio" name="emailFrequency" value="instant" className="mr-3" defaultChecked />
                 <span className="text-sm text-gray-700">Natychmiast</span>
               </label>
               <label className="flex items-center cursor-pointer group">
-                <input type="radio" name="emailFrequency" value="daily" className="sr-only" />
-                <div className="w-4 h-4 border-2 border-gray-300 rounded-full mr-3 flex items-center justify-center group-hover:border-green-600">
-                  <div className="w-2 h-2 bg-transparent rounded-full"></div>
-                </div>
+                <input type="radio" name="emailFrequency" value="daily" className="mr-3" />
                 <span className="text-sm text-gray-700">Podsumowanie dzienne</span>
               </label>
               <label className="flex items-center cursor-pointer group">
-                <input type="radio" name="emailFrequency" value="weekly" className="sr-only" />
-                <div className="w-4 h-4 border-2 border-gray-300 rounded-full mr-3 flex items-center justify-center group-hover:border-green-600">
-                  <div className="w-2 h-2 bg-transparent rounded-full"></div>
-                </div>
+                <input type="radio" name="emailFrequency" value="weekly" className="mr-3" />
                 <span className="text-sm text-gray-700">Podsumowanie tygodniowe</span>
               </label>
             </div>
@@ -257,12 +248,7 @@ const NotificationPreferences = () => {
             </h3>
             <div className="space-y-4">
               <label className="flex items-center cursor-pointer">
-                <input type="checkbox" className="sr-only" />
-                <div className="w-5 h-5 border-2 border-gray-300 rounded mr-3 flex items-center justify-center">
-                  <svg className="w-3 h-3 text-green-600 hidden" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                </div>
+                <input type="checkbox" className="mr-3" />
                 <span className="text-sm text-gray-700">Włącz godziny ciszy</span>
               </label>
               <div className="grid grid-cols-2 gap-4">

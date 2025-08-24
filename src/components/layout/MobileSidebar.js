@@ -19,7 +19,8 @@ const MobileSidebar = ({ children }) => {
       {!isExpanded && (
         <button
           onClick={toggleSidebar}
-          className="fixed top-[64px] left-0 bg-[#35530A] text-white p-2.5 rounded-r-lg shadow-lg z-50 hover:bg-[#4a6b2a] flex items-center justify-center"
+          className="fixed left-0 bg-[#35530A] text-white p-2.5 rounded-r-lg shadow-lg z-50 hover:bg-[#4a6b2a] flex items-center justify-center"
+          style={{ top: '64px' }}
           aria-label="Otwórz menu"
         >
           <ChevronDown className="w-5 h-5" />
@@ -27,9 +28,13 @@ const MobileSidebar = ({ children }) => {
       )}
 
       <aside
-        className={`fixed top-[64px] left-0 h-[calc(100vh-64px)] ${sidebarWidth} bg-[#35530A] text-white z-50 flex flex-col transform transition-transform duration-300 ${
+        className={`fixed left-0 ${sidebarWidth} bg-[#35530A] text-white z-50 flex flex-col transform transition-transform duration-300 ${
           isExpanded ? 'translate-x-0' : '-translate-x-full'
         }`}
+        style={{ 
+          top: '64px',
+          height: 'calc(100vh - 64px)'
+        }}
       >
         <button
           onClick={toggleSidebar}

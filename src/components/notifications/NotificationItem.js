@@ -47,11 +47,6 @@ const NotificationItem = ({ notification, onMarkAsRead, onDelete }) => {
     navigate(`/profil/notification/${notification.id}`);
   };
 
-  // Obsługa przejścia do szczegółów powiadomienia
-  const handleViewDetails = (e) => {
-    e.stopPropagation();
-    navigate(`/profil/notification/${notification.id}`);
-  };
   
   return (
     <div

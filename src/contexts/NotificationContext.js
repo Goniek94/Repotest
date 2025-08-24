@@ -338,7 +338,7 @@ export const NotificationProvider = ({ children }) => {
       notificationService.off('disconnect', () => handleConnectionChange(false));
       notificationService.disconnect();
     };
-  }, [isAuthenticated, user?.token, showToast, fetchNotifications]); // Dodane showToast i fetchNotifications
+  }, [isAuthenticated, user?.token, user?.id, showToast, fetchNotifications]); // Dodane user.id
 
   // Wartość kontekstu - memoized
   const value = React.useMemo(

@@ -61,13 +61,13 @@ const GridListingCard = memo(({ listing, onFavorite, isFavorite }) => {
       className={`relative bg-white shadow-md overflow-hidden flex flex-col cursor-pointer 
                  hover:shadow-lg transition-shadow h-full
                  ${isFeatured ? 'border-2 border-[#35530A]' : 'border border-gray-200'}
-                 rounded-sm sm:rounded-md`}
+                 rounded-[2px]`}
       onClick={handleNavigate}
-      style={{ minHeight: '420px' }} // Zwiększona wysokość karty
+      style={{ minHeight: '360px' }} // Zmniejszona wysokość karty
     >
       {/* Featured badge */}
       {isFeatured && (
-        <div className="absolute top-2 left-2 bg-[#35530A] text-white py-1 px-2 text-xs font-semibold z-10 uppercase rounded-sm">
+        <div className="absolute top-2 left-2 bg-[#35530A] text-white py-1 px-2 text-xs font-semibold z-10 uppercase rounded-[2px]">
           WYRÓŻNIONE
         </div>
       )}
@@ -77,7 +77,7 @@ const GridListingCard = memo(({ listing, onFavorite, isFavorite }) => {
         <img
           src={imageUrl}
           alt={title}
-          className="w-full h-48 sm:h-52 md:h-56 object-cover" // Zwiększona wysokość obrazka
+          className="w-full h-40 sm:h-44 md:h-48 object-cover" // Zmniejszona wysokość obrazka
           onError={(e) => {
             e.target.onerror = null;
             e.target.src = '/images/auto-788747_1280.jpg';
@@ -101,96 +101,120 @@ const GridListingCard = memo(({ listing, onFavorite, isFavorite }) => {
 
         {/* Match score label */}
         {listing.matchLabel && listing.matchLabel !== 'Pozostałe ogłoszenia' && (
-          <div className="absolute bottom-2 left-2 bg-black bg-opacity-60 text-white text-xs px-2 py-0.5 rounded-sm">
+          <div className="absolute bottom-2 left-2 bg-black bg-opacity-60 text-white text-xs px-2 py-0.5 rounded-[2px]">
             {listing.matchLabel}
           </div>
         )}
       </div>
 
-      {/* Card content - więcej paddingu i spacingu */}
-      <div className="p-4 flex flex-col flex-grow">
+      {/* Card content - układ jak na wzorze BMW Seria 1 */}
+      <div className="p-3 flex flex-col flex-grow">
         {/* Title */}
-        <h3 className="font-bold text-lg text-gray-900 mb-2 line-clamp-1">
+        <h3 className="font-bold text-base text-gray-900 mb-1.5 line-clamp-1">
           {title}
         </h3>
         
-        <p className="text-sm text-gray-500 mb-4 line-clamp-1">
-          {`Ogłoszenie: ${title}`}
+        <p className="text-xs text-gray-600 mb-3 line-clamp-2 leading-relaxed">
+          {listing.headline || listing.shortDescription || `${title} - sprawdź szczegóły tego ogłoszenia`}
         </p>
 
-        {/* Seller and location - większy spacing */}
-        <div className="flex flex-row justify-between mb-4">
-          {/* Seller type */}
-          <div className="flex items-center">
-            <div className="mr-2 text-gray-700">
-              <User className="w-5 h-5" />
+        {/* Specifications - układ jak na wzorze BMW Seria 1 */}
+        <div className="space-y-2 mb-3">
+          {/* Pierwsza linia */}
+          <div className="grid grid-cols-2 gap-2">
+            <div className="flex items-center gap-1.5">
+              <div className="flex items-center justify-center w-5 h-5 bg-gray-100 rounded-full flex-shrink-0">
+                <YearIcon className="w-3 h-3 text-gray-600" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-[9px] text-gray-500 font-medium">Rok</div>
+                <div className="text-[11px] font-bold text-gray-900">{year}</div>
+              </div>
             </div>
-            <div className="text-sm font-medium text-[#35530A]">{sellerType}</div>
+            <div className="flex items-center gap-1.5">
+              <div className="flex items-center justify-center w-5 h-5 bg-gray-100 rounded-full flex-shrink-0">
+                <FuelIcon className="w-3 h-3 text-gray-600" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-[9px] text-gray-500 font-medium">Paliwo</div>
+                <div className="text-[11px] font-bold text-gray-900">{fuelType}</div>
+              </div>
+            </div>
           </div>
 
-          {/* Location - tylko miasto bez województwa */}
-          <div className="flex items-center">
-            <div className="mr-2 text-gray-700">
-              <MapPin className="w-5 h-5" />
+          {/* Druga linia */}
+          <div className="grid grid-cols-2 gap-2">
+            <div className="flex items-center gap-1.5">
+              <div className="flex items-center justify-center w-5 h-5 bg-gray-100 rounded-full flex-shrink-0">
+                <MileageIcon className="w-3 h-3 text-gray-600" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-[9px] text-gray-500 font-medium">Przebieg</div>
+                <div className="text-[11px] font-bold text-gray-900">{Math.round(mileage/1000)} tys. km</div>
+              </div>
             </div>
-            <div className="text-sm font-medium">{listing.city || location.split('(')[0].trim()}</div>
+            <div className="flex items-center gap-1.5">
+              <div className="flex items-center justify-center w-5 h-5 bg-gray-100 rounded-full flex-shrink-0">
+                <PowerIcon className="w-3 h-3 text-gray-600" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-[9px] text-gray-500 font-medium">Moc</div>
+                <div className="text-[11px] font-bold text-gray-900">{power}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Trzecia linia */}
+          <div className="grid grid-cols-2 gap-2">
+            <div className="flex items-center gap-1.5">
+              <div className="flex items-center justify-center w-5 h-5 bg-gray-100 rounded-full flex-shrink-0">
+                <CapacityIcon className="w-3 h-3 text-gray-600" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-[9px] text-gray-500 font-medium">Pojemność</div>
+                <div className="text-[11px] font-bold text-gray-900">{engineCapacity} cm³</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="flex items-center justify-center w-5 h-5 bg-gray-100 rounded-full flex-shrink-0">
+                <GearboxIcon className="w-3 h-3 text-gray-600" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-[9px] text-gray-500 font-medium">Skrzynia</div>
+                <div className="text-[11px] font-bold text-gray-900">{transmission === 'Automatyczna' ? 'automatyczna' : 'manualna'}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Separator */}
+          <div className="border-t border-gray-200 my-2"></div>
+          
+          {/* Czwarta linia - pod separatorem */}
+          <div className="grid grid-cols-2 gap-2">
+            <div className="flex items-center gap-1.5">
+              <div className="flex items-center justify-center w-5 h-5 bg-gray-100 rounded-full flex-shrink-0">
+                <User className="w-3 h-3 text-gray-600" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-[9px] text-gray-500 font-medium">Sprzedawca</div>
+                <div className="text-[11px] font-bold text-gray-900">prywatny</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="flex items-center justify-center w-5 h-5 bg-gray-100 rounded-full flex-shrink-0">
+                <MapPin className="w-3 h-3 text-gray-600" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-[9px] text-gray-500 font-medium">Lokalizacja</div>
+                <div className="text-[11px] font-bold text-gray-900 truncate">{listing.city || location.split('(')[0].trim()}</div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Specifications - większy spacing między wierszami */}
-        <div className="grid grid-cols-3 gap-y-3 gap-x-2 mb-4">
-          {/* 1 kolumna */}
-          <div className="flex items-center">
-            <div className="mr-2 text-gray-700">
-              <FuelIcon className="w-4 h-4" />
-            </div>
-            <div className="text-xs font-medium overflow-hidden text-ellipsis whitespace-nowrap">{fuelType}</div>
-          </div>
-
-          {/* 2 kolumna */}
-          <div className="flex items-center">
-            <div className="mr-2 text-gray-700">
-              <CapacityIcon className="w-4 h-4" />
-            </div>
-            <div className="text-xs font-medium overflow-hidden text-ellipsis whitespace-nowrap">{engineCapacity}</div>
-          </div>
-
-          {/* 3 kolumna */}
-          <div className="flex items-center">
-            <div className="mr-2 text-gray-700">
-              <MileageIcon className="w-4 h-4" />
-            </div>
-            <div className="text-xs font-medium overflow-hidden text-ellipsis whitespace-nowrap">{mileage.toLocaleString()} km</div>
-          </div>
-
-          {/* 1 kolumna */}
-          <div className="flex items-center">
-            <div className="mr-2 text-gray-700">
-              <YearIcon className="w-4 h-4" />
-            </div>
-            <div className="text-xs font-medium overflow-hidden text-ellipsis whitespace-nowrap">{year}</div>
-          </div>
-
-          {/* 2 kolumna */}
-          <div className="flex items-center">
-            <div className="mr-2 text-gray-700">
-              <PowerIcon className="w-4 h-4" />
-            </div>
-            <div className="text-xs font-medium overflow-hidden text-ellipsis whitespace-nowrap">{power}</div>
-          </div>
-
-          {/* 3 kolumna */}
-          <div className="flex items-center">
-            <div className="mr-2 text-gray-700">
-              <GearboxIcon className="w-4 h-4" />
-            </div>
-            <div className="text-xs font-medium overflow-hidden text-ellipsis whitespace-nowrap">{transmission}</div>
-          </div>
-        </div>
-
-        {/* Cena - PRZENIESIONA NA DÓŁ - większa i bardziej wyróżniona */}
+        {/* Cena - na dole */}
         <div className="mt-auto">
-          <div className="bg-[#35530A] rounded-md py-3 text-center text-2xl font-bold text-white">
+          <div className="bg-[#35530A] rounded-[2px] py-2 text-center text-lg font-bold text-white">
             {price.toLocaleString()} zł
           </div>
         </div>

@@ -8,21 +8,27 @@ export const FOLDER_MAP = {
   'odebrane': 'inbox',
   'wyslane': 'sent',
   'wazne': 'starred',
-  'archiwum': 'archived'
+  'archiwum': 'archived',
+  'multimedia': 'multimedia',
+  'linki': 'links'
 };
 
 export const FOLDER_LABELS = {
   'odebrane': 'Odebrane',
   'wyslane': 'Wysłane', 
   'wazne': 'Ważne',
-  'archiwum': 'Archiwum'
+  'archiwum': 'Archiwum',
+  'multimedia': 'Multimedia',
+  'linki': 'Linki'
 };
 
 export const API_FOLDER_MAP = {
   'inbox': 'odebrane',
   'sent': 'wyslane',
   'starred': 'wazne',
-  'archived': 'archiwum'
+  'archived': 'archiwum',
+  'multimedia': 'multimedia',
+  'links': 'linki'
 };
 
 export const UI_FOLDERS = Object.keys(FOLDER_LABELS);

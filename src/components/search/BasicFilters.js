@@ -1,7 +1,9 @@
 // BasicFilters.js
 import React, { useState, useEffect } from "react";
 import { regionToCities, priceRanges, mileageRanges, generateYearOptions } from "./SearchFormConstants";
+import { FUEL_TYPES, TRANSMISSION_TYPES, DRIVE_TYPES } from "../../contexts/constants/vehicleOptions";
 import useFilterCounts from './hooks/useFilterCounts';
+import useClickOutside from '../../hooks/useClickOutside';
 import SearchableDropdown from './SearchableDropdown';
 
 /**
@@ -44,6 +46,14 @@ export default function BasicFilters({
   
   // State dla dostępnych generacji, zależny od wybranej marki i modelu
   const [availableGenerations, setAvailableGenerations] = useState([]);
+
+  // Funkcja do zamykania wszystkich dropdownów
+  const closeAllDropdowns = () => {
+    setOpenChecklists({});
+  };
+
+  // Hook do zamykania dropdownów przy kliknięciu poza nimi
+  const dropdownRef = useClickOutside(closeAllDropdowns, Object.keys(openChecklists).some(key => openChecklists[key]));
   
   // Aktualizacja dostępnych miast, gdy zmienia się wybrane województwo
   useEffect(() => {
@@ -244,7 +254,7 @@ export default function BasicFilters({
   };
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-4">
+    <div ref={dropdownRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
       
       {/* Nadwozie - SearchableDropdown */}
       <SearchableDropdown
@@ -588,7 +598,7 @@ export default function BasicFilters({
       <SearchableDropdown
         name="fuelType"
         label="Rodzaj paliwa"
-        options={advancedOptions?.fuelType || []}
+        options={FUEL_TYPES}
         placeholder="Wybierz rodzaj paliwa"
         value={formData.fuelType || []}
         onChange={handleInputChange}
@@ -603,7 +613,7 @@ export default function BasicFilters({
       <SearchableDropdown
         name="transmission"
         label="Skrzynia biegów"
-        options={advancedOptions?.transmission || []}
+        options={TRANSMISSION_TYPES}
         placeholder="Wybierz skrzynię biegów"
         value={formData.transmission || []}
         onChange={handleInputChange}
@@ -649,7 +659,7 @@ export default function BasicFilters({
       <SearchableDropdown
         name="driveType"
         label="Napęd"
-        options={advancedOptions?.driveType || []}
+        options={DRIVE_TYPES}
         placeholder="Wybierz napęd"
         value={formData.driveType || []}
         onChange={handleInputChange}

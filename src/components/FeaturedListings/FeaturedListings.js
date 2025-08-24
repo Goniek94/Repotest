@@ -183,31 +183,31 @@ const FeaturedListings = () => {
 
   return (
     <div className="bg-white min-h-screen">
-      {/* Komunikat o wylogowaniu */}
+      {/* Komunikat o wylogowaniu - zoptymalizowany dla mobile */}
       {showLogoutMessage && (
-        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 bg-green-100 border border-green-400 text-green-700 px-6 py-3 rounded shadow-lg flex items-center">
-          <FaCheckCircle className="text-green-500 mr-2" />
-          <span>Zostałeś pomyślnie wylogowany</span>
+        <div className="fixed top-4 left-2 right-2 sm:top-20 sm:left-1/2 sm:right-auto sm:transform sm:-translate-x-1/2 z-50 bg-green-100 border border-green-400 text-green-700 px-3 py-2 sm:px-6 sm:py-3 rounded shadow-lg flex items-center text-sm sm:text-base">
+          <FaCheckCircle className="text-green-500 mr-2 flex-shrink-0" />
+          <span className="flex-1">Zostałeś pomyślnie wylogowany</span>
           <button 
             onClick={() => setShowLogoutMessage(false)}
-            className="ml-4 text-green-800 hover:text-green-900 focus:outline-none"
+            className="ml-2 sm:ml-4 text-green-800 hover:text-green-900 focus:outline-none flex-shrink-0"
           >
             <FaTimesCircle />
           </button>
         </div>
       )}
       
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 pt-0 pb-2 sm:pb-3 md:pb-4">
-        {/* Nagłówek poza kontenerem - podniesiony */}
-        <div className="text-center mb-4 sm:mb-5 md:mb-6">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800">
+      <div className="max-w-7xl mx-auto px-2 sm:px-3 md:px-4 pt-0 pb-2 sm:pb-3 md:pb-4">
+        {/* Nagłówek - zoptymalizowany dla mobile */}
+        <div className="text-center mb-3 sm:mb-4 md:mb-6 px-2">
+          <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-800">
             OGŁOSZENIA
-            <div className="w-16 sm:w-24 h-0.5 bg-[#35530A] mx-auto mt-2" />
+            <div className="w-12 sm:w-16 md:w-24 h-0.5 bg-[#35530A] mx-auto mt-1 sm:mt-2" />
           </h1>
         </div>
 
-        {/* Kontener z ogłoszeniami - styl jak wyszukiwarka */}
-        <div className="bg-white p-5 shadow-xl shadow-gray-300/60 rounded-[2px] mb-6 border border-gray-100">
+        {/* Kontener z ogłoszeniami - zoptymalizowany padding dla mobile */}
+        <div className="bg-white p-2 sm:p-3 md:p-4 shadow-xl shadow-gray-300/60 rounded-[2px] mb-4 sm:mb-6 border border-gray-100">
           {/* ✅ Sprawdzanie czy są ogłoszenia */}
           {featuredListings.length === 0 && hotListings.length === 0 && normalListings.length === 0 ? (
             <div className="text-center py-16">
@@ -219,7 +219,7 @@ const FeaturedListings = () => {
             <>
               {/* 2 duże ogłoszenia */}
               {featuredListings.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 lg:gap-10 mb-6 sm:mb-8 lg:mb-10">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 lg:gap-4 mb-6 sm:mb-8 lg:mb-10">
                   {featuredListings.map((listing) => (
                     <MainFeatureListing key={listing._id} listing={listing} />
                   ))}

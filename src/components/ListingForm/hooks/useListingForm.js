@@ -1,9 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import FormValidator from '../utils/FormValidator';
 
 const TEMP_STORAGE_KEY = 'auto_sell_temp_form'; // Tymczasowe dane tylko przy cofaniu z podglądu
 const DRAFT_STORAGE_KEY = 'auto_sell_draft_form'; // Wersje robocze
-const TEMP_DRAFT_KEY = 'auto_sell_temp_form'; // Tymczasowe dane wersji roboczej do załadowania
 
 const initialFormData = {
  brand: '',

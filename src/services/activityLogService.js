@@ -54,8 +54,10 @@ function logLogin(user) {
   addActivity(activity, user.id);
 }
 
-export default {
+const activityLogService = {
   getActivities,
   addActivity,
   logLogin
 };
+
+export default activityLogService;

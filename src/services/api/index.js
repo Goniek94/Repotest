@@ -6,7 +6,7 @@ import apiClient from './client';
 import ListingsService from './listingsApi';
 import AuthService from './authApi';
 import FavoritesService from './favoritesApi';
-import MessagesService from './messagesApi';
+import messagesApi from './messagesApi';
 import NotificationsService from './notificationsApi';
 import TransactionsService from './transactionsApi';
 import notificationService from '../notifications'; // WebSocket notifications
@@ -16,7 +16,7 @@ export {
   ListingsService,
   AuthService,
   FavoritesService,
-  MessagesService,
+  messagesApi,
   NotificationsService,
   TransactionsService,
   notificationService,
@@ -60,17 +60,17 @@ export default {
   checkIfFavorite: FavoritesService.checkIsFavorite,
   
   // Wiadomości
-  getMessages: (folder) => MessagesService.getByFolder(folder).then(r => r.data),
-  getMessage: (id) => MessagesService.getById(id).then(r => r.data),
-  sendMessage: (data) => MessagesService.send(data).then(r => r.data),
-  sendMessageToAd: (adId, data) => MessagesService.sendToAd(adId, data).then(r => r.data),
-  sendMessageToUser: (userId, data) => MessagesService.sendToUser(userId, data).then(r => r.data),
-  replyToMessage: (msgId, data) => MessagesService.replyToMessage(msgId, data).then(r => r.data),
-  markMessageAsRead: (id) => MessagesService.markAsRead(id).then(r => r.data),
-  toggleMessageStar: (id) => MessagesService.toggleStar(id).then(r => r.data),
-  deleteMessage: (id) => MessagesService.delete(id).then(r => r.data),
-  getConversationsList: (folder) => MessagesService.getConversationsList(folder).then(r => r.data),
-  getConversation: (userId) => MessagesService.getConversation(userId).then(r => r.data),
+  getMessages: (folder) => messagesApi.getByFolder(folder).then(r => r.data),
+  getMessage: (id) => messagesApi.getById(id).then(r => r.data),
+  sendMessage: (data) => messagesApi.send(data).then(r => r.data),
+  sendMessageToAd: (adId, data) => messagesApi.sendToAd(adId, data).then(r => r.data),
+  sendMessageToUser: (userId, data) => messagesApi.sendToUser(userId, data).then(r => r.data),
+  replyToMessage: (msgId, data) => messagesApi.replyToMessage(msgId, data).then(r => r.data),
+  markMessageAsRead: (id) => messagesApi.markAsRead(id).then(r => r.data),
+  toggleMessageStar: (id) => messagesApi.toggleStar(id).then(r => r.data),
+  deleteMessage: (id) => messagesApi.delete(id).then(r => r.data),
+  getConversationsList: (folder) => messagesApi.getConversationsList(folder).then(r => r.data),
+  getConversation: (userId) => messagesApi.getConversation(userId).then(r => r.data),
   
   // Powiadomienia (REST API)
   getNotifications: NotificationsService.getAll,

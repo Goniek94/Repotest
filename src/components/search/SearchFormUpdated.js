@@ -285,13 +285,13 @@ export default function SearchFormUpdated({ initialValues = {}, onFilterChange }
         </div>
       )} */}
       
-      <div className="bg-white p-5 shadow-xl shadow-gray-300/60 rounded-[2px] mb-4 max-w-7xl mx-auto border border-gray-100">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-[#35530A]">Filtry wyszukiwania</h2>
+      <div className="bg-white p-3 sm:p-4 md:p-5 shadow-xl shadow-gray-300/60 rounded-[2px] mb-3 sm:mb-4 max-w-7xl mx-auto border border-gray-100">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6 gap-2 sm:gap-0">
+          <h2 className="text-lg sm:text-xl font-bold text-[#35530A]">Filtry wyszukiwania</h2>
           <button
             type="button"
             onClick={resetAllFilters}
-            className="text-sm text-[#35530A] hover:text-[#2a4208] hover:underline"
+            className="text-xs sm:text-sm text-[#35530A] hover:text-[#2a4208] hover:underline self-start sm:self-auto"
           >
             Wyczyść wszystkie filtry
           </button>

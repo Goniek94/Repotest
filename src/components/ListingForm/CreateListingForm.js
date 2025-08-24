@@ -28,7 +28,6 @@ const {
   formData,
   setFormData,
   errors,
-  setErrors,
   handleChange,
   validateForm,
   saveTemporaryData,
@@ -118,8 +117,6 @@ useEffect(() => {
     price: false
   });
 
-// Stan do kontrolowania widoku podsumowania
-const [showSummary, setShowSummary] = useState(false);
 
 // Obsługa submitu formularza
 const handleSubmit = (e) => {
@@ -188,15 +185,6 @@ const handleDeleteDraft = (index) => {
   }
 };
 
-// Funkcja do powrotu z podsumowania do formularza
-const handleBackFromSummary = () => {
-  setShowSummary(false);
-};
-
-// Funkcja do przejścia do płatności
-const handleContinueToPayment = () => {
-  navigate('/add-listing-view', { state: { listingData: formData } });
-};
 
 // Obsługa przełączania sekcji
 const toggleSection = (section) => {

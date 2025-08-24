@@ -11,7 +11,6 @@ import {
   MapPin,
   Users,
   CheckCircle,
-  ExternalLink,
   ChevronDown,
   ChevronUp
 } from 'lucide-react';
@@ -285,10 +284,10 @@ const ContactTab = () => {
             onClick={() => toggleSection('company')}
           >
             <div className="px-4 py-2 text-sm grid grid-cols-2 gap-2">
-              <a href="#" className="text-gray-300 hover:text-white">Cennik</a>
-              <a href="#" className="text-gray-300 hover:text-white">Reklama</a>
-              <a href="#" className="text-gray-300 hover:text-white">Polityka prywatności</a>
-              <a href="#" className="text-gray-300 hover:text-white">Regulamin</a>
+              <button className="text-gray-300 hover:text-white text-left">Cennik</button>
+              <button className="text-gray-300 hover:text-white text-left">Reklama</button>
+              <button className="text-gray-300 hover:text-white text-left">Polityka prywatności</button>
+              <button className="text-gray-300 hover:text-white text-left">Regulamin</button>
             </div>
           </AccordionSection>
           
@@ -298,9 +297,9 @@ const ContactTab = () => {
             onClick={() => toggleSection('info')}
           >
             <div className="px-4 py-2 text-sm grid grid-cols-2 gap-2">
-              <a href="#" className="text-gray-300 hover:text-white">FAQ</a>
-              <a href="#" className="text-gray-300 hover:text-white">O Firmie</a>
-              <a href="#" className="text-gray-300 hover:text-white">Kontakt</a>
+              <button className="text-gray-300 hover:text-white text-left">FAQ</button>
+              <button className="text-gray-300 hover:text-white text-left">O Firmie</button>
+              <button className="text-gray-300 hover:text-white text-left">Kontakt</button>
             </div>
           </AccordionSection>
         </div>
@@ -312,15 +311,15 @@ const ContactTab = () => {
               <div className="w-1/4">
                 <h3 className="font-bold mb-3">AutoSell.PL</h3>
                 <div className="flex space-x-3 mb-2">
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                  <button className="text-gray-400 hover:text-white transition-colors">
                     <Facebook size={16} />
-                  </a>
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                  </button>
+                  <button className="text-gray-400 hover:text-white transition-colors">
                     <Instagram size={16} />
-                  </a>
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                  </button>
+                  <button className="text-gray-400 hover:text-white transition-colors">
                     <Mail size={16} />
-                  </a>
+                  </button>
                 </div>
               </div>
               
@@ -336,19 +335,19 @@ const ContactTab = () => {
               <div className="w-1/4">
                 <h3 className="font-bold mb-3">AutoSell</h3>
                 <ul className="text-sm space-y-1">
-                  <li><a href="#" className="text-gray-300 hover:text-white">Cennik</a></li>
-                  <li><a href="#" className="text-gray-300 hover:text-white">Reklama</a></li>
-                  <li><a href="#" className="text-gray-300 hover:text-white">Polityka prywatności</a></li>
-                  <li><a href="#" className="text-gray-300 hover:text-white">Regulamin</a></li>
+                  <li><button className="text-gray-300 hover:text-white text-left">Cennik</button></li>
+                  <li><button className="text-gray-300 hover:text-white text-left">Reklama</button></li>
+                  <li><button className="text-gray-300 hover:text-white text-left">Polityka prywatności</button></li>
+                  <li><button className="text-gray-300 hover:text-white text-left">Regulamin</button></li>
                 </ul>
               </div>
               
               <div className="w-1/4">
                 <h3 className="font-bold mb-3">Informacje</h3>
                 <ul className="text-sm space-y-1">
-                  <li><a href="#" className="text-gray-300 hover:text-white">FAQ</a></li>
-                  <li><a href="#" className="text-gray-300 hover:text-white">O Firmie</a></li>
-                  <li><a href="#" className="text-gray-300 hover:text-white">Kontakt</a></li>
+                  <li><button className="text-gray-300 hover:text-white text-left">FAQ</button></li>
+                  <li><button className="text-gray-300 hover:text-white text-left">O Firmie</button></li>
+                  <li><button className="text-gray-300 hover:text-white text-left">Kontakt</button></li>
                 </ul>
               </div>
             </div>
@@ -366,13 +365,12 @@ const ContactTab = () => {
 
 // Komponent przycisku mediów społecznościowych
 const SocialButton = ({ icon, color }) => (
-  <a 
-    href="#" 
+  <button 
     className={`${color} text-white p-2 rounded-full hover:opacity-90 transition-opacity`}
     aria-label="Social Media Link"
   >
     {icon}
-  </a>
+  </button>
 );
 
 // Komponent sekcji accordion dla mobilnego footera

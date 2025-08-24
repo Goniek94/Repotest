@@ -179,25 +179,63 @@ const useConversations = (activeTab) => {
       
       console.log('Wszystkie wiadomości przed formatowaniem:', allMessages);
       
+        // Sprawdź czy dane są już znormalizowane (z messagesApi.transformConversationResponse)
+        const isAlreadyNormalized = allMessages.length > 0 && 
+          typeof allMessages[0].id === 'string' && 
+          typeof allMessages[0].sender?.id === 'string';
+
+        console.log('🔍 Sprawdzanie formatu danych:');
+        console.log('🔍 isAlreadyNormalized:', isAlreadyNormalized);
+        if (allMessages.length > 0) {
+          console.log('🔍 Przykład pierwszej wiadomości:', allMessages[0]);
+          console.log('🔍 typeof msg.id:', typeof allMessages[0].id);
+          console.log('🔍 typeof msg.sender?.id:', typeof allMessages[0].sender?.id);
+        }
+
         // Formatowanie wiadomości do jednolitego formatu
-        const formattedChatMessages = allMessages.map(msg => ({
-          id: msg._id,
-          sender: msg.sender?._id || msg.sender,
-          senderName: msg.sender?.name || 'Nieznany użytkownik',
-          content: msg.content || '',
-          timestamp: msg.createdAt || msg.date 
-            ? new Date(msg.createdAt || msg.date)
-            : new Date(),
-          isRead: msg.read || false,
-          isDelivered: true,
-          isDelivering: false,
-          attachments: (msg.attachments || []).map(att => ({
-            id: att._id,
-            name: att.name || att.originalname || 'Załącznik',
-            url: att.path || att.url,
-            type: att.mimetype || att.type || 'application/octet-stream'
-          }))
-        }));
+        const formattedChatMessages = allMessages.map(msg => {
+          if (isAlreadyNormalized) {
+            // Dane już znormalizowane przez messagesApi - używaj bezpośrednio
+            return {
+              id: msg.id,
+              sender: msg.sender.id, // To już jest string ID
+              senderName: msg.sender.name || 'Nieznany użytkownik',
+              content: msg.content || '',
+              createdAt: msg.createdAt,
+              timestamp: new Date(msg.createdAt),
+              isRead: msg.read || false,
+              isDelivered: true,
+              isDelivering: false,
+              attachments: (msg.attachments || []).map(att => ({
+                id: att.id || att._id,
+                name: att.name || att.originalname || 'Załącznik',
+                url: att.path || att.url,
+                type: att.mimetype || att.type || 'application/octet-stream'
+              }))
+            };
+          } else {
+            // Surowe dane z bazy - formatuj jak wcześniej
+            return {
+              id: msg._id,
+              sender: msg.sender?._id || msg.sender,
+              senderName: msg.sender?.name || 'Nieznany użytkownik',
+              content: msg.content || '',
+              createdAt: msg.createdAt || msg.date,
+              timestamp: msg.createdAt || msg.date 
+                ? new Date(msg.createdAt || msg.date)
+                : new Date(),
+              isRead: msg.read || false,
+              isDelivered: true,
+              isDelivering: false,
+              attachments: (msg.attachments || []).map(att => ({
+                id: att._id,
+                name: att.name || att.originalname || 'Załącznik',
+                url: att.path || att.url,
+                type: att.mimetype || att.type || 'application/octet-stream'
+              }))
+            };
+          }
+        });
       
       // Sortowanie wiadomości według czasu
       formattedChatMessages.sort((a, b) => a.timestamp - b.timestamp);
@@ -541,26 +579,55 @@ const useConversations = (activeTab) => {
           return;
         }
         
+        // Sprawdź czy dane są już znormalizowane (z messagesApi.transformConversationResponse)
+        const isAlreadyNormalized = allMessages.length > 0 && 
+          typeof allMessages[0].id === 'string' && 
+          typeof allMessages[0].sender?.id === 'string';
+
         // Formatowanie wiadomości do jednolitego formatu
-        const formattedChatMessages = allMessages.map(msg => ({
-          id: msg._id,
-          sender: msg.sender?._id || msg.sender,
-          senderName: msg.sender?.name || 'Nieznany użytkownik',
-          content: msg.content || '',
-          createdAt: msg.createdAt || msg.date,
-          timestamp: msg.createdAt || msg.date 
-            ? new Date(msg.createdAt || msg.date)
-            : new Date(),
-          isRead: msg.read || false,
-          isDelivered: true,
-          isDelivering: false,
-          attachments: (msg.attachments || []).map(att => ({
-            id: att._id,
-            name: att.name || att.originalname || 'Załącznik',
-            url: att.path || att.url,
-            type: att.mimetype || att.type || 'application/octet-stream'
-          }))
-        }));
+        const formattedChatMessages = allMessages.map(msg => {
+          if (isAlreadyNormalized) {
+            // Dane już znormalizowane przez messagesApi - używaj bezpośrednio
+            return {
+              id: msg.id,
+              sender: msg.sender.id,
+              senderName: msg.sender.name || 'Nieznany użytkownik',
+              content: msg.content || '',
+              createdAt: msg.createdAt,
+              timestamp: new Date(msg.createdAt),
+              isRead: msg.read || false,
+              isDelivered: true,
+              isDelivering: false,
+              attachments: (msg.attachments || []).map(att => ({
+                id: att.id || att._id,
+                name: att.name || att.originalname || 'Załącznik',
+                url: att.path || att.url,
+                type: att.mimetype || att.type || 'application/octet-stream'
+              }))
+            };
+          } else {
+            // Surowe dane z bazy - formatuj jak wcześniej
+            return {
+              id: msg._id,
+              sender: msg.sender?._id || msg.sender,
+              senderName: msg.sender?.name || 'Nieznany użytkownik',
+              content: msg.content || '',
+              createdAt: msg.createdAt || msg.date,
+              timestamp: msg.createdAt || msg.date 
+                ? new Date(msg.createdAt || msg.date)
+                : new Date(),
+              isRead: msg.read || false,
+              isDelivered: true,
+              isDelivering: false,
+              attachments: (msg.attachments || []).map(att => ({
+                id: att._id,
+                name: att.name || att.originalname || 'Załącznik',
+                url: att.path || att.url,
+                type: att.mimetype || att.type || 'application/octet-stream'
+              }))
+            };
+          }
+        });
         
         // Sortowanie wiadomości według czasu
         formattedChatMessages.sort((a, b) => a.timestamp - b.timestamp);

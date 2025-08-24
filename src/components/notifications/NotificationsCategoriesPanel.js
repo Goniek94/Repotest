@@ -1,67 +1,73 @@
 import React, { memo } from 'react';
-import { 
-  Receipt, 
-  XCircle, 
-  RefreshCw, 
-  ShoppingCart, 
-  TrendingUp, 
-  Clock,
-  CreditCard
-} from 'lucide-react';
+import { Bell, Inbox, MessageCircle, Settings, FileText, CreditCard, MessageSquare, AlertTriangle, Cog } from 'lucide-react';
 
 /**
- * 💳 TRANSACTION CATEGORIES PANEL - Panel kategorii transakcji
+ * 🔔 NOTIFICATIONS CATEGORIES PANEL - Panel kategorii powiadomień
  * 
- * Wzorowany na panelu kategorii powiadomień i wiadomości
- * Dopasowany do rozmiarów przycisków z innych paneli
+ * Wzorowany na zdjęciu z kategoriami jak w oryginalnym designie
+ * Dopasowany do rozmiarów przycisków z panelu wiadomości
  */
-const TransactionCategoriesPanel = memo(({ 
-  activeCategory, 
-  transactionCounts = {}, 
-  onCategoryChange 
+const NotificationsCategoriesPanel = memo(({ 
+  activeTab, 
+  categoryCounts, 
+  onTabChange 
 }) => {
   const categories = [
     { 
-      id: 'wszystkie', 
+      id: 'all', 
       label: 'Wszystkie', 
-      icon: Receipt, 
-      count: transactionCounts.all || 0,
-      description: 'Wszystkie transakcje'
+      icon: Bell, 
+      count: categoryCounts.all,
+      description: 'Wszystkie powiadomienia'
     },
     { 
-      id: 'wydatki', 
-      label: 'Wydatki', 
-      icon: XCircle, 
-      count: transactionCounts.expenses || 0,
-      description: 'Opłaty za ogłoszenia'
+      id: 'unread', 
+      label: 'Nieprzeczytane', 
+      icon: Inbox, 
+      count: categoryCounts.unread,
+      description: 'Nieprzeczytane powiadomienia'
     },
     { 
-      id: 'zwroty', 
-      label: 'Zwroty', 
-      icon: RefreshCw, 
-      count: transactionCounts.refunds || 0,
-      description: 'Zwroty za anulowane ogłoszenia'
+      id: 'listings', 
+      label: 'Ogłoszenia', 
+      icon: FileText, 
+      count: categoryCounts.listings || 0,
+      description: 'Powiadomienia o ogłoszeniach'
     },
     { 
-      id: 'standardowe', 
-      label: 'Standardowe', 
-      icon: ShoppingCart, 
-      count: transactionCounts.standardListings || 0,
-      description: 'Opłaty za standardowe ogłoszenia'
+      id: 'messages', 
+      label: 'Wiadomości', 
+      icon: MessageCircle, 
+      count: categoryCounts.messages,
+      description: 'Powiadomienia o wiadomościach'
     },
     { 
-      id: 'wyrozione', 
-      label: 'Wyróżnione', 
-      icon: TrendingUp, 
-      count: transactionCounts.featuredListings || 0,
-      description: 'Opłaty za wyróżnione ogłoszenia'
+      id: 'comments', 
+      label: 'Komentarze', 
+      icon: MessageSquare, 
+      count: categoryCounts.comments || 0,
+      description: 'Powiadomienia o komentarzach'
     },
     { 
-      id: 'miesiac', 
-      label: 'Ten miesiąc', 
-      icon: Clock, 
-      count: transactionCounts.thisMonth || 0,
-      description: 'Transakcje z tego miesiąca'
+      id: 'payments', 
+      label: 'Płatności', 
+      icon: CreditCard, 
+      count: categoryCounts.payments || 0,
+      description: 'Powiadomienia o płatnościach'
+    },
+    { 
+      id: 'system', 
+      label: 'Systemowe', 
+      icon: AlertTriangle, 
+      count: categoryCounts.system,
+      description: 'Powiadomienia systemowe'
+    },
+    { 
+      id: 'preferences', 
+      label: 'Preferencje', 
+      icon: Cog, 
+      count: categoryCounts.preferences || 0,
+      description: 'Powiadomienia o preferencjach'
     }
   ];
 
@@ -78,7 +84,7 @@ const TransactionCategoriesPanel = memo(({
               Kategorie
             </h2>
             <p className="text-xs text-gray-500 truncate leading-tight">
-              Wybierz kategorię płatności
+              Wybierz kategorię powiadomień
             </p>
           </div>
         </div>
@@ -89,13 +95,13 @@ const TransactionCategoriesPanel = memo(({
         <div className="space-y-1 sm:space-y-2">
           {categories.map(category => {
             const Icon = category.icon;
-            const isActive = activeCategory === category.id;
+            const isActive = activeTab === category.id;
             const hasCount = category.count > 0;
             
             return (
               <button
                 key={category.id}
-                onClick={() => onCategoryChange(category.id)}
+                onClick={() => onTabChange(category.id)}
                 className={`
                   w-full flex items-center gap-2 sm:gap-3 
                   px-3 sm:px-4 py-2 sm:py-3 
@@ -127,7 +133,7 @@ const TransactionCategoriesPanel = memo(({
                   {category.label}
                 </span>
 
-                {/* Licznik transakcji */}
+                {/* Licznik nieprzeczytanych */}
                 {hasCount && (
                   <div className={`
                     px-1.5 sm:px-2 py-0.5 sm:py-1 
@@ -148,22 +154,16 @@ const TransactionCategoriesPanel = memo(({
         </div>
       </div>
 
-      {/* Informacja o cenach - na dole panelu */}
+      {/* Informacja o braku powiadomień - na dole panelu */}
       <div className="hidden lg:block p-3 bg-[#35530A]/5 border-t border-gray-100">
-        <div className="flex items-center gap-2 mb-1">
-          <CreditCard className="w-3 h-3 text-[#35530A]" />
-          <p className="text-xs text-[#35530A] font-medium">
-            Cennik usług
-          </p>
-        </div>
-        <p className="text-xs text-[#35530A]/80">
-          Standardowe: 30 PLN • Wyróżnione: 50 PLN
+        <p className="text-xs text-[#35530A] text-center font-medium">
+          Kliknij kategorię aby zobaczyć powiadomienia
         </p>
       </div>
     </div>
   );
 });
 
-TransactionCategoriesPanel.displayName = 'TransactionCategoriesPanel';
+NotificationsCategoriesPanel.displayName = 'NotificationsCategoriesPanel';
 
-export default TransactionCategoriesPanel;
+export default NotificationsCategoriesPanel;

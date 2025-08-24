@@ -34,7 +34,7 @@ const PaymentModal = ({ isOpen, onClose, amount, listingType, adId, onPaymentCom
   const formatCardNumber = (value) => {
     const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
     const matches = v.match(/\d{4,16}/g);
-    const match = matches && matches[0] || '';
+    const match = (matches && matches[0]) || '';
     const parts = [];
     
     for (let i = 0, len = match.length; i < len; i += 4) {
@@ -59,47 +59,6 @@ const PaymentModal = ({ isOpen, onClose, amount, listingType, adId, onPaymentCom
     return v;
   };
   
-  // Walidacja formularza
-  const validateForm = () => {
-    const newErrors = {};
-    
-    // Walidacja numeru karty
-    if (!cardNumber) {
-      newErrors.cardNumber = 'Numer karty jest wymagany';
-    } else if (cardNumber.replace(/\s/g, '').length !== 16) {
-      newErrors.cardNumber = 'Numer karty powinien mieć 16 cyfr';
-    }
-    
-    // Walidacja imienia i nazwiska
-    if (!cardName) {
-      newErrors.cardName = 'Imię i nazwisko jest wymagane';
-    }
-    
-    // Walidacja daty ważności
-    if (!expiryDate) {
-      newErrors.expiryDate = 'Data ważności jest wymagana';
-    } else {
-      const [month, year] = expiryDate.split('/');
-      const currentYear = new Date().getFullYear() % 100;
-      const currentMonth = new Date().getMonth() + 1;
-      
-      if (!month || !year || month < 1 || month > 12) {
-        newErrors.expiryDate = 'Nieprawidłowy format daty (MM/YY)';
-      } else if ((year < currentYear) || (year == currentYear && month < currentMonth)) {
-        newErrors.expiryDate = 'Karta jest nieważna';
-      }
-    }
-    
-    // Walidacja CVV
-    if (!cvv) {
-      newErrors.cvv = 'Kod CVV jest wymagany';
-    } else if (cvv.length !== 3) {
-      newErrors.cvv = 'Kod CVV powinien mieć 3 cyfry';
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
   
   // Obsługa płatności
   const handlePayment = async (e) => {

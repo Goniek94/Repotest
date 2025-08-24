@@ -1,14 +1,8 @@
 // src/components/listings/ListingsPage.js
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
-} from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
-// ✅ poprawne ścieżki względem tego pliku
 import SearchForm from '../search/SearchFormUpdated';
 import ListingControls from './controls/ListingControls';
 import ListingListItem from './display/list/ListingListItem';
@@ -23,8 +17,9 @@ function ListingsPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isMobile } = useResponsiveContext();
 
-  // Stany dla danych z API
+  // === Stany danych ===
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -32,42 +27,35 @@ function ListingsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState({});
 
-  // Stany UI
+  // === Stany UI ===
   const [searchOpen, setSearchOpen] = useState(false);
   const [sortType, setSortType] = useState('none');
   const [offerType, setOfferType] = useState('all');
   const [onlyFeatured, setOnlyFeatured] = useState(false);
-  const [viewMode, setViewMode] = useState('list');
+  const [viewMode, setViewMode] = useState('list'); // 'list' | 'grid'
   const [itemsPerPage] = useState(30);
   const [favorites, setFavorites] = useState([]);
   const [favMessages, setFavMessages] = useState({});
   const [favoritesLoading, setFavoritesLoading] = useState(false);
 
-  // Inicjalizacja filtrów z URL
+  // Inicjalizacja z URL
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const urlFilters = {};
 
     params.forEach((value, key) => {
-      if (value === 'true' || value === 'false') {
-        urlFilters[key] = value === 'true';
-      } else if (!isNaN(value) && value !== '') {
-        urlFilters[key] = Number(value);
-      } else {
-        urlFilters[key] = value;
-      }
+      if (value === 'true' || value === 'false') urlFilters[key] = value === 'true';
+      else if (!isNaN(value) && value !== '') urlFilters[key] = Number(value);
+      else urlFilters[key] = value;
     });
 
-    if (Object.keys(urlFilters).length > 0) {
-      setFilters(urlFilters);
-    }
+    if (Object.keys(urlFilters).length > 0) setFilters(urlFilters);
 
     const page = parseInt(params.get('page') || '1', 10);
     setCurrentPage(page || 1);
   }, [location.search]);
 
-  const { isMobile } = useResponsiveContext();
-
+  // Pobieranie ogłoszeń
   const fetchListings = useCallback(async () => {
     try {
       setLoading(true);
@@ -76,12 +64,12 @@ function ListingsPage() {
       let order = 'desc';
 
       switch (sortType) {
-        case 'price-asc': sortBy = 'price'; order = 'asc'; break;
-        case 'price-desc': sortBy = 'price'; order = 'desc'; break;
-        case 'year-asc': sortBy = 'year'; order = 'asc'; break;
-        case 'year-desc': sortBy = 'year'; order = 'desc'; break;
-        case 'mileage-asc': sortBy = 'mileage'; order = 'asc'; break;
-        case 'mileage-desc': sortBy = 'mileage'; order = 'desc'; break;
+        case 'price-asc':     sortBy = 'price';   order = 'asc';  break;
+        case 'price-desc':    sortBy = 'price';   order = 'desc'; break;
+        case 'year-asc':      sortBy = 'year';    order = 'asc';  break;
+        case 'year-desc':     sortBy = 'year';    order = 'desc'; break;
+        case 'mileage-asc':   sortBy = 'mileage'; order = 'asc';  break;
+        case 'mileage-desc':  sortBy = 'mileage'; order = 'desc'; break;
         default: break;
       }
 
@@ -99,12 +87,12 @@ function ListingsPage() {
 
       const response = result?.data || {};
 
-      function getMatchLabel(ad) {
+      const getMatchLabel = (ad) => {
         if (ad.match_score >= 100) return 'Dopasowanie: 100 pkt (idealne)';
         if (ad.match_score >= 50) return `Dopasowanie: ${ad.match_score} pkt`;
         if (ad.match_score > 0) return `Podobne ogłoszenie (${ad.match_score} pkt)`;
         return null;
-        }
+      };
 
       const mappedListings = (response.ads || []).map((ad) => {
         const brand = ad.brand || ad.make || '';
@@ -185,12 +173,11 @@ function ListingsPage() {
     }
   }, [sortType, offerType, onlyFeatured, currentPage, filters, itemsPerPage]);
 
-  // Pobierz ogłoszenia
   useEffect(() => {
     fetchListings();
   }, [fetchListings]);
 
-  // Pobranie ulubionych użytkownika
+  // Ulubione
   const fetchUserFavorites = useCallback(async () => {
     if (!user) return;
     try {
@@ -211,11 +198,13 @@ function ListingsPage() {
     fetchUserFavorites();
   }, [fetchUserFavorites]);
 
+  // Zmiana filtrów z formularza
   const handleFilterChange = useCallback((newFilters) => {
     setFilters(newFilters);
     setCurrentPage(1);
   }, []);
 
+  // Ulubione toggle
   const toggleFavorite = useCallback(
     async (id) => {
       if (!user) {
@@ -261,25 +250,32 @@ function ListingsPage() {
     [navigate]
   );
 
+  // Listę wymuszamy na mobile, grid tylko na desktopie
   const finalViewMode = useMemo(() => (isMobile ? 'list' : viewMode), [isMobile, viewMode]);
 
+  // === R E N D E R ===
   return (
     <div className="min-h-screen bg-gray-100">
-      <div className="wrapper py-8 sm:py-10 md:py-12 lg:py-16 space-y-6">
-        <div className="section">
-          <div className="flex justify-center mb-6">
-            <button
-              onClick={() => setSearchOpen(!searchOpen)}
-              className="text-white px-6 py-2.5 rounded shadow-md hover:shadow-lg transition-all duration-300 bg-[#35530A] hover:bg-[#44671A]"
-            >
-              {searchOpen ? 'Ukryj wyszukiwarkę' : 'Pokaż wyszukiwarkę'}
-            </button>
-          </div>
+      <div className="py-4 sm:py-6 md:py-8 lg:py-12 space-y-4 sm:space-y-6 md:space-y-8">
+        {/* Przycisk nad kartą - zoptymalizowany dla mobile */}
+        <div className="flex justify-center px-2 sm:px-4">
+          <button
+            onClick={() => setSearchOpen(!searchOpen)}
+            className="text-white px-4 sm:px-6 py-2 sm:py-3 rounded-md shadow-md hover:shadow-lg transition bg-[#35530A] hover:bg-[#44671A] text-sm sm:text-base"
+          >
+            {searchOpen ? 'Ukryj wyszukiwarkę' : 'Pokaż wyszukiwarkę'}
+          </button>
+        </div>
 
-          {searchOpen && (
+        {/* SearchForm - zoptymalizowany padding dla mobile */}
+        {searchOpen && (
+          <div className="max-w-6xl mx-auto px-2 sm:px-4">
             <SearchForm initialValues={filters} onFilterChange={handleFilterChange} />
-          )}
+          </div>
+        )}
 
+        {/* Karta z filtrami - zoptymalizowany padding dla mobile */}
+        <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-md px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-5 mx-2 sm:mx-4 md:mx-auto">
           <ListingControls
             sortType={sortType}
             setSortType={setSortType}
@@ -292,7 +288,8 @@ function ListingsPage() {
           />
         </div>
 
-        <div className="section">
+        {/* Lista ogłoszeń - zoptymalizowany padding dla mobile */}
+        <div className="max-w-6xl mx-auto w-full px-2 sm:px-4 md:px-0">
           {loading && currentPage === 1 ? (
             <div className="flex justify-center items-center py-16">
               <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-[#35530A]" />
@@ -312,8 +309,10 @@ function ListingsPage() {
                 <div
                   className={
                     finalViewMode === 'grid'
-                      ? 'grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 mt-6'
-                      : 'space-y-4 mt-6'
+                      // Zoptymalizowany grid jak na stronie głównej - mniejsze gap na mobile
+                      ? 'grid gap-3 sm:gap-4 lg:gap-5 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 mt-4 sm:mt-6'
+                      // Widok listowy - mniejsze odstępy na mobile
+                      : 'space-y-3 sm:space-y-4 mt-4 sm:mt-6'
                   }
                 >
                   {listings.map((listing) =>
@@ -341,13 +340,13 @@ function ListingsPage() {
               )}
 
               {currentPage < totalPages && (
-                <div className="text-center mt-8">
+                <div className="text-center mt-6 sm:mt-8">
                   {loading ? (
                     <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#35530A]" />
                   ) : (
                     <button
                       onClick={handleShowMore}
-                      className="px-8 py-3 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 bg-[#35530A] hover:bg-[#44671A]"
+                      className="px-6 sm:px-8 py-2.5 sm:py-3 text-white rounded-lg shadow-md hover:shadow-lg transition bg-[#35530A] hover:bg-[#44671A] text-sm sm:text-base"
                     >
                       Pokaż więcej
                     </button>

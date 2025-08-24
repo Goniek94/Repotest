@@ -48,10 +48,8 @@ export const carData = {}; // Fallback dla statycznych danych
 export const bodyTypes = BODY_TYPES;
 
 export const advancedOptions = {
-  // Dane techniczne
-  fuelType: FUEL_TYPES,
-  transmission: TRANSMISSION_TYPES,
-  driveType: DRIVE_TYPES,
+  // Dane techniczne - usunięto fuelType (duplikat z podstawowych)
+  // Usunięto driveType (duplikat z podstawowych)
   tuning: TUNING_OPTIONS,
   
   // Stan pojazdu
@@ -60,14 +58,12 @@ export const advancedOptions = {
   damageStatus: DAMAGE_STATUS_OPTIONS,
   
   // Nadwozie
-  bodyType: BODY_TYPES,
   color: COLORS,
   finish: PAINT_FINISHES,
   doorCount: DOOR_OPTIONS,
   seats: SEAT_OPTIONS,
   
   // Pochodzenie i sprzedawca
-  countryOfOrigin: COUNTRIES,
   sellerType: SELLER_TYPE_OPTIONS,
   
   // Statusy pojazdu
@@ -77,7 +73,7 @@ export const advancedOptions = {
   disabledAdapted: DISABLED_ADAPTED_OPTIONS,
   
   // Zachowane dla kompatybilności wstecznej
-  country: COUNTRIES,
+  // Usunięto country (duplikat z podstawowych)
   vehicleCondition: [...CONDITION_OPTIONS, ...ACCIDENT_STATUS_OPTIONS, ...DAMAGE_STATUS_OPTIONS],
   vehicleStatus: ['Uszkodzony', 'Bezwypadkowy', 'Kierownica po prawej', 'Przystosowany dla niepełnosprawnych', 'Pierwszy właściciel', 'Serwisowany w ASO', 'Zarejestrowany w Polsce', 'Sprowadzony'],
   sellingForm: ['Sprzedaż', 'Zamiana', 'Wynajem', 'Leasing']

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Inbox, Send, Star, Archive } from 'lucide-react';
+import { Inbox, Send, Star, Archive, Image, Link } from 'lucide-react';
 import { UI_FOLDERS } from '../../../contexts/constants/messageFolders';
 
 /**
@@ -16,10 +16,12 @@ const MessagesTabs = ({ activeTab, setActiveTab, unreadCount = {} }) => {
   const isMobile = window.innerWidth < 768;
   
   const ICONS = {
-    odebrane: <Inbox className="w-5 h-5" />,
-    wyslane: <Send className="w-5 h-5" />,
-    wazne: <Star className="w-5 h-5" />,
-    archiwum: <Archive className="w-5 h-5" />,
+    odebrane: <Inbox className="w-3 h-3" />,
+    wyslane: <Send className="w-3 h-3" />,
+    wazne: <Star className="w-3 h-3" />,
+    archiwum: <Archive className="w-3 h-3" />,
+    multimedia: <Image className="w-3 h-3" />,
+    linki: <Link className="w-3 h-3" />,
   };
 
   // Wyświetlamy wszystkie foldery niezależnie od typu urządzenia

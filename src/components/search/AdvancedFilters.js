@@ -1,6 +1,8 @@
 // AdvancedFilters.js
 import React, { useState } from "react";
 import { enginePowerRanges, engineCapacityRanges, weightRanges } from "./SearchFormConstants";
+import { COUNTRIES } from "../../contexts/constants/vehicleOptions";
+import useClickOutside from '../../hooks/useClickOutside';
 import SearchableDropdown from './SearchableDropdown';
 
 /**
@@ -18,6 +20,14 @@ export default function AdvancedFilters({
 }) {
   // State do zarządzania otwartymi/zamkniętymi checklistami
   const [openChecklists, setOpenChecklists] = useState({});
+
+  // Funkcja do zamykania wszystkich dropdownów
+  const closeAllDropdowns = () => {
+    setOpenChecklists({});
+  };
+
+  // Hook do zamykania dropdownów przy kliknięciu poza nimi
+  const dropdownRef = useClickOutside(closeAllDropdowns, Object.keys(openChecklists).some(key => openChecklists[key]));
 
   const toggleChecklist = (filterName) => {
     setOpenChecklists(prev => ({
@@ -216,29 +226,8 @@ export default function AdvancedFilters({
   // Dostępne marki z carData
   const availableBrands = Object.keys(carData || {}).sort();
   return (
-    <div className="mt-6 pt-4 border-t border-gray-200">
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-4">
-        {/* Typ paliwa */}
-        <RadioFilter
-          name="fuelType"
-          label="Typ paliwa"
-          options={fuelTypes || []}
-        />
-        
-        {/* Skrzynia biegów */}
-        <RadioFilter
-          name="transmission"
-          label="Skrzynia biegów"
-          options={transmissionTypes || []}
-        />
-        
-        
-        {/* Typ nadwozia */}
-        <RadioFilter
-          name="bodyType"
-          label="Typ nadwozia"
-          options={bodyTypes || []}
-        />
+    <div ref={dropdownRef} className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-gray-200">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
         
         {/* Kolor - SearchableDropdown */}
         <SearchableDropdown
@@ -251,30 +240,7 @@ export default function AdvancedFilters({
           multiSelect={false}
         />
         
-        {/* Wykończenie lakieru - SearchableDropdown */}
-        <SearchableDropdown
-          name="finish"
-          label="Wykończenie lakieru"
-          options={finishTypes || []}
-          placeholder="Wybierz wykończenie"
-          value={formData.finish ? [formData.finish] : []}
-          onChange={(e) => handleInputChange({ target: { name: e.target.name, value: e.target.value[0] || '' } })}
-          multiSelect={false}
-        />
         
-        {/* Liczba drzwi */}
-        <RadioFilter
-          name="doorCount"
-          label="Liczba drzwi"
-          options={advancedOptions?.doorCount || []}
-        />
-        
-        {/* Liczba miejsc */}
-        <RadioFilter
-          name="seats"
-          label="Liczba miejsc"
-          options={seatOptions || []}
-        />
         
         {/* Moc silnika - Od/Do Selecty z ograniczoną wysokością */}
         <div>
@@ -602,12 +568,6 @@ export default function AdvancedFilters({
           </div>
         </div>
         
-        {/* Importowany */}
-        <RadioFilter
-          name="imported"
-          label="Importowany"
-          options={advancedOptions?.imported || []}
-        />
         
         {/* Zarejestrowany w PL */}
         <RadioFilter
@@ -632,11 +592,11 @@ export default function AdvancedFilters({
       </div>
 
       {/* PRZYCISK RESET FILTRÓW */}
-      <div className="pt-4 mt-6 border-t border-gray-200">
+      <div className="pt-3 sm:pt-4 mt-4 sm:mt-6 border-t border-gray-200">
         <button
           type="button"
           onClick={resetAllFilters}
-          className="px-4 py-2 text-sm text-[#35530A] hover:text-[#2a4208] border border-[#35530A] rounded-[2px] hover:bg-[#35530A]/5 transition-colors"
+          className="px-3 sm:px-4 py-2 text-xs sm:text-sm text-[#35530A] hover:text-[#2a4208] border border-[#35530A] rounded-[2px] hover:bg-[#35530A]/5 transition-colors"
         >
           Wyczyść wszystkie filtry
         </button>

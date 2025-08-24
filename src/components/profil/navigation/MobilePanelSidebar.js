@@ -8,7 +8,9 @@ import {
   History, 
   PhoneCall, 
   Settings,
-  UserCog
+  UserCog,
+  Image,
+  Link
 } from 'lucide-react';
 import { useNotifications } from '../../../contexts/NotificationContext';
 import { useResponsiveContext } from '../../../contexts/ResponsiveContext';

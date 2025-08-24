@@ -61,8 +61,8 @@ const ProfileLayout = () => {
         {isMobile && <MobilePanelSidebar activeItem={getActiveItem()} />}
 
         <MainContentWrapper className={isMobileOrTablet ? "ml-12 sm:ml-14 lg:ml-0" : ""}>
-          <main className="space-y-6 mt-0 pl-[10%]">
-            <div className="section">
+          <main className={`space-y-6 ${isMobileOrTablet ? 'mt-0 pt-0' : 'mt-0'} pl-[10%]`}>
+            <div className={`section ${isMobileOrTablet ? 'py-0 mt-0 pt-0' : ''}`}>
               <Outlet />
             </div>
           </main>

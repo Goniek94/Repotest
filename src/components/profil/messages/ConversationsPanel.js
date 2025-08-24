@@ -1,5 +1,6 @@
 import React, { memo, useState } from 'react';
 import { ArrowLeft, MoreVertical, Star, Archive, Trash2, Check, CheckSquare, Square } from 'lucide-react';
+import useResponsiveLayout from '../../../hooks/useResponsiveLayout';
 
 /**
  * 💬 CONVERSATIONS PANEL - Panel listy konwersacji
@@ -22,6 +23,7 @@ const ConversationsPanel = memo(({
   const [selectedConversations, setSelectedConversations] = useState(new Set());
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
+  const { isMobile } = useResponsiveLayout();
 
   // ===== CATEGORY LABELS =====
   const getCategoryLabel = (tab) => {
@@ -289,6 +291,15 @@ const ConversationsPanel = memo(({
       <div className="p-4 border-b border-gray-200 flex-shrink-0 min-h-[64px]">
         <div className="flex items-center justify-between h-full">
           <div className="flex items-center gap-3 min-w-0 flex-1">
+            {/* Przycisk powrotu - tylko na mobilnych */}
+            {isMobile && (
+              <button
+                onClick={onBack}
+                className="flex items-center justify-center w-8 h-8 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+              >
+                <ArrowLeft className="w-5 h-5 text-gray-600" />
+              </button>
+            )}
             <div className="w-8 h-8 bg-[#35530A]/10 rounded-lg flex items-center justify-center flex-shrink-0">
               <div className="w-4 h-4 bg-[#35530A] rounded-sm"></div>
             </div>

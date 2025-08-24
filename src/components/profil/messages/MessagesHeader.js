@@ -8,18 +8,18 @@ import { MessageCircle } from 'lucide-react';
  */
 const MessagesHeader = memo(({ unreadCount = 0 }) => {
   return (
-    <div className="bg-gradient-to-r from-green-600 via-emerald-600 to-green-800 rounded-t-2xl shadow-xl p-6" style={{background: 'linear-gradient(135deg, #35530A, #4a7c0c, #35530A)'}}>
-      <div className="flex items-center gap-4">
-        <div className="p-3 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
-          <MessageCircle className="w-8 h-8 text-white" />
+    <div className="bg-[#35530A] rounded-t-2xl shadow-lg p-4 sm:p-5 lg:p-6">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-xl flex items-center justify-center">
+          <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
         </div>
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold text-white">
+        <div>
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">
             Wiadomości
           </h1>
           {unreadCount > 0 && (
-            <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-white/20 text-white backdrop-blur-sm mt-2">
-              <div className="w-2 h-2 bg-yellow-400 rounded-full mr-2 animate-pulse"></div>
+            <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-white/20 text-white backdrop-blur-sm mt-1">
+              <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full mr-1.5 animate-pulse"></div>
               {unreadCount} {unreadCount === 1 ? 'nieprzeczytana' : 'nieprzeczytanych'}
             </div>
           )}

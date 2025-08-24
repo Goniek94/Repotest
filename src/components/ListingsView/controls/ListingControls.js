@@ -1,112 +1,127 @@
+// src/components/listings/controls/ListingControls.jsx
 import React from 'react';
-import ViewToggle from './ViewToggle';
-import { useResponsiveContext } from '../../../contexts/ResponsiveContext';
+import { LayoutList, Grid2x2 } from 'lucide-react';
 
-const ListingControls = ({ 
-  sortType, 
-  setSortType, 
-  offerType, 
+const baseSelect =
+  'w-full h-9 rounded-md border border-gray-300 bg-white px-3 pr-8 text-sm ' +
+  'focus:outline-none focus:ring-2 focus:ring-[#35530A]/30 focus:border-[#35530A]';
+
+const IconButton = ({ active, title, onClick, children, className = '' }) => (
+  <button
+    type="button"
+    title={title}
+    aria-label={title}
+    onClick={onClick}
+    className={
+      'h-9 w-9 rounded-md grid place-items-center border transition ' +
+      (active
+        ? 'bg-[#35530A] text-white border-[#35530A]'
+        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50') +
+      (className ? ` ${className}` : '')
+    }
+  >
+    {children}
+  </button>
+);
+
+const ListingControls = ({
+  sortType,
+  setSortType,
+  offerType,
   setOfferType,
   onlyFeatured,
   setOnlyFeatured,
   viewMode,
-  setViewMode
+  setViewMode,
 }) => {
-  const { isMobile } = useResponsiveContext();
   return (
-    <div className="mt-6 p-6">
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-        
-        {/* Filtry i sortowanie */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1">
-          
-          {/* Sortowanie */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-gray-700">Sortuj według</label>
+    <div
+      className={
+        // niższy panel: zmniejszony padding góra/dół
+        'rounded-xl bg-white shadow-sm px-4 py-2 sm:py-3'
+      }
+    >
+      <div className="grid grid-cols-1 md:grid-cols-12 items-center gap-3 sm:gap-4">
+        {/* Lewy blok: Sort / Typ / Opcje */}
+        <div className="md:col-span-9 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Sortuj według */}
+          <div className="flex flex-col">
+            <label className="text-xs sm:text-sm text-gray-600 mb-1">Sortuj według</label>
             <div className="relative">
               <select
-                className="appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2.5 pr-10 text-sm font-medium text-gray-700 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#35530A]/20 focus:border-[#35530A] transition-all duration-200 cursor-pointer min-w-[180px]"
                 value={sortType}
                 onChange={(e) => setSortType(e.target.value)}
+                className={baseSelect}
               >
                 <option value="none">Domyślnie</option>
-                <option value="price-asc">Cena: od najniższej</option>
-                <option value="price-desc">Cena: od najwyższej</option>
-                <option value="year-asc">Rok: od najstarszych</option>
-                <option value="year-desc">Rok: od najnowszych</option>
-                <option value="mileage-asc">Przebieg: od najmniejszego</option>
-                <option value="mileage-desc">Przebieg: od największego</option>
+                <option value="price-asc">Cena: rosnąco</option>
+                <option value="price-desc">Cena: malejąco</option>
+                <option value="year-desc">Rok: nowsze</option>
+                <option value="year-asc">Rok: starsze</option>
+                <option value="mileage-asc">Przebieg: rosnąco</option>
+                <option value="mileage-desc">Przebieg: malejąco</option>
               </select>
-              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
+              <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-gray-400">
+                ⌄
+              </span>
             </div>
           </div>
 
           {/* Typ oferty */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-gray-700">Typ oferty</label>
+          <div className="flex flex-col">
+            <label className="text-xs sm:text-sm text-gray-600 mb-1">Typ oferty</label>
             <div className="relative">
               <select
-                className="appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2.5 pr-10 text-sm font-medium text-gray-700 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#35530A]/20 focus:border-[#35530A] transition-all duration-200 cursor-pointer min-w-[140px]"
                 value={offerType}
                 onChange={(e) => setOfferType(e.target.value)}
+                className={baseSelect}
               >
                 <option value="all">Wszystkie</option>
-                <option value="used">Używane</option>
-                <option value="new">Nowe</option>
+                <option value="private">Prywatne</option>
+                <option value="dealer">Dealer</option>
               </select>
-              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
+              <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-gray-400">
+                ⌄
+              </span>
             </div>
           </div>
 
-          {/* Checkbox wyróżnione */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-gray-700">Opcje</label>
-            <label className="flex items-center gap-3 cursor-pointer group">
-              <div className="relative">
-                <input
-                  type="checkbox"
-                  checked={onlyFeatured}
-                  onChange={() => setOnlyFeatured((prev) => !prev)}
-                  className="sr-only"
-                />
-                <div className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center ${
-                  onlyFeatured 
-                    ? 'bg-[#35530A] border-[#35530A]' 
-                    : 'bg-white border-gray-300 group-hover:border-gray-400'
-                }`}>
-                  {onlyFeatured && (
-                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                    </svg>
-                  )}
-                </div>
-              </div>
-              <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900 transition-colors duration-200">
-                Tylko wyróżnione
-              </span>
+          {/* Opcje */}
+          <div className="flex flex-col">
+            <label className="text-xs sm:text-sm text-gray-600 mb-1">Opcje</label>
+            <label htmlFor="onlyFeatured" className="flex items-center h-9 select-none cursor-pointer">
+              <input
+                id="onlyFeatured"
+                type="checkbox"
+                checked={onlyFeatured}
+                onChange={(e) => setOnlyFeatured(e.target.checked)}
+                className="mr-2 h-4 w-4 rounded border-gray-300 text-[#35530A] focus:ring-[#35530A]"
+              />
+              <span className="text-sm text-gray-800">Tylko wyróżnione</span>
             </label>
           </div>
-
         </div>
 
-        {/* Przełącznik widoku */}
-        {!isMobile && (
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-gray-700">Widok</label>
-            <ViewToggle 
-              view={viewMode} 
-              onToggleView={setViewMode}
-            />
+        {/* Prawy blok: przełącznik widoku (ukryty na mobile dla kompaktu) */}
+        <div className="md:col-span-3">
+          <div className="hidden md:flex items-center justify-end gap-2">
+            <span className="text-sm text-gray-600 mr-1">Widok</span>
+            <IconButton
+              title="Lista"
+              active={viewMode === 'list'}
+              onClick={() => setViewMode('list')}
+            >
+              <LayoutList className="w-4 h-4" />
+            </IconButton>
+            <IconButton
+              title="Siatka"
+              active={viewMode === 'grid'}
+              onClick={() => setViewMode('grid')}
+            >
+              <Grid2x2 className="w-4 h-4" />
+            </IconButton>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

@@ -19,8 +19,6 @@ export const decodeVin = (vin) => {
   // VDS (Vehicle Descriptor Section) - znaki 4-9
   const vds = vin.substring(3, 9);
   
-  // VIS (Vehicle Identifier Section) - znaki 10-17
-  const vis = vin.substring(9, 17);
   
   // Określenie producenta na podstawie WMI
   const manufacturer = getManufacturerFromWMI(wmi);

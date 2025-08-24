@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { MapPin, Medal, Image, Star, Upload } from 'lucide-react';
+import { MapPin, Medal, Upload } from 'lucide-react';
 import AdsService from '../../services/ads';
 import PaymentModal from '../payment/PaymentModal';
-import InfoRow from './preview/InfoRow';
 import { useImageUpload } from '../../hooks/useImageUpload';
 import ImageGallery from '../listings/details/ImageGallery';
 import TechnicalDetails from '../listings/details/TechnicalDetails';
 import Description from '../listings/details/Description';
-import ContactInfo from '../listings/details/ContactInfo';
 
 const AddListingView = () => {
   const navigate = useNavigate();
@@ -42,13 +40,6 @@ const AddListingView = () => {
   const [adId, setAdId] = useState(null);
   const [paymentCompleted, setPaymentCompleted] = useState(false);
   
-  // Stan dla aktywnego zdjęcia w galerii
-  const [activePhotoIndex, setActivePhotoIndex] = useState(0);
-  
-  // Funkcja do zmiany aktywnego zdjęcia
-  const handleThumbnailClick = (index) => {
-    setActivePhotoIndex(index);
-  };
   
   // Funkcja do obsługi płatności
   const handlePaymentComplete = async () => {

@@ -1,27 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiGrid, FiBarChart2, FiHeart, FiAlertCircle } from 'react-icons/fi';
-import { Heart, Eye, Edit, Trash, RefreshCw, AlertTriangle, CheckCircle, Plus, X, FileText } from 'lucide-react';
+import { FiBarChart2 } from 'react-icons/fi';
+import { Heart, Edit, Trash, RefreshCw, AlertTriangle, CheckCircle, Plus, FileText, Eye, Clock } from 'lucide-react';
 import { toast } from 'react-toastify';
 import ListingsService from '../../../services/api/listingsApi';
-import FavoritesService from '../../../services/api/favoritesApi';
-import ListingListItem from '../../ListingsView/display/list/ListingListItem';
 import UserListingListItem from './UserListingListItem';
-import ListingTabs from './ListingTabs';
-import getImageUrl from '../../../utils/responsive/getImageUrl';
+import GridListingCard from '../../listings/GridListingCard';
+import useResponsiveLayout from '../../../hooks/useResponsiveLayout';
 
 // Klucze localStorage dla wersji roboczych
 const DRAFT_STORAGE_KEY = 'auto_sell_draft_form';
 
-const UserListings = () => {
+const UserListings = memo(() => {
   // Stany komponentu
   const navigate = useNavigate();
+  const { isMobile, isTablet, isDesktop } = useResponsiveLayout();
   const [activeTab, setActiveTab] = useState('active');
   const [allListings, setAllListings] = useState([]);
   const [localDrafts, setLocalDrafts] = useState([]); // Wersje robocze z localStorage
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [extendingId, setExtendingId] = useState(null); // ID ogłoszenia, które jest obecnie przedłużane
+  const [extendingId, setExtendingId] = useState(null); // ID ogłoszenia, które jest obecnie przedłużana
   const [deletingId, setDeletingId] = useState(null); // ID ogłoszenia, które jest obecnie usuwane
   const [endingId, setEndingId] = useState(null); // ID ogłoszenia, które jest obecnie archiwizowane
   const [notifications, setNotifications] = useState([]); // Powiadomienia o kończących się ogłoszeniach
@@ -286,207 +285,118 @@ const UserListings = () => {
   };
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 via-white to-blue-50">
-      <div className="max-w-6xl mx-auto px-4 py-4">
-        {/* Nagłówek z gradientem - średni rozmiar */}
-        <div className="bg-gradient-to-r from-green-600 via-emerald-600 to-green-800 rounded-xl shadow-lg p-6 mb-5" style={{background: 'linear-gradient(135deg, #35530A, #4a7c0c, #35530A)'}}>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="bg-white overflow-x-hidden">
+      <div className="max-w-7xl mx-auto px-0 sm:px-1 lg:px-2 py-0 sm:py-1 lg:py-1">
+        {/* Nagłówek - prosty i czytelny jak w Messages */}
+        <div className="bg-[#35530A] rounded-t-2xl shadow-lg p-4 sm:p-5 lg:p-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-xl flex items-center justify-center">
+              <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+            </div>
             <div>
-              <h1 className="text-2xl font-bold text-white mb-2">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">
                 Moje ogłoszenia
               </h1>
-              <div className="flex flex-wrap gap-2">
-                <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-white/20 text-white backdrop-blur-sm">
-                  <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
-                  {allListings.filter(listing => listing.status === 'active').length} aktywnych
-                </div>
-                <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-white/20 text-white backdrop-blur-sm">
-                  <div className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></div>
-                  {allListings.filter(listing => listing.status === 'pending' || listing.status === 'needs_changes' || listing.isVersionRobocza).length + localDrafts.length} roboczych
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                onClick={() => navigate('/dodaj-ogloszenie')}
-                className="inline-flex items-center px-5 py-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-sm font-medium text-white hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-200 shadow-md hover:shadow-lg"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Dodaj ogłoszenie
-              </button>
             </div>
           </div>
         </div>
 
-        {/* Główny kontener z dwukolumnowym layoutem */}
-        <div className="flex flex-col lg:flex-row gap-5">
-          {/* Lewy panel - kategorie */}
-          <div className="lg:w-64 flex-shrink-0">
-            <div className="bg-white border border-slate-200 rounded-2xl shadow-lg overflow-hidden h-fit lg:h-full" style={{ 
-              borderRadius: '2px', 
-              boxShadow: '0 10px 25px -3px rgba(53, 83, 10, 0.1), 0 4px 6px -2px rgba(53, 83, 10, 0.05)' 
-            }}>
-              <div className="p-4 border-b border-gray-100">
-                <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">KATEGORIE</h3>
+        {/* Mobile Layout - 5 kategorii ogłoszeń pod nagłówkiem jak w Messages */}
+        {isMobile && (
+          <div className="bg-white border-b border-gray-200">
+            <div className="px-2 py-2">
+              <div className="flex justify-center gap-2 relative">
+                {/* Lewa kreska separator */}
+                <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-px h-8 bg-gray-300"></div>
+                {/* Prawa kreska separator */}
+                <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-px h-8 bg-gray-300"></div>
+                {[
+                  { id: 'active', label: 'Aktywne', icon: CheckCircle, count: allListings.filter(listing => listing.status === 'active').length },
+                  { id: 'drafts', label: 'Wersje robocze', icon: FileText, count: allListings.filter(listing => listing.status === 'pending' || listing.status === 'needs_changes' || listing.isVersionRobocza).length + localDrafts.length },
+                  { id: 'favorites', label: 'Ulubione', icon: Heart, count: allListings.filter(listing => listing.isFavorite).length },
+                  { id: 'completed', label: 'Zakończone', icon: FiBarChart2, count: allListings.filter(listing => listing.status === 'archived' || listing.status === 'sold').length },
+                  { id: 'add', label: 'Dodaj', icon: Plus, count: 0 }
+                ].map(category => {
+                  const Icon = category.icon;
+                  const isActive = activeTab === category.id;
+                  const hasCount = category.count > 0;
+                  
+                  return (
+                    <button
+                      key={category.id}
+                      onClick={() => {
+                        if (category.id === 'add') {
+                          navigate('/dodaj-ogloszenie');
+                        } else {
+                          setActiveTab(category.id);
+                        }
+                      }}
+                      className={`
+                        flex items-center justify-center
+                        w-12 h-12 rounded-xl
+                        transition-all duration-200
+                        relative
+                        ${isActive 
+                          ? 'bg-[#35530A] text-white' 
+                          : 'bg-gray-50 text-gray-600 hover:bg-gray-100 active:bg-gray-200'
+                        }
+                      `}
+                      title={category.label}
+                    >
+                      <Icon className="w-5 h-5" />
+                      {hasCount && (
+                        <div className={`
+                          absolute -top-1 -right-1
+                          w-5 h-5 
+                          rounded-full text-xs font-bold 
+                          flex items-center justify-center
+                          ${isActive 
+                            ? 'bg-white text-[#35530A]' 
+                            : 'bg-red-500 text-white'
+                          }
+                        `}>
+                          {category.count > 9 ? '9+' : category.count}
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
-              <div className="p-4">
-                {/* Mobile - ikonki identyczne jak w wiadomościach */}
-                <div className="lg:hidden">
-                  <div className="grid grid-cols-4 gap-3" style={{ transform: 'translateY(-10%)' }}>
-                    {/* Pierwszy rząd */}
-                    <button
-                      onClick={() => setActiveTab('active')}
-                      className={`
-                        relative flex items-center justify-center p-4 rounded-lg transition-all duration-200
-                        ${activeTab === 'active' 
-                          ? 'bg-[#35530A] bg-opacity-10 border border-[#35530A] border-opacity-30' 
-                          : 'hover:bg-gray-50 border border-transparent'}
-                      `}
-                      title="Aktywne"
-                    >
-                      <span className={`
-                        ${activeTab === 'active' ? 'text-[#35530A]' : 'text-gray-400'}
-                        transition-colors duration-200
-                      `}>
-                        <CheckCircle className="w-6 h-6" />
-                      </span>
-                      {allListings.filter(listing => listing.status === 'active').length > 0 && (
-                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
-                          {allListings.filter(listing => listing.status === 'active').length > 99 ? '99+' : allListings.filter(listing => listing.status === 'active').length}
-                        </span>
-                      )}
-                    </button>
+            </div>
+          </div>
+        )}
 
-                    <button
-                      onClick={() => setActiveTab('drafts')}
-                      className={`
-                        relative flex items-center justify-center p-4 rounded-lg transition-all duration-200
-                        ${activeTab === 'drafts' 
-                          ? 'bg-[#35530A] bg-opacity-10 border border-[#35530A] border-opacity-30' 
-                          : 'hover:bg-gray-50 border border-transparent'}
-                      `}
-                      title="Wersje robocze"
-                    >
-                      <span className={`
-                        ${activeTab === 'drafts' ? 'text-[#35530A]' : 'text-gray-400'}
-                        transition-colors duration-200
-                      `}>
-                        <FileText className="w-6 h-6" />
-                      </span>
-                      {(allListings.filter(listing => listing.status === 'pending' || listing.status === 'needs_changes' || listing.isVersionRobocza).length + localDrafts.length) > 0 && (
-                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
-                          {(allListings.filter(listing => listing.status === 'pending' || listing.status === 'needs_changes' || listing.isVersionRobocza).length + localDrafts.length) > 99 ? '99+' : (allListings.filter(listing => listing.status === 'pending' || listing.status === 'needs_changes' || listing.isVersionRobocza).length + localDrafts.length)}
-                        </span>
-                      )}
-                    </button>
-
-                    <button
-                      onClick={() => setActiveTab('completed')}
-                      className={`
-                        relative flex items-center justify-center p-4 rounded-lg transition-all duration-200
-                        ${activeTab === 'completed' 
-                          ? 'bg-[#35530A] bg-opacity-10 border border-[#35530A] border-opacity-30' 
-                          : 'hover:bg-gray-50 border border-transparent'}
-                      `}
-                      title="Zakończone"
-                    >
-                      <span className={`
-                        ${activeTab === 'completed' ? 'text-[#35530A]' : 'text-gray-400'}
-                        transition-colors duration-200
-                      `}>
-                        <FiBarChart2 className="w-6 h-6" />
-                      </span>
-                      {allListings.filter(listing => listing.status === 'archived' || listing.status === 'sold').length > 0 && (
-                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
-                          {allListings.filter(listing => listing.status === 'archived' || listing.status === 'sold').length > 99 ? '99+' : allListings.filter(listing => listing.status === 'archived' || listing.status === 'sold').length}
-                        </span>
-                      )}
-                    </button>
-
-                    <button
-                      onClick={() => setActiveTab('favorites')}
-                      className={`
-                        relative flex items-center justify-center p-4 rounded-lg transition-all duration-200
-                        ${activeTab === 'favorites' 
-                          ? 'bg-[#35530A] bg-opacity-10 border border-[#35530A] border-opacity-30' 
-                          : 'hover:bg-gray-50 border border-transparent'}
-                      `}
-                      title="Ulubione"
-                    >
-                      <span className={`
-                        ${activeTab === 'favorites' ? 'text-[#35530A]' : 'text-gray-400'}
-                        transition-colors duration-200
-                      `}>
-                        <Heart className="w-6 h-6" />
-                      </span>
-                      {allListings.filter(listing => listing.isFavorite).length > 0 && (
-                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
-                          {allListings.filter(listing => listing.isFavorite).length > 99 ? '99+' : allListings.filter(listing => listing.isFavorite).length}
-                        </span>
-                      )}
-                    </button>
-
-                    {/* Drugi rząd */}
-                    <button
-                      onClick={() => navigate('/dodaj-ogloszenie')}
-                      className="relative flex items-center justify-center p-4 rounded-lg transition-all duration-200 hover:bg-gray-50 border border-transparent"
-                      title="Dodaj ogłoszenie"
-                    >
-                      <span className="text-gray-400 transition-colors duration-200 hover:text-[#35530A]">
-                        <Plus className="w-6 h-6" />
-                      </span>
-                    </button>
-
-                    <button
-                      onClick={() => window.location.reload()}
-                      className="relative flex items-center justify-center p-4 rounded-lg transition-all duration-200 hover:bg-gray-50 border border-transparent"
-                      title="Odśwież"
-                    >
-                      <span className="text-gray-400 transition-colors duration-200 hover:text-[#35530A]">
-                        <RefreshCw className="w-6 h-6" />
-                      </span>
-                    </button>
-
-                    <button
-                      onClick={() => navigate('/profil')}
-                      className="relative flex items-center justify-center p-4 rounded-lg transition-all duration-200 hover:bg-gray-50 border border-transparent"
-                      title="Profil"
-                    >
-                      <span className="text-gray-400 transition-colors duration-200 hover:text-[#35530A]">
-                        <Eye className="w-6 h-6" />
-                      </span>
-                    </button>
-
-                    <button
-                      onClick={() => navigate('/ustawienia')}
-                      className="relative flex items-center justify-center p-4 rounded-lg transition-all duration-200 hover:bg-gray-50 border border-transparent"
-                      title="Ustawienia"
-                    >
-                      <span className="text-gray-400 transition-colors duration-200 hover:text-[#35530A]">
-                        <FiGrid className="w-6 h-6" />
-                      </span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Desktop - pełne przyciski pionowo */}
-                <div className="space-y-1 hidden lg:block">
+        {/* Główny kontener - identyczny layout jak Messages */}
+        <div className="
+          flex flex-col lg:flex-row
+          min-h-[400px] sm:min-h-[450px] lg:h-[calc(100vh-150px)] max-h-[600px]
+          bg-white rounded-b-2xl border border-gray-200 border-t-0 overflow-hidden
+        " style={{
+          boxShadow: '0 4px 8px -2px rgba(0, 0, 0, 0.15), -3px 0 6px -1px rgba(0, 0, 0, 0.1), 3px 0 6px -1px rgba(0, 0, 0, 0.1)'
+        }}>
+          {/* Lewy panel - kategorie normalnej wielkości */}
+          <div className="hidden lg:block lg:w-64 flex-shrink-0 border-r border-gray-200">
+            <div className="bg-white h-full">
+              <div className="p-4 border-b border-gray-200">
+                <h3 className="text-sm font-medium text-gray-700 mb-4">KATEGORIE</h3>
+                
+                {/* Desktop - pełne przyciski pionowo jak na zdjęciu */}
+                <div className="space-y-1">
                   <button
                     onClick={() => setActiveTab('active')}
-                    className={`w-full flex items-center px-4 py-3 text-left rounded-xl transition-all duration-200 ${
+                    className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-all duration-200 ${
                       activeTab === 'active'
-                        ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg'
+                        ? 'bg-[#35530A] text-white'
                         : 'text-gray-700 hover:bg-gray-50'
                     }`}
                   >
                     <CheckCircle className="w-5 h-5 mr-3" />
-                    <span className="font-medium">Aktywne</span>
+                    <span className="font-medium">Aktywne ogłoszenia</span>
                     {allListings.filter(listing => listing.status === 'active').length > 0 && (
                       <span className={`ml-auto px-2 py-1 text-xs rounded-full ${
                         activeTab === 'active' 
                           ? 'bg-white/20 text-white' 
-                          : 'bg-gray-100 text-gray-600'
+                          : 'bg-red-500 text-white'
                       }`}>
                         {allListings.filter(listing => listing.status === 'active').length}
                       </span>
@@ -495,19 +405,19 @@ const UserListings = () => {
 
                   <button
                     onClick={() => setActiveTab('drafts')}
-                    className={`w-full flex items-center px-4 py-3 text-left rounded-xl transition-all duration-200 ${
+                    className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-all duration-200 ${
                       activeTab === 'drafts'
-                        ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg'
+                        ? 'bg-[#35530A] text-white'
                         : 'text-gray-700 hover:bg-gray-50'
                     }`}
                   >
                     <FileText className="w-5 h-5 mr-3" />
-                    <span className="font-medium">Wersje robocze</span>
+                    <span className="font-medium">Wersja robocza</span>
                     {(allListings.filter(listing => listing.status === 'pending' || listing.status === 'needs_changes' || listing.isVersionRobocza).length + localDrafts.length) > 0 && (
                       <span className={`ml-auto px-2 py-1 text-xs rounded-full ${
                         activeTab === 'drafts' 
                           ? 'bg-white/20 text-white' 
-                          : 'bg-gray-100 text-gray-600'
+                          : 'bg-red-500 text-white'
                       }`}>
                         {allListings.filter(listing => listing.status === 'pending' || listing.status === 'needs_changes' || listing.isVersionRobocza).length + localDrafts.length}
                       </span>
@@ -515,31 +425,10 @@ const UserListings = () => {
                   </button>
 
                   <button
-                    onClick={() => setActiveTab('completed')}
-                    className={`w-full flex items-center px-4 py-3 text-left rounded-xl transition-all duration-200 ${
-                      activeTab === 'completed'
-                        ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg'
-                        : 'text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    <FiBarChart2 className="w-5 h-5 mr-3" />
-                    <span className="font-medium">Zakończone</span>
-                    {allListings.filter(listing => listing.status === 'archived' || listing.status === 'sold').length > 0 && (
-                      <span className={`ml-auto px-2 py-1 text-xs rounded-full ${
-                        activeTab === 'completed' 
-                          ? 'bg-white/20 text-white' 
-                          : 'bg-gray-100 text-gray-600'
-                      }`}>
-                        {allListings.filter(listing => listing.status === 'archived' || listing.status === 'sold').length}
-                      </span>
-                    )}
-                  </button>
-
-                  <button
                     onClick={() => setActiveTab('favorites')}
-                    className={`w-full flex items-center px-4 py-3 text-left rounded-xl transition-all duration-200 ${
+                    className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-all duration-200 ${
                       activeTab === 'favorites'
-                        ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg'
+                        ? 'bg-[#35530A] text-white'
                         : 'text-gray-700 hover:bg-gray-50'
                     }`}
                   >
@@ -549,19 +438,47 @@ const UserListings = () => {
                       <span className={`ml-auto px-2 py-1 text-xs rounded-full ${
                         activeTab === 'favorites' 
                           ? 'bg-white/20 text-white' 
-                          : 'bg-gray-100 text-gray-600'
+                          : 'bg-red-500 text-white'
                       }`}>
                         {allListings.filter(listing => listing.isFavorite).length}
                       </span>
                     )}
                   </button>
+
+                  <button
+                    onClick={() => setActiveTab('completed')}
+                    className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-all duration-200 ${
+                      activeTab === 'completed'
+                        ? 'bg-[#35530A] text-white'
+                        : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <FiBarChart2 className="w-5 h-5 mr-3" />
+                    <span className="font-medium">Zakończone</span>
+                    {allListings.filter(listing => listing.status === 'archived' || listing.status === 'sold').length > 0 && (
+                      <span className={`ml-auto px-2 py-1 text-xs rounded-full ${
+                        activeTab === 'completed' 
+                          ? 'bg-white/20 text-white' 
+                          : 'bg-red-500 text-white'
+                      }`}>
+                        {allListings.filter(listing => listing.status === 'archived' || listing.status === 'sold').length}
+                      </span>
+                    )}
+                  </button>
                 </div>
+              </div>
+              
+              {/* Informacja na dole panelu */}
+              <div className="p-3 bg-[#35530A]/5 border-t border-gray-100">
+                <p className="text-xs text-[#35530A] text-center font-medium">
+                  Kliknij kategorię aby zobaczyć ogłoszenia
+                </p>
               </div>
             </div>
           </div>
 
-          {/* Prawy panel - zawartość */}
-          <div className="flex-1">
+          {/* Prawy panel - zawartość z suwakiem */}
+          <div className="flex-1 overflow-y-auto p-4">
             {/* Sekcja powiadomień */}
             {notifications.length > 0 && (
               <div className="mb-6 relative">
@@ -646,7 +563,7 @@ const UserListings = () => {
                 )}
               </div>
             ) : (
-              <div className="space-y-6">
+              <div>
                 {/* Wersje robocze z localStorage - tylko w zakładce drafts */}
                 {activeTab === 'drafts' && localDrafts.length > 0 && (
                   <>
@@ -714,60 +631,62 @@ const UserListings = () => {
                   </>
                 )}
 
-                {/* Ogłoszenia z bazy danych */}
-                {listings.map(listing => (
-                  <UserListingListItem
-                    key={listing._id}
-                    listing={{
-                      id: listing._id,
-                      _id: listing._id, // Dodajemy również _id dla pewności
-                      // Przekazujemy pełną tablicę obrazów i mainImageIndex - uproszczona i bezpieczna logika
-                      images: Array.isArray(listing.images) ? listing.images : [],
-                      mainImageIndex: typeof listing.mainImageIndex === 'number' && 
-                                     listing.mainImageIndex >= 0 && 
-                                     Array.isArray(listing.images) && 
-                                     listing.mainImageIndex < listing.images.length 
-                                        ? listing.mainImageIndex 
-                                        : 0,
-                      // Dodajemy również pojedyncze zdjęcie jako fallback
-                      image: listing.image || (Array.isArray(listing.images) && listing.images.length > 0 ? listing.images[0] : null),
-                      featured: listing.listingType === 'wyróżnione' || listing.listingType === 'featured',
-                      title: `${listing.brand || ''} ${listing.model || ''}`.trim() || 'Brak tytułu',
-                      subtitle: listing.headline || listing.shortDescription || '',
-                      price: listing.price || 0,
-                      year: listing.year || 'N/A',
-                      mileage: listing.mileage || 0,
-                      fuel: listing.fuelType || 'N/A',
-                      power: listing.power || 'N/A',
-                      engineCapacity: listing.engineSize || 'N/A',
-                      drive: listing.drive || 'N/A',
-                      transmission: listing.transmission || listing.gearbox || 'N/A',
-                      countryOrigin: listing.countryOrigin || listing.origin || 'N/A',
-                      sellerType: listing.sellerType || 'N/A',
-                      city: listing.city || 'N/A',
-                      location: listing.voivodeship || 'N/A',
-                      status: listing.status || 'N/A',
-                      views: listing.views || 0,
-                      likes: listing.likes || 0,
-                      createdAt: listing.createdAt || new Date().toISOString(),
-                      expiresAt: listing.expiresAt,
-                      brand: listing.brand || '',
-                      model: listing.model || '',
-                    }}
-                    onNavigate={handleNavigate}
-                    onEdit={handleEdit}
-                    onEnd={handleEnd}
-                    onDelete={handleDelete}
-                    onExtend={handleExtend}
-                    onFavorite={toggleFavorite}
-                    isFavorite={!!listing.isFavorite}
-                    message={
-                      listing.status === 'wersja robocza'
-                        ? 'Wersja robocza – dokończ lub opublikuj'
-                        : undefined
-                    }
-                  />
-                ))}
+                {/* Ogłoszenia z bazy danych - zmniejszone odstępy */}
+                <div className="space-y-2 lg:space-y-3">
+                  {listings.map(listing => (
+                    <UserListingListItem
+                      key={listing._id}
+                      listing={{
+                        id: listing._id,
+                        _id: listing._id, // Dodajemy również _id dla pewności
+                        // Przekazujemy pełną tablicę obrazów i mainImageIndex - uproszczona i bezpieczna logika
+                        images: Array.isArray(listing.images) ? listing.images : [],
+                        mainImageIndex: typeof listing.mainImageIndex === 'number' && 
+                                       listing.mainImageIndex >= 0 && 
+                                       Array.isArray(listing.images) && 
+                                       listing.mainImageIndex < listing.images.length 
+                                          ? listing.mainImageIndex 
+                                          : 0,
+                        // Dodajemy również pojedyncze zdjęcie jako fallback
+                        image: listing.image || (Array.isArray(listing.images) && listing.images.length > 0 ? listing.images[0] : null),
+                        featured: listing.listingType === 'wyróżnione' || listing.listingType === 'featured',
+                        title: `${listing.brand || ''} ${listing.model || ''}`.trim() || 'Brak tytułu',
+                        subtitle: listing.headline || listing.shortDescription || '',
+                        price: listing.price || 0,
+                        year: listing.year || 'N/A',
+                        mileage: listing.mileage || 0,
+                        fuel: listing.fuelType || 'N/A',
+                        power: listing.power || 'N/A',
+                        engineCapacity: listing.engineSize || 'N/A',
+                        drive: listing.drive || 'N/A',
+                        transmission: listing.transmission || listing.gearbox || 'N/A',
+                        countryOrigin: listing.countryOrigin || listing.origin || 'N/A',
+                        sellerType: listing.sellerType || 'N/A',
+                        city: listing.city || 'N/A',
+                        location: listing.voivodeship || 'N/A',
+                        status: listing.status || 'N/A',
+                        views: listing.views || 0,
+                        likes: listing.likes || 0,
+                        createdAt: listing.createdAt || new Date().toISOString(),
+                        expiresAt: listing.expiresAt,
+                        brand: listing.brand || '',
+                        model: listing.model || '',
+                      }}
+                      onNavigate={handleNavigate}
+                      onEdit={handleEdit}
+                      onEnd={handleEnd}
+                      onDelete={handleDelete}
+                      onExtend={handleExtend}
+                      onFavorite={toggleFavorite}
+                      isFavorite={!!listing.isFavorite}
+                      message={
+                        listing.status === 'wersja robocza'
+                          ? 'Wersja robocza – dokończ lub opublikuj'
+                          : undefined
+                      }
+                    />
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -775,6 +694,8 @@ const UserListings = () => {
       </div>
     </div>
   );
-};
+});
+
+UserListings.displayName = 'UserListings';
 
 export default UserListings;
