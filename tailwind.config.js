@@ -9,29 +9,25 @@ module.exports = {
   ],
   theme: {
     screens: {
-      xs: "360px",
-      sm: "640px",
-      md: "768px",
-      lg: "1024px",
-      xl: "1280px",
-      "2xl": "1536px",
+      xs: '360px',  // małe telefony (updated for better mobile support)
+      sm: '640px',
+      md: '768px',  // tablet (pion)
+      lg: '1024px', // laptop 13"
+      xl: '1280px', // desktop
+      '2xl': '1536px' // duże monitory
     },
-    container: {
-      center: true,
-      padding: {
-        DEFAULT: "1rem",
-        md: "1.25rem",
-        lg: "1.5rem",
-      },
+    container: { 
+      center: true, 
+      padding: { 
+        DEFAULT: '1rem', 
+        lg: '1.5rem' 
+      } 
     },
     extend: {
-      fontSize: {
-        display: "clamp(28px,4vw,48px)",
-        h1: "clamp(24px,3.2vw,40px)",
-        h2: "clamp(20px,2.6vw,32px)",
-        h3: "clamp(18px,2.2vw,28px)",
-        body: "clamp(14px,1.4vw,16px)",
-        small: "clamp(12px,1.2vw,14px)",
+      maxWidth: {
+        'content': '72ch',          // optymalna długość linii tekstu
+        'container-xl': '1200px',   // desktop
+        'container-2xl': '1320px'   // duży desktop
       },
       colors: {
         border: "hsl(var(--border))",

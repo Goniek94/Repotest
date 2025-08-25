@@ -56,8 +56,8 @@ const SmallListingCard = ({ listing, showHotOffer = false }) => {
       className="bg-white shadow-xl shadow-gray-400/50 hover:shadow-2xl hover:shadow-gray-500/60 rounded-[2px] overflow-hidden flex flex-col cursor-pointer h-full transition-shadow duration-200 w-full" 
       onClick={() => navigate(`/listing/${listing._id}`)}
     >
-      {/* Zdjęcie */}
-      <div className="relative h-36">
+      {/* Zdjęcie - zwiększone na mobilnych */}
+      <div className="relative h-48 sm:h-40 md:h-36">
         {imageUrl ? (
           <img
             src={imageUrl}
@@ -74,60 +74,60 @@ const SmallListingCard = ({ listing, showHotOffer = false }) => {
           </div>
         )}
         {showHotOffer && (
-          <div className="absolute top-2 left-2 bg-[#35530A] text-white px-2 py-1 rounded-[2px] text-xs font-medium">
+          <div className="absolute top-2 left-2 bg-[#35530A] text-white px-2 py-1 text-xs font-medium" style={{borderRadius: '2px'}}>
             Gorąca oferta
           </div>
         )}
       </div>
 
-      {/* Tytuł i opis */}
-      <div className="p-3 flex-1">
-        <h3 className="text-sm font-bold text-gray-900 mb-1">
+      {/* Tytuł i opis - zwiększone rozmiary na mobilnych */}
+      <div className="p-3 sm:p-3 flex-1 flex flex-col">
+        <h3 className="text-base sm:text-sm font-bold text-gray-900 mb-2 sm:mb-1">
           {title}
         </h3>
-        <p className="text-xs text-gray-600 mb-2">
+        <p className="text-sm sm:text-xs text-gray-600 mb-3 sm:mb-2">
           {description || 'Ogłoszenie: ' + title}
         </p>
         
-        {/* Specyfikacje w 2 kolumny z odpowiednim odstępem */}
-        <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 mb-2">
-          <SpecItem icon={<YearIcon className="w-3 h-3" />} label="Rok" value={year} />
-          <SpecItem icon={<FuelIcon className="w-3 h-3" />} label="Paliwo" value={fuelType} />
-          <SpecItem icon={<MileageIcon className="w-3 h-3" />} label="Przebieg" value={`${mileage.toLocaleString('pl-PL')} km`} />
-          <SpecItem icon={<PowerIcon className="w-3 h-3" />} label="Moc" value={power} />
-          <SpecItem icon={<CapacityIcon className="w-3 h-3" />} label="Pojemność" value={`${capacity} cm³`} />
-          <SpecItem icon={<GearboxIcon className="w-3 h-3" />} label="Skrzynia" value={transmission} />
-          <SpecItem icon={<DriveIcon className="w-3 h-3" />} label="Napęd" value={drive} />
-          <SpecItem icon={<Globe className="w-3 h-3" />} label="Pochodzenie" value={countryOfOrigin} />
+        {/* Specyfikacje w 2 kolumny z odpowiednim odstępem - zwiększone ikony na mobilnych */}
+        <div className="grid grid-cols-2 gap-x-2 gap-y-2 sm:gap-y-1.5 mb-2 mt-6 sm:mt-5">
+          <SpecItem icon={<YearIcon className="w-4 h-4 sm:w-3 sm:h-3" />} label="Rok" value={year} />
+          <SpecItem icon={<FuelIcon className="w-4 h-4 sm:w-3 sm:h-3" />} label="Paliwo" value={fuelType} />
+          <SpecItem icon={<MileageIcon className="w-4 h-4 sm:w-3 sm:h-3" />} label="Przebieg" value={`${mileage.toLocaleString('pl-PL')} km`} />
+          <SpecItem icon={<PowerIcon className="w-4 h-4 sm:w-3 sm:h-3" />} label="Moc" value={power} />
+          <SpecItem icon={<CapacityIcon className="w-4 h-4 sm:w-3 sm:h-3" />} label="Pojemność" value={`${capacity} cm³`} />
+          <SpecItem icon={<GearboxIcon className="w-4 h-4 sm:w-3 sm:h-3" />} label="Skrzynia" value={transmission} />
+          <SpecItem icon={<DriveIcon className="w-4 h-4 sm:w-3 sm:h-3" />} label="Napęd" value={drive} />
+          <SpecItem icon={<Globe className="w-4 h-4 sm:w-3 sm:h-3" />} label="Pochodzenie" value={countryOfOrigin} />
         </div>
         
       </div>
 
-      {/* Sprzedawca i lokalizacja - białe tło */}
-      <div className="bg-white px-3 py-2 border-t border-gray-100">
+      {/* Sprzedawca i lokalizacja - białe tło - zwiększone na mobilnych */}
+      <div className="bg-white px-3 py-2.5 sm:py-2 border-t border-gray-100">
         <div className="grid grid-cols-2 gap-x-3">
-          <div className="flex items-center gap-1.5">
-            <User className="w-3 h-3 text-[#35530A]" />
+          <div className="flex items-center gap-2 sm:gap-1.5">
+            <User className="w-4 h-4 sm:w-3 sm:h-3 text-gray-800" />
             <div>
               <div className="text-xs text-gray-500 font-medium">Sprzedawca</div>
-              <div className="text-xs font-semibold text-gray-800">{sellerType}</div>
+              <div className="text-sm sm:text-xs font-semibold text-gray-800">{sellerType}</div>
             </div>
           </div>
-          <div className="flex items-center gap-1.5">
-            <MapPin className="w-3 h-3 text-[#35530A]" />
+          <div className="flex items-center gap-2 sm:gap-1.5">
+            <MapPin className="w-4 h-4 sm:w-3 sm:h-3 text-gray-800" />
             <div>
               <div className="text-xs text-gray-500 font-medium">Lokalizacja</div>
-              <div className="text-xs font-semibold text-gray-800">{city}</div>
+              <div className="text-sm sm:text-xs font-semibold text-gray-800">{city}</div>
             </div>
           </div>
         </div>
       </div>
       
-      {/* Cena i przycisk - zielone tło */}
-      <div className="bg-[#35530A] px-3 py-3 flex justify-between items-center">
+      {/* Cena i przycisk - zielone tło - zwiększone na mobilnych */}
+      <div className="bg-[#35530A] px-3 py-4 sm:py-3 flex justify-between items-center">
         <div className="text-white">
-          <div className="text-xs font-medium opacity-80">Cena</div>
-          <div className="text-lg font-bold">
+          <div className="text-sm sm:text-xs font-medium opacity-80">Cena</div>
+          <div className="text-xl sm:text-lg font-bold">
             {price.toLocaleString('pl-PL')} zł
           </div>
         </div>
@@ -136,7 +136,7 @@ const SmallListingCard = ({ listing, showHotOffer = false }) => {
             e.stopPropagation();
             navigate(`/listing/${listing._id}`);
           }}
-          className="bg-white text-[#35530A] px-3 py-1.5 rounded-[2px] text-xs font-semibold hover:bg-gray-100 transition-colors shadow-sm"
+          className="bg-white text-[#35530A] px-4 py-2 sm:px-3 sm:py-1.5 rounded-[2px] text-sm sm:text-xs font-semibold hover:bg-gray-100 transition-colors shadow-sm"
         >
           Szczegóły
         </button>

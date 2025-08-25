@@ -63,12 +63,71 @@
 }
 
 @layer base {
-  * {
-    @apply border-border;
+  /* —— Bazowy reset pod czytelność —— */
+  html, body { height: 100%; }
+  * { box-sizing: border-box; @apply border-border; }
+  body { margin: 0; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  :root { --lh-body: 1.6; --lh-heading: 1.25; }
+
+  /* —— FLUID TYPOGRAPHY SYSTEM —— 
+     Responsive font scaling optimized for Full HD (1920×1080) */
+  html { 
+    font-size: clamp(100%, 0.3vw + 0.9rem, 106.25%); /* 16px → 17px fluid */
   }
-  body {
+
+  /* —— Body i nagłówki z fluid scaling —— */
+  body { 
+    font-size: clamp(0.875rem, 1.2vw, 1rem); /* 14px → 16px */
+    line-height: var(--lh-body); 
+    color: #0f172a; 
+    background: #fff;
     @apply bg-white text-foreground;
   }
+  
+  h1, h2, h3, h4, h5, h6 { 
+    margin: 0 0 0.5em; 
+    font-weight: 700; 
+    line-height: var(--lh-heading);
+  }
+
+  /* —— FLUID TYPOGRAPHY SCALE —— */
+  h1 { font-size: clamp(1.75rem, 2.5vw, 2.25rem); }      /* 28px → 36px */
+  h2 { font-size: clamp(1.5rem, 2.2vw, 2rem); }          /* 24px → 32px */
+  h3 { font-size: clamp(1.25rem, 1.8vw, 1.625rem); }     /* 20px → 26px */
+  h4 { font-size: clamp(1.125rem, 1.5vw, 1.375rem); }    /* 18px → 22px */
+  h5 { font-size: clamp(1rem, 1.2vw, 1.125rem); }        /* 16px → 18px */
+  h6 { font-size: clamp(0.875rem, 1vw, 1rem); }          /* 14px → 16px */
+
+  /* —— RESPONSIVE TEXT UTILITIES —— */
+  .text-fluid-xs { font-size: clamp(0.75rem, 0.8vw, 0.8125rem); }   /* 12px → 13px */
+  .text-fluid-sm { font-size: clamp(0.875rem, 1vw, 0.9375rem); }    /* 14px → 15px */
+  .text-fluid-base { font-size: clamp(1rem, 1.2vw, 1.0625rem); }    /* 16px → 17px */
+  .text-fluid-lg { font-size: clamp(1.125rem, 1.5vw, 1.1875rem); }  /* 18px → 19px */
+  .text-fluid-xl { font-size: clamp(1.25rem, 1.8vw, 1.3125rem); }   /* 20px → 21px */
+  .text-fluid-2xl { font-size: clamp(1.5rem, 2.2vw, 1.625rem); }    /* 24px → 26px */
+  .text-fluid-3xl { font-size: clamp(1.875rem, 2.5vw, 2rem); }      /* 30px → 32px */
+
+  /* —— RESPONSIVE LINE HEIGHTS —— */
+  .leading-fluid-tight { line-height: clamp(1.2, 0.5vw + 1.1, 1.3); }
+  .leading-fluid-normal { line-height: clamp(1.4, 0.5vw + 1.3, 1.6); }
+  .leading-fluid-relaxed { line-height: clamp(1.5, 0.5vw + 1.4, 1.7); }
+
+  /* Teksty pomocnicze z responsive scaling */
+  small, .text-small { 
+    font-size: clamp(0.75rem, 0.8vw, 0.8125rem); 
+    line-height: clamp(1.4, 0.1vw + 1.35, 1.45); 
+  }
+  .caption { 
+    font-size: clamp(0.6875rem, 0.6vw, 0.75rem); 
+    line-height: clamp(1.3, 0.1vw + 1.25, 1.35); 
+  }
+
+  /* Długość linii i poziomy scroll (czytelność) */
+  .prose, .richtext { max-width: 72ch; }
+  body { overflow-x: hidden; }
+
+  /* Dostępność focus */
+  :focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(59,130,246,.7); border-radius: 6px; }
 }
 
 /* Style dla podniesionego panelu użytkownika */
@@ -89,15 +148,98 @@
 }
 
 @layer components {
+  /* —— RESPONSIVE SPACING SYSTEM —— */
   .section {
-    /* usunięto białe tło i cień - tylko padding */
-    @apply py-8 sm:py-10 md:py-12 lg:py-16;
+    /* Fluid section spacing - zmniejszone dla lepszej proporcji */
+    padding-top: clamp(1.25rem, 2.5vw, 2rem);    /* 20px → 32px */
+    padding-bottom: clamp(1.25rem, 2.5vw, 2rem); /* 20px → 32px */
   }
+  
+  .grid-spacing {
+    gap: clamp(0.875rem, 2vw, 1.5rem); /* 14px → 24px fluid gap */
+  }
+  
+  /* —— RESPONSIVE CONTAINERS —— */
   .wrapper {
     @apply container mx-auto;
+    padding-left: clamp(1rem, 2vw, 1.5rem);  /* 16px → 24px */
+    padding-right: clamp(1rem, 2vw, 1.5rem); /* 16px → 24px */
   }
+  
+  .container-content {
+    @apply container max-w-container-xl 2xl:max-w-container-2xl;
+  }
+  
   .card {
-    @apply rounded-xl border border-gray-200 p-4 sm:p-5 md:p-6;
+    @apply rounded-xl border border-gray-200;
+    padding: clamp(0.875rem, 1.8vw, 1.25rem); /* 14px → 20px fluid padding */
+  }
+  
+  /* —— RESPONSIVE SPACING UTILITIES —— */
+  .spacing-xs { margin: clamp(0.25rem, 0.3vw, 0.375rem); }     /* 4px → 6px */
+  .spacing-sm { margin: clamp(0.5rem, 0.6vw, 0.625rem); }      /* 8px → 10px */
+  .spacing-md { margin: clamp(0.75rem, 1vw, 0.875rem); }       /* 12px → 14px */
+  .spacing-lg { margin: clamp(1rem, 1.5vw, 1.25rem); }         /* 16px → 20px */
+  .spacing-xl { margin: clamp(1.25rem, 2vw, 1.5rem); }         /* 20px → 24px */
+  .spacing-2xl { margin: clamp(1.5rem, 2.5vw, 2rem); }         /* 24px → 32px */
+  
+  /* —— TOUCH TARGETS & ACCESSIBILITY —— */
+  .tap-target {
+    min-height: clamp(44px, 10vw, 48px); /* Apple/Google guidelines */
+    min-width: clamp(44px, 10vw, 48px);
+    @apply flex items-center justify-center;
+  }
+  
+  .tap-target-sm {
+    min-height: clamp(40px, 8vw, 44px);
+    min-width: clamp(40px, 8vw, 44px);
+    @apply flex items-center justify-center;
+  }
+  
+  .tap-target-lg {
+    min-height: clamp(48px, 12vw, 56px);
+    min-width: clamp(48px, 12vw, 56px);
+    @apply flex items-center justify-center;
+  }
+  
+  /* —— RESPONSIVE FORM ELEMENTS —— */
+  .form-input {
+    height: clamp(2.5rem, 3vw, 2.75rem); /* 40px → 44px */
+    padding-left: clamp(0.75rem, 1.2vw, 0.875rem);
+    padding-right: clamp(0.75rem, 1.2vw, 0.875rem);
+    font-size: clamp(0.875rem, 1.2vw, 0.9375rem); /* 14px → 15px */
+  }
+  
+  .form-input-lg {
+    height: clamp(2.75rem, 3.5vw, 3rem); /* 44px → 48px */
+    padding-left: clamp(1rem, 1.5vw, 1.125rem);
+    padding-right: clamp(1rem, 1.5vw, 1.125rem);
+    font-size: clamp(1rem, 1.5vw, 1.0625rem); /* 16px → 17px */
+  }
+  
+  /* —— RESPONSIVE BUTTONS —— */
+  .btn-responsive {
+    height: clamp(2.25rem, 2.5vw, 2.5rem); /* 36px → 40px */
+    padding-left: clamp(0.875rem, 1.5vw, 1rem);
+    padding-right: clamp(0.875rem, 1.5vw, 1rem);
+    font-size: clamp(0.8125rem, 1vw, 0.875rem); /* 13px → 14px */
+    @apply tap-target-sm;
+  }
+  
+  .btn-responsive-sm {
+    height: clamp(2rem, 2.2vw, 2.25rem); /* 32px → 36px */
+    padding-left: clamp(0.625rem, 1vw, 0.75rem);
+    padding-right: clamp(0.625rem, 1vw, 0.75rem);
+    font-size: clamp(0.75rem, 0.9vw, 0.8125rem); /* 12px → 13px */
+    @apply tap-target-sm;
+  }
+  
+  .btn-responsive-lg {
+    height: clamp(2.5rem, 3vw, 2.75rem); /* 40px → 44px */
+    padding-left: clamp(1rem, 1.8vw, 1.25rem);
+    padding-right: clamp(1rem, 1.8vw, 1.25rem);
+    font-size: clamp(0.875rem, 1.2vw, 0.9375rem); /* 14px → 15px */
+    @apply tap-target;
   }
 }
 

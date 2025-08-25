@@ -176,24 +176,11 @@ const UserDataSection = ({ formData, handleChange, handleSubmit, isSaving }) => 
   };
 
   return (
-    <div className="h-full flex flex-col">
-      {/* Nagłówek - Zarządzaj danymi */}
-      <div className="flex items-center space-x-4 p-6 bg-white rounded-xl border border-gray-200 mb-6 flex-shrink-0">
-        <div className="w-12 h-12 bg-[#35530A] rounded-xl flex items-center justify-center">
-          <FaCog className="text-white text-xl" />
-        </div>
-        <div>
-          <h2 className="text-xl font-bold text-gray-900">Zarządzaj danymi</h2>
-          <p className="text-gray-600 mt-1">Zarządzaj danymi swojego konta</p>
-        </div>
-      </div>
-
-      {/* Karty z danymi - z suwakiem */}
-      <div className="flex-1 overflow-y-auto px-6">
-        {/* Status weryfikacji */}
-        <VerificationStatus />
-        
-        <div className="space-y-2 pb-6">
+    <div className="space-y-4">
+      {/* Status weryfikacji */}
+      <VerificationStatus />
+      
+      <div className="space-y-2">
           {/* Imię - nie edytowalne */}
           <DataCard
             id="firstName"
@@ -303,9 +290,7 @@ const UserDataSection = ({ formData, handleChange, handleSubmit, isSaving }) => 
               </div>
             </div>
           </div>
-
         </div>
-      </div>
 
       {/* Modals */}
       <ChangeEmailModal

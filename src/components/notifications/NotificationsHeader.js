@@ -21,8 +21,8 @@ const NotificationsHeader = ({ unreadCount = 0, totalCount = 0 }) => {
           </div>
         </div>
         
-        {/* Liczniki jak w UserListings */}
-        <div className="flex items-center gap-4">
+        {/* Liczniki tylko na desktop */}
+        <div className="hidden sm:flex items-center gap-4">
           <div className="flex items-center gap-2 bg-white/10 rounded-full px-3 py-1">
             <div className="w-2 h-2 bg-red-400 rounded-full"></div>
             <span className="text-white text-sm font-medium">

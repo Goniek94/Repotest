@@ -244,19 +244,20 @@ const TransactionListPanel = memo(({
         )}
       </div>
 
-      {/* Footer z informacją o liczbie transakcji - wzorowany na powiadomieniach */}
-      {transactions.length > 0 && (
-        <div className="flex-shrink-0 p-3 border-t border-gray-200 bg-gray-50">
-          <div className="flex items-center justify-between text-xs text-gray-500">
-            <span>
-              {transactions.length} {transactions.length === 1 ? 'transakcja' : 'transakcji'}
-            </span>
-            <span className="text-[#35530A] font-medium">
-              {activeCategory === 'wszystkie' ? 'Wszystkie kategorie' : activeCategory}
-            </span>
-          </div>
+      {/* Footer z informacją o liczbie transakcji - zawsze widoczny */}
+      <div className="flex-shrink-0 p-3 border-t border-gray-200 bg-gray-50">
+        <div className="flex items-center justify-between text-xs text-gray-500">
+          <span>
+            {transactions.length > 0 
+              ? `${transactions.length} ${transactions.length === 1 ? 'transakcja' : 'transakcji'}`
+              : 'Brak transakcji'
+            }
+          </span>
+          <span className="text-[#35530A] font-medium">
+            {activeCategory === 'wszystkie' ? 'Wszystkie kategorie' : activeCategory}
+          </span>
         </div>
-      )}
+      </div>
     </div>
   );
 });

@@ -108,18 +108,18 @@ const GridListingCard = memo(({ listing, onFavorite, isFavorite }) => {
       </div>
 
       {/* Card content - układ jak na wzorze BMW Seria 1 */}
-      <div className="p-3 flex flex-col flex-grow">
+      <div className="p-2.5 flex flex-col flex-grow">
         {/* Title */}
-        <h3 className="font-bold text-base text-gray-900 mb-1.5 line-clamp-1">
+        <h3 className="font-bold text-sm text-gray-900 mb-1 line-clamp-1">
           {title}
         </h3>
         
-        <p className="text-xs text-gray-600 mb-3 line-clamp-2 leading-relaxed">
+        <p className="text-[10px] text-gray-600 mb-2 line-clamp-2 leading-tight">
           {listing.headline || listing.shortDescription || `${title} - sprawdź szczegóły tego ogłoszenia`}
         </p>
 
         {/* Specifications - układ jak na wzorze BMW Seria 1 */}
-        <div className="space-y-2 mb-3">
+        <div className="space-y-1.5 mb-2">
           {/* Pierwsza linia */}
           <div className="grid grid-cols-2 gap-2">
             <div className="flex items-center gap-1.5">
@@ -214,7 +214,7 @@ const GridListingCard = memo(({ listing, onFavorite, isFavorite }) => {
 
         {/* Cena - na dole */}
         <div className="mt-auto">
-          <div className="bg-[#35530A] rounded-[2px] py-2 text-center text-lg font-bold text-white">
+          <div className="bg-[#35530A] rounded-[2px] py-1.5 text-center text-base font-bold text-white">
             {price.toLocaleString()} zł
           </div>
         </div>

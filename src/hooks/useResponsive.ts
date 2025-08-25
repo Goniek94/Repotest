@@ -19,8 +19,8 @@ const useResponsive = () => {
   const isSm = width >= SCREENS.sm && width < SCREENS.md;
   const isMd = width >= SCREENS.md && width < SCREENS.lg;
   const isLg = width >= SCREENS.lg && width < SCREENS.xl;
-  const isXl = width >= SCREENS.xl && width < SCREENS.x2l;
-  const is2Xl = width >= SCREENS.x2l;
+  const isXl = width >= SCREENS.xl && width < SCREENS['2xl'];
+  const is2Xl = width >= SCREENS['2xl'];
 
   const isMobile = width < SCREENS.md;
   const isTablet = width >= SCREENS.md && width < SCREENS.lg;

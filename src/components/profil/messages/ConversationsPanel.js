@@ -455,6 +455,24 @@ const ConversationsPanel = memo(({
         )}
       </div>
 
+      {/* Footer z informacją o konwersacjach - zawsze widoczny */}
+      <div className="flex-shrink-0 p-3 border-t border-gray-200 bg-gray-50">
+        <div className="flex items-center justify-between text-xs text-gray-500">
+          <span>
+            {processedConversations.length > 0 
+              ? `${processedConversations.length} ${processedConversations.length === 1 ? 'konwersacja' : 'konwersacji'}`
+              : 'Brak konwersacji'
+            }
+          </span>
+          <span className="text-[#35530A] font-medium">
+            {processedConversations.filter(c => c.unread).length > 0 
+              ? `${processedConversations.filter(c => c.unread).length} nieprzeczytane`
+              : 'Wszystkie przeczytane'
+            }
+          </span>
+        </div>
+      </div>
+
       {/* Kliknij poza menu, aby je zamknąć */}
       {showOptionsMenu && (
         <div

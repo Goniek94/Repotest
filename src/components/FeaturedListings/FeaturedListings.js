@@ -197,7 +197,7 @@ const FeaturedListings = () => {
         </div>
       )}
       
-      <div className="max-w-7xl mx-auto px-2 sm:px-3 md:px-4 pt-0 pb-2 sm:pb-3 md:pb-4">
+      <div className="max-w-7xl mx-auto px-2 sm:px-3 md:px-4 pt-0 pb-20 sm:pb-24 md:pb-28">
         {/* Nagłówek - zoptymalizowany dla mobile */}
         <div className="text-center mb-3 sm:mb-4 md:mb-6 px-2">
           <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-800">

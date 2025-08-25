@@ -9,21 +9,21 @@ import { Facebook, Instagram, Mail } from 'lucide-react';
 const Footer = () => {
   return (
     <footer className="w-full">
-      {/* WERSJA MOBILNA - standardowy element pod paskiem nawigacji */}
+      {/* WERSJA MOBILNA - zawsze widoczna stopka */}
       <div className="md:hidden">
-        {/* Stopka mobilna - statyczny element pod paskiem nawigacji */}
-        <div className="w-full bg-gray-900 z-50 static mt-auto">
+        {/* Stopka mobilna - zawsze widoczna na dole ekranu */}
+        <div className="w-full bg-gray-900 relative z-10 mt-auto">
           <div className="w-full">
-            {/* Stopka jednopoziomowa pod paskiem nawigacji */}
-            <div className="flex items-center justify-between px-4 h-8">
+            {/* Stopka jednopoziomowa */}
+            <div className="flex items-center justify-between px-4 py-2 min-h-[40px]">
               {/* Logo */}
               <div className="text-white font-semibold text-xs">AutoSell.PL</div>
               
               {/* Linki */}
-              <div className="flex space-x-4">
-                <a href="#" className="text-gray-300 text-[11px] hover:text-white">O firmie</a>
-                <a href="#" className="text-gray-300 text-[11px] hover:text-white">Regulamin</a>
-                <a href="#" className="text-gray-300 text-[11px] hover:text-white">Kontakt</a>
+              <div className="flex space-x-3">
+                <a href="/about-company" className="text-gray-300 text-[11px] hover:text-white">O firmie</a>
+                <a href="/faq" className="text-gray-300 text-[11px] hover:text-white">FAQ</a>
+                <a href="/contact" className="text-gray-300 text-[11px] hover:text-white">Kontakt</a>
               </div>
               
               {/* Copyright i ikony */}

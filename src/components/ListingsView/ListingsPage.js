@@ -7,6 +7,7 @@ import SearchForm from '../search/SearchFormUpdated';
 import ListingControls from './controls/ListingControls';
 import ListingListItem from './display/list/ListingListItem';
 import ListingCard from './display/grid/ListingCard';
+import SmallListingCard from '../FeaturedListings/SmallListingCard';
 
 import AdsService from '../../services/ads';
 import getImageUrl from '../../utils/responsive/getImageUrl';
@@ -32,7 +33,7 @@ function ListingsPage() {
   const [sortType, setSortType] = useState('none');
   const [offerType, setOfferType] = useState('all');
   const [onlyFeatured, setOnlyFeatured] = useState(false);
-  const [viewMode, setViewMode] = useState('list'); // 'list' | 'grid'
+  const [viewMode, setViewMode] = useState(isMobile ? 'grid' : 'list'); // 'list' | 'grid'
   const [itemsPerPage] = useState(30);
   const [favorites, setFavorites] = useState([]);
   const [favMessages, setFavMessages] = useState({});
@@ -239,9 +240,6 @@ function ListingsPage() {
     [favorites, user]
   );
 
-  const handleShowMore = useCallback(() => {
-    setCurrentPage((prev) => prev + 1);
-  }, []);
 
   const navigateToListing = useCallback(
     (id) => {
@@ -250,8 +248,8 @@ function ListingsPage() {
     [navigate]
   );
 
-  // Listę wymuszamy na mobile, grid tylko na desktopie
-  const finalViewMode = useMemo(() => (isMobile ? 'list' : viewMode), [isMobile, viewMode]);
+  // Na mobilnych również używamy widoku kartowego
+  const finalViewMode = useMemo(() => viewMode, [viewMode]);
 
   // === R E N D E R ===
   return (
@@ -309,8 +307,8 @@ function ListingsPage() {
                 <div
                   className={
                     finalViewMode === 'grid'
-                      // Zoptymalizowany grid jak na stronie głównej - mniejsze gap na mobile
-                      ? 'grid gap-3 sm:gap-4 lg:gap-5 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 mt-4 sm:mt-6'
+                      // Identyczny układ jak na homepage - standardowe ogłoszenia
+                      ? 'grid gap-6 sm:gap-8 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 mt-4 sm:mt-6'
                       // Widok listowy - mniejsze odstępy na mobile
                       : 'space-y-3 sm:space-y-4 mt-4 sm:mt-6'
                   }
@@ -339,18 +337,71 @@ function ListingsPage() {
                 </div>
               )}
 
-              {currentPage < totalPages && (
-                <div className="text-center mt-6 sm:mt-8">
-                  {loading ? (
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#35530A]" />
-                  ) : (
-                    <button
-                      onClick={handleShowMore}
-                      className="px-6 sm:px-8 py-2.5 sm:py-3 text-white rounded-lg shadow-md hover:shadow-lg transition bg-[#35530A] hover:bg-[#44671A] text-sm sm:text-base"
-                    >
-                      Pokaż więcej
-                    </button>
-                  )}
+              {/* Paginacja */}
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center mt-6 sm:mt-8 space-x-2">
+                  {/* Poprzednia strona */}
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className={`px-3 py-2 rounded-md text-sm font-medium ${
+                      currentPage === 1
+                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                    }`}
+                  >
+                    Poprzednia
+                  </button>
+
+                  {/* Numery stron */}
+                  <div className="flex space-x-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum;
+                      if (totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => setCurrentPage(pageNum)}
+                          className={`px-3 py-2 rounded-md text-sm font-medium ${
+                            currentPage === pageNum
+                              ? 'bg-[#35530A] text-white'
+                              : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Następna strona */}
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                    className={`px-3 py-2 rounded-md text-sm font-medium ${
+                      currentPage === totalPages
+                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                    }`}
+                  >
+                    Następna
+                  </button>
+                </div>
+              )}
+
+              {/* Informacja o liczbie wyników */}
+              {listings.length > 0 && (
+                <div className="text-center mt-4 text-sm text-gray-600">
+                  Strona {currentPage} z {totalPages} ({listings.length} ogłoszeń na tej stronie)
                 </div>
               )}
             </>

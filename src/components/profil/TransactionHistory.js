@@ -1,21 +1,19 @@
 import React, { useState, memo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { CreditCard, Receipt, CheckCircle, Clock, XCircle, ShoppingCart, TrendingUp, RefreshCw, DollarSign } from 'lucide-react';
+import { CreditCard, Receipt, CheckCircle, Clock, XCircle, ShoppingCart, TrendingUp, RefreshCw, DollarSign, FileText, Download, History, BarChart3 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import useResponsiveLayout from '../../hooks/useResponsiveLayout';
 import TransactionHeader from './transactions/TransactionHeader';
 import TransactionCategoriesPanel from './transactions/TransactionCategoriesPanel';
 import TransactionListPanel from './transactions/TransactionListPanel';
-import TransactionDetailsPanel from './transactions/TransactionDetailsPanel';
 import useTransactions from './transactions/hooks/useTransactions';
 
 /**
  * 💳 TRANSACTION HISTORY - Główny komponent historii transakcji
  * 
- * 3-panelowy layout w stylu Messages i Notifications z pełną responsywnością:
- * 1. Panel kategorii (lewy)
- * 2. Panel listy transakcji (środkowy)
- * 3. Panel szczegółów transakcji (prawy)
+ * Jednopanelowy layout podobny do systemu powiadomień:
+ * - Kategorie na górze (mobile) lub po lewej (desktop)
+ * - Jeden panel z listą transakcji
  */
 const TransactionHistory = memo(() => {
   // ===== HOOKS =====
@@ -30,24 +28,19 @@ const TransactionHistory = memo(() => {
     return initial || 'wszystkie';
   });
   
-  // Stan paneli - kontroluje które panele są widoczne na mobile
-  const [panelState, setPanelState] = useState('categories'); // categories, list, details
-  
   // Custom hook do zarządzania transakcjami
   const transactionsData = useTransactions(activeCategory, user?.id);
 
   // ===== EFFECTS =====
   /**
-   * Automatycznie otwórz panel listy transakcji po załadowaniu
+   * Automatycznie ustaw domyślną kategorię
    */
   useEffect(() => {
     // Jeśli nie ma parametru category w URL, ustaw domyślny
     if (!searchParams.get('category')) {
       setSearchParams({ category: 'wszystkie' });
-      // Na mobilnych pokaż kategorie, na desktop od razu listę
-      setPanelState(isMobile ? 'categories' : 'list');
     }
-  }, [searchParams, setSearchParams, isMobile]);
+  }, [searchParams, setSearchParams]);
 
   // ===== HANDLERS =====
   /**
@@ -56,32 +49,42 @@ const TransactionHistory = memo(() => {
   const handleCategoryChange = (category) => {
     setActiveCategory(category);
     setSearchParams({ category });
-    setPanelState('list'); // Pokaż panel listy
-    transactionsData.selectTransaction(null); // Wyczyść wybór
-  };
-
-  /**
-   * Obsługa wyboru transakcji
-   */
-  const handleSelectTransaction = (transaction) => {
-    transactionsData.selectTransaction(transaction.id);
-    setPanelState('details'); // Pokaż panel szczegółów
-  };
-
-  /**
-   * Obsługa powrotu do poprzedniego panelu
-   */
-  const handleBack = () => {
-    if (panelState === 'details') {
-      setPanelState('list');
-      transactionsData.selectTransaction(null);
-    } else if (panelState === 'list') {
-      setPanelState('categories');
-    }
   };
 
   // Oblicz statystyki dla nagłówka
   const totalTransactions = transactionsData.transactionCounts.all || 0;
+
+  // ===== FILTERING =====
+  /**
+   * Filtrowanie transakcji na podstawie aktywnej kategorii
+   */
+  const getFilteredTransactions = () => {
+    switch(activeCategory) {
+      case 'platnosci':
+        return transactionsData.transactions.filter(transaction => 
+          transaction.type === 'payment' || transaction.type === 'charge'
+        );
+      case 'zwroty':
+        return transactionsData.transactions.filter(transaction => 
+          transaction.type === 'refund'
+        );
+      case 'faktury':
+        return transactionsData.transactions.filter(transaction => 
+          transaction.type === 'invoice' || transaction.hasInvoice === true
+        );
+      case 'historia':
+        // Historia transakcji - możliwość wyszukiwania całej historii
+        return transactionsData.transactions; // Zwróć wszystkie z możliwością wyszukiwania
+      case 'statystyki':
+        // Statystyki - może zwrócić puste lub specjalne dane do wyświetlenia statystyk
+        return [];
+      case 'wszystkie':
+      default:
+        return transactionsData.transactions;
+    }
+  };
+
+  const filteredTransactions = getFilteredTransactions();
 
   // ===== RENDER =====
   return (
@@ -94,19 +97,22 @@ const TransactionHistory = memo(() => {
           />
         </div>
 
-        {/* Mobile Layout - Categories in grid under header */}
-        {isMobile && panelState === 'categories' && (
-          <div className="bg-white border-b border-gray-200">
-            <div className="p-4">
-              <h3 className="text-sm font-medium text-gray-700 mb-4 uppercase tracking-wide">KATEGORIE</h3>
-              <div className="grid grid-cols-2 gap-3">
+        {/* Mobile Layout - Kategorie pod nagłówkiem jak w powiadomieniach */}
+        {isMobile && (
+          <div className="bg-white border-b border-gray-200 -mt-1">
+            <div className="px-2 py-2">
+              <div className="flex justify-center gap-2 relative">
+                {/* Lewa kreska separator */}
+                <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-px h-8 bg-gray-300"></div>
+                {/* Prawa kreska separator */}
+                <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-px h-8 bg-gray-300"></div>
                 {[
                   { id: 'wszystkie', label: 'Wszystkie', icon: Receipt, count: transactionsData.transactionCounts.all },
-                  { id: 'wydatki', label: 'Wydatki', icon: XCircle, count: transactionsData.transactionCounts.expenses },
+                  { id: 'platnosci', label: 'Płatności', icon: CreditCard, count: transactionsData.transactionCounts.payments },
                   { id: 'zwroty', label: 'Zwroty', icon: RefreshCw, count: transactionsData.transactionCounts.refunds },
-                  { id: 'standardowe', label: 'Standardowe', icon: ShoppingCart, count: transactionsData.transactionCounts.standardListings },
-                  { id: 'wyrozione', label: 'Wyróżnione', icon: TrendingUp, count: transactionsData.transactionCounts.featuredListings },
-                  { id: 'miesiac', label: 'Ten miesiąc', icon: Clock, count: transactionsData.transactionCounts.thisMonth }
+                  { id: 'faktury', label: 'Faktury', icon: FileText, count: transactionsData.transactionCounts.invoices },
+                  { id: 'historia', label: 'Historia', icon: History, count: transactionsData.transactionCounts.all },
+                  { id: 'statystyki', label: 'Statystyki', icon: BarChart3, count: 0 }
                 ].map(category => {
                   const Icon = category.icon;
                   const isActive = activeCategory === category.id;
@@ -117,35 +123,30 @@ const TransactionHistory = memo(() => {
                       key={category.id}
                       onClick={() => handleCategoryChange(category.id)}
                       className={`
-                        flex flex-col items-center justify-center
-                        p-3 rounded-xl
-                        transition-all duration-200 group
-                        h-16 relative
+                        flex items-center justify-center
+                        w-12 h-12 rounded-xl
+                        transition-all duration-200
+                        relative
                         ${isActive 
-                          ? 'bg-[#35530A] text-white shadow-lg' 
-                          : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                          ? 'bg-[#35530A] text-white' 
+                          : 'bg-gray-50 text-gray-600 hover:bg-gray-100 active:bg-gray-200'
                         }
                       `}
+                      title={category.label}
                     >
-                      <Icon className={`
-                        w-5 h-5 mb-1
-                        ${isActive ? 'text-white' : 'text-gray-600'}
-                      `} />
-                      <span className={`
-                        text-xs font-medium text-center
-                        ${isActive ? 'text-white' : 'text-gray-700'}
-                      `}>
-                        {category.label}
-                      </span>
+                      <Icon className="w-5 h-5" />
                       {hasCount && (
                         <div className={`
                           absolute -top-1 -right-1
-                          w-2 h-2 rounded-full
+                          w-5 h-5 
+                          rounded-full text-xs font-bold 
+                          flex items-center justify-center
                           ${isActive 
-                            ? 'bg-yellow-400' 
-                            : 'bg-yellow-500'
+                            ? 'bg-white text-[#35530A]' 
+                            : 'bg-red-500 text-white'
                           }
                         `}>
+                          {category.count > 9 ? '9+' : category.count}
                         </div>
                       )}
                     </button>
@@ -184,74 +185,36 @@ const TransactionHistory = memo(() => {
           )}
 
           {/* Panel listy transakcji - pełna szerokość na mobile, ograniczona na desktop */}
-          {(panelState === 'list' || isDesktop) && (
-            <div className={`
-              ${isMobile 
-                ? 'w-full' 
-                : 'w-72 xl:w-80 flex-shrink-0 border-r border-gray-200'
-              }
-              ${panelState === 'details' && isMobile ? 'hidden' : ''}
-              min-h-[280px] lg:min-h-0
-            `}>
-              <TransactionListPanel
-                isVisible={true}
-                transactions={transactionsData.transactions}
-                loading={transactionsData.loading}
-                error={transactionsData.error}
-                activeCategory={activeCategory}
-                onSelectTransaction={handleSelectTransaction}
-                onBack={handleBack}
-                onExport={transactionsData.exportTransactions}
-                showBackButton={isMobile && panelState === 'list'}
-                // Filtry
-                searchTerm={transactionsData.searchTerm}
-                setSearchTerm={transactionsData.setSearchTerm}
-                dateFilter={transactionsData.dateFilter}
-                setDateFilter={transactionsData.setDateFilter}
-                startDate={transactionsData.startDate}
-                setStartDate={transactionsData.setStartDate}
-                endDate={transactionsData.endDate}
-                setEndDate={transactionsData.setEndDate}
-                onCustomDateFilter={transactionsData.onCustomDateFilter}
-                onDateFilterChange={transactionsData.onDateFilterChange}
-              />
-            </div>
-          )}
-
-          {/* Panel szczegółów transakcji - pełna szerokość na mobile gdy aktywny */}
-          {(panelState === 'details' || isDesktop) && (
-            <div className={`
-              ${isMobile && panelState === 'details' 
-                ? 'w-full h-full' 
-                : 'flex-1'
-              }
-              relative overflow-hidden
-              ${isMobile ? 'h-full' : 'min-h-[400px] lg:min-h-0'}
-            `}>
-              {transactionsData.selectedTransaction ? (
-                <TransactionDetailsPanel
-                  isVisible={true}
-                  transaction={transactionsData.selectedTransaction}
-                  onBack={handleBack}
-                  onDownloadReceipt={transactionsData.downloadReceipt}
-                />
-              ) : (
-                <div className="h-full flex items-center justify-center bg-gray-50">
-                  <div className="text-center p-4">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <CreditCard className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400" />
-                    </div>
-                    <h3 className="text-lg sm:text-xl font-medium text-gray-900 mb-2">
-                      Wybierz transakcję
-                    </h3>
-                    <p className="text-gray-500 text-sm">
-                      Kliknij na transakcję z listy, aby zobaczyć szczegóły
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+          <div className={`
+            ${isMobile 
+              ? 'w-full' 
+              : 'flex-1'
+            }
+            min-h-[280px] lg:min-h-0
+          `}>
+            <TransactionListPanel
+              isVisible={true}
+              transactions={filteredTransactions}
+              loading={transactionsData.loading}
+              error={transactionsData.error}
+              activeCategory={activeCategory}
+              onSelectTransaction={() => {}} // Usunięte - nie potrzebujemy szczegółów
+              onBack={() => {}} // Usunięte - nie ma powrotu
+              onExport={transactionsData.exportTransactions}
+              showBackButton={false} // Zawsze false - nie ma powrotu
+              // Filtry
+              searchTerm={transactionsData.searchTerm}
+              setSearchTerm={transactionsData.setSearchTerm}
+              dateFilter={transactionsData.dateFilter}
+              setDateFilter={transactionsData.setDateFilter}
+              startDate={transactionsData.startDate}
+              setStartDate={transactionsData.setStartDate}
+              endDate={transactionsData.endDate}
+              setEndDate={transactionsData.setEndDate}
+              onCustomDateFilter={transactionsData.onCustomDateFilter}
+              onDateFilterChange={transactionsData.onDateFilterChange}
+            />
+          </div>
         </div>
       </div>
     </div>

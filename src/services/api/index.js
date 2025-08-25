@@ -87,9 +87,4 @@ export default {
   // CEPiK - pobieranie danych pojazdu
   getVehicleDataByVin: (vin) => apiClient.post('/api/cepik/checkVehicle', { vin }).then(r => r.data.vehicle),
   
-  // SYMULACJA - funkcje mockowe dla rejestracji
-  simulateEmailVerification: AuthService.simulateEmailVerification,
-  simulateSMSCode: AuthService.simulateSMSCode,
-  simulateSMSVerification: AuthService.simulateSMSVerification,
-  simulateRegistration: AuthService.simulateRegistration
 };

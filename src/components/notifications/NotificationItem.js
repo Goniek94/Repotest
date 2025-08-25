@@ -35,25 +35,55 @@ const NotificationItem = ({ notification, onMarkAsRead, onDelete }) => {
       onMarkAsRead();
     }
     
+    // Generuj URL na podstawie typu powiadomienia i danych
+    let targetUrl = notification.actionUrl;
+    
+    // Jeśli nie ma actionUrl, generuj na podstawie typu powiadomienia
+    if (!targetUrl) {
+      switch (notification.type) {
+        case 'listing_added':
+        case 'listing_expiring':
+        case 'listing_expired':
+        case 'listing_status_changed':
+        case 'listing_liked':
+        case 'listing_viewed':
+          // Dla powiadomień o ogłoszeniach - przekieruj do szczegółów ogłoszenia
+          if (notification.relatedId) {
+            targetUrl = `/listing/${notification.relatedId}`;
+          } else if (notification.data?.listingId) {
+            targetUrl = `/listing/${notification.data.listingId}`;
+          } else {
+            // Fallback - przekieruj do listy ogłoszeń użytkownika
+            targetUrl = '/profile/listings';
+          }
+          break;
+        case 'new_message':
+        case 'NEW_MESSAGE':
+          // Dla powiadomień o wiadomościach - przekieruj do wiadomości
+          targetUrl = '/profile/messages';
+          break;
+        case 'payment_completed':
+        case 'payment_failed':
+        case 'payment_pending':
+          // Dla powiadomień o płatnościach - przekieruj do historii transakcji
+          targetUrl = '/profile/transactions';
+          break;
+        default:
+          // Domyślnie przekieruj do powiadomień
+          targetUrl = '/profile/notifications';
+          break;
+      }
+    }
+    
     // Przekierowujemy na stronę akcji
-    if (notification.actionUrl) {
-      navigate(notification.actionUrl);
+    if (targetUrl) {
+      navigate(targetUrl);
     }
   };
   
-  // Obsługa kliknięcia w powiadomienie
-  const handleClick = () => {
-    // Przekierowujemy do strony szczegółów powiadomienia
-    navigate(`/profil/notification/${notification.id}`);
-  };
-
-  
   return (
     <div
-      className={`relative overflow-hidden bg-white rounded-2xl shadow-lg border border-gray-100 p-6 transition-all duration-300 hover:shadow-xl hover:scale-[1.02] ${
-        notification.actionUrl ? 'cursor-pointer' : 'cursor-default'
-      } ${!notification.isRead ? 'bg-gradient-to-r from-blue-50 via-white to-purple-50' : ''}`}
-      onClick={handleClick}
+      className={`relative overflow-hidden bg-white rounded-2xl shadow-lg border border-gray-100 p-6 transition-all duration-300 hover:shadow-xl hover:scale-[1.02] cursor-default ${!notification.isRead ? 'bg-gradient-to-r from-blue-50 via-white to-purple-50' : ''}`}
     >
       {/* Gradient border dla nieprzeczytanych */}
       {!notification.isRead && (
@@ -217,12 +247,16 @@ const NotificationItem = ({ notification, onMarkAsRead, onDelete }) => {
             </span>
             
             {/* Przycisk akcji */}
-            {notification.actionUrl && notification.actionText && (
+            {(notification.actionUrl || notification.type.includes('listing') || notification.type.includes('message') || notification.type.includes('payment')) && (
               <button
                 onClick={handleActionClick}
                 className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 w-full sm:w-auto justify-center sm:justify-start"
               >
-                {notification.actionText}
+                {notification.actionText || 
+                  (notification.type.includes('listing') ? 'Zobacz ogłoszenie' :
+                   notification.type.includes('message') ? 'Zobacz wiadomości' :
+                   notification.type.includes('payment') ? 'Zobacz transakcje' :
+                   'Zobacz szczegóły')}
                 <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>

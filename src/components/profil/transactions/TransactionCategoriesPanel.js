@@ -6,7 +6,10 @@ import {
   ShoppingCart, 
   TrendingUp, 
   Clock,
-  CreditCard
+  CreditCard,
+  FileText,
+  History,
+  BarChart3
 } from 'lucide-react';
 
 /**
@@ -29,11 +32,11 @@ const TransactionCategoriesPanel = memo(({
       description: 'Wszystkie transakcje'
     },
     { 
-      id: 'wydatki', 
-      label: 'Wydatki', 
-      icon: XCircle, 
-      count: transactionCounts.expenses || 0,
-      description: 'Opłaty za ogłoszenia'
+      id: 'platnosci', 
+      label: 'Płatności', 
+      icon: CreditCard, 
+      count: transactionCounts.payments || 0,
+      description: 'Płatności za usługi'
     },
     { 
       id: 'zwroty', 
@@ -43,25 +46,25 @@ const TransactionCategoriesPanel = memo(({
       description: 'Zwroty za anulowane ogłoszenia'
     },
     { 
-      id: 'standardowe', 
-      label: 'Standardowe', 
-      icon: ShoppingCart, 
-      count: transactionCounts.standardListings || 0,
-      description: 'Opłaty za standardowe ogłoszenia'
+      id: 'faktury', 
+      label: 'Faktury', 
+      icon: FileText, 
+      count: transactionCounts.invoices || 0,
+      description: 'Faktury do pobrania'
     },
     { 
-      id: 'wyrozione', 
-      label: 'Wyróżnione', 
-      icon: TrendingUp, 
-      count: transactionCounts.featuredListings || 0,
-      description: 'Opłaty za wyróżnione ogłoszenia'
+      id: 'historia', 
+      label: 'Historia Transakcji', 
+      icon: History, 
+      count: transactionCounts.all || 0,
+      description: 'Pełna historia z możliwością wyszukiwania'
     },
     { 
-      id: 'miesiac', 
-      label: 'Ten miesiąc', 
-      icon: Clock, 
-      count: transactionCounts.thisMonth || 0,
-      description: 'Transakcje z tego miesiąca'
+      id: 'statystyki', 
+      label: 'Statystyki', 
+      icon: BarChart3, 
+      count: 0,
+      description: 'Statystyki i wykresy transakcji'
     }
   ];
 
@@ -148,18 +151,6 @@ const TransactionCategoriesPanel = memo(({
         </div>
       </div>
 
-      {/* Informacja o cenach - na dole panelu */}
-      <div className="hidden lg:block p-3 bg-[#35530A]/5 border-t border-gray-100">
-        <div className="flex items-center gap-2 mb-1">
-          <CreditCard className="w-3 h-3 text-[#35530A]" />
-          <p className="text-xs text-[#35530A] font-medium">
-            Cennik usług
-          </p>
-        </div>
-        <p className="text-xs text-[#35530A]/80">
-          Standardowe: 30 PLN • Wyróżnione: 50 PLN
-        </p>
-      </div>
     </div>
   );
 });

@@ -22,80 +22,6 @@ const useTransactions = (activeCategory, userId) => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  // ===== MOCK DATA =====
-  // Tymczasowe dane testowe - w przyszłości zastąpione prawdziwymi danymi z API
-  const mockTransactions = [
-    {
-      id: 'TXN001',
-      description: 'Opłata za publikację ogłoszenia',
-      amount: '-30.00 PLN',
-      date: '2024-01-15T10:30:00Z',
-      status: 'Zakończona',
-      category: 'Ogłoszenie standardowe',
-      type: 'standard_listing',
-      paymentMethod: 'Karta kredytowa',
-      adTitle: 'BMW X5 2018 - Stan idealny',
-      adId: 'AD001'
-    },
-    {
-      id: 'TXN002',
-      description: 'Opłata za wyróżnienie ogłoszenia',
-      amount: '-50.00 PLN',
-      date: '2024-01-10T14:20:00Z',
-      status: 'Zakończona',
-      category: 'Ogłoszenie wyróżnione',
-      type: 'featured_listing',
-      paymentMethod: 'BLIK'
-    },
-    {
-      id: 'TXN003',
-      description: 'Opłata za wyróżnienie ogłoszenia',
-      amount: '-50.00 PLN',
-      date: '2024-01-08T09:15:00Z',
-      status: 'Zakończona',
-      category: 'Ogłoszenie wyróżnione',
-      type: 'featured_listing',
-      paymentMethod: 'Przelew bankowy',
-      adTitle: 'Audi A4 2020 - Jak nowy',
-      adId: 'AD002'
-    },
-    {
-      id: 'TXN004',
-      description: 'Zwrot za anulowane ogłoszenie',
-      amount: '+30.00 PLN',
-      date: '2024-01-05T16:45:00Z',
-      status: 'Zakończona',
-      category: 'Zwrot',
-      type: 'refund',
-      paymentMethod: 'Przelew bankowy',
-      adTitle: 'Mercedes C-Class 2019',
-      adId: 'AD003'
-    },
-    {
-      id: 'TXN005',
-      description: 'Opłata za publikację ogłoszenia',
-      amount: '-30.00 PLN',
-      date: '2024-01-03T11:30:00Z',
-      status: 'W trakcie',
-      category: 'Ogłoszenie standardowe',
-      type: 'standard_listing',
-      paymentMethod: 'PayPal',
-      adTitle: 'Volkswagen Golf 2021',
-      adId: 'AD004'
-    },
-    {
-      id: 'TXN006',
-      description: 'Opłata za wyróżnienie ogłoszenia',
-      amount: '-50.00 PLN',
-      date: '2024-01-02T15:20:00Z',
-      status: 'Zakończona',
-      category: 'Ogłoszenie wyróżnione',
-      type: 'featured_listing',
-      paymentMethod: 'Przelewy24',
-      adTitle: 'Toyota Corolla 2022',
-      adId: 'AD005'
-    }
-  ];
 
   // ===== FUNKCJE POMOCNICZE =====
   
@@ -286,15 +212,15 @@ const useTransactions = (activeCategory, userId) => {
           setTransactions(formattedTransactions);
           console.log(`Pobrano ${formattedTransactions.length} transakcji z API`);
         } else {
-          // Fallback na mock data jeśli brak transakcji
-          console.log('Brak transakcji w API, używam mock data');
-          setTransactions(mockTransactions);
+          // Brak transakcji w API
+          console.log('Brak transakcji w API');
+          setTransactions([]);
         }
       } catch (err) {
         console.error('Błąd pobierania transakcji z API:', err);
         setError('Nie udało się pobrać historii transakcji');
-        // Fallback na mock data w przypadku błędu
-        setTransactions(mockTransactions);
+        // Ustaw pustą tablicę w przypadku błędu
+        setTransactions([]);
       } finally {
         setLoading(false);
       }

@@ -377,7 +377,7 @@ const UserListings = memo(() => {
           {/* Lewy panel - kategorie normalnej wielkości */}
           <div className="hidden lg:block lg:w-64 flex-shrink-0 border-r border-gray-200">
             <div className="bg-white h-full">
-              <div className="p-4 border-b border-gray-200">
+              <div className="p-4">
                 <h3 className="text-sm font-medium text-gray-700 mb-4">KATEGORIE</h3>
                 
                 {/* Desktop - pełne przyciski pionowo jak na zdjęciu */}
@@ -468,8 +468,8 @@ const UserListings = memo(() => {
                 </div>
               </div>
               
-              {/* Informacja na dole panelu */}
-              <div className="p-3 bg-[#35530A]/5 border-t border-gray-100">
+              {/* Informacja na dole panelu - przeniesiona na sam dół */}
+              <div className="absolute bottom-0 left-0 right-0 p-3 bg-[#35530A]/5 border-t border-gray-100">
                 <p className="text-xs text-[#35530A] text-center font-medium">
                   Kliknij kategorię aby zobaczyć ogłoszenia
                 </p>
@@ -518,10 +518,30 @@ const UserListings = memo(() => {
                             </button>
                           </div>
                         ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+          </div>
+        </div>
+
+        {/* Footer mobilny - tylko na urządzeniach mobilnych */}
+        {isMobile && (
+          <div className="bg-gray-50 border-t border-gray-200 p-3">
+            <div className="flex items-center justify-between text-xs text-gray-500">
+              <span>
+                {allListings.length > 0 
+                  ? `${allListings.length} ${allListings.length === 1 ? 'ogłoszenie' : 'ogłoszeń'}`
+                  : 'Brak ogłoszeń'
+                }
+              </span>
+              <span className="text-[#35530A] font-medium">
+                {activeTab === 'active' && 'Aktywne'}
+                {activeTab === 'drafts' && 'Wersje robocze'}
+                {activeTab === 'favorites' && 'Ulubione'}
+                {activeTab === 'completed' && 'Zakończone'}
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
               </div>
             )}
 

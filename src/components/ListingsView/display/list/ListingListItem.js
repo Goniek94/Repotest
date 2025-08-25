@@ -22,6 +22,12 @@ const ListingListItem = memo(({
   isFavorite, 
   message 
 }) => {
+  // Function to truncate title to 120 characters
+  const truncateTitle = (title) => {
+    if (!title) return '';
+    return title.length > 120 ? title.substring(0, 120) + '...' : title;
+  };
+
   // Sprawdzamy, czy ogłoszenie jest wyróżnione
   const isFeatured = listing.featured || listing.listingType === 'wyróżnione';
   
@@ -81,93 +87,93 @@ const ListingListItem = memo(({
       <div className="flex flex-col sm:flex-row flex-grow">
         {/* Główne informacje */}
         <div className="flex-grow p-2 sm:p-3 lg:p-3 flex flex-col">
-          <div className="mb-2 sm:mb-2.5 lg:mb-3">
-            <h3 className="text-lg sm:text-xl lg:text-xl font-bold mb-0.5 sm:mb-1 lg:mb-1 line-clamp-1">{listing.title}</h3>
-            <p className="text-sm sm:text-base lg:text-base text-gray-600 line-clamp-2 leading-relaxed">{listing.headline || ''}</p>
+          <div className="mb-1.5 sm:mb-2 lg:mb-2">
+            <h3 className="text-fluid-sm font-bold mb-0.5 sm:mb-0.5 lg:mb-0.5 line-clamp-1 leading-fluid-tight" title={listing.title}>{truncateTitle(listing.title)}</h3>
+            <p className="text-fluid-xs text-gray-600 line-clamp-2 leading-fluid-normal">{listing.headline || ''}</p>
           </div>
 
           {/* Parametry w 4 kolumnach po 2 parametry */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-2 sm:gap-x-4 sm:gap-y-2 mt-3" style={{ transform: 'translateY(-10%)' }}>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-3 sm:gap-x-4 sm:gap-y-4 mt-6 sm:mt-8">
             {/* Kolumna 1 */}
-            <div className="space-y-2">
+            <div className="space-y-3">
               {/* Paliwo */}
-              <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
-                <Fuel className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
-                <div>
-                  <div className="text-xs text-gray-500">Paliwo</div>
-                  <div className="text-sm font-medium">{listing.fuel}</div>
+              <div className="flex items-start gap-2.5 text-gray-700">
+                <Fuel className="w-4 h-4 sm:w-4 sm:h-4 text-gray-800 flex-shrink-0 mt-0.5" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs text-gray-500 leading-tight mb-0.5">Paliwo</div>
+                  <div className="text-sm font-medium text-gray-900 leading-tight">{listing.fuel}</div>
                 </div>
               </div>
               
               {/* Przebieg */}
-              <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
-                <Gauge className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
-                <div>
-                  <div className="text-xs text-gray-500">Przebieg</div>
-                  <div className="text-sm font-medium">{listing.mileage} km</div>
+              <div className="flex items-start gap-2.5 text-gray-700">
+                <Gauge className="w-4 h-4 sm:w-4 sm:h-4 text-gray-800 flex-shrink-0 mt-0.5" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs text-gray-500 leading-tight mb-0.5">Przebieg</div>
+                  <div className="text-sm font-medium text-gray-900 leading-tight">{listing.mileage} km</div>
                 </div>
               </div>
             </div>
 
             {/* Kolumna 2 */}
-            <div className="space-y-2">
+            <div className="space-y-3">
               {/* Pojemność */}
-              <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
-                <Box className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
-                <div>
-                  <div className="text-xs text-gray-500">Pojemność</div>
-                  <div className="text-sm font-medium">{listing.engineCapacity}</div>
+              <div className="flex items-start gap-2.5 text-gray-700">
+                <Box className="w-4 h-4 sm:w-4 sm:h-4 text-gray-800 flex-shrink-0 mt-0.5" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs text-gray-500 leading-tight mb-0.5">Pojemność</div>
+                  <div className="text-sm font-medium text-gray-900 leading-tight">{listing.engineCapacity}</div>
                 </div>
               </div>
 
               {/* Rok */}
-              <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
-                <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
-                <div>
-                  <div className="text-xs text-gray-500">Rok</div>
-                  <div className="text-sm font-medium">{listing.year}</div>
+              <div className="flex items-start gap-2.5 text-gray-700">
+                <Calendar className="w-4 h-4 sm:w-4 sm:h-4 text-gray-800 flex-shrink-0 mt-0.5" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs text-gray-500 leading-tight mb-0.5">Rok</div>
+                  <div className="text-sm font-medium text-gray-900 leading-tight">{listing.year}</div>
                 </div>
               </div>
             </div>
 
             {/* Kolumna 3 */}
-            <div className="space-y-2">
+            <div className="space-y-3">
               {/* Moc */}
-              <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
-                <Power className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
-                <div>
-                  <div className="text-xs text-gray-500">Moc</div>
-                  <div className="text-sm font-medium">{listing.power}</div>
+              <div className="flex items-start gap-2.5 text-gray-700">
+                <Power className="w-4 h-4 sm:w-4 sm:h-4 text-gray-800 flex-shrink-0 mt-0.5" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs text-gray-500 leading-tight mb-0.5">Moc</div>
+                  <div className="text-sm font-medium text-gray-900 leading-tight">{listing.power}</div>
                 </div>
               </div>
               
               {/* Napęd */}
-              <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
-                <Settings className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
-                <div>
-                  <div className="text-xs text-gray-500">Napęd</div>
-                  <div className="text-sm font-medium">{listing.drive}</div>
+              <div className="flex items-start gap-2.5 text-gray-700">
+                <Settings className="w-4 h-4 sm:w-4 sm:h-4 text-gray-800 flex-shrink-0 mt-0.5" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs text-gray-500 leading-tight mb-0.5">Napęd</div>
+                  <div className="text-sm font-medium text-gray-900 leading-tight">{listing.drive}</div>
                 </div>
               </div>
             </div>
 
             {/* Kolumna 4 */}
-            <div className="space-y-2">
+            <div className="space-y-3">
               {/* Skrzynia biegów */}
-              <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
-                <Car className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
-                <div>
-                  <div className="text-xs text-gray-500">Skrzynia</div>
-                  <div className="text-sm font-medium">{listing.transmission || listing.gearbox || listing.transmissionType || 'N/A'}</div>
+              <div className="flex items-start gap-2.5 text-gray-700">
+                <Car className="w-4 h-4 sm:w-4 sm:h-4 text-gray-800 flex-shrink-0 mt-0.5" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs text-gray-500 leading-tight mb-0.5">Skrzynia</div>
+                  <div className="text-sm font-medium text-gray-900 leading-tight">{listing.transmission || listing.gearbox || listing.transmissionType || 'N/A'}</div>
                 </div>
               </div>
 
               {/* Kraj pochodzenia */}
-              <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
-                <Globe className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
-                <div>
-                  <div className="text-xs text-gray-500">Pochodzenie</div>
-                  <div className="text-sm font-medium">
+              <div className="flex items-start gap-2.5 text-gray-700">
+                <Globe className="w-4 h-4 sm:w-4 sm:h-4 text-gray-800 flex-shrink-0 mt-0.5" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs text-gray-500 leading-tight mb-0.5">Pochodzenie</div>
+                  <div className="text-sm font-medium text-gray-900 leading-tight">
                     {listing.countryOfOrigin || 
                      (listing.imported === 'Tak' || listing.imported === 'tak' ? 'Import' : 'Polska')}
                   </div>
@@ -181,21 +187,21 @@ const ListingListItem = memo(({
         <div className="w-full sm:w-[180px] lg:w-[192px] p-2 sm:p-3 lg:p-3 flex flex-col sm:flex-col bg-gray-50 border-t sm:border-t-0 sm:border-l border-gray-100">
           {/* Na desktopach najpierw cena, potem sprzedawca/lokalizacja */}
           {/* Cena */}
-          <div className="bg-[#35530A] rounded-sm p-2 sm:p-3 lg:p-3 shadow-md order-2 sm:order-1 mt-1 sm:mt-0 sm:mb-3 lg:mb-4">
-            <div className="text-xl sm:text-2xl lg:text-2xl font-bold text-white tracking-tight text-center">
+          <div className="bg-[#35530A] rounded-sm p-1.5 sm:p-2 lg:p-2 shadow-md order-2 sm:order-1 mt-1 sm:mt-0 sm:mb-2 lg:mb-2">
+            <div className="text-fluid-lg font-bold text-white tracking-tight text-center leading-fluid-tight">
               {listing.price.toLocaleString('pl-PL')} zł
             </div>
           </div>
           
           {/* Sprzedawca i lokalizacja w jednym wierszu na mobile, w kolumnie na desktop */}
-          <div className="flex flex-row sm:flex-col gap-1.5 sm:gap-2 mb-1 sm:mb-0 order-1 sm:order-2">
+          <div className="flex flex-row sm:flex-col gap-2 sm:gap-3 mb-1 sm:mb-0 order-1 sm:order-2">
             {/* Sprzedawca */}
             <div className="flex-1 sm:w-full">
-              <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
-                <User className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-black" />
+              <div className="flex items-center gap-2 text-gray-700">
+                <User className="w-4 h-4 sm:w-5 sm:h-5 lg:w-5 lg:h-5 text-[#35530A] flex-shrink-0" />
                 <div>
-                  <div className="text-sm sm:text-xs lg:text-sm text-gray-500">Sprzedawca</div>
-                  <div className="text-base sm:text-base lg:text-base font-medium text-[#35530A]">
+                  <div className="text-xs text-gray-500 leading-tight">Sprzedawca</div>
+                  <div className="text-sm font-semibold text-[#35530A] leading-tight">
                     {listing.sellerType === 'prywatny' ? 'Prywatny' : 'Firma'}
                   </div>
                 </div>
@@ -204,11 +210,11 @@ const ListingListItem = memo(({
 
             {/* Lokalizacja */}
             <div className="flex-1 sm:w-full mt-0 sm:mt-2">
-              <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2 text-gray-700">
-                <MapPin className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-black" />
+              <div className="flex items-center gap-2 text-gray-700">
+                <MapPin className="w-4 h-4 sm:w-5 sm:h-5 lg:w-5 lg:h-5 text-[#35530A] flex-shrink-0" />
                 <div>
-                  <div className="text-sm sm:text-xs lg:text-sm text-gray-500">Lokalizacja</div>
-                  <div className="text-base sm:text-base lg:text-base font-medium">
+                  <div className="text-xs text-gray-500 leading-tight">Lokalizacja</div>
+                  <div className="text-sm font-semibold text-gray-900 leading-tight">
                     {listing.city}
                   </div>
                 </div>

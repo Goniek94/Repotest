@@ -81,11 +81,13 @@ const Navigation = () => {
 
   return (
     <header className="bg-white text-gray-800 sticky top-0 z-50 shadow-md">
-      {/* Logo przy samej lewej krawędzi */}
-      <div className="w-full h-16 flex items-center justify-between pr-4">
-        <Logo />
+      {/* Logo maksymalnie w lewo */}
+      <div className="w-full h-16 flex items-center justify-between pl-0 pr-3 sm:pr-4 md:pr-5 lg:pr-6">
+        <div className="-ml-12 sm:-ml-10 md:-ml-8 lg:-ml-6 xl:-ml-4">
+          <Logo />
+        </div>
 
-        <div className="hidden md:flex items-center space-x-6">
+        <div className="hidden md:flex items-center space-x-4">
           <DesktopNav user={user} />
           <AddListingButton user={user} setIsLoginModalOpen={setIsLoginModalOpen} />
 
@@ -106,7 +108,7 @@ const Navigation = () => {
           ) : (
             <button
               onClick={handleOpenLogin}
-              className="px-4 py-2 font-bold uppercase hover:bg-gray-800 bg-gray-900 text-white rounded-[2px] transition-colors text-sm"
+              className="btn-responsive font-bold uppercase hover:bg-gray-800 bg-gray-900 text-white rounded-[2px] transition-colors"
             >
               Zaloguj się
             </button>

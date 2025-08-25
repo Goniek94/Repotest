@@ -55,8 +55,8 @@ const MainFeatureListing = ({ listing }) => {
       className="bg-white shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-[2px] overflow-hidden flex flex-col cursor-pointer h-full max-w-sm md:max-w-none mx-auto md:mx-0 md:shadow-xl md:shadow-gray-400/50 md:hover:shadow-2xl md:hover:shadow-gray-500/60" 
       onClick={() => navigate(`/listing/${listing._id}`)}
     >
-      {/* Zdjęcie - zwiększone na desktopach dla lepszej widoczności */}
-      <div className="relative h-40 md:h-[280px] lg:h-[320px]">
+      {/* Zdjęcie - zwiększone na mobilnych i desktopach dla lepszej widoczności */}
+      <div className="relative h-56 sm:h-48 md:h-[280px] lg:h-[320px]">
         {imageUrl ? (
           <img
             src={imageUrl}
@@ -79,95 +79,95 @@ const MainFeatureListing = ({ listing }) => {
 
       {/* Main content section - zmniejszone paddingi */}
       <div className="p-3 md:p-4 lg:p-4 flex-1 flex flex-col bg-white">
-        <h2 className="text-base md:text-lg font-bold text-gray-900 mb-1.5 line-clamp-1">{title}</h2>
-        <p className="text-xs md:text-sm text-gray-600 mb-3 md:mb-4 line-clamp-2 leading-relaxed">{shortDesc}</p>
+        <h2 className="text-lg md:text-lg font-bold text-gray-900 mb-2 md:mb-1.5 line-clamp-1">{title}</h2>
+        <p className="text-sm md:text-sm text-gray-600 mb-4 md:mb-4 line-clamp-2 leading-relaxed">{shortDesc}</p>
 
-        {/* Mobile: Kompaktowy układ - zmniejszone odstępy */}
-        <div className="md:hidden space-y-2 mb-3">
+        {/* Mobile: Zwiększone rozmiary dla lepszej widoczności */}
+        <div className="md:hidden space-y-3 mb-4">
           {/* Pierwsza linia */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="flex items-center gap-1.5">
-              <div className="flex items-center justify-center w-5 h-5 bg-gray-100 rounded-full flex-shrink-0">
-                <YearIcon className="w-2.5 h-2.5 text-gray-600" />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center w-6 h-6 bg-gray-100 rounded-full flex-shrink-0">
+                <YearIcon className="w-3.5 h-3.5 text-gray-600" />
               </div>
               <div className="min-w-0">
-                <div className="text-[9px] text-gray-500 font-medium">Rok</div>
-                <div className="text-[11px] font-bold text-gray-900">{year}</div>
+                <div className="text-xs text-gray-500 font-medium">Rok</div>
+                <div className="text-sm text-gray-900">{year}</div>
               </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <div className="flex items-center justify-center w-5 h-5 bg-gray-100 rounded-full flex-shrink-0">
-                <FuelIcon className="w-2.5 h-2.5 text-gray-600" />
+            <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center w-6 h-6 bg-gray-100 rounded-full flex-shrink-0">
+                <FuelIcon className="w-3.5 h-3.5 text-gray-600" />
               </div>
               <div className="min-w-0">
-                <div className="text-[9px] text-gray-500 font-medium">Paliwo</div>
-                <div className="text-[11px] font-bold text-gray-900">{fuelType}</div>
+                <div className="text-xs text-gray-500 font-medium">Paliwo</div>
+                <div className="text-sm text-gray-900">{fuelType}</div>
               </div>
             </div>
           </div>
 
           {/* Druga linia */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="flex items-center gap-1.5">
-              <div className="flex items-center justify-center w-5 h-5 bg-gray-100 rounded-full flex-shrink-0">
-                <MileageIcon className="w-2.5 h-2.5 text-gray-600" />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center w-6 h-6 bg-gray-100 rounded-full flex-shrink-0">
+                <MileageIcon className="w-3.5 h-3.5 text-gray-600" />
               </div>
               <div className="min-w-0">
-                <div className="text-[9px] text-gray-500 font-medium">Przebieg</div>
-                <div className="text-[11px] font-bold text-gray-900">{Math.round(mileage/1000)} tys. km</div>
+                <div className="text-xs text-gray-500 font-medium">Przebieg</div>
+                <div className="text-sm text-gray-900">{Math.round(mileage/1000)} tys. km</div>
               </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <div className="flex items-center justify-center w-5 h-5 bg-gray-100 rounded-full flex-shrink-0">
-                <PowerIcon className="w-2.5 h-2.5 text-gray-600" />
+            <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center w-6 h-6 bg-gray-100 rounded-full flex-shrink-0">
+                <PowerIcon className="w-3.5 h-3.5 text-gray-600" />
               </div>
               <div className="min-w-0">
-                <div className="text-[9px] text-gray-500 font-medium">Moc</div>
-                <div className="text-[11px] font-bold text-gray-900">{power}</div>
+                <div className="text-xs text-gray-500 font-medium">Moc</div>
+                <div className="text-sm text-gray-900">{power}</div>
               </div>
             </div>
           </div>
 
           {/* Trzecia linia */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="flex items-center gap-1.5">
-              <div className="flex items-center justify-center w-5 h-5 bg-gray-100 rounded-full flex-shrink-0">
-                <CapacityIcon className="w-2.5 h-2.5 text-gray-600" />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center w-6 h-6 bg-gray-100 rounded-full flex-shrink-0">
+                <CapacityIcon className="w-3.5 h-3.5 text-gray-600" />
               </div>
               <div className="min-w-0">
-                <div className="text-[9px] text-gray-500 font-medium">Pojemność</div>
-                <div className="text-[11px] font-bold text-gray-900">{capacity} cm³</div>
+                <div className="text-xs text-gray-500 font-medium">Pojemność</div>
+                <div className="text-sm text-gray-900">{capacity} cm³</div>
               </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <div className="flex items-center justify-center w-5 h-5 bg-gray-100 rounded-full flex-shrink-0">
-                <GearboxIcon className="w-2.5 h-2.5 text-gray-600" />
+            <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center w-6 h-6 bg-gray-100 rounded-full flex-shrink-0">
+                <GearboxIcon className="w-3.5 h-3.5 text-gray-600" />
               </div>
               <div className="min-w-0">
-                <div className="text-[9px] text-gray-500 font-medium">Skrzynia</div>
-                <div className="text-[11px] font-bold text-gray-900">{transmission === 'Automatyczna' ? 'automatyczna' : 'manualna'}</div>
+                <div className="text-xs text-gray-500 font-medium">Skrzynia</div>
+                <div className="text-sm text-gray-900">{transmission === 'Automatyczna' ? 'automatyczna' : 'manualna'}</div>
               </div>
             </div>
           </div>
 
           {/* Czwarta linia */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="flex items-center gap-1.5">
-              <div className="flex items-center justify-center w-5 h-5 bg-gray-100 rounded-full flex-shrink-0">
-                <DriveIcon className="w-2.5 h-2.5 text-gray-600" />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center w-6 h-6 bg-gray-100 rounded-full flex-shrink-0">
+                <DriveIcon className="w-3.5 h-3.5 text-gray-600" />
               </div>
               <div className="min-w-0">
-                <div className="text-[9px] text-gray-500 font-medium">Napęd</div>
-                <div className="text-[11px] font-bold text-gray-900">Tylny</div>
+                <div className="text-xs text-gray-500 font-medium">Napęd</div>
+                <div className="text-sm text-gray-900">Tylny</div>
               </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <div className="flex items-center justify-center w-5 h-5 bg-gray-100 rounded-full flex-shrink-0">
-                <Globe className="w-2.5 h-2.5 text-gray-600" />
+            <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center w-6 h-6 bg-gray-100 rounded-full flex-shrink-0">
+                <Globe className="w-3.5 h-3.5 text-gray-600" />
               </div>
               <div className="min-w-0">
-                <div className="text-[9px] text-gray-500 font-medium">Pochodzenie</div>
-                <div className="text-[11px] font-bold text-gray-900">{countryOfOrigin}</div>
+                <div className="text-xs text-gray-500 font-medium">Pochodzenie</div>
+                <div className="text-sm text-gray-900">{countryOfOrigin}</div>
               </div>
             </div>
           </div>
@@ -175,24 +175,24 @@ const MainFeatureListing = ({ listing }) => {
           {/* Separator */}
           <div className="border-t border-gray-200 my-2"></div>
           
-          {/* Piąta linia - pod separatorem */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="flex items-center gap-1.5">
-              <div className="flex items-center justify-center w-5 h-5 bg-gray-100 rounded-full flex-shrink-0">
-                <User className="w-2.5 h-2.5 text-gray-600" />
+          {/* Piąta linia - pod separatorem - lekko powiększona */}
+          <div className="grid grid-cols-2 gap-3 py-1">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center w-6 h-6 bg-gray-100 rounded-full flex-shrink-0">
+                <User className="w-3.5 h-3.5 text-gray-800" />
               </div>
               <div className="min-w-0">
-                <div className="text-[9px] text-gray-500 font-medium">Sprzedawca</div>
-                <div className="text-[11px] font-bold text-gray-900">prywatny</div>
+                <div className="text-xs text-gray-500 font-medium">Sprzedawca</div>
+                <div className="text-sm text-gray-900 font-semibold">prywatny</div>
               </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <div className="flex items-center justify-center w-5 h-5 bg-gray-100 rounded-full flex-shrink-0">
-                <MapPin className="w-2.5 h-2.5 text-gray-600" />
+            <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center w-6 h-6 bg-gray-100 rounded-full flex-shrink-0">
+                <MapPin className="w-3.5 h-3.5 text-gray-800" />
               </div>
               <div className="min-w-0">
-                <div className="text-[9px] text-gray-500 font-medium">Lokalizacja</div>
-                <div className="text-[11px] font-bold text-gray-900 truncate">{city}</div>
+                <div className="text-xs text-gray-500 font-medium">Lokalizacja</div>
+                <div className="text-sm text-gray-900 font-semibold truncate">{city}</div>
               </div>
             </div>
           </div>
@@ -220,22 +220,22 @@ const MainFeatureListing = ({ listing }) => {
       </div>
 
       {/* Location and Seller section - hidden on mobile, visible on desktop */}
-      <div className="hidden md:block px-3 sm:px-4 md:px-4 py-2 sm:py-3 bg-white border-t border-gray-100">
+      <div className="hidden md:block px-3 sm:px-4 md:px-4 py-1.5 sm:py-1 bg-white border-t border-gray-100">
         <div className="grid grid-cols-2 gap-x-4">
           <SpecItem icon={<MapPin className="w-5 h-5" />} label="Lokalizacja" value={city} />
           <SpecItem icon={<User className="w-5 h-5" />} label="Sprzedawca" value={sellerType} />
         </div>
       </div>
 
-      {/* Price section - zmniejszony */}
-      <div className="bg-[#35530A] text-white px-3 py-2.5 md:px-4 lg:px-4 md:py-2.5 lg:py-3 flex justify-between items-center border-t border-[#2A4208] md:border-t">
-        <span className="text-base md:text-lg lg:text-xl font-bold">{price.toLocaleString('pl-PL')} zł</span>
+      {/* Price section - zwiększony na mobilnych */}
+      <div className="bg-[#35530A] text-white px-3 py-3 md:px-4 lg:px-4 md:py-2.5 lg:py-3 flex justify-between items-center border-t border-[#2A4208] md:border-t">
+        <span className="text-lg md:text-lg lg:text-xl font-bold">{price.toLocaleString('pl-PL')} zł</span>
         <button
           onClick={(e) => {
             e.stopPropagation();
             navigate(`/listing/${listing._id}`);
           }}
-          className="bg-white text-[#35530A] px-3 py-1.5 md:px-3 lg:px-4 md:py-1 lg:py-1.5 rounded-[2px] text-xs md:text-sm font-medium md:font-semibold hover:bg-gray-100 transition-colors"
+          className="bg-white text-[#35530A] px-4 py-2 md:px-3 lg:px-4 md:py-1 lg:py-1.5 rounded-[2px] text-sm md:text-sm font-semibold hover:bg-gray-100 transition-colors"
         >
           Szczegóły
         </button>

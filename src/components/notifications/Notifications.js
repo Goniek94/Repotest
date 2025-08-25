@@ -1,5 +1,4 @@
 import React, { useState, memo, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import { Bell, Inbox, CheckCircle, MessageCircle, Settings, Trash2, FileText, CreditCard, MessageSquare, AlertTriangle, Cog } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -21,39 +20,38 @@ const Notifications = memo(() => {
   // ===== HOOKS =====
   const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification, isLoading } = useNotifications();
   const { user } = useAuth();
-  const [searchParams, setSearchParams] = useSearchParams();
   const { isMobile, isTablet, isDesktop } = useResponsiveLayout();
   
   // ===== STATE =====
-  // Aktywna kategoria powiadomień
-  const [activeTab, setActiveTab] = useState(() => {
-    const initial = searchParams.get('category');
-    return ['all', 'unread', 'listings', 'messages', 'comments', 'payments', 'system', 'preferences'].includes(initial) ? initial : 'all';
-  });
+  // Aktywna kategoria powiadomień - domyślnie 'all'
+  const [activeTab, setActiveTab] = useState('all');
   
   // Stan paneli - kontroluje które panele są widoczne na mobile
-  const [panelState, setPanelState] = useState('categories'); // categories, list
+  const [panelState, setPanelState] = useState(() => {
+    // Na mobilnych od razu pokazuj listę z domyślną kategorią
+    return isMobile ? 'list' : 'categories';
+  });
 
   // ===== EFFECTS =====
   /**
    * Automatycznie otwórz panel listy z powiadomieniami po załadowaniu
    */
   useEffect(() => {
-    // Jeśli nie ma parametru category w URL, ustaw domyślny
-    if (!searchParams.get('category')) {
-      setSearchParams({ category: 'all' });
-      // Na mobilnych pokaż kategorie, na desktop od razu listę
-      setPanelState(isMobile ? 'categories' : 'list');
-    }
-  }, [searchParams, setSearchParams, isMobile]);
+    // Na mobilnych od razu pokaż listę z wszystkimi powiadomieniami, na desktop od razu listę
+    setPanelState('list');
+  }, [isMobile]);
 
   // ===== HANDLERS =====
   /**
    * Obsługa zmiany kategorii powiadomień
    */
-  const handleTabChange = (tab) => {
+  const handleTabChange = (tab, event) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
     setActiveTab(tab);
-    setSearchParams({ category: tab });
+    // Nie używamy setSearchParams - tylko lokalny stan
     setPanelState('list'); // Pokaż panel listy
   };
 
@@ -105,8 +103,6 @@ const Notifications = memo(() => {
    */
   const getFilteredNotifications = () => {
     switch(activeTab) {
-      case 'unread':
-        return notifications.filter(notification => !notification.isRead);
       case 'listings':
         return notifications.filter(notification => 
           notification.type === 'listing_added' || 
@@ -201,21 +197,22 @@ const Notifications = memo(() => {
           />
         </div>
 
-        {/* Mobile Layout - Categories in grid under header */}
-        {isMobile && panelState === 'categories' && (
-          <div className="bg-white border-b border-gray-200">
-            <div className="p-4">
-              <h3 className="text-sm font-medium text-gray-700 mb-4 uppercase tracking-wide">KATEGORIE</h3>
-              <div className="grid grid-cols-2 gap-3">
+        {/* Mobile Layout - 6 kategorii powiadomień pod nagłówkiem jak w Messages */}
+        {isMobile && (
+          <div className="bg-white border-b border-gray-200 -mt-1">
+            <div className="px-2 py-2">
+              <div className="flex justify-center gap-2 relative">
+                {/* Lewa kreska separator */}
+                <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-px h-8 bg-gray-300"></div>
+                {/* Prawa kreska separator */}
+                <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-px h-8 bg-gray-300"></div>
                 {[
                   { id: 'all', label: 'Wszystkie', icon: Bell, count: categoryCounts.all },
-                  { id: 'unread', label: 'Nieprzeczytane', icon: Inbox, count: categoryCounts.unread },
                   { id: 'listings', label: 'Ogłoszenia', icon: FileText, count: categoryCounts.listings },
                   { id: 'messages', label: 'Wiadomości', icon: MessageCircle, count: categoryCounts.messages },
-                  { id: 'comments', label: 'Komentarze', icon: MessageSquare, count: categoryCounts.comments },
                   { id: 'payments', label: 'Płatności', icon: CreditCard, count: categoryCounts.payments },
-                  { id: 'system', label: 'Systemowe', icon: AlertTriangle, count: categoryCounts.system },
-                  { id: 'preferences', label: 'Preferencje', icon: Cog, count: categoryCounts.preferences }
+                  { id: 'system', label: 'Systemowe', icon: Settings, count: categoryCounts.system },
+                  { id: 'comments', label: 'Komentarze', icon: MessageSquare, count: categoryCounts.comments }
                 ].map(category => {
                   const Icon = category.icon;
                   const isActive = activeTab === category.id;
@@ -224,37 +221,32 @@ const Notifications = memo(() => {
                   return (
                     <button
                       key={category.id}
-                      onClick={() => handleTabChange(category.id)}
+                      onClick={(e) => handleTabChange(category.id, e)}
                       className={`
-                        flex flex-col items-center justify-center
-                        p-3 rounded-xl
-                        transition-all duration-200 group
-                        h-16 relative
+                        flex items-center justify-center
+                        w-12 h-12 rounded-xl
+                        transition-all duration-200
+                        relative
                         ${isActive 
-                          ? 'bg-[#35530A] text-white shadow-lg' 
-                          : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                          ? 'bg-[#35530A] text-white' 
+                          : 'bg-gray-50 text-gray-600 hover:bg-gray-100 active:bg-gray-200'
                         }
                       `}
+                      title={category.label}
                     >
-                      <Icon className={`
-                        w-5 h-5 mb-1
-                        ${isActive ? 'text-white' : 'text-gray-600'}
-                      `} />
-                      <span className={`
-                        text-xs font-medium text-center
-                        ${isActive ? 'text-white' : 'text-gray-700'}
-                      `}>
-                        {category.label}
-                      </span>
+                      <Icon className="w-5 h-5" />
                       {hasCount && (
                         <div className={`
                           absolute -top-1 -right-1
-                          w-2 h-2 rounded-full
+                          w-5 h-5 
+                          rounded-full text-xs font-bold 
+                          flex items-center justify-center
                           ${isActive 
-                            ? 'bg-yellow-400' 
-                            : 'bg-yellow-500'
+                            ? 'bg-white text-[#35530A]' 
+                            : 'bg-red-500 text-white'
                           }
                         `}>
+                          {category.count > 9 ? '9+' : category.count}
                         </div>
                       )}
                     </button>

@@ -21,13 +21,6 @@ const NotificationsCategoriesPanel = memo(({
       description: 'Wszystkie powiadomienia'
     },
     { 
-      id: 'unread', 
-      label: 'Nieprzeczytane', 
-      icon: Inbox, 
-      count: categoryCounts.unread,
-      description: 'Nieprzeczytane powiadomienia'
-    },
-    { 
       id: 'listings', 
       label: 'Ogłoszenia', 
       icon: FileText, 
@@ -101,7 +94,7 @@ const NotificationsCategoriesPanel = memo(({
             return (
               <button
                 key={category.id}
-                onClick={() => onTabChange(category.id)}
+                onClick={(e) => onTabChange(category.id, e)}
                 className={`
                   w-full flex items-center gap-2 sm:gap-3 
                   px-3 sm:px-4 py-2 sm:py-3 
