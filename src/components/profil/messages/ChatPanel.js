@@ -1,5 +1,5 @@
 import React, { memo, useState, useRef, useEffect } from 'react';
-import { ArrowLeft, Send, MoreVertical, Phone, Video, UserX, Flag, VolumeX, Archive, Star, Trash2, Search, Paperclip, Smile, Info, Save, Check } from 'lucide-react';
+import { ArrowLeft, Send, MoreVertical, Phone, Video, UserX, Flag, VolumeX, Archive, Star, Trash2, Search, Paperclip, Smile, Info, Save, Check, Edit3, Copy, RotateCcw, X } from 'lucide-react';
 import useResponsiveLayout from '../../../hooks/useResponsiveLayout';
 
 /**
@@ -15,6 +15,7 @@ const ChatPanel = memo(({
   loading = false,
   onSendMessage,
   onBack,
+  onRefreshConversation,
   showNotification
 }) => {
   console.log('🔄 ChatPanel - otrzymane props:');
@@ -36,8 +37,9 @@ const ChatPanel = memo(({
   const [messageText, setMessageText] = useState('');
   const [sending, setSending] = useState(false);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
-  const [selectedMessages, setSelectedMessages] = useState(new Set());
-  const [selectionMode, setSelectionMode] = useState(false);
+  const [contextMenu, setContextMenu] = useState({ show: false, messageId: null, x: 0, y: 0, message: null });
+  const [editingMessage, setEditingMessage] = useState({ id: null, content: '', originalContent: '' });
+  const [locallyDeletedMessages, setLocallyDeletedMessages] = useState(new Set());
 
   // ===== EFFECTS =====
   // Auto-scroll do najnowszych wiadomości
@@ -95,53 +97,125 @@ const ChatPanel = memo(({
     setShowOptionsMenu(false);
   };
 
-  // ===== SELECTION HANDLERS =====
-  const handleMessageSelect = (messageId) => {
-    const newSelected = new Set(selectedMessages);
-    if (newSelected.has(messageId)) {
-      newSelected.delete(messageId);
+  // ===== MESSAGE CONTEXT MENU HANDLERS =====
+  const handleMessageRightClick = (e, message) => {
+    e.preventDefault();
+    const rect = e.currentTarget.getBoundingClientRect();
+    setContextMenu({
+      show: true,
+      messageId: message.id,
+      message: message,
+      x: e.clientX,
+      y: e.clientY
+    });
+  };
+
+  const handleCloseContextMenu = () => {
+    setContextMenu({ show: false, messageId: null, x: 0, y: 0, message: null });
+  };
+
+  // Edycja wiadomości
+  const handleEditMessage = (message) => {
+    setEditingMessage({
+      id: message.id,
+      content: message.content,
+      originalContent: message.content
+    });
+    handleCloseContextMenu();
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingMessage.content.trim()) return;
+    
+    try {
+      // Import messagesApi dynamically to avoid circular imports
+      const { default: messagesApi } = await import('../../../services/api/messagesApi.js');
+      
+      await messagesApi.editMessage(editingMessage.id, editingMessage.content.trim());
+      
+      showNotification?.('Wiadomość została zaktualizowana', 'success');
+      
+      // Odśwież konwersację po edycji
+      if (onRefreshConversation) {
+        onRefreshConversation();
+      }
+      
+      setEditingMessage({ id: null, content: '', originalContent: '' });
+    } catch (error) {
+      console.error('Błąd podczas edycji wiadomości:', error);
+      showNotification?.('Błąd podczas edycji wiadomości', 'error');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMessage({ id: null, content: '', originalContent: '' });
+  };
+
+  // Usunięcie wiadomości (własnej - z API, cudzej - lokalnie)
+  const handleDeleteMessage = async (message) => {
+    const currentUserId = currentUser?.id || currentUser?._id;
+    const messageSenderId = message.sender;
+    const isOwn = messageSenderId === currentUserId || 
+                  messageSenderId?.toString() === currentUserId?.toString();
+
+    if (isOwn) {
+      // Własna wiadomość - usuń z API
+      if (window.confirm('Czy na pewno chcesz usunąć tę wiadomość?')) {
+        try {
+          const { default: messagesApi } = await import('../../../services/api/messagesApi.js');
+          await messagesApi.deleteMessages([message.id]);
+          
+          showNotification?.('Wiadomość została usunięta', 'success');
+          
+          if (onRefreshConversation) {
+            onRefreshConversation();
+          }
+        } catch (error) {
+          console.error('Błąd podczas usuwania wiadomości:', error);
+          showNotification?.('Błąd podczas usuwania wiadomości', 'error');
+        }
+      }
     } else {
-      newSelected.add(messageId);
+      // Cudza wiadomość - usuń lokalnie
+      if (window.confirm('Czy chcesz usunąć tę wiadomość tylko u siebie?')) {
+        setLocallyDeletedMessages(prev => new Set([...prev, message.id]));
+        showNotification?.('Wiadomość została usunięta lokalnie', 'success');
+      }
     }
-    setSelectedMessages(newSelected);
     
-    // Jeśli nie ma zaznaczonych wiadomości, wyłącz tryb zaznaczania
-    if (newSelected.size === 0) {
-      setSelectionMode(false);
+    handleCloseContextMenu();
+  };
+
+  // Cofnij wiadomość (tylko własne)
+  const handleUnsendMessage = async (message) => {
+    if (window.confirm('Czy na pewno chcesz cofnąć tę wiadomość? Zostanie usunięta dla wszystkich.')) {
+      try {
+        const { default: messagesApi } = await import('../../../services/api/messagesApi.js');
+        await messagesApi.unsendMessage(message.id);
+        
+        showNotification?.('Wiadomość została cofnięta', 'success');
+        
+        if (onRefreshConversation) {
+          onRefreshConversation();
+        }
+      } catch (error) {
+        console.error('Błąd podczas cofania wiadomości:', error);
+        showNotification?.('Błąd podczas cofania wiadomości', 'error');
+      }
     }
-  };
-
-  const handleLongPress = (messageId) => {
-    setSelectionMode(true);
-    setSelectedMessages(new Set([messageId]));
-  };
-
-  const handleSelectAll = () => {
-    const allMessageIds = new Set(messages.map(msg => msg.id));
-    setSelectedMessages(allMessageIds);
-  };
-
-  const handleDeselectAll = () => {
-    setSelectedMessages(new Set());
-    setSelectionMode(false);
-  };
-
-  const handleDeleteSelected = () => {
-    if (selectedMessages.size === 0) return;
     
-    if (window.confirm(`Czy na pewno chcesz usunąć ${selectedMessages.size} wiadomości?`)) {
-      showNotification?.(`Usunięto ${selectedMessages.size} wiadomości`, 'success');
-      setSelectedMessages(new Set());
-      setSelectionMode(false);
-    }
+    handleCloseContextMenu();
   };
 
-  const handleArchiveSelected = () => {
-    if (selectedMessages.size === 0) return;
+  // Kopiuj wiadomość
+  const handleCopyMessage = (message) => {
+    navigator.clipboard.writeText(message.content).then(() => {
+      showNotification?.('Wiadomość została skopiowana', 'success');
+    }).catch(() => {
+      showNotification?.('Błąd podczas kopiowania', 'error');
+    });
     
-    showNotification?.(`Przeniesiono ${selectedMessages.size} wiadomości do archiwum`, 'success');
-    setSelectedMessages(new Set());
-    setSelectionMode(false);
+    handleCloseContextMenu();
   };
 
   // ===== HELPER FUNCTIONS =====
@@ -244,15 +318,25 @@ const ChatPanel = memo(({
   // ===== RENDER MESSAGE =====
   const renderMessage = (message) => {
     console.log('🔄 ChatPanel - renderMessage dla wiadomości:', message);
-    console.log('🔄 ChatPanel - currentUser:', currentUser);
-    console.log('🔄 ChatPanel - message.sender:', message.sender);
-    console.log('🔄 ChatPanel - currentUser?.id:', currentUser?.id);
-    console.log('🔄 ChatPanel - currentUser?._id:', currentUser?._id);
     
-    const isOwn = message.sender === currentUser?.id || message.sender === currentUser?._id;
+    // Sprawdź czy wiadomość została lokalnie usunięta
+    if (locallyDeletedMessages.has(message.id)) {
+      return null;
+    }
+    
+    // Ulepszone porównanie sender ID - obsługa różnych formatów
+    const currentUserId = currentUser?.id || currentUser?._id;
+    const messageSenderId = message.sender;
+    
+    const isOwn = messageSenderId === currentUserId || 
+                  messageSenderId?.toString() === currentUserId?.toString();
+    
+    console.log('🔄 ChatPanel - currentUserId:', currentUserId);
+    console.log('🔄 ChatPanel - messageSenderId:', messageSenderId);
     console.log('🔄 ChatPanel - isOwn:', isOwn);
     
-    const isSelected = selectedMessages.has(message.id);
+    // Sprawdź czy wiadomość jest edytowana
+    const isEditing = editingMessage.id === message.id;
     
     // Responsywne szerokości wiadomości - lepsze proporcje
     const messageMaxWidth = isMobile 
@@ -261,57 +345,143 @@ const ChatPanel = memo(({
     
     return (
       <div key={message.id} className={`flex items-start gap-2 mb-3 sm:mb-4 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
-        {/* Checkbox - pokazuje się tylko w trybie zaznaczania */}
-        {selectionMode && (
-          <div className="flex-shrink-0 mt-2">
-            <input
-              type="checkbox"
-              checked={isSelected}
-              onChange={() => handleMessageSelect(message.id)}
-              className="w-4 h-4 text-[#35530A] bg-gray-100 border-gray-300 rounded focus:ring-[#35530A] focus:ring-2"
-            />
-          </div>
-        )}
-        
         {/* Wiadomość */}
         <div 
           className={`
             ${messageMaxWidth} 
             px-3 sm:px-4 py-2 sm:py-2.5 
-            rounded-lg shadow-sm cursor-pointer
+            rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-shadow
             ${isOwn 
               ? 'bg-[#35530A] text-white rounded-br-sm' 
               : 'bg-gray-200 text-gray-900 rounded-bl-sm'
             }
-            ${isSelected ? 'ring-2 ring-[#35530A] ring-opacity-50' : ''}
+            ${isEditing ? 'ring-2 ring-blue-500 ring-opacity-50' : ''}
           `}
-          onClick={() => {
-            if (selectionMode) {
-              handleMessageSelect(message.id);
+          onContextMenu={(e) => handleMessageRightClick(e, message)}
+          onClick={(e) => {
+            // Na mobile - pojedyncze kliknięcie pokazuje menu
+            if (isMobile) {
+              handleMessageRightClick(e, message);
             }
           }}
-          onLongPress={() => handleLongPress(message.id)}
-          onTouchStart={(e) => {
-            // Obsługa długiego naciśnięcia na mobile
-            const touchStartTime = Date.now();
-            const touchHandler = () => {
-              if (Date.now() - touchStartTime >= 500) {
-                handleLongPress(message.id);
-              }
-            };
-            setTimeout(touchHandler, 500);
-          }}
         >
-          <p className="text-sm sm:text-base leading-relaxed break-words">
-            {message.content}
-          </p>
-          <p className={`text-xs mt-1 ${
-            isOwn ? 'text-white/80' : 'text-gray-500'
-          }`}>
-            {formatMessageTime(message.createdAt || message.timestamp)}
-          </p>
+          {isEditing ? (
+            // Tryb edycji
+            <div className="space-y-2">
+              <textarea
+                value={editingMessage.content}
+                onChange={(e) => setEditingMessage(prev => ({ ...prev, content: e.target.value }))}
+                className="w-full p-2 text-sm bg-white text-gray-900 border border-gray-300 rounded resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                rows="2"
+                autoFocus
+              />
+              <div className="flex items-center gap-2 justify-end">
+                <button
+                  onClick={handleCancelEdit}
+                  className="px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+                >
+                  Anuluj
+                </button>
+                <button
+                  onClick={handleSaveEdit}
+                  className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                >
+                  Zapisz
+                </button>
+              </div>
+            </div>
+          ) : (
+            // Normalna wiadomość
+            <>
+              <p className="text-sm sm:text-base leading-relaxed break-words">
+                {message.content}
+              </p>
+              <p className={`text-xs mt-1 ${
+                isOwn ? 'text-white/80' : 'text-gray-500'
+              }`}>
+                {formatMessageTime(message.createdAt || message.timestamp)}
+              </p>
+            </>
+          )}
         </div>
       </div>
+    );
+  };
+
+  // ===== RENDER CONTEXT MENU =====
+  const renderContextMenu = () => {
+    if (!contextMenu.show || !contextMenu.message) return null;
+
+    const message = contextMenu.message;
+    const currentUserId = currentUser?.id || currentUser?._id;
+    const messageSenderId = message.sender;
+    const isOwn = messageSenderId === currentUserId || 
+                  messageSenderId?.toString() === currentUserId?.toString();
+
+    return (
+      <>
+        {/* Overlay do zamykania menu */}
+        <div
+          className="fixed inset-0 z-40"
+          onClick={handleCloseContextMenu}
+        />
+        
+        {/* Menu kontekstowe */}
+        <div
+          className="fixed z-50 bg-white border border-gray-200 rounded-lg shadow-lg py-2 min-w-[160px]"
+          style={{
+            left: Math.min(contextMenu.x, window.innerWidth - 180),
+            top: Math.min(contextMenu.y, window.innerHeight - 200)
+          }}
+        >
+          {/* Kopiuj - zawsze dostępne */}
+          <button
+            onClick={() => handleCopyMessage(message)}
+            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+          >
+            <Copy className="w-4 h-4" />
+            Kopiuj
+          </button>
+
+          {isOwn ? (
+            // Opcje dla własnych wiadomości
+            <>
+              <button
+                onClick={() => handleEditMessage(message)}
+                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+              >
+                <Edit3 className="w-4 h-4" />
+                Edytuj
+              </button>
+              
+              <button
+                onClick={() => handleUnsendMessage(message)}
+                className="w-full px-4 py-2 text-left text-sm text-orange-600 hover:bg-orange-50 flex items-center gap-2"
+              >
+                <RotateCcw className="w-4 h-4" />
+                Cofnij
+              </button>
+              
+              <button
+                onClick={() => handleDeleteMessage(message)}
+                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                Usuń
+              </button>
+            </>
+          ) : (
+            // Opcje dla cudzych wiadomości
+            <button
+              onClick={() => handleDeleteMessage(message)}
+              className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+            >
+              <Trash2 className="w-4 h-4" />
+              Usuń u siebie
+            </button>
+          )}
+        </div>
+      </>
     );
   };
 
@@ -358,21 +528,6 @@ const ChatPanel = memo(({
 
         {/* Akcje - wyrównane po prawej */}
         <div className="flex items-center gap-1 flex-shrink-0 relative">
-          {/* Przycisk zaznacz wiadomości */}
-          <button 
-            onClick={() => {
-              setSelectionMode(!selectionMode);
-              if (!selectionMode) {
-                setSelectedMessages(new Set());
-              }
-            }}
-            className={`flex items-center justify-center w-8 h-8 hover:bg-gray-100 rounded-lg transition-colors ${
-              selectionMode ? 'bg-[#35530A] text-white hover:bg-[#2a4208]' : ''
-            }`}
-          >
-            <Check className="w-5 h-5" />
-          </button>
-
           <button 
             onClick={() => setShowOptionsMenu(!showOptionsMenu)}
             className="flex items-center justify-center w-8 h-8 hover:bg-gray-100 rounded-lg transition-colors"
@@ -432,88 +587,43 @@ const ChatPanel = memo(({
         )}
       </div>
 
-      {/* Toolbar akcji lub Input do pisania wiadomości */}
-      {selectionMode && selectedMessages.size > 0 ? (
-        /* Toolbar z akcjami dla zaznaczonych wiadomości */
-        <div className="p-3 sm:p-4 border-t border-gray-200 bg-gray-50">
-          <div className="flex items-center justify-between">
-            {/* Liczba zaznaczonych wiadomości */}
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-gray-700">
-                Zaznaczono: {selectedMessages.size}
-              </span>
-            </div>
-
-            {/* Akcje */}
-            <div className="flex items-center gap-2">
-              {/* Przycisk zapisz */}
-              <button
-                onClick={handleArchiveSelected}
-                className="flex items-center justify-center w-10 h-10 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors shadow-sm"
-                title="Zapisz wiadomości"
-              >
-                <Save className="w-5 h-5" />
-              </button>
-
-              {/* Przycisk usuń */}
-              <button
-                onClick={handleDeleteSelected}
-                className="flex items-center justify-center w-10 h-10 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-sm"
-                title="Usuń wiadomości"
-              >
-                <Trash2 className="w-5 h-5" />
-              </button>
-
-              {/* Przycisk anuluj */}
-              <button
-                onClick={handleDeselectAll}
-                className="flex items-center justify-center w-10 h-10 bg-gray-500 text-white rounded-full hover:bg-gray-600 transition-colors shadow-sm ml-2"
-                title="Anuluj zaznaczenie"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
+      {/* Input do pisania wiadomości - responsywny i elegancki */}
+      <div className="p-3 sm:p-4 border-t border-gray-200 bg-white">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <input
+            type="text"
+            value={messageText}
+            onChange={(e) => setMessageText(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder="Napisz wiadomość..."
+            disabled={sending}
+            className="
+              flex-1 
+              px-3 sm:px-4 py-2 sm:py-2.5
+              text-sm sm:text-base
+              border border-gray-300 rounded-full 
+              focus:outline-none focus:ring-2 focus:ring-[#35530A] focus:border-transparent
+              disabled:bg-gray-50 disabled:cursor-not-allowed
+              transition-all duration-200
+            "
+          />
+          <button
+            onClick={handleSendMessage}
+            disabled={!messageText.trim() || sending}
+            className="
+              p-2 sm:p-2.5
+              bg-[#35530A] text-white rounded-full 
+              hover:bg-[#2a4208] active:bg-[#1f3006]
+              disabled:opacity-50 disabled:cursor-not-allowed 
+              transition-all duration-200
+              flex-shrink-0
+              shadow-sm hover:shadow-md
+            "
+          >
+            <Send className="w-4 h-4 sm:w-5 sm:h-5" />
+          </button>
         </div>
-      ) : (
-        /* Input do pisania wiadomości - responsywny i elegancki */
-        <div className="p-3 sm:p-4 border-t border-gray-200 bg-white">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <input
-              type="text"
-              value={messageText}
-              onChange={(e) => setMessageText(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Napisz wiadomość..."
-              disabled={sending}
-              className="
-                flex-1 
-                px-3 sm:px-4 py-2 sm:py-2.5
-                text-sm sm:text-base
-                border border-gray-300 rounded-full 
-                focus:outline-none focus:ring-2 focus:ring-[#35530A] focus:border-transparent
-                disabled:bg-gray-50 disabled:cursor-not-allowed
-                transition-all duration-200
-              "
-            />
-            <button
-              onClick={handleSendMessage}
-              disabled={!messageText.trim() || sending}
-              className="
-                p-2 sm:p-2.5
-                bg-[#35530A] text-white rounded-full 
-                hover:bg-[#2a4208] active:bg-[#1f3006]
-                disabled:opacity-50 disabled:cursor-not-allowed 
-                transition-all duration-200
-                flex-shrink-0
-                shadow-sm hover:shadow-md
-              "
-            >
-              <Send className="w-4 h-4 sm:w-5 sm:h-5" />
-            </button>
-          </div>
-        </div>
-      )}
+      </div>
 
       {/* Kliknij poza menu, aby je zamknąć */}
       {showOptionsMenu && (
@@ -522,6 +632,9 @@ const ChatPanel = memo(({
           onClick={() => setShowOptionsMenu(false)}
         />
       )}
+
+      {/* Menu kontekstowe dla wiadomości */}
+      {renderContextMenu()}
     </div>
   );
 });

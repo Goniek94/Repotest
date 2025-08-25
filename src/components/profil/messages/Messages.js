@@ -271,6 +271,7 @@ const Messages = memo(() => {
                   onEditMessage={conversationsData.editMessage}
                   onDeleteMessage={conversationsData.deleteMessage}
                   onArchiveMessage={conversationsData.archiveMessage}
+                  onRefreshConversation={conversationsData.refreshConversation}
                   onBack={handleBack}
                   showNotification={conversationsData.showNotification}
                 />

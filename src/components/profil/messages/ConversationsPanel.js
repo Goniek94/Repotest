@@ -61,6 +61,22 @@ const ConversationsPanel = memo(({
     }
   };
 
+  // Skracanie tekstu wiadomości
+  const truncateMessage = (text, maxLength = 30) => {
+    if (!text) return 'Brak wiadomości';
+    
+    // Usuń nadmiarowe białe znaki
+    const cleanText = text.trim().replace(/\s+/g, ' ');
+    
+    // Jeśli tekst jest krótki, zwróć go bez zmian
+    if (cleanText.length <= maxLength) {
+      return cleanText;
+    }
+    
+    // Skróć tekst i dodaj wielokropek
+    return cleanText.substring(0, maxLength).trim() + '...';
+  };
+
   // Przetwarzanie konwersacji z API na format wyświetlania
   const processedConversations = conversations.map(conv => {
     // Pobieranie nazwy użytkownika z różnych możliwych źródeł
@@ -269,7 +285,7 @@ const ConversationsPanel = memo(({
         )}
         
         <p className="text-xs sm:text-sm text-gray-600 truncate">
-          {conversation.lastMessageText}
+          {truncateMessage(conversation.lastMessageText)}
         </p>
       </div>
 

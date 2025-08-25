@@ -141,9 +141,25 @@ const useConversations = (activeTab) => {
       setLoading(true);
       setError(null);
       
-      console.log(`Pobieranie wiadomości dla konwersacji z użytkownikiem ${conversation.userId}`);
+      // Parse composite ID if present (format: userId:adId)
+      let userId = conversation.userId;
+      let adId = null;
       
-      const response = await messagesApi.getConversation(conversation.userId, { signal });
+      if (conversation.id && conversation.id.includes(':')) {
+        const [parsedUserId, parsedAdId] = conversation.id.split(':');
+        userId = parsedUserId;
+        adId = parsedAdId;
+        console.log(`🔍 Parsed composite ID - userId: ${userId}, adId: ${adId}`);
+      }
+      
+      console.log(`Pobieranie wiadomości dla konwersacji z użytkownikiem ${userId}${adId ? ` dla ogłoszenia ${adId}` : ''}`);
+      
+      const options = { signal };
+      if (adId) {
+        options.adId = adId;
+      }
+      
+      const response = await messagesApi.getConversation(userId, options);
       
       console.log('Otrzymana odpowiedź z API dla wiadomości:', response);
       
@@ -458,14 +474,37 @@ const useConversations = (activeTab) => {
   // Wybór konwersacji
   const selectConversation = useCallback((conversationId) => {
     console.log('🔄 selectConversation wywołane z ID:', conversationId);
-    const conversation = conversations.find(c => c.id === conversationId || c.userId === conversationId);
-    if (!conversation) {
+    console.log('🔍 Dostępne konwersacje:', conversations.map(c => ({id: c.id, userId: c.userId, name: c.userName})));
+    
+    // Obsługa różnych formatów ID:
+    // 1. Composite ID (userId:adId)
+    // 2. Zwykły userId
+    // 3. Obiekt konwersacji (z ConversationsPanel)
+    let targetConversation = null;
+    
+    if (typeof conversationId === 'object' && conversationId !== null) {
+      // Przekazano cały obiekt konwersacji
+      console.log('🔍 Otrzymano obiekt konwersacji:', conversationId);
+      targetConversation = conversationId;
+    } else {
+      // Przekazano ID jako string
+      targetConversation = conversations.find(c => 
+        c.userId === conversationId || 
+        c.id === conversationId ||
+        // Obsługa composite ID - sprawdź czy ID zawiera ':'
+        (typeof conversationId === 'string' && conversationId.includes(':') && c.id === conversationId)
+      );
+    }
+    
+    if (!targetConversation) {
       console.log('❌ Nie znaleziono konwersacji o ID:', conversationId);
+      console.log('❌ Sprawdzane ID:', conversationId);
+      console.log('❌ Dostępne ID konwersacji:', conversations.map(c => `id: ${c.id}, userId: ${c.userId}`));
       return;
     }
     
-    console.log('✅ Znaleziono konwersację:', conversation);
-    setSelectedConversation(conversation);
+    console.log('✅ Znaleziono konwersację:', targetConversation);
+    setSelectedConversation(targetConversation);
   }, [conversations]);
 
   // Stałe zależności dla useMessageActions
@@ -656,6 +695,119 @@ const useConversations = (activeTab) => {
     };
   }, [selectedConversation?.id, selectedConversation?.userId, showNotification]);
 
+  /**
+   * Odświeżenie aktualnej konwersacji
+   */
+  const refreshConversation = useCallback(async () => {
+    if (!selectedConversation?.userId && !selectedConversation?.id) {
+      console.log('❌ Brak selectedConversation do odświeżenia');
+      return;
+    }
+    
+    // Parse composite ID if present (format: userId:adId)
+    let userId = selectedConversation.userId || selectedConversation.id;
+    let adId = null;
+    
+    if (selectedConversation.id && selectedConversation.id.includes(':')) {
+      const [parsedUserId, parsedAdId] = selectedConversation.id.split(':');
+      userId = parsedUserId;
+      adId = parsedAdId;
+      console.log(`🔍 Parsed composite ID for refresh - userId: ${userId}, adId: ${adId}`);
+    }
+    
+    try {
+      console.log(`🔄 Odświeżanie konwersacji z użytkownikiem ${userId}${adId ? ` dla ogłoszenia ${adId}` : ''}`);
+      
+      const options = {};
+      if (adId) {
+        options.adId = adId;
+      }
+      
+      const response = await messagesApi.getConversation(userId, options);
+      
+      if (!response) {
+        console.error('❌ Brak odpowiedzi przy odświeżaniu konwersacji');
+        return;
+      }
+      
+      let allMessages = [];
+      
+      // Obsługa różnych formatów odpowiedzi
+      if (response.conversations) {
+        Object.values(response.conversations).forEach(convo => {
+          if (convo.messages && Array.isArray(convo.messages)) {
+            allMessages = [...allMessages, ...convo.messages];
+          }
+        });
+      } else if (Array.isArray(response)) {
+        allMessages = response;
+      } else if (response.messages && Array.isArray(response.messages)) {
+        allMessages = response.messages;
+      } else if (response.data && Array.isArray(response.data)) {
+        allMessages = response.data;
+      }
+      
+      // Sprawdź czy dane są już znormalizowane
+      const isAlreadyNormalized = allMessages.length > 0 && 
+        typeof allMessages[0].id === 'string' && 
+        typeof allMessages[0].sender?.id === 'string';
+
+      // Formatowanie wiadomości
+      const formattedChatMessages = allMessages.map(msg => {
+        if (isAlreadyNormalized) {
+          return {
+            id: msg.id,
+            sender: msg.sender.id,
+            senderName: msg.sender.name || 'Nieznany użytkownik',
+            content: msg.content || '',
+            createdAt: msg.createdAt,
+            timestamp: new Date(msg.createdAt),
+            isRead: msg.read || false,
+            isDelivered: true,
+            isDelivering: false,
+            attachments: (msg.attachments || []).map(att => ({
+              id: att.id || att._id,
+              name: att.name || att.originalname || 'Załącznik',
+              url: att.path || att.url,
+              type: att.mimetype || att.type || 'application/octet-stream'
+            }))
+          };
+        } else {
+          return {
+            id: msg._id,
+            sender: msg.sender?._id || msg.sender,
+            senderName: msg.sender?.name || 'Nieznany użytkownik',
+            content: msg.content || '',
+            createdAt: msg.createdAt || msg.date,
+            timestamp: msg.createdAt || msg.date 
+              ? new Date(msg.createdAt || msg.date)
+              : new Date(),
+            isRead: msg.read || false,
+            isDelivered: true,
+            isDelivering: false,
+            attachments: (msg.attachments || []).map(att => ({
+              id: att._id,
+              name: att.name || att.originalname || 'Załącznik',
+              url: att.path || att.url,
+              type: att.mimetype || att.type || 'application/octet-stream'
+            }))
+          };
+        }
+      });
+      
+      // Sortowanie wiadomości według czasu
+      formattedChatMessages.sort((a, b) => a.timestamp - b.timestamp);
+      
+      setChatMessages(formattedChatMessages);
+      
+      console.log(`✅ Odświeżono konwersację - ${formattedChatMessages.length} wiadomości`);
+      
+    } catch (err) {
+      console.error('💥 Błąd podczas odświeżania konwersacji:', err);
+      showNotification('Nie udało się odświeżyć konwersacji', 'error');
+    }
+  }, [selectedConversation, showNotification]);
+
   // Memoize the return object to prevent unnecessary re-renders of consuming components
   return useMemo(() => ({
     activeTab,
@@ -675,6 +827,7 @@ const useConversations = (activeTab) => {
     deleteMessage,
     archiveMessage,
     sendReply,
+    refreshConversation,
     showNotification,
     markConversationAsRead
   }), [
@@ -694,6 +847,7 @@ const useConversations = (activeTab) => {
     deleteMessage,
     archiveMessage,
     sendReply,
+    refreshConversation,
     showNotification,
     markConversationAsRead
   ]);

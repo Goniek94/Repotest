@@ -59,9 +59,9 @@ class MessagesApi {
   }
 
   /**
-   * Pobiera konwersację z konkretnym użytkownikiem
+   * Pobiera konwersację z konkretnym użytkownikiem (opcjonalnie dla konkretnego ogłoszenia)
    * @param {string} userId - ID użytkownika
-   * @param {Object} options - Opcje paginacji
+   * @param {Object} options - Opcje paginacji i filtrowania
    */
   async getConversation(userId, options = {}) {
     try {
@@ -77,6 +77,11 @@ class MessagesApi {
       
       if (options.before) {
         params.append('before', options.before);
+      }
+
+      // 🔥 NOWE: Dodaj parametr ogłoszenia jeśli jest dostępny
+      if (options.adId) {
+        params.append('adId', options.adId);
       }
 
       const url = `${this.baseUrl}/conversation/${userId}${params.toString() ? `?${params.toString()}` : ''}`;
@@ -410,14 +415,30 @@ class MessagesApi {
   /**
    * Edytuje wiadomość
    * @param {string} messageId - ID wiadomości
-   * @param {Object} messageData - Nowe dane wiadomości
+   * @param {string} content - Nowa treść wiadomości
    */
-  async editMessage(messageId, messageData) {
+  async editMessage(messageId, content) {
     try {
-      const response = await apiClient.put(`${this.baseUrl}/${messageId}`, messageData);
+      const response = await apiClient.put(`${this.baseUrl}/${messageId}`, {
+        content: content
+      });
       return response.data;
     } catch (error) {
       console.error('Błąd podczas edycji wiadomości:', error);
+      throw this.handleError(error);
+    }
+  }
+
+  /**
+   * Cofnij wiadomość (usuwa dla wszystkich)
+   * @param {string} messageId - ID wiadomości
+   */
+  async unsendMessage(messageId) {
+    try {
+      const response = await apiClient.delete(`${this.baseUrl}/${messageId}/unsend`);
+      return response.data;
+    } catch (error) {
+      console.error('Błąd podczas cofania wiadomości:', error);
       throw this.handleError(error);
     }
   }
@@ -432,6 +453,82 @@ class MessagesApi {
       return response.data;
     } catch (error) {
       console.error('Błąd podczas usuwania wiadomości:', error);
+      throw this.handleError(error);
+    }
+  }
+
+  /**
+   * Usuwa wiele wiadomości
+   * @param {Array} messageIds - Tablica ID wiadomości
+   */
+  async deleteMessages(messageIds) {
+    try {
+      const promises = messageIds.map(id => this.deleteMessage(id));
+      const results = await Promise.all(promises);
+      return {
+        success: true,
+        deletedCount: results.length,
+        results
+      };
+    } catch (error) {
+      console.error('Błąd podczas usuwania wiadomości:', error);
+      throw this.handleError(error);
+    }
+  }
+
+  /**
+   * Archiwizuje wiele wiadomości
+   * @param {Array} messageIds - Tablica ID wiadomości
+   */
+  async archiveMessages(messageIds) {
+    try {
+      const promises = messageIds.map(id => this.archiveMessage(id));
+      const results = await Promise.all(promises);
+      return {
+        success: true,
+        archivedCount: results.length,
+        results
+      };
+    } catch (error) {
+      console.error('Błąd podczas archiwizowania wiadomości:', error);
+      throw this.handleError(error);
+    }
+  }
+
+  /**
+   * Oznacza wiele wiadomości gwiazdką
+   * @param {Array} messageIds - Tablica ID wiadomości
+   */
+  async starMessages(messageIds) {
+    try {
+      const promises = messageIds.map(id => this.toggleMessageStar(id));
+      const results = await Promise.all(promises);
+      return {
+        success: true,
+        starredCount: results.length,
+        results
+      };
+    } catch (error) {
+      console.error('Błąd podczas oznaczania gwiazdką:', error);
+      throw this.handleError(error);
+    }
+  }
+
+  /**
+   * Oznacza wiele wiadomości jako przeczytane
+   * @param {Array} messageIds - Tablica ID wiadomości
+   */
+  async markMessagesAsRead(messageIds) {
+    try {
+      const promises = messageIds.map(id => this.markMessageAsRead(id));
+      const results = await Promise.all(promises);
+      return {
+        success: true,
+        readCount: results.length,
+        results
+      };
+    } catch (error) {
+      console.error('Błąd podczas oznaczania jako przeczytane:', error);
       throw this.handleError(error);
     }
   }
@@ -520,12 +617,27 @@ class MessagesApi {
       const user = conversation.user || {};
       const lastMessage = conversation.lastMessage || {};
       
-      // Użyj ID użytkownika jako ID konwersacji - to jest klucz do pobierania szczegółów
+      // 🔥 NOWE: Użyj ID użytkownika + ogłoszenie jako ID konwersacji
       const userId = user._id || user.id;
+      const adId = conversation.adInfo ? 
+        (conversation.adInfo._id || conversation.adInfo.id) : 
+        'no-ad';
+      
+      // Unikalny ID konwersacji: użytkownik:ogłoszenie
+      const conversationId = `${userId}:${adId}`;
+      
+      console.log('🔄 messagesApi - transformConversationsResponse - przetwarzam konwersację:', {
+        originalConversation: conversation,
+        userId: userId,
+        adId: adId,
+        conversationId: conversationId,
+        userName: user.name || user.email
+      });
       
       return {
-        id: userId, // ID konwersacji = ID użytkownika z którym rozmawiamy
+        id: conversationId, // 🔥 NOWE: Unikalny ID konwersacji
         userId: userId, // ID użytkownika do pobierania szczegółów
+        adId: adId === 'no-ad' ? null : adId, // ID ogłoszenia (null jeśli brak)
         userName: user.name || user.email || 'Nieznany użytkownik',
         userEmail: user.email || '',
         lastMessage: {
@@ -544,7 +656,7 @@ class MessagesApi {
         isOnline: false, // Backend nie ma tego pola, można dodać później
         hasAttachments: lastMessage.attachments && lastMessage.attachments.length > 0,
         adInfo: conversation.adInfo ? {
-          id: conversation.adInfo._id,
+          id: conversation.adInfo._id || conversation.adInfo.id,
           headline: conversation.adInfo.headline,
           brand: conversation.adInfo.brand,
           model: conversation.adInfo.model,
@@ -560,7 +672,10 @@ class MessagesApi {
    * Transformuje odpowiedź z konwersacją
    */
   transformConversationResponse(data) {
-    if (!data || !data.messages) {
+    console.log('🔄 messagesApi - transformConversationResponse - otrzymane dane:', data);
+    
+    if (!data) {
+      console.log('❌ Brak danych konwersacji');
       return {
         messages: [],
         user: null,
@@ -568,31 +683,65 @@ class MessagesApi {
       };
     }
 
-    return {
-      messages: data.messages.map(msg => ({
+    // 🔥 NAPRAWKA: Backend teraz zwraca { otherUser, messages, totalMessages }
+    // zamiast { otherUser, conversations }
+    const messages = data.messages || [];
+    const otherUser = data.otherUser || null;
+    
+    console.log(`✅ Przetwarzam ${messages.length} wiadomości z konwersacji`);
+    
+    if (messages.length === 0) {
+      console.log('⚠️ Brak wiadomości w konwersacji');
+      return {
+        messages: [],
+        user: otherUser,
+        hasMore: false
+      };
+    }
+
+    const transformedMessages = messages.map(msg => {
+      const transformedMsg = {
         id: msg._id,
-        content: msg.content,
+        content: msg.content || '',
+        subject: msg.subject || '',
         sender: {
-          id: msg.sender._id,
-          name: msg.sender.name || msg.sender.email,
-          email: msg.sender.email
+          id: msg.sender?._id || msg.sender,
+          name: msg.sender?.name || msg.sender?.email || 'Nieznany użytkownik',
+          email: msg.sender?.email || ''
         },
         recipient: {
-          id: msg.recipient._id,
-          name: msg.recipient.name || msg.recipient.email,
-          email: msg.recipient.email
+          id: msg.recipient?._id || msg.recipient,
+          name: msg.recipient?.name || msg.recipient?.email || 'Nieznany użytkownik',
+          email: msg.recipient?.email || ''
         },
         createdAt: msg.createdAt,
-        read: msg.read,
-        starred: msg.starred,
+        read: msg.read || false,
+        starred: msg.starred || false,
         attachments: msg.attachments || [],
         type: this.getMessageType(msg),
-        isFromMe: msg.sender._id === data.currentUserId
-      })),
-      user: data.otherUser,
+        isFromMe: false, // Zostanie ustawione w komponencie na podstawie currentUser
+        relatedAd: msg.relatedAd || null
+      };
+      
+      console.log(`  Wiadomość ${msg._id}: ${msg.content?.substring(0, 50)}...`);
+      return transformedMsg;
+    });
+
+    const result = {
+      messages: transformedMessages,
+      user: otherUser,
       hasMore: data.hasMore || false,
+      totalMessages: data.totalMessages || messages.length,
       adInfo: data.adInfo || null
     };
+    
+    console.log('✅ Konwersacja przetworzona pomyślnie:', {
+      messagesCount: result.messages.length,
+      user: result.user?.name || result.user?.email,
+      totalMessages: result.totalMessages
+    });
+    
+    return result;
   }
 
   /**
