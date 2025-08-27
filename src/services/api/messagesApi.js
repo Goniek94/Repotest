@@ -121,11 +121,17 @@ class MessagesApi {
    * @param {string} userId - ID użytkownika
    * @param {string} content - Treść wiadomości
    * @param {Array} attachments - Załączniki
+   * @param {string} adId - ID ogłoszenia (opcjonalne)
    */
-  async replyToConversation(userId, content, attachments = []) {
+  async replyToConversation(userId, content, attachments = [], adId = null) {
     try {
       const formData = new FormData();
       formData.append('content', content);
+      
+      // Dodaj adId jeśli jest dostępne
+      if (adId && adId !== 'no-ad') {
+        formData.append('adId', adId);
+      }
       
       // Dodaj załączniki
       attachments.forEach((attachment, index) => {
@@ -683,10 +689,21 @@ class MessagesApi {
       };
     }
 
-    // 🔥 NAPRAWKA: Backend teraz zwraca { otherUser, messages, totalMessages }
-    // zamiast { otherUser, conversations }
-    const messages = data.messages || [];
+    // Backend może zwracać różne formaty - obsłuż oba
+    let messages = [];
     const otherUser = data.otherUser || null;
+    
+    if (data.messages && Array.isArray(data.messages)) {
+      // Nowy format: { otherUser, messages, totalMessages }
+      messages = data.messages;
+    } else if (data.conversations) {
+      // Stary format: { otherUser, conversations }
+      Object.values(data.conversations).forEach(convo => {
+        if (convo.messages && Array.isArray(convo.messages)) {
+          messages = [...messages, ...convo.messages];
+        }
+      });
+    }
     
     console.log(`✅ Przetwarzam ${messages.length} wiadomości z konwersacji`);
     

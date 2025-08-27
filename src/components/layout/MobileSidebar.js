@@ -28,12 +28,13 @@ const MobileSidebar = ({ children }) => {
       )}
 
       <aside
-        className={`fixed left-0 ${sidebarWidth} bg-[#35530A] text-white z-50 flex flex-col transform transition-transform duration-300 ${
+        className={`fixed left-0 ${sidebarWidth} bg-[#35530A] text-white z-40 flex flex-col transform transition-transform duration-300 ${
           isExpanded ? 'translate-x-0' : '-translate-x-full'
         }`}
         style={{ 
           top: '64px',
-          height: 'calc(100vh - 64px)'
+          height: 'calc(100vh - 64px - 40px)', // Odejmujemy wysokość footera (40px)
+          maxHeight: 'calc(100vh - 104px)' // 64px header + 40px footer
         }}
       >
         <button

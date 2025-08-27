@@ -209,11 +209,13 @@ const CategoriesPanel = memo(({
         </div>
       </div>
 
-      {/* Informacja o braku konwersacji - na dole panelu */}
-      <div className="hidden lg:block p-3 bg-[#35530A]/5 border-t border-gray-100">
-        <p className="text-xs text-[#35530A] text-center font-medium">
-          Kliknij kategorię aby zobaczyć wiadomości
-        </p>
+      {/* Footer z informacją - wyrównany z ConversationsPanel */}
+      <div className="flex-shrink-0 p-3 border-t border-gray-200 bg-gray-50">
+        <div className="flex items-center justify-center text-xs text-gray-500">
+          <span className="text-[#35530A] font-medium">
+            Kliknij kategorię aby zobaczyć wiadomości
+          </span>
+        </div>
       </div>
     </div>
   );

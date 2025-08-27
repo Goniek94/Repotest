@@ -1,5 +1,5 @@
 import React, { memo, useState, useRef, useEffect } from 'react';
-import { ArrowLeft, Send, MoreVertical, Phone, Video, UserX, Flag, VolumeX, Archive, Star, Trash2, Search, Paperclip, Smile, Info, Save, Check, Edit3, Copy, RotateCcw, X } from 'lucide-react';
+import { ArrowLeft, Send, MoreVertical, Phone, Video, UserX, Flag, VolumeX, Archive, Star, Trash2, Search, Paperclip, Smile, Info, Save, Check, Edit3, Copy, RotateCcw, X, Image, FileText, Link, Plus } from 'lucide-react';
 import useResponsiveLayout from '../../../hooks/useResponsiveLayout';
 
 /**
@@ -32,6 +32,7 @@ const ChatPanel = memo(({
   
   // ===== REFS =====
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
   
   // ===== STATE =====
   const [messageText, setMessageText] = useState('');
@@ -40,6 +41,11 @@ const ChatPanel = memo(({
   const [contextMenu, setContextMenu] = useState({ show: false, messageId: null, x: 0, y: 0, message: null });
   const [editingMessage, setEditingMessage] = useState({ id: null, content: '', originalContent: '' });
   const [locallyDeletedMessages, setLocallyDeletedMessages] = useState(new Set());
+  
+  // ===== ATTACHMENTS STATE =====
+  const [attachments, setAttachments] = useState([]);
+  const [showAttachmentMenu, setShowAttachmentMenu] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
 
   // ===== EFFECTS =====
   // Auto-scroll do najnowszych wiadomości
@@ -54,17 +60,25 @@ const ChatPanel = memo(({
    * Obsługa wysyłania wiadomości
    */
   const handleSendMessage = async () => {
-    if (!messageText.trim()) return;
+    if (!messageText.trim() && attachments.length === 0) return;
     if (!conversation?.id) return;
 
     setSending(true);
     
     try {
       // Wywołaj onSendMessage z content i attachments (zgodnie z useMessageActions)
-      await onSendMessage(messageText.trim(), []);
+      await onSendMessage(messageText.trim(), attachments);
 
       // Reset formularza
       setMessageText('');
+      
+      // Wyczyść załączniki i zwolnij URL-e
+      attachments.forEach(att => {
+        if (att.preview) {
+          URL.revokeObjectURL(att.preview);
+        }
+      });
+      setAttachments([]);
       
     } catch (error) {
       showNotification?.('Błąd wysyłania wiadomości', 'error');
@@ -218,6 +232,130 @@ const ChatPanel = memo(({
     handleCloseContextMenu();
   };
 
+  // ===== ATTACHMENT HANDLERS =====
+  
+  /**
+   * Obsługa wyboru plików
+   */
+  const handleFileSelect = (event) => {
+    const files = Array.from(event.target.files);
+    if (files.length === 0) return;
+
+    const newAttachments = files.map(file => {
+      // Sprawdź rozmiar pliku (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        showNotification?.(`Plik ${file.name} jest za duży (max 10MB)`, 'error');
+        return null;
+      }
+
+      // Sprawdź typ pliku
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf', 'text/plain'];
+      if (!allowedTypes.includes(file.type)) {
+        showNotification?.(`Nieobsługiwany typ pliku: ${file.name}`, 'error');
+        return null;
+      }
+
+      return {
+        id: Date.now() + Math.random(),
+        file: file,
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : null
+      };
+    }).filter(Boolean);
+
+    setAttachments(prev => [...prev, ...newAttachments]);
+    setShowAttachmentMenu(false);
+    
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  /**
+   * Usunięcie załącznika
+   */
+  const removeAttachment = (attachmentId) => {
+    setAttachments(prev => {
+      const updated = prev.filter(att => att.id !== attachmentId);
+      // Zwolnij URL dla podglądu obrazów
+      const removed = prev.find(att => att.id === attachmentId);
+      if (removed?.preview) {
+        URL.revokeObjectURL(removed.preview);
+      }
+      return updated;
+    });
+  };
+
+  /**
+   * Obsługa drag & drop
+   */
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setDragOver(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setDragOver(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragOver(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      // Symuluj wybór plików
+      const fakeEvent = { target: { files } };
+      handleFileSelect(fakeEvent);
+    }
+  };
+
+  /**
+   * Obsługa wklejania z schowka
+   */
+  const handlePaste = async (e) => {
+    const items = Array.from(e.clipboardData.items);
+    const files = [];
+    
+    for (const item of items) {
+      if (item.kind === 'file') {
+        const file = item.getAsFile();
+        if (file) {
+          files.push(file);
+        }
+      }
+    }
+    
+    if (files.length > 0) {
+      const fakeEvent = { target: { files } };
+      handleFileSelect(fakeEvent);
+    }
+  };
+
+  /**
+   * Formatowanie rozmiaru pliku
+   */
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  /**
+   * Pobieranie ikony dla typu pliku
+   */
+  const getFileIcon = (type) => {
+    if (type.startsWith('image/')) return <Image className="w-4 h-4" />;
+    if (type === 'application/pdf') return <FileText className="w-4 h-4" />;
+    return <FileText className="w-4 h-4" />;
+  };
+
   // ===== HELPER FUNCTIONS =====
   const getInitials = (name) => {
     if (!name) return '??';
@@ -251,6 +389,89 @@ const ChatPanel = memo(({
       minute: '2-digit' 
     });
   };
+
+  // Formatowanie daty dla separatora
+  const formatDateSeparator = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    // Sprawdź czy to dzisiaj
+    if (date.toDateString() === today.toDateString()) {
+      return 'Dzisiaj';
+    }
+    
+    // Sprawdź czy to wczoraj
+    if (date.toDateString() === yesterday.toDateString()) {
+      return 'Wczoraj';
+    }
+    
+    // Sprawdź czy to w tym tygodniu
+    const weekAgo = new Date(today);
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    if (date > weekAgo) {
+      return date.toLocaleDateString('pl-PL', { weekday: 'long' });
+    }
+    
+    // Dla starszych dat
+    return date.toLocaleDateString('pl-PL', { 
+      day: 'numeric', 
+      month: 'long',
+      year: date.getFullYear() !== today.getFullYear() ? 'numeric' : undefined
+    });
+  };
+
+  // Grupowanie wiadomości według dat
+  const groupMessagesByDate = (messages) => {
+    const groups = [];
+    let currentDate = null;
+    let currentGroup = [];
+
+    messages.forEach((message) => {
+      const messageDate = new Date(message.createdAt || message.timestamp);
+      const messageDateString = messageDate.toDateString();
+
+      if (currentDate !== messageDateString) {
+        // Zapisz poprzednią grupę jeśli istnieje
+        if (currentGroup.length > 0) {
+          groups.push({
+            date: currentDate,
+            messages: currentGroup
+          });
+        }
+        
+        // Rozpocznij nową grupę
+        currentDate = messageDateString;
+        currentGroup = [message];
+      } else {
+        // Dodaj do bieżącej grupy
+        currentGroup.push(message);
+      }
+    });
+
+    // Dodaj ostatnią grupę
+    if (currentGroup.length > 0) {
+      groups.push({
+        date: currentDate,
+        messages: currentGroup
+      });
+    }
+
+    return groups;
+  };
+
+  // Render separatora daty
+  const renderDateSeparator = (dateString) => (
+    <div className="flex items-center justify-center my-4 sm:my-6">
+      <div className="bg-gray-100 px-3 py-1 rounded-full">
+        <span className="text-xs sm:text-sm text-gray-600 font-medium">
+          {formatDateSeparator(dateString)}
+        </span>
+      </div>
+    </div>
+  );
 
   // ===== ONLINE STATUS FUNCTIONS =====
   const getOnlineStatus = (conversation) => {
@@ -581,15 +802,164 @@ const ChatPanel = memo(({
           </div>
         ) : (
           <div>
-            {messages.map(renderMessage)}
+            {groupMessagesByDate(messages).map((group, groupIndex) => (
+              <div key={`group-${groupIndex}`}>
+                {/* Separator daty */}
+                {renderDateSeparator(group.date)}
+                
+                {/* Wiadomości z tej daty */}
+                {group.messages.map(renderMessage)}
+              </div>
+            ))}
             <div ref={messagesEndRef} />
           </div>
         )}
       </div>
 
       {/* Input do pisania wiadomości - responsywny i elegancki */}
-      <div className="p-3 sm:p-4 border-t border-gray-200 bg-white">
-        <div className="flex items-center gap-2 sm:gap-3">
+      <div 
+        className={`p-3 sm:p-4 border-t border-gray-200 bg-white ${dragOver ? 'bg-blue-50 border-blue-300' : ''}`}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        onPaste={handlePaste}
+      >
+        {/* Podgląd załączników */}
+        {attachments.length > 0 && (
+          <div className="mb-3 p-2 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-gray-600 font-medium">
+                Załączniki ({attachments.length})
+              </span>
+              <button
+                onClick={() => {
+                  attachments.forEach(att => {
+                    if (att.preview) URL.revokeObjectURL(att.preview);
+                  });
+                  setAttachments([]);
+                }}
+                className="text-xs text-red-600 hover:text-red-800"
+              >
+                Usuń wszystkie
+              </button>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {attachments.map(attachment => (
+                <div key={attachment.id} className="relative group">
+                  {attachment.preview ? (
+                    // Podgląd obrazu
+                    <div className="relative">
+                      <img
+                        src={attachment.preview}
+                        alt={attachment.name}
+                        className="w-full h-16 object-cover rounded border"
+                      />
+                      <button
+                        onClick={() => removeAttachment(attachment.id)}
+                        className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    // Ikona pliku
+                    <div className="relative p-2 border rounded bg-white">
+                      <div className="flex items-center gap-2">
+                        {getFileIcon(attachment.type)}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium truncate">{attachment.name}</p>
+                          <p className="text-xs text-gray-500">{formatFileSize(attachment.size)}</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => removeAttachment(attachment.id)}
+                        className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Drag & Drop overlay */}
+        {dragOver && (
+          <div className="absolute inset-0 bg-blue-100 bg-opacity-75 flex items-center justify-center z-10 rounded-lg">
+            <div className="text-center">
+              <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-2">
+                <Plus className="w-6 h-6 text-white" />
+              </div>
+              <p className="text-blue-700 font-medium">Upuść pliki tutaj</p>
+              <p className="text-blue-600 text-sm">Obsługiwane: zdjęcia, PDF, TXT</p>
+            </div>
+          </div>
+        )}
+
+        <div className="flex items-center gap-2 sm:gap-3 relative">
+          {/* Przycisk załączników */}
+          <div className="relative">
+            <button
+              onClick={() => setShowAttachmentMenu(!showAttachmentMenu)}
+              disabled={sending}
+              className="
+                p-2 sm:p-2.5
+                text-gray-600 hover:text-[#35530A] hover:bg-gray-100
+                rounded-full transition-all duration-200
+                disabled:opacity-50 disabled:cursor-not-allowed
+                flex-shrink-0
+              "
+            >
+              <Paperclip className="w-4 h-4 sm:w-5 sm:h-5" />
+            </button>
+
+            {/* Menu załączników */}
+            {showAttachmentMenu && (
+              <div className="absolute bottom-full left-0 mb-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
+                <div className="py-2">
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <Image className="w-4 h-4" />
+                    Dodaj zdjęcie
+                  </button>
+                  
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <FileText className="w-4 h-4" />
+                    Dodaj plik
+                  </button>
+                  
+                  <div className="border-t border-gray-100 my-1"></div>
+                  
+                  <div className="px-4 py-2">
+                    <p className="text-xs text-gray-500">
+                      Przeciągnij i upuść pliki lub wklej ze schowka
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      Max 10MB • JPG, PNG, GIF, PDF, TXT
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept="image/*,.pdf,.txt"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+
           <input
             type="text"
             value={messageText}
@@ -609,7 +979,7 @@ const ChatPanel = memo(({
           />
           <button
             onClick={handleSendMessage}
-            disabled={!messageText.trim() || sending}
+            disabled={(!messageText.trim() && attachments.length === 0) || sending}
             className="
               p-2 sm:p-2.5
               bg-[#35530A] text-white rounded-full 

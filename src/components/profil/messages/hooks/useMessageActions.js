@@ -12,7 +12,8 @@ const useMessageActions = ({
   setChatMessages,
   currentUserId,
   user,
-  showNotification
+  showNotification,
+  fetchConversations
 }) => {
   // Update conversation after removing a message
   const updateConversationAfterRemoval = useCallback(
@@ -105,11 +106,24 @@ const useMessageActions = ({
       const conversationId = selectedConversation.id;
       const recipientUserId = selectedConversation.userId;
       
+      // Wyciągnij adId z conversationId jeśli jest w formacie userId:adId
+      let adId = null;
+      if (conversationId && conversationId.includes(':')) {
+        const parts = conversationId.split(':');
+        if (parts.length === 2 && parts[1] !== 'no-ad') {
+          adId = parts[1];
+        }
+      }
+      
+      console.log('🔄 sendReply - conversationId:', conversationId);
+      console.log('🔄 sendReply - adId:', adId);
+      
       try {
         const response = await messagesApi.replyToConversation(
           recipientUserId,
           content,
-          attachments
+          attachments,
+          adId // Przekaż adId do API
         );
         
         const newMessage = {
@@ -135,24 +149,17 @@ const useMessageActions = ({
           isRead: true
         };
         
-        // Update chat messages
+        // Update chat messages locally for immediate feedback
         setChatMessages((prevMessages) => [...prevMessages, newMessage]);
         
-        // Update conversations list
-        setConversations((prevConversations) =>
-          prevConversations.map((convo) =>
-            convo.id === conversationId
-              ? { ...convo, lastMessage: lastMessageData }
-              : convo
-          )
-        );
-        
-        // Update selected conversation
-        setSelectedConversation((prev) => 
-          prev && prev.id === conversationId
-            ? { ...prev, lastMessage: lastMessageData }
-            : prev
-        );
+        // Refresh conversations from backend to get accurate data
+        if (fetchConversations) {
+          try {
+            await fetchConversations();
+          } catch (error) {
+            console.error('Błąd podczas odświeżania konwersacji:', error);
+          }
+        }
         
         showNotification('Wiadomość wysłana', 'success');
         return Promise.resolve();
@@ -170,8 +177,7 @@ const useMessageActions = ({
       user?.email,
       showNotification,
       setChatMessages,
-      setConversations,
-      setSelectedConversation
+      fetchConversations
     ]
   );
 

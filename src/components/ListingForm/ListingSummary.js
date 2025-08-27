@@ -198,6 +198,9 @@ const ListingSummary = ({ listingData, onBack, onContinue }) => {
                     <InfoRow label="Waga" value={listingData.weight ? `${listingData.weight} kg` : 'Nie podano'} />
                     <InfoRow label="Opcja zakupu" value={listingData.purchaseOptions || (listingData.purchaseOption === 'sprzedaz' ? 'Sprzedaż' : listingData.purchaseOption === 'najem' ? 'Najem' : 'Inne')} />
                     <InfoRow label="Cena do negocjacji" value={listingData.negotiable} />
+                    {(listingData.purchaseOptions === 'inne' || listingData.purchaseOption === 'najem') && listingData.rentalPrice && (
+                      <InfoRow label="Cena najmu" value={`${listingData.rentalPrice} PLN/miesiąc`} />
+                    )}
                   </div>
                 </div>
                 

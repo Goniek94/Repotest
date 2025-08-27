@@ -3,81 +3,38 @@ import { ChevronDown, Info } from 'lucide-react';
 
 const TechnicalDataSection = ({ formData, handleChange, errors }) => {
   const [openDropdowns, setOpenDropdowns] = useState({});
+  const [showCustomPaintModal, setShowCustomPaintModal] = useState(false);
+  const [customPaint, setCustomPaint] = useState('');
 
   const FUEL_TYPES = [
     'Benzyna', 
     'Diesel', 
-    'Benzyna+LPG', 
-    'Benzyna+CNG', 
+    'LPG', 
     'Hybryda', 
     'Hybryda plug-in', 
     'Elektryczny', 
-    'Etanol', 
-    'Wodór', 
-    'Benzyna+Etanol', 
-    'Inne'
+    'CNG', 
+    'Wodór'
   ];
   
   const TRANSMISSION_TYPES = [
     'Manualna', 
     'Automatyczna', 
     'Półautomatyczna', 
-    'Bezstopniowa CVT', 
-    'Automatyczna dwusprzęgłowa', 
-    'Sekwencyjna', 
-    'Inne'
+    'CVT'
   ];
   
   const DRIVE_TYPES = [
-    'Przedni', 
-    'Tylny', 
-    'Na cztery koła stały', 
-    'Na cztery koła dołączany', 
-    'AWD', 
-    '4WD', 
-    '4x4', 
-    'RWD', 
-    'FWD', 
-    'Inne'
+    'FWD (przedni)', 
+    'RWD (tylny)', 
+    'AWD/4x4'
   ];
   
-  const COUNTRIES = [
-    'Polska', 
-    'Niemcy', 
-    'Francja', 
-    'Włochy', 
-    'Hiszpania', 
-    'Holandia', 
-    'Belgia', 
-    'Czechy', 
-    'Słowacja', 
-    'Austria', 
-    'Szwajcaria', 
-    'Dania', 
-    'Szwecja', 
-    'Norwegia', 
-    'Finlandia', 
-    'Wielka Brytania', 
-    'Irlandia', 
-    'Portugalia', 
-    'Luksemburg', 
-    'Słowenia', 
-    'Chorwacja', 
-    'Węgry', 
-    'Rumunia', 
-    'Bułgaria', 
-    'Litwa', 
-    'Łotwa', 
-    'Estonia', 
-    'USA', 
-    'Kanada', 
-    'Japonia', 
-    'Korea Południowa', 
-    'Chiny', 
-    'Indie', 
-    'Brazylia', 
-    'Meksyk', 
-    'Australia', 
+  const PAINT_FINISHES = [
+    'Metalik', 
+    'Perła', 
+    'Mat', 
+    'Połysk', 
     'Inne'
   ];
 
@@ -89,17 +46,83 @@ const TechnicalDataSection = ({ formData, handleChange, errors }) => {
   };
 
   const handleOptionChange = (name, option) => {
-    handleChange(name, option);
-    setOpenDropdowns(prev => ({
-      ...prev,
-      [name]: false
-    }));
+    if (name === 'paintFinish' && option === 'Inne') {
+      setShowCustomPaintModal(true);
+      setOpenDropdowns(prev => ({
+        ...prev,
+        [name]: false
+      }));
+    } else {
+      handleChange(name, option);
+      setOpenDropdowns(prev => ({
+        ...prev,
+        [name]: false
+      }));
+    }
   };
 
-  // NAPRAWIONA funkcja obsługi liczb - bez dodatkowych warunków
-  const handleNumberChange = (name, value) => {
-    // Bezpośrednio przekaż wartość bez dodatkowych sprawdzeń
-    handleChange(name, value);
+  const handleCustomPaintSubmit = () => {
+    if (customPaint.trim()) {
+      handleChange('paintFinish', customPaint.trim());
+      setShowCustomPaintModal(false);
+      setCustomPaint('');
+    }
+  };
+
+  const handleCustomPaintCancel = () => {
+    setShowCustomPaintModal(false);
+    setCustomPaint('');
+  };
+
+  // Funkcja walidacji wartości liczbowych - tylko czyści input, nie ogranicza wartości
+  const validateNumericInput = (name, value) => {
+    // Usuń wszystkie niealfanumeryczne znaki oprócz cyfr
+    const numericValue = value.replace(/[^\d]/g, '');
+    return numericValue;
+  };
+
+  // Funkcja sprawdzająca czy wartość jest w realistycznym zakresie - zwraca błąd walidacyjny
+  const getValidationError = (name, value) => {
+    if (!value) return null;
+    
+    const num = parseInt(value);
+    if (isNaN(num)) return null;
+    
+    const limits = {
+      mileage: { min: 0, max: 1200000, unit: 'km', name: 'Przebieg' },
+      lastOfficialMileage: { min: 0, max: 1200000, unit: 'km', name: 'Przebieg CEPiK' },
+      engineSize: { min: 50, max: 8500, unit: 'cm³', name: 'Pojemność' },
+      power: { min: 10, max: 2000, unit: 'KM', name: 'Moc' },
+      weight: { min: 400, max: 4000, unit: 'kg', name: 'Waga' }
+    };
+    
+    const limit = limits[name];
+    if (!limit) return null;
+    
+    if (num < limit.min) {
+      return `${limit.name} jest za niska. Minimalna wartość: ${limit.min} ${limit.unit}`;
+    }
+    if (num > limit.max) {
+      return `${limit.name} jest za wysoka. Maksymalna wartość: ${limit.max.toLocaleString()} ${limit.unit}`;
+    }
+    
+    return null;
+  };
+
+  // Funkcja obsługi zmiany w polach liczbowych
+  const handleNumericChange = (e) => {
+    const { name, value } = e.target;
+    const validatedValue = validateNumericInput(name, value);
+    
+    // Stwórz nowy event z zwalidowaną wartością
+    const syntheticEvent = {
+      target: {
+        name: name,
+        value: validatedValue
+      }
+    };
+    
+    handleChange(syntheticEvent);
   };
 
   const SelectField = ({ name, label, options, value, required, placeholder }) => {
@@ -133,7 +156,7 @@ const TechnicalDataSection = ({ formData, handleChange, errors }) => {
           </button>
           
           {openDropdowns[name] && (
-            <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
+            <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-32 overflow-y-auto">
               {options.map((option) => (
                 <div 
                   key={option} 
@@ -157,84 +180,58 @@ const TechnicalDataSection = ({ formData, handleChange, errors }) => {
     );
   };
 
-  const InputField = ({ name, label, value, required, placeholder, type = "text", min, max, unit }) => {
-    // Funkcja do formatowania liczb z separatorami tysięcy
-    const formatNumber = (value) => {
-      if (!value) return '';
-      // Usuń wszystkie niealfanumeryczne znaki oprócz cyfr
-      const cleanValue = value.toString().replace(/[^\d]/g, '');
-      if (!cleanValue) return '';
-      // Dodaj spacje jako separatory tysięcy
-      return cleanValue.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-    };
-
-    // Funkcja do obsługi zmiany wartości w polach liczbowych
-    const handleInputChange = (e) => {
-      const inputValue = e.target.value;
-      
-      // Dla pól liczbowych (pojemność, moc, waga, przebieg)
-      if (['engineSize', 'power', 'weight', 'mileage', 'lastOfficialMileage'].includes(name)) {
-        // Pozwól na wpisywanie cyfr i spacji
-        const allowedChars = /^[\d\s]*$/;
-        if (allowedChars.test(inputValue) || inputValue === '') {
-          // Przekaż surową wartość do handleChange
-          handleChange(e);
-        }
-      } else {
-        // Dla innych pól - normalne zachowanie
-        handleChange(e);
-      }
-    };
-
-    return (
-      <div className="relative">
-        <label className="block text-sm font-medium mb-2 text-gray-700">
-          <div className="flex items-center gap-1">
-            <span>{label}</span>
-            {required && <span className="text-red-500">*</span>}
-            {unit && <span className="text-gray-500">({unit})</span>}
-          </div>
-        </label>
-        <input
-          type="text"
-          name={name}
-          value={value || ''}
-          onChange={handleInputChange}
-          placeholder={placeholder}
-          className="w-full h-9 text-sm px-3 border border-gray-300 rounded-md transition-all duration-200 hover:border-gray-400 focus:border-[#35530A]"
-        />
-        {errors && errors[name] && (
-          <p className="text-red-500 text-sm mt-1">{errors[name]}</p>
-        )}
-      </div>
-    );
-  };
 
   return (
     <div className="space-y-6">
       {/* Grid z polami technicznymi */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <InputField
-          name="mileage"
-          label="Przebieg"
-          value={formData.mileage}
-          required={true}
-          placeholder="np. 75000"
-          type="number"
-          min="0"
-          max="1000000"
-          unit="km"
-        />
-        <InputField
-          name="lastOfficialMileage"
-          label="Przebieg CEPiK"
-          value={formData.lastOfficialMileage}
-          placeholder="np. 70000"
-          type="number"
-          min="0"
-          max="1000000"
-          unit="km"
-        />
+        {/* Przebieg */}
+        <div>
+          <label className="block text-sm font-medium mb-2 text-gray-700">
+            <div className="flex items-center gap-1">
+              <span>Przebieg</span>
+              <span className="text-red-500">*</span>
+              <span className="text-gray-500">(km)</span>
+            </div>
+          </label>
+          <input
+            type="text"
+            name="mileage"
+            value={formData.mileage || ''}
+            onChange={handleNumericChange}
+            placeholder="np. 75000"
+            className="w-full h-9 text-sm px-3 border border-gray-300 rounded-md transition-all duration-200 hover:border-gray-400 focus:border-[#35530A]"
+          />
+          {(errors && errors.mileage) || getValidationError('mileage', formData.mileage) ? (
+            <p className="text-red-500 text-sm mt-1">
+              {errors?.mileage || getValidationError('mileage', formData.mileage)}
+            </p>
+          ) : null}
+        </div>
+
+        {/* Przebieg CEPiK */}
+        <div>
+          <label className="block text-sm font-medium mb-2 text-gray-700">
+            <div className="flex items-center gap-1">
+              <span>Przebieg CEPiK</span>
+              <span className="text-gray-500">(km)</span>
+            </div>
+          </label>
+          <input
+            type="text"
+            name="lastOfficialMileage"
+            value={formData.lastOfficialMileage || ''}
+            onChange={handleNumericChange}
+            placeholder="np. 70000"
+            className="w-full h-9 text-sm px-3 border border-gray-300 rounded-md transition-all duration-200 hover:border-gray-400 focus:border-[#35530A]"
+          />
+          {(errors && errors.lastOfficialMileage) || getValidationError('lastOfficialMileage', formData.lastOfficialMileage) ? (
+            <p className="text-red-500 text-sm mt-1">
+              {errors?.lastOfficialMileage || getValidationError('lastOfficialMileage', formData.lastOfficialMileage)}
+            </p>
+          ) : null}
+        </div>
+
         <SelectField
           name="fuelType"
           label="Paliwo"
@@ -243,38 +240,78 @@ const TechnicalDataSection = ({ formData, handleChange, errors }) => {
           required={true}
           placeholder="Wybierz paliwo"
         />
-        <InputField
-          name="engineSize"
-          label="Pojemność"
-          value={formData.engineSize}
-          required={true}
-          placeholder="np. 1600"
-          type="number"
-          min="0"
-          max="10000"
-          unit="cm³"
-        />
-        <InputField
-          name="power"
-          label="Moc"
-          value={formData.power}
-          required={true}
-          placeholder="np. 150"
-          type="number"
-          min="0"
-          max="2000"
-          unit="KM"
-        />
-        <InputField
-          name="weight"
-          label="Waga"
-          value={formData.weight}
-          placeholder="np. 1500"
-          type="number"
-          min="0"
-          max="10000"
-          unit="kg"
-        />
+
+        {/* Pojemność */}
+        <div>
+          <label className="block text-sm font-medium mb-2 text-gray-700">
+            <div className="flex items-center gap-1">
+              <span>Pojemność</span>
+              <span className="text-red-500">*</span>
+              <span className="text-gray-500">(cm³)</span>
+            </div>
+          </label>
+          <input
+            type="text"
+            name="engineSize"
+            value={formData.engineSize || ''}
+            onChange={handleNumericChange}
+            placeholder="np. 1600"
+            className="w-full h-9 text-sm px-3 border border-gray-300 rounded-md transition-all duration-200 hover:border-gray-400 focus:border-[#35530A]"
+          />
+          {(errors && errors.engineSize) || getValidationError('engineSize', formData.engineSize) ? (
+            <p className="text-red-500 text-sm mt-1">
+              {errors?.engineSize || getValidationError('engineSize', formData.engineSize)}
+            </p>
+          ) : null}
+        </div>
+
+        {/* Moc */}
+        <div>
+          <label className="block text-sm font-medium mb-2 text-gray-700">
+            <div className="flex items-center gap-1">
+              <span>Moc</span>
+              <span className="text-red-500">*</span>
+              <span className="text-gray-500">(KM)</span>
+            </div>
+          </label>
+          <input
+            type="text"
+            name="power"
+            value={formData.power || ''}
+            onChange={handleNumericChange}
+            placeholder="np. 150"
+            className="w-full h-9 text-sm px-3 border border-gray-300 rounded-md transition-all duration-200 hover:border-gray-400 focus:border-[#35530A]"
+          />
+          {(errors && errors.power) || getValidationError('power', formData.power) ? (
+            <p className="text-red-500 text-sm mt-1">
+              {errors?.power || getValidationError('power', formData.power)}
+            </p>
+          ) : null}
+        </div>
+
+        {/* Waga */}
+        <div>
+          <label className="block text-sm font-medium mb-2 text-gray-700">
+            <div className="flex items-center gap-1">
+              <span>Waga</span>
+              <span className="text-gray-500">(kg)</span>
+            </div>
+          </label>
+          <input
+            type="text"
+            name="weight"
+            value={formData.weight || ''}
+            onChange={handleNumericChange}
+            placeholder="np. 1500"
+            className="w-full h-9 text-sm px-3 border border-gray-300 rounded-md transition-all duration-200 hover:border-gray-400 focus:border-[#35530A]"
+          />
+          {(errors && errors.weight) || getValidationError('weight', formData.weight) ? (
+            <p className="text-red-500 text-sm mt-1">
+              {errors?.weight || getValidationError('weight', formData.weight)}
+            </p>
+          ) : null}
+        </div>
+
         <SelectField
           name="transmission"
           label="Skrzynia"
@@ -300,12 +337,12 @@ const TechnicalDataSection = ({ formData, handleChange, errors }) => {
           placeholder="Wybierz"
         />
         <SelectField
-          name="countryOfOrigin"
-          label="Kraj pochodzenia"
-          options={COUNTRIES}
-          value={formData.countryOfOrigin}
-          required={false}
-          placeholder="Wybierz kraj"
+          name="paintFinish"
+          label="Wykończenie"
+          options={PAINT_FINISHES}
+          value={formData.paintFinish}
+          required={true}
+          placeholder="Wybierz wykończenie"
         />
       </div>
 
@@ -316,6 +353,51 @@ const TechnicalDataSection = ({ formData, handleChange, errors }) => {
           Przebieg z CEPiK pomoże zweryfikować historię pojazdu.
         </p>
       </div>
+
+      {/* Modal dla niestandardowego wykończenia lakieru */}
+      {showCustomPaintModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold mb-4 text-gray-800">
+              Niestandardowe wykończenie lakieru
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Wprowadź nazwę wykończenia lakieru, która będzie wyświetlana w ogłoszeniu:
+            </p>
+            <input
+              type="text"
+              value={customPaint}
+              onChange={(e) => setCustomPaint(e.target.value)}
+              placeholder="np. Matowy czarny, Perłowy biały..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-[#35530A] mb-4"
+              autoFocus
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  handleCustomPaintSubmit();
+                }
+              }}
+            />
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={handleCustomPaintCancel}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+              >
+                Anuluj
+              </button>
+              <button
+                type="button"
+                onClick={handleCustomPaintSubmit}
+                disabled={!customPaint.trim()}
+                className="px-4 py-2 bg-[#35530A] text-white rounded-md hover:bg-[#2a4208] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              >
+                Zatwierdź
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

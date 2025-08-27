@@ -302,7 +302,11 @@ const ConversationsPanel = memo(({
 
   // ===== RENDER =====
   return (
-    <div className="w-full bg-white h-full flex flex-col overflow-hidden">
+    <div className="w-full bg-white h-full flex flex-col overflow-hidden" style={{
+      // Na mobile zapewnij lepszą wysokość z uwzględnieniem footera
+      minHeight: isMobile ? '400px' : 'auto',
+      maxHeight: isMobile ? 'calc(100vh - 240px)' : 'none'
+    }}>
       {/* Header z tytułem i opcjami - wyrównany z ChatPanel */}
       <div className="p-4 border-b border-gray-200 flex-shrink-0 min-h-[64px]">
         <div className="flex items-center justify-between h-full">
@@ -435,28 +439,40 @@ const ConversationsPanel = memo(({
         )}
       </div>
 
-      {/* Lista konwersacji */}
-      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+      {/* Lista konwersacji - zajmuje całą dostępną przestrzeń z lepszym mobile scrolling */}
+      <div 
+        className={`
+          flex-1 overflow-y-auto min-h-0
+          ${processedConversations.length >= 6 ? 'scrollbar-visible' : 'scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100'}
+          hover:scrollbar-thumb-gray-400
+        `}
+        style={{
+          // Na mobile zapewnij prawidłowe przewijanie
+          WebkitOverflowScrolling: 'touch',
+          overscrollBehavior: 'contain',
+          touchAction: 'pan-y',
+          minHeight: isMobile ? '400px' : 'auto'
+        }}>
         {loading ? (
-          <div className="flex justify-center py-8">
+          <div className="flex justify-center items-center h-full">
             <div className="animate-spin w-6 h-6 border-2 border-[#35530A] border-t-transparent rounded-full"></div>
           </div>
         ) : processedConversations.length === 0 ? (
-          <div className="flex items-center justify-center py-8">
+          <div className="flex items-center justify-center h-full">
             <div className="text-center">
               <div className="w-8 h-8 text-gray-400 mx-auto mb-2">💬</div>
               <p className="text-gray-500 text-sm">Brak konwersacji</p>
             </div>
           </div>
         ) : (
-          <div>
+          <div className="h-full">
             {processedConversations.map(renderConversationItem)}
           </div>
         )}
       </div>
 
-      {/* Footer z informacją o konwersacjach - zawsze widoczny */}
-      <div className="flex-shrink-0 p-3 border-t border-gray-200 bg-gray-50">
+      {/* Footer z informacją o konwersacjach - przylepiony do dołu */}
+      <div className="flex-shrink-0 p-3 border-t border-gray-200 bg-gray-50 mt-auto">
         <div className="flex items-center justify-between text-xs text-gray-500">
           <span>
             {processedConversations.length > 0 

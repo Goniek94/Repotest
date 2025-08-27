@@ -18,15 +18,10 @@ const BodyInfoSection = ({ formData, handleChange, errors }) => {
     'Zielony', 'Żółty', 'Brązowy', 'Złoty', 'Fioletowy', 'Pomarańczowy', 'Inne'
   ];
 
-  const PAINT_FINISHES = [
-    'Metalik', 'Perła', 'Mat', 'Połysk', 'Inne'
-  ];
-
   // Lista opcji nadwozia i koloru
   const bodyOptions = [
     { name: 'bodyType', label: 'Typ nadwozia', options: BODY_TYPES, required: true },
     { name: 'color', label: 'Kolor', options: COLORS, required: true },
-    { name: 'paintFinish', label: 'Wykończenie', options: PAINT_FINISHES, required: true },
     { name: 'doors', label: 'Liczba drzwi', options: DOOR_OPTIONS, required: true },
     { name: 'seats', label: 'Liczba miejsc', options: SEAT_OPTIONS, required: true }
   ];

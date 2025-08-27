@@ -79,8 +79,21 @@ const LocationSection = ({ formData, handleChange, errors }) => {
   // Funkcja formatowania nazwy miasta
   const formatCityName = (cityName) => {
     if (!cityName) return '';
-    // Konwertuj pierwszą literę na wielką, resztę na małe
-    return cityName.charAt(0).toUpperCase() + cityName.slice(1).toLowerCase();
+    
+    // Lista słów, które powinny pozostać małe (przedimki, spójniki)
+    const smallWords = ['i', 'na', 'nad', 'pod', 'w', 'z', 'ze', 'do', 'od', 'o'];
+    
+    return cityName
+      .toLowerCase()
+      .split(/[\s-]/)
+      .map((word, index) => {
+        // Pierwsza litera zawsze wielka, lub jeśli nie jest małym słowem
+        if (index === 0 || !smallWords.includes(word)) {
+          return word.charAt(0).toUpperCase() + word.slice(1);
+        }
+        return word;
+      })
+      .join(cityName.includes('-') ? '-' : ' ');
   };
 
   // Obsługa zmiany dla pola miasta z formatowaniem
@@ -139,14 +152,29 @@ const LocationSection = ({ formData, handleChange, errors }) => {
                 placeholder="Wybierz województwo"
                 errors={errors}
               />
-              <InputField
-                name="city"
-                label="Miejscowość"
-                value={formData.city}
-                required={true}
-                placeholder="np. Warszawa"
-                errors={errors}
-              />
+              <div className="relative">
+                <label className="block text-sm font-medium mb-2 text-gray-700">
+                  <div className="flex items-center gap-1">
+                    <span>Miejscowość</span>
+                    <span className="text-red-500">*</span>
+                  </div>
+                </label>
+                <input
+                  type="text"
+                  name="city"
+                  value={formData.city || ''}
+                  onChange={handleCityChange}
+                  placeholder="np. Warszawa"
+                  className={`w-full h-9 text-sm px-3 border rounded-md transition-all duration-200 ${
+                    formData.city 
+                      ? 'border-[#35530A] bg-white' 
+                      : 'border-gray-300 hover:border-gray-400 focus:border-[#35530A]'
+                  }`}
+                />
+                {errors && errors.city && (
+                  <p className="text-red-500 text-sm mt-1">{errors.city}</p>
+                )}
+              </div>
             </div>
           </div>
 

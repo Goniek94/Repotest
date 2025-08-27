@@ -14,6 +14,12 @@ import getImageUrl from '../../utils/responsive/getImageUrl';
 const SmallListingCard = ({ listing, showHotOffer = false }) => {
   const navigate = useNavigate();
 
+  // Function to truncate title to 80 characters
+  const truncateTitle = (title) => {
+    if (!title) return '';
+    return title.length > 80 ? title.substring(0, 80) + '...' : title;
+  };
+
   // Sprawdzenie czy listing istnieje
   if (!listing) {
     return null;
@@ -82,8 +88,8 @@ const SmallListingCard = ({ listing, showHotOffer = false }) => {
 
       {/* Tytuł i opis - zwiększone rozmiary na mobilnych */}
       <div className="p-3 sm:p-3 flex-1 flex flex-col">
-        <h3 className="text-base sm:text-sm font-bold text-gray-900 mb-2 sm:mb-1">
-          {title}
+        <h3 className="text-base sm:text-sm font-bold text-gray-900 mb-2 sm:mb-1 truncate whitespace-nowrap overflow-hidden text-ellipsis" title={title}>
+          {truncateTitle(title)}
         </h3>
         <p className="text-sm sm:text-xs text-gray-600 mb-3 sm:mb-2">
           {description || 'Ogłoszenie: ' + title}

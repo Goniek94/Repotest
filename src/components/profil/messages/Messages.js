@@ -197,16 +197,16 @@ const Messages = memo(() => {
           </div>
         )}
 
-        {/* Główny kontener - responsywny layout */}
+        {/* Główny kontener - responsywny layout z poprawnym mobile scrolling */}
         <div className={`
           flex flex-col lg:flex-row
           bg-white rounded-b-2xl border border-gray-200 border-t-0
-          ${isMobile ? 'overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100' : 'overflow-hidden'}
+          ${isMobile ? 'h-full' : 'overflow-hidden'}
         `} style={{
           boxShadow: '0 4px 8px -2px rgba(0, 0, 0, 0.15), -3px 0 6px -1px rgba(0, 0, 0, 0.1), 3px 0 6px -1px rgba(0, 0, 0, 0.1)',
-          height: isMobile ? '70vh' : 'calc(100vh - 150px)',
-          minHeight: isMobile ? '500px' : '600px',
-          maxHeight: isMobile ? '80vh' : '800px'
+          height: isMobile ? 'calc(100vh - 240px)' : 'calc(100vh - 150px)', // Uwzględnienie footera (40px) + marginesów na mobile
+          minHeight: isMobile ? '400px' : '600px',
+          maxHeight: isMobile ? 'none' : '800px'
         }}>
           
           {/* Panel kategorii - tylko desktop */}
@@ -228,11 +228,11 @@ const Messages = memo(() => {
           {(panelState === 'conversations' || isDesktop) && (
             <div className={`
               ${isMobile 
-                ? 'w-full' 
+                ? 'w-full h-full flex flex-col' 
                 : 'w-72 xl:w-80 flex-shrink-0 border-r border-gray-200'
               }
               ${panelState === 'chat' && isMobile ? 'hidden' : ''}
-              min-h-[280px] lg:min-h-0
+              ${isMobile ? '' : 'min-h-[280px] lg:min-h-0'}
             `}>
               <ConversationsPanel
                 isVisible={true}

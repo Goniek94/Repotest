@@ -27,7 +27,7 @@ const BasicInfoSection = ({ formData, handleChange, errors, showToast }) => {
   
   // Opcje dla typu sprzedawcy
   const sellerTypeOptions = [
-    { value: 'prywatny', label: 'Osoba prywatna' },
+    { value: 'prywatny', label: 'Osoba Prywatna' },
     { value: 'firma', label: 'Firma' }
   ];
 
@@ -121,7 +121,7 @@ const BasicInfoSection = ({ formData, handleChange, errors, showToast }) => {
     // Specjalna obsługa dla pola sellerType - konwertuj z labela na wartość
     let valueToSave = option;
     if (name === 'sellerType') {
-      if (option === 'Osoba prywatna') {
+      if (option === 'Osoba Prywatna') {
         valueToSave = 'prywatny';
       } else if (option === 'Firma') {
         valueToSave = 'firma';
@@ -279,34 +279,6 @@ const BasicInfoSection = ({ formData, handleChange, errors, showToast }) => {
     );
   };
 
-  // Komponent dla nagłówka - bezpośrednie wywołanie handleChange
-  const HeadlineField = () => {
-    return (
-      <div>
-        <label className="block text-sm font-medium mb-2 text-gray-700">
-          Nagłówek ogłoszenia <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="text"
-          name="headline"
-          value={formData.headline || ''}
-          onChange={handleChange}
-          placeholder="Wpisz krótki nagłówek ogłoszenia (max 120 znaków)"
-          maxLength={120}
-          disabled={isFieldLocked('headline')}
-          className={`w-full h-9 text-sm px-3 border border-gray-300 rounded-md transition-all duration-200 hover:border-gray-400 focus:border-[#35530A] ${
-            isFieldLocked('headline') ? 'cursor-not-allowed bg-gray-50' : ''
-          }`}
-        />
-        {errors.headline && (
-          <p className="text-red-500 text-sm mt-1">{errors.headline}</p>
-        )}
-        <div className="text-xs text-gray-500 mt-1">
-          {formData.headline ? formData.headline.length : 0}/120 znaków
-        </div>
-      </div>
-    );
-  };
 
   // PROSTY INPUT FIELD - bezpośrednie wywołanie handleChange bez dodatkowych warstw
   const InputField = ({ name, label, value, required, placeholder, disabled, maxLength, type = "text" }) => {
@@ -336,15 +308,37 @@ const BasicInfoSection = ({ formData, handleChange, errors, showToast }) => {
   
   return (
     <div className="space-y-6">
-      {/* Nagłówek ogłoszenia z lokalnym stanem */}
-      <HeadlineField />
+      {/* Nagłówek ogłoszenia - bezpośrednie pole input */}
+      <div>
+        <label className="block text-sm font-medium mb-2 text-gray-700">
+          Nagłówek ogłoszenia <span className="text-red-500">*</span>
+        </label>
+        <input
+          type="text"
+          name="headline"
+          value={formData.headline || ''}
+          onChange={handleChange}
+          placeholder="Wpisz krótki nagłówek ogłoszenia (max 120 znaków)"
+          maxLength={120}
+          disabled={isFieldLocked('headline')}
+          className={`w-full h-9 text-sm px-3 border border-gray-300 rounded-md transition-all duration-200 hover:border-gray-400 focus:border-[#35530A] ${
+            isFieldLocked('headline') ? 'cursor-not-allowed bg-gray-50' : ''
+          }`}
+        />
+        {errors.headline && (
+          <p className="text-red-500 text-sm mt-1">{errors.headline}</p>
+        )}
+        <div className="text-xs text-gray-500 mt-1">
+          {formData.headline ? formData.headline.length : 0}/120 znaków
+        </div>
+      </div>
 
       {/* Kto sprzedaje */}
       <SelectField
         name="sellerType"
         label="Kto sprzedaje?"
         options={sellerTypeOptions.map(opt => opt.label)}
-        value={formData.sellerType === 'prywatny' ? 'Osoba prywatna' : formData.sellerType === 'firma' ? 'Firma' : ''}
+        value={formData.sellerType === 'prywatny' ? 'Osoba Prywatna' : formData.sellerType === 'firma' ? 'Firma' : ''}
         required={true}
         placeholder="Wybierz typ sprzedawcy"
         disabled={isFieldLocked('sellerType')}
@@ -359,13 +353,20 @@ const BasicInfoSection = ({ formData, handleChange, errors, showToast }) => {
         {/* Pola do wypełnienia przed pobraniem VIN */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
           <div>
-            <InputField
-              name="registrationNumberForVin"
-              label="Numer rejestracyjny"
-              value={formData.registrationNumberForVin}
-              placeholder="np. WA12345"
-              maxLength={10}
-            />
+            <div>
+              <label className="block text-sm font-medium mb-2 text-gray-700">
+                Numer rejestracyjny
+              </label>
+              <input
+                type="text"
+                name="registrationNumberForVin"
+                value={formData.registrationNumberForVin || ''}
+                onChange={handleChange}
+                placeholder="np. WA12345"
+                maxLength={10}
+                className="w-full h-9 text-sm px-3 border border-gray-300 rounded-md transition-all duration-200 hover:border-gray-400 focus:border-[#35530A]"
+              />
+            </div>
             <div className="text-xs text-gray-500 mt-1">
               Pole B na dowodzie rejestracyjnym
             </div>
@@ -388,13 +389,20 @@ const BasicInfoSection = ({ formData, handleChange, errors, showToast }) => {
           </div>
           
           <div>
-            <InputField
-              name="vinForSearch"
-              label="Numer VIN"
-              value={formData.vinForSearch}
-              placeholder="17 znaków"
-              maxLength={17}
-            />
+            <div>
+              <label className="block text-sm font-medium mb-2 text-gray-700">
+                Numer VIN
+              </label>
+              <input
+                type="text"
+                name="vinForSearch"
+                value={formData.vinForSearch || ''}
+                onChange={handleChange}
+                placeholder="17 znaków"
+                maxLength={17}
+                className="w-full h-9 text-sm px-3 border border-gray-300 rounded-md transition-all duration-200 hover:border-gray-400 focus:border-[#35530A]"
+              />
+            </div>
             <div className="text-xs text-gray-500 mt-1">
               Pole E na dowodzie rejestracyjnym
             </div>
@@ -517,24 +525,47 @@ const BasicInfoSection = ({ formData, handleChange, errors, showToast }) => {
         <div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Wersja silnika */}
-            <InputField
-              name="version"
-              label="Wersja silnika"
-              value={formData.version}
-              required={true}
-              placeholder="np. 1.4 TSI"
-              disabled={isFieldLocked('version')}
-            />
+            <div>
+              <label className="block text-sm font-medium mb-2 text-gray-700">
+                {renderFieldLabel("Wersja silnika", "version", true)}
+              </label>
+              <input
+                type="text"
+                name="version"
+                value={formData.version || ''}
+                onChange={handleChange}
+                placeholder="np. 1.4 TSI"
+                disabled={isFieldLocked('version')}
+                className={`w-full h-9 text-sm px-3 border border-gray-300 rounded-md transition-all duration-200 hover:border-gray-400 focus:border-[#35530A] ${
+                  isFieldLocked('version') ? 'cursor-not-allowed bg-gray-50' : ''
+                }`}
+              />
+              {errors && errors.version && (
+                <p className="text-red-500 text-sm mt-1">{errors.version}</p>
+              )}
+            </div>
             
             {/* Numer rejestracyjny */}
-            <InputField
-              name="registrationNumber"
-              label="Numer rejestracyjny"
-              value={formData.registrationNumber}
-              placeholder="np. WA12345"
-              maxLength={10}
-              disabled={isFieldLocked('registrationNumber')}
-            />
+            <div>
+              <label className="block text-sm font-medium mb-2 text-gray-700">
+                {renderFieldLabel("Numer rejestracyjny", "registrationNumber")}
+              </label>
+              <input
+                type="text"
+                name="registrationNumber"
+                value={formData.registrationNumber || ''}
+                onChange={handleChange}
+                placeholder="np. WA12345"
+                maxLength={10}
+                disabled={isFieldLocked('registrationNumber')}
+                className={`w-full h-9 text-sm px-3 border border-gray-300 rounded-md transition-all duration-200 hover:border-gray-400 focus:border-[#35530A] ${
+                  isFieldLocked('registrationNumber') ? 'cursor-not-allowed bg-gray-50' : ''
+                }`}
+              />
+              {errors && errors.registrationNumber && (
+                <p className="text-red-500 text-sm mt-1">{errors.registrationNumber}</p>
+              )}
+            </div>
             
             {/* Data pierwszej rejestracji */}
             <DatePicker
@@ -549,14 +580,26 @@ const BasicInfoSection = ({ formData, handleChange, errors, showToast }) => {
             />
             
             {/* Numer VIN */}
-            <InputField
-              name="vin"
-              label="Numer VIN"
-              value={formData.vin}
-              placeholder="17 znaków"
-              maxLength={17}
-              disabled={isFieldLocked('vin')}
-            />
+            <div>
+              <label className="block text-sm font-medium mb-2 text-gray-700">
+                {renderFieldLabel("Numer VIN", "vin")}
+              </label>
+              <input
+                type="text"
+                name="vin"
+                value={formData.vin || ''}
+                onChange={handleChange}
+                placeholder="17 znaków"
+                maxLength={17}
+                disabled={isFieldLocked('vin')}
+                className={`w-full h-9 text-sm px-3 border border-gray-300 rounded-md transition-all duration-200 hover:border-gray-400 focus:border-[#35530A] ${
+                  isFieldLocked('vin') ? 'cursor-not-allowed bg-gray-50' : ''
+                }`}
+              />
+              {errors && errors.vin && (
+                <p className="text-red-500 text-sm mt-1">{errors.vin}</p>
+              )}
+            </div>
           </div>
           
           <div className="text-xs text-gray-500 mt-2">

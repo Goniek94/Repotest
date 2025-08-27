@@ -142,61 +142,74 @@ class FormValidator {
     static validateTechnicalData(formData, errors) {
       // Przebieg - wymagany
       if (!formData.mileage) {
-        formData.mileage = '100000'; // Domyślna wartość
+        errors.mileage = 'Przebieg jest wymagany';
       } else {
         const mileage = parseInt(formData.mileage);
         
         if (isNaN(mileage)) {
-          formData.mileage = '100000'; // Domyślna wartość
+          errors.mileage = 'Przebieg musi być liczbą';
         } else if (mileage < 0) {
-          formData.mileage = '100000'; // Domyślna wartość
-        } else if (mileage > 1000000) {
-          formData.mileage = '100000'; // Domyślna wartość
+          errors.mileage = 'Przebieg jest za niski. Minimalna wartość: 0 km';
+        } else if (mileage > 1200000) {
+          errors.mileage = 'Przebieg jest za wysoki. Maksymalna wartość: 1,200,000 km';
         }
       }
       
       // Ostatni oficjalny przebieg (opcjonalny)
       if (formData.lastOfficialMileage) {
         const lastMileage = parseInt(formData.lastOfficialMileage);
-        const currentMileage = parseInt(formData.mileage);
         
-        if (isNaN(lastMileage) || lastMileage < 0 || lastMileage > 1000000 || (currentMileage && lastMileage > currentMileage)) {
-          formData.lastOfficialMileage = ''; // Usuwamy wartość, jeśli jest nieprawidłowa
+        if (isNaN(lastMileage)) {
+          errors.lastOfficialMileage = 'Przebieg CEPiK musi być liczbą';
+        } else if (lastMileage < 0) {
+          errors.lastOfficialMileage = 'Przebieg CEPiK jest za niski. Minimalna wartość: 0 km';
+        } else if (lastMileage > 1200000) {
+          errors.lastOfficialMileage = 'Przebieg CEPiK jest za wysoki. Maksymalna wartość: 1,200,000 km';
         }
       }
       
-      // Rodzaj paliwa
+      // Rodzaj paliwa - wymagany
       if (!formData.fuelType) {
-        formData.fuelType = 'Benzyna'; // Domyślna wartość
+        errors.fuelType = 'Rodzaj paliwa jest wymagany';
       }
       
-      // Skrzynia biegów
+      // Skrzynia biegów - wymagana
       if (!formData.transmission) {
-        formData.transmission = 'Manualna'; // Domyślna wartość
+        errors.transmission = 'Skrzynia biegów jest wymagana';
       }
       
-      // Napęd
+      // Napęd - wymagany
       if (!formData.drive) {
-        formData.drive = 'Przedni'; // Domyślna wartość
+        errors.drive = 'Napęd jest wymagany';
       }
       
-      // Moc silnika
+      // Moc silnika - wymagana
       if (!formData.power) {
-        formData.power = '100'; // Domyślna wartość
+        errors.power = 'Moc silnika jest wymagana';
       } else {
         const power = parseInt(formData.power);
         
-        if (isNaN(power) || power <= 0 || power > 2000) {
-          formData.power = '100'; // Domyślna wartość
+        if (isNaN(power)) {
+          errors.power = 'Moc musi być liczbą';
+        } else if (power < 10) {
+          errors.power = 'Moc jest za niska. Minimalna wartość: 10 KM';
+        } else if (power > 2000) {
+          errors.power = 'Moc jest za wysoka. Maksymalna wartość: 2,000 KM';
         }
       }
       
-      // Pojemność silnika (opcjonalna)
-      if (formData.engineSize) {
+      // Pojemność silnika - wymagana
+      if (!formData.engineSize) {
+        errors.engineSize = 'Pojemność silnika jest wymagana';
+      } else {
         const engineSize = parseInt(formData.engineSize);
         
-        if (isNaN(engineSize) || engineSize <= 0 || engineSize > 10000) {
-          formData.engineSize = ''; // Usuwamy wartość, jeśli jest nieprawidłowa
+        if (isNaN(engineSize)) {
+          errors.engineSize = 'Pojemność musi być liczbą';
+        } else if (engineSize < 50) {
+          errors.engineSize = 'Pojemność jest za niska. Minimalna wartość: 50 cm³';
+        } else if (engineSize > 8500) {
+          errors.engineSize = 'Pojemność jest za wysoka. Maksymalna wartość: 8,500 cm³';
         }
       }
       
@@ -204,8 +217,12 @@ class FormValidator {
       if (formData.weight) {
         const weight = parseInt(formData.weight);
         
-        if (isNaN(weight) || weight <= 0 || weight > 10000) {
-          formData.weight = ''; // Usuwamy wartość, jeśli jest nieprawidłowa
+        if (isNaN(weight)) {
+          errors.weight = 'Waga musi być liczbą';
+        } else if (weight < 400) {
+          errors.weight = 'Waga jest za niska. Minimalna wartość: 400 kg';
+        } else if (weight > 4000) {
+          errors.weight = 'Waga jest za wysoka. Maksymalna wartość: 4,000 kg';
         }
       }
     }
@@ -214,9 +231,14 @@ class FormValidator {
      * Walidacja zdjęć
      */
     static validatePhotos(formData, errors) {
-      // Zdjęcia nie są już wymagane, ale jeśli są, to muszą być poprawne
+      // Inicjalizujemy tablicę zdjęć jeśli nie istnieje
       if (!formData.images) {
         formData.images = [];
+      }
+      
+      // WYMAGANE MINIMUM 5 ZDJĘĆ
+      if (formData.images.length < 5) {
+        errors.images = `Wymagane jest minimum 5 zdjęć pojazdu. Aktualnie dodano: ${formData.images.length}`;
       }
       
       // Sprawdzamy, czy mainImage jest ustawiony i czy jest w tablicy images

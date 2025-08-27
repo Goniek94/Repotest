@@ -14,6 +14,12 @@ import getImageUrl from '../../utils/responsive/getImageUrl';
 const MainFeatureListing = ({ listing }) => {
   const navigate = useNavigate();
 
+  // Function to truncate title to 80 characters
+  const truncateTitle = (title) => {
+    if (!title) return '';
+    return title.length > 80 ? title.substring(0, 80) + '...' : title;
+  };
+
   // Sprawdzenie czy listing istnieje
   if (!listing) {
     return null;
@@ -79,7 +85,9 @@ const MainFeatureListing = ({ listing }) => {
 
       {/* Main content section - zmniejszone paddingi */}
       <div className="p-3 md:p-4 lg:p-4 flex-1 flex flex-col bg-white">
-        <h2 className="text-lg md:text-lg font-bold text-gray-900 mb-2 md:mb-1.5 line-clamp-1">{title}</h2>
+        <h2 className="text-lg md:text-lg font-bold text-gray-900 mb-2 md:mb-1.5 truncate whitespace-nowrap overflow-hidden text-ellipsis" title={title}>
+          {truncateTitle(title)}
+        </h2>
         <p className="text-sm md:text-sm text-gray-600 mb-4 md:mb-4 line-clamp-2 leading-relaxed">{shortDesc}</p>
 
         {/* Mobile: Zwiększone rozmiary dla lepszej widoczności */}

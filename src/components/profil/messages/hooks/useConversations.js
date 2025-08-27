@@ -515,8 +515,9 @@ const useConversations = (activeTab) => {
     setChatMessages,
     currentUserId,
     user,
-    showNotification
-  }), [selectedConversation, currentUserId, user, showNotification]);
+    showNotification,
+    fetchConversations
+  }), [selectedConversation, currentUserId, user, showNotification, fetchConversations]);
 
   const { sendReply, editMessage, deleteMessage, archiveMessage } = useMessageActions(messageActionsConfig);
 
@@ -585,30 +586,26 @@ const useConversations = (activeTab) => {
           throw new Error('Nie udało się pobrać wiadomości z konwersacji');
         }
         
-        let allMessages = [];
-        
-        // Obsługa różnych formatów odpowiedzi
-        if (response.conversations) {
-          // Format z grupowaniem według ogłoszeń
-          console.log('📁 Format odpowiedzi: grupowanie według ogłoszeń');
-          Object.values(response.conversations).forEach(convo => {
-            if (convo.messages && Array.isArray(convo.messages)) {
-              allMessages = [...allMessages, ...convo.messages];
-            }
-          });
-        } else if (Array.isArray(response)) {
-          // Bezpośrednia tablica wiadomości
-          console.log('📁 Format odpowiedzi: bezpośrednia tablica wiadomości');
-          allMessages = response;
-        } else if (response.messages && Array.isArray(response.messages)) {
-          // Wiadomości w property messages
-          console.log('📁 Format odpowiedzi: wiadomości w property messages');
-          allMessages = response.messages;
-        } else if (response.data && Array.isArray(response.data)) {
-          // Wiadomości w property data
-          console.log('📁 Format odpowiedzi: wiadomości w property data');
-          allMessages = response.data;
-        }
+      // Backend teraz zwraca już przetworzone dane z messagesApi.transformConversationResponse
+      let allMessages = [];
+      
+      if (response.messages && Array.isArray(response.messages)) {
+        // Nowy format: { messages: [...], user: {...} }
+        console.log('📁 Format odpowiedzi: nowy format z messages');
+        allMessages = response.messages;
+      } else if (response.conversations) {
+        // Stary format z grupowaniem według ogłoszeń (fallback)
+        console.log('📁 Format odpowiedzi: stary format z conversations');
+        Object.values(response.conversations).forEach(convo => {
+          if (convo.messages && Array.isArray(convo.messages)) {
+            allMessages = [...allMessages, ...convo.messages];
+          }
+        });
+      } else if (Array.isArray(response)) {
+        // Bezpośrednia tablica wiadomości
+        console.log('📁 Format odpowiedzi: bezpośrednia tablica');
+        allMessages = response;
+      }
         
         console.log(`📨 Znaleziono ${allMessages.length} wiadomości przed formatowaniem:`, allMessages);
         

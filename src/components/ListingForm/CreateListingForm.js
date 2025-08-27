@@ -418,7 +418,7 @@ return (
               <div className="font-medium mb-1">Przed kontynuacją upewnij się, że:</div>
               <ul className="list-disc list-inside">
                 <li>Wszystkie wymagane pola zostały wypełnione</li>
-                <li>Dodałeś/aś minimum jedno zdjęcie pojazdu</li>
+                <li><strong>Dodałeś/aś minimum 5 zdjęć pojazdu</strong></li>
                 <li>Podane informacje są dokładne i zgodne ze stanem faktycznym</li>
               </ul>
               <p className="text-xs text-[#35530A] opacity-80 mt-2">

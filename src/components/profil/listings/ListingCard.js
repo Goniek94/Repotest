@@ -16,6 +16,12 @@ import getImageUrl from '../../../utils/responsive/getImageUrl';
  * - calculateDaysRemaining: function
  */
 const ListingCard = ({ listing, onFavorite, onEdit, onDelete, onExtend, calculateDaysRemaining }) => {
+  // Function to truncate title to 80 characters
+  const truncateTitle = (title) => {
+    if (!title) return '';
+    return title.length > 80 ? title.substring(0, 80) + '...' : title;
+  };
+
   // Przygotowanie danych
   const title = `${listing.brand || listing.make || ''} ${listing.model || ''}`.trim() || listing.title;
   const price = listing.price || 0;
@@ -77,7 +83,9 @@ const ListingCard = ({ listing, onFavorite, onEdit, onDelete, onExtend, calculat
         <div className="flex-grow p-4 flex flex-col">
           {/* Title and description */}
           <div className="mb-4">
-            <h2 className="text-xl font-bold text-gray-900 mb-2">{title}</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-2 truncate whitespace-nowrap overflow-hidden text-ellipsis" title={title}>
+              {truncateTitle(title)}
+            </h2>
             <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">{description}</p>
           </div>
 

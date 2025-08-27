@@ -1,5 +1,6 @@
 import React from "react";
 import { Heart } from "lucide-react";
+import { formatVehicleTitle } from '../../utils/formatters';
 
 /**
  * CardGridItem - komponent karty dla widoku siatki, bazujący na ListingCard
@@ -28,7 +29,7 @@ const CardGridItem = ({ listing, onNavigate, onFavorite, isFavorite }) => {
       <div className="relative">
         <img
           src={listing.image}
-          alt={listing.title || `${listing.brand || listing.make || ''} ${listing.model || ''}`.trim()}
+          alt={listing.title || formatVehicleTitle(listing)}
           className="w-full h-40 object-cover"
           loading="lazy"
           onError={(e) => {
@@ -65,7 +66,7 @@ const CardGridItem = ({ listing, onNavigate, onFavorite, isFavorite }) => {
       {/* Treść karty */}
       <div className="p-2.5">
         <h3 className="font-bold text-base sm:text-sm text-gray-900 mb-1">
-          {listing.title || `${listing.brand || listing.make || ''} ${listing.model || ''}`.trim()}
+          {listing.title || formatVehicleTitle(listing)}
         </h3>
         
         <div className="text-xs text-gray-600 mb-2.5">

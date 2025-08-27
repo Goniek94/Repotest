@@ -36,6 +36,12 @@ const UserListingListItem = memo(({
   message,
   onNavigate // function to go to details
 }) => {
+  // Function to truncate title to 80 characters
+  const truncateTitle = (title) => {
+    if (!title) return '';
+    return title.length > 80 ? title.substring(0, 80) + '...' : title;
+  };
+
   const isFeatured = listing.featured || listing.listingType === 'wyróżnione';
 
   // Calculate days remaining (if not provided)
@@ -144,7 +150,9 @@ const UserListingListItem = memo(({
           {/* Info section - normalny */}
           <div className="flex-grow p-3 flex flex-col justify-between">
             <div>
-              <h3 className="text-sm lg:text-base font-bold mb-1 line-clamp-1">{listing.title}</h3>
+              <h3 className="text-sm lg:text-base font-bold mb-1 truncate whitespace-nowrap overflow-hidden text-ellipsis" title={listing.title}>
+                {truncateTitle(listing.title)}
+              </h3>
               <p className="text-xs lg:text-sm text-gray-600 line-clamp-1 mb-2">{listing.subtitle}</p>
               
               {/* Parameters grid - kompaktowy ale czytelny */}
