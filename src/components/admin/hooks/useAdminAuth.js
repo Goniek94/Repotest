@@ -14,7 +14,7 @@ const useAdminAuth = () => {
         
         // Try to verify authentication with backend using HttpOnly cookies
         try {
-          const response = await fetch('/api/admin-panel/health', {
+          const response = await fetch('/api/admin/health', {
             credentials: 'include', // Ważne: wysyła HttpOnly cookies
             headers: {
               'Content-Type': 'application/json'

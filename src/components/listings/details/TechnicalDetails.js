@@ -192,7 +192,7 @@ const TechnicalDetails = ({ listing }) => {
     { label: "Opcja zakupu", value: formatSelectOption(listing.purchaseOptions) },
     { label: "Cena najmu", value: listing.rentalPrice ? `${listing.rentalPrice.toLocaleString()} zł/miesiąc` : null },
     // Informacje o cesji - dodawane gdy wybrano cesję
-    ...(listing.purchaseOptions === 'Cesja' ? [
+    ...(listing.purchaseOptions === 'Cesja leasingu' ? [
       { label: "Firma leasingowa/bank", value: listing.leasingCompany },
       { label: "Pozostałe raty", value: listing.remainingInstallments ? `${listing.remainingInstallments} rat` : null },
       { label: "Wysokość raty", value: listing.installmentAmount ? `${listing.installmentAmount.toLocaleString()} zł/miesiąc` : null },
@@ -214,7 +214,7 @@ const TechnicalDetails = ({ listing }) => {
   
   // Logika wyświetlania ceny w zależności od opcji zakupu
   const getPriceDisplay = () => {
-    if (listing.purchaseOptions === 'Cesja') {
+    if (listing.purchaseOptions === 'Cesja leasingu') {
       // Jeśli jest opłata za cesję, pokaż ją jako cenę z informacją o cesji
       if (listing.cessionFee && listing.cessionFee > 0) {
         return `${listing.cessionFee.toLocaleString()} zł (Cesja)`;

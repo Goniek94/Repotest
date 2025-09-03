@@ -232,37 +232,54 @@ const ConversationsPanel = memo(({
       key={conversation.id}
       onClick={(e) => handleConversationClick(conversation, e)}
       className={`
-        flex items-start gap-2 sm:gap-3 p-2 sm:p-3 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-100
-        ${activeConversation === conversation.id ? 'bg-[#35530A]/10 border-r-2 border-[#35530A]' : ''}
-        ${selectedConversations.has(conversation.id) ? 'bg-[#35530A]/10' : ''}
+        relative flex items-start p-3 sm:p-4 hover:bg-gray-50 cursor-pointer transition-all duration-200 border-b border-gray-100
+        ${activeConversation === conversation.id ? 'bg-[#35530A]/10 border-r-4 border-[#35530A]' : ''}
+        ${selectedConversations.has(conversation.id) ? 'bg-[#35530A]/15 shadow-sm' : ''}
+        ${isSelectionMode ? 'pl-12 sm:pl-14' : ''}
       `}
     >
-      {/* Checkbox w trybie zaznaczania */}
+      {/* Checkbox w trybie zaznaczania - pozycjonowany absolutnie */}
       {isSelectionMode && (
-        <div className="flex items-center mt-1 flex-shrink-0">
-          {selectedConversations.has(conversation.id) ? (
-            <CheckSquare className="w-4 h-4 sm:w-5 sm:h-5 text-[#35530A]" />
-          ) : (
-            <Square className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-          )}
+        <div className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 z-10">
+          <div className="flex items-center justify-center w-6 h-6 rounded-md border-2 border-gray-300 bg-white transition-all duration-200 hover:border-[#35530A]">
+            {selectedConversations.has(conversation.id) ? (
+              <CheckSquare className="w-5 h-5 text-[#35530A]" />
+            ) : (
+              <Square className="w-5 h-5 text-gray-400" />
+            )}
+          </div>
         </div>
       )}
 
-      {/* Treść konwersacji - bez awatara */}
+      {/* Treść konwersacji */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between mb-1">
-          <h4 className="font-medium text-gray-900 text-sm sm:text-base truncate">
-            {conversation.name}
-          </h4>
-          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-            {/* Gwiazdka - ukryta na bardzo małych ekranach */}
+        <div className="flex items-start justify-between mb-2">
+          <div className="flex-1 min-w-0 pr-2">
+            <h4 className={`font-semibold text-gray-900 truncate transition-all duration-200 ${
+              isSelectionMode ? 'text-sm' : 'text-sm sm:text-base'
+            }`}>
+              {conversation.name}
+            </h4>
+            
+            {/* Informacja o ogłoszeniu */}
+            {conversation.adTitle && (
+              <p className="text-xs text-[#35530A] truncate mt-1 flex items-center gap-1">
+                <span className="text-[#35530A]">📋</span>
+                <span className="truncate font-medium">{conversation.adTitle}</span>
+              </p>
+            )}
+          </div>
+          
+          {/* Prawa strona - czas i akcje */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Gwiazdka - tylko gdy nie ma trybu zaznaczania */}
             {!isSelectionMode && (
               <button
                 onClick={(e) => handleStarClick(e, conversation.id)}
-                className="hidden sm:block p-1 hover:bg-gray-200 rounded transition-colors"
+                className="p-1 hover:bg-gray-200 rounded-full transition-colors opacity-0 group-hover:opacity-100"
               >
                 <Star 
-                  className={`w-3 h-3 sm:w-4 sm:h-4 ${
+                  className={`w-4 h-4 ${
                     conversation.isStarred 
                       ? 'text-yellow-500 fill-yellow-500' 
                       : 'text-gray-400 hover:text-yellow-500'
@@ -270,33 +287,35 @@ const ConversationsPanel = memo(({
                 />
               </button>
             )}
-            <span className="text-xs text-gray-500">
+            
+            {/* Czas */}
+            <span className="text-xs text-gray-500 font-medium">
               {conversation.time}
             </span>
+            
+            {/* Status nieprzeczytanej wiadomości */}
+            {!isSelectionMode && conversation.unread && (
+              <div className="w-2.5 h-2.5 bg-[#35530A] rounded-full flex-shrink-0"></div>
+            )}
           </div>
         </div>
         
-        {/* Informacja o ogłoszeniu nad wiadomością */}
-        {conversation.adTitle && (
-          <p className="text-xs text-[#35530A] truncate mb-1 flex items-center gap-1">
-            <span className="text-[#35530A]">📋</span>
-            <span className="truncate">{conversation.adTitle}</span>
+        {/* Ostatnia wiadomość */}
+        <div className="flex items-center justify-between">
+          <p className={`text-gray-600 truncate transition-all duration-200 ${
+            isSelectionMode ? 'text-xs' : 'text-xs sm:text-sm'
+          }`}>
+            {truncateMessage(conversation.lastMessageText, isSelectionMode ? 25 : 35)}
           </p>
-        )}
-        
-        <p className="text-xs sm:text-sm text-gray-600 truncate">
-          {truncateMessage(conversation.lastMessageText)}
-        </p>
-      </div>
-
-      {/* Status indicator */}
-      {!isSelectionMode && (
-        <div className="flex flex-col items-center gap-1 mt-1 flex-shrink-0">
-          {conversation.unread && (
-            <div className="w-2 h-2 bg-[#35530A] rounded-full"></div>
+          
+          {/* Liczba nieprzeczytanych wiadomości */}
+          {conversation.unreadCount > 0 && (
+            <span className="ml-2 px-2 py-1 bg-[#35530A] text-white text-xs rounded-full font-medium flex-shrink-0">
+              {conversation.unreadCount > 99 ? '99+' : conversation.unreadCount}
+            </span>
           )}
         </div>
-      )}
+      </div>
     </div>
   );
 
@@ -327,9 +346,21 @@ const ConversationsPanel = memo(({
               <h2 className="text-base font-semibold text-gray-900 truncate leading-tight">
                 {getCategoryLabel(activeTab)}
               </h2>
-              <p className="text-xs text-gray-500 truncate leading-tight">
-                {processedConversations.length} wiadomości • {processedConversations.filter(c => c.unread).length} nieprzeczytane
-              </p>
+              {/* Informacja o trybie zaznaczania lub standardowe info */}
+              {isSelectionMode ? (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-[#35530A] font-medium">
+                    Tryb zaznaczania aktywny
+                  </span>
+                  <span className="text-xs text-[#35530A] bg-[#35530A]/20 px-2 py-0.5 rounded-full">
+                    {selectedConversations.size} zaznaczono
+                  </span>
+                </div>
+              ) : (
+                <p className="text-xs text-gray-500 truncate leading-tight">
+                  {processedConversations.length} wiadomości • {processedConversations.filter(c => c.unread).length} nieprzeczytane
+                </p>
+              )}
             </div>
           </div>
 
@@ -429,14 +460,6 @@ const ConversationsPanel = memo(({
           </div>
         </div>
 
-        {/* Informacja o trybie zaznaczania */}
-        {isSelectionMode && (
-          <div className="mt-3 p-2 bg-[#35530A]/10 rounded-lg">
-            <p className="text-sm text-[#35530A]">
-              Tryb zaznaczania aktywny • Zaznaczono: {selectedConversations.size}
-            </p>
-          </div>
-        )}
       </div>
 
       {/* Lista konwersacji - zajmuje całą dostępną przestrzeń z lepszym mobile scrolling */}

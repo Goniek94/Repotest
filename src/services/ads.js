@@ -60,9 +60,9 @@ const AdsService = {
   deleteImage: (id, index) => 
     apiClient.delete(`/ads/${id}/images/${index}`),
 
-  // ✅ DODANE: Ustawienie głównego zdjęcia
-  setMainImage: (id, mainImageIndex) =>
-    apiClient.put(`/ads/${id}/main-image`, { mainImageIndex }),
+  // ✅ POPRAWIONE: Zmiana kolejności zdjęć (pierwsze = główne)
+  setMainImage: (id, images) =>
+    apiClient.put(`/ads/${id}/images/reorder`, { images }),
 
   // Dodawanie ogłoszenia do ulubionych
   addToFavorites: (id) => apiClient.post(`/favorites/add/${id}`),

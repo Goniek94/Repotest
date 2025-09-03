@@ -16,12 +16,15 @@ const GridListingCard = memo(({ listing, onFavorite, isFavorite }) => {
   // Check if listing is featured
   const isFeatured = listing.featured || listing.listingType === 'wyróżnione';
   
-  // Create title from brand/make and model
-  const title = `${listing.brand || listing.make || ''} ${listing.model || ''}`.trim();
+  // Create title from brand/make and model (always on top)
+  const brandModel = `${listing.brand || listing.make || ''} ${listing.model || ''}`.trim();
+  // Headline from form (displayed under brand and model)
+  const headline = listing.headline || '';
   
-  // Function to truncate title to 120 characters
-  const truncateTitle = (title) => {
+  // Function to format title for two lines (up to 120 characters)
+  const formatTitle = (title) => {
     if (!title) return '';
+    // Allow up to 120 characters, will wrap naturally to two lines
     return title.length > 120 ? title.substring(0, 120) + '...' : title;
   };
   
@@ -69,7 +72,7 @@ const GridListingCard = memo(({ listing, onFavorite, isFavorite }) => {
                  ${isFeatured ? 'border-2 border-[#35530A]' : 'border border-gray-200'}
                  rounded-[2px]`}
       onClick={handleNavigate}
-      style={{ minHeight: '360px' }} // Zmniejszona wysokość karty
+      style={{ minHeight: '320px' }} // Jeszcze bardziej zmniejszona wysokość karty
     >
       {/* Featured badge */}
       {isFeatured && (
@@ -83,7 +86,7 @@ const GridListingCard = memo(({ listing, onFavorite, isFavorite }) => {
         <img
           src={imageUrl}
           alt={title}
-          className="w-full h-40 sm:h-44 md:h-48 object-cover" // Zmniejszona wysokość obrazka
+          className="w-full h-32 sm:h-36 md:h-40 object-cover" // Jeszcze bardziej zmniejszona wysokość obrazka
           onError={(e) => {
             e.target.onerror = null;
             e.target.src = '/images/auto-788747_1280.jpg';
@@ -113,108 +116,126 @@ const GridListingCard = memo(({ listing, onFavorite, isFavorite }) => {
         )}
       </div>
 
-      {/* Card content - układ jak na wzorze BMW Seria 1 */}
-      <div className="p-2.5 flex flex-col flex-grow">
-        {/* Większa przestrzeń dla pełnego nagłówka */}
-        <div className="h-24 mb-1">
-          <h3 className="font-bold text-base text-gray-900 mb-1 line-clamp-2 leading-tight" title={title}>
-            {title}
+      {/* Card content - bardziej kompaktowy */}
+      <div className="p-2 flex flex-col flex-grow">
+        {/* Kompaktowy nagłówek - marka/model + headline */}
+        <div className="h-16 mb-0.5">
+          {/* Marka i model */}
+          <h3 className="font-bold text-sm text-gray-900 mb-0.5 leading-tight">
+            {brandModel}
           </h3>
           
-          <p className="text-sm text-gray-600 line-clamp-2 leading-tight">
-            {listing.headline || listing.shortDescription || `${title} - sprawdź szczegóły tego ogłoszenia`}
-          </p>
+          {/* Nagłówek z formularza - dynamiczny rozmiar żeby się zmieścił w 2 liniach */}
+          {headline && (
+            <h4 
+              className="font-medium text-gray-700 leading-tight"
+              style={{
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+                wordBreak: 'break-word',
+                hyphens: 'auto',
+                minHeight: '2rem',
+                lineHeight: '1rem',
+                fontSize: headline.length > 60 ? '10px' : headline.length > 40 ? '11px' : '12px'
+              }}
+              title={headline}
+            >
+              {headline}
+            </h4>
+          )}
         </div>
 
-        {/* Specifications - układ jak na wzorze BMW Seria 1 */}
-        <div className="space-y-1 mb-1">
+        {/* Specifications - bardziej kompaktowe */}
+        <div className="space-y-0.5 mb-0.5">
           {/* Pierwsza linia */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="flex items-center gap-1.5">
-              <div className="flex items-center justify-center w-5 h-5 bg-gray-100 rounded-full flex-shrink-0">
-                <YearIcon className="w-3 h-3 text-gray-600" />
+          <div className="grid grid-cols-2 gap-1">
+            <div className="flex items-center gap-1">
+              <div className="flex items-center justify-center w-4 h-4 bg-gray-100 rounded-full flex-shrink-0">
+                <YearIcon className="w-2.5 h-2.5 text-gray-600" />
               </div>
               <div className="min-w-0">
-                <div className="text-[9px] text-gray-500 font-medium">Rok</div>
-                <div className="text-[11px] font-bold text-gray-900">{year}</div>
+                <div className="text-[8px] text-gray-500 font-medium">Rok</div>
+                <div className="text-[10px] font-bold text-gray-900">{year}</div>
               </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <div className="flex items-center justify-center w-5 h-5 bg-gray-100 rounded-full flex-shrink-0">
-                <FuelIcon className="w-3 h-3 text-gray-600" />
+            <div className="flex items-center gap-1">
+              <div className="flex items-center justify-center w-4 h-4 bg-gray-100 rounded-full flex-shrink-0">
+                <FuelIcon className="w-2.5 h-2.5 text-gray-600" />
               </div>
               <div className="min-w-0">
-                <div className="text-[9px] text-gray-500 font-medium">Paliwo</div>
-                <div className="text-[11px] font-bold text-gray-900">{fuelType}</div>
+                <div className="text-[8px] text-gray-500 font-medium">Paliwo</div>
+                <div className="text-[10px] font-bold text-gray-900">{fuelType}</div>
               </div>
             </div>
           </div>
 
           {/* Druga linia */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="flex items-center gap-1.5">
-              <div className="flex items-center justify-center w-5 h-5 bg-gray-100 rounded-full flex-shrink-0">
-                <MileageIcon className="w-3 h-3 text-gray-600" />
+          <div className="grid grid-cols-2 gap-1">
+            <div className="flex items-center gap-1">
+              <div className="flex items-center justify-center w-4 h-4 bg-gray-100 rounded-full flex-shrink-0">
+                <MileageIcon className="w-2.5 h-2.5 text-gray-600" />
               </div>
               <div className="min-w-0">
-                <div className="text-[9px] text-gray-500 font-medium">Przebieg</div>
-                <div className="text-[11px] font-bold text-gray-900">{Math.round(mileage/1000)} tys. km</div>
+                <div className="text-[8px] text-gray-500 font-medium">Przebieg</div>
+                <div className="text-[10px] font-bold text-gray-900">{Math.round(mileage/1000)} tys. km</div>
               </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <div className="flex items-center justify-center w-5 h-5 bg-gray-100 rounded-full flex-shrink-0">
-                <PowerIcon className="w-3 h-3 text-gray-600" />
+            <div className="flex items-center gap-1">
+              <div className="flex items-center justify-center w-4 h-4 bg-gray-100 rounded-full flex-shrink-0">
+                <PowerIcon className="w-2.5 h-2.5 text-gray-600" />
               </div>
               <div className="min-w-0">
-                <div className="text-[9px] text-gray-500 font-medium">Moc</div>
-                <div className="text-[11px] font-bold text-gray-900">{power}</div>
+                <div className="text-[8px] text-gray-500 font-medium">Moc</div>
+                <div className="text-[10px] font-bold text-gray-900">{power}</div>
               </div>
             </div>
           </div>
 
           {/* Trzecia linia */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="flex items-center gap-1.5">
-              <div className="flex items-center justify-center w-5 h-5 bg-gray-100 rounded-full flex-shrink-0">
-                <CapacityIcon className="w-3 h-3 text-gray-600" />
+          <div className="grid grid-cols-2 gap-1">
+            <div className="flex items-center gap-1">
+              <div className="flex items-center justify-center w-4 h-4 bg-gray-100 rounded-full flex-shrink-0">
+                <CapacityIcon className="w-2.5 h-2.5 text-gray-600" />
               </div>
               <div className="min-w-0">
-                <div className="text-[9px] text-gray-500 font-medium">Pojemność</div>
-                <div className="text-[11px] font-bold text-gray-900">{engineCapacity} cm³</div>
+                <div className="text-[8px] text-gray-500 font-medium">Pojemność</div>
+                <div className="text-[10px] font-bold text-gray-900">{engineCapacity} cm³</div>
               </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <div className="flex items-center justify-center w-5 h-5 bg-gray-100 rounded-full flex-shrink-0">
-                <GearboxIcon className="w-3 h-3 text-gray-600" />
+            <div className="flex items-center gap-1">
+              <div className="flex items-center justify-center w-4 h-4 bg-gray-100 rounded-full flex-shrink-0">
+                <GearboxIcon className="w-2.5 h-2.5 text-gray-600" />
               </div>
               <div className="min-w-0">
-                <div className="text-[9px] text-gray-500 font-medium">Skrzynia</div>
-                <div className="text-[11px] font-bold text-gray-900">{transmission === 'Automatyczna' ? 'automatyczna' : 'manualna'}</div>
+                <div className="text-[8px] text-gray-500 font-medium">Skrzynia</div>
+                <div className="text-[10px] font-bold text-gray-900">{transmission === 'Automatyczna' ? 'automatyczna' : 'manualna'}</div>
               </div>
             </div>
           </div>
 
           {/* Separator */}
-          <div className="border-t border-gray-200 my-1"></div>
+          <div className="border-t border-gray-200 my-0.5"></div>
           
           {/* Czwarta linia - pod separatorem */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="flex items-center gap-1.5">
-              <div className="flex items-center justify-center w-5 h-5 bg-gray-100 rounded-full flex-shrink-0">
-                <User className="w-3 h-3 text-gray-600" />
+          <div className="grid grid-cols-2 gap-1">
+            <div className="flex items-center gap-1">
+              <div className="flex items-center justify-center w-4 h-4 bg-gray-100 rounded-full flex-shrink-0">
+                <User className="w-2.5 h-2.5 text-gray-600" />
               </div>
               <div className="min-w-0">
-                <div className="text-[9px] text-gray-500 font-medium">Sprzedawca</div>
-                <div className="text-[11px] font-bold text-gray-900">prywatny</div>
+                <div className="text-[8px] text-gray-500 font-medium">Sprzedawca</div>
+                <div className="text-[10px] font-bold text-gray-900">prywatny</div>
               </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <div className="flex items-center justify-center w-5 h-5 bg-gray-100 rounded-full flex-shrink-0">
-                <MapPin className="w-3 h-3 text-gray-600" />
+            <div className="flex items-center gap-1">
+              <div className="flex items-center justify-center w-4 h-4 bg-gray-100 rounded-full flex-shrink-0">
+                <MapPin className="w-2.5 h-2.5 text-gray-600" />
               </div>
               <div className="min-w-0">
-                <div className="text-[9px] text-gray-500 font-medium">Lokalizacja</div>
-                <div className="text-[11px] font-bold text-gray-900 truncate">{listing.city || location.split('(')[0].trim()}</div>
+                <div className="text-[8px] text-gray-500 font-medium">Lokalizacja</div>
+                <div className="text-[10px] font-bold text-gray-900 truncate">{listing.city || location.split('(')[0].trim()}</div>
               </div>
             </div>
           </div>
@@ -222,7 +243,7 @@ const GridListingCard = memo(({ listing, onFavorite, isFavorite }) => {
 
         {/* Cena - na dole */}
         <div className="mt-auto">
-          <div className="bg-[#35530A] rounded-[2px] py-1.5 text-center text-base font-bold text-white">
+          <div className="bg-[#35530A] rounded-[2px] py-1 text-center text-sm font-bold text-white">
             {price.toLocaleString()} zł
           </div>
         </div>

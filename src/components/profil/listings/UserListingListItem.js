@@ -189,7 +189,7 @@ const UserListingListItem = memo(({
                   <Box className="w-3 h-3 text-black flex-shrink-0" />
                   <div className="min-w-0">
                     <div className="text-xs text-gray-500">Pojemność</div>
-                    <div className="text-xs font-medium truncate">{listing.engineCapacity}</div>
+                    <div className="text-xs font-medium truncate">{listing.engineSize || listing.engineCapacity || 'N/A'} cm³</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-1 text-gray-700">
@@ -210,7 +210,7 @@ const UserListingListItem = memo(({
                   <MapPin className="w-3 h-3 text-black flex-shrink-0" />
                   <div className="min-w-0">
                     <div className="text-xs text-gray-500">Pochodzenie</div>
-                    <div className="text-xs font-medium truncate">{listing.countryOrigin || listing.origin || 'N/A'}</div>
+                    <div className="text-xs font-medium truncate">{listing.countryOfOrigin || listing.countryOrigin || listing.origin || 'N/A'}</div>
                   </div>
                 </div>
               </div>

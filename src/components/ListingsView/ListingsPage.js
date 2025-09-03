@@ -75,7 +75,13 @@ function ListingsPage() {
       }
 
       const requestFilters = { ...filters };
-      if (offerType !== 'all') requestFilters.condition = offerType;
+      if (offerType !== 'all') {
+        if (offerType === 'private') {
+          requestFilters.sellerType = 'Prywatny';
+        } else if (offerType === 'dealer') {
+          requestFilters.sellerType = 'Firma';
+        }
+      }
       if (onlyFeatured) requestFilters.listingType = 'wyróżnione';
 
       const result = await AdsService.search({
@@ -253,8 +259,8 @@ function ListingsPage() {
 
   // === R E N D E R ===
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="py-4 sm:py-6 md:py-8 lg:py-12 space-y-4 sm:space-y-6 md:space-y-8">
+    <div className="min-h-screen bg-white">
+      <div className="py-4 sm:py-6 md:py-8 lg:py-12 pb-8 sm:pb-12 md:pb-16 lg:pb-20 space-y-4 sm:space-y-6 md:space-y-8">
         {/* Przycisk nad kartą - zoptymalizowany dla mobile */}
         <div className="flex justify-center px-2 sm:px-4">
           <button
@@ -272,8 +278,8 @@ function ListingsPage() {
           </div>
         )}
 
-        {/* Karta z filtrami - zoptymalizowany padding dla mobile */}
-        <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-md px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-5 mx-2 sm:mx-4 md:mx-auto">
+        {/* Karta z filtrami - bez tła */}
+        <div className="max-w-6xl mx-auto mx-2 sm:mx-4 md:mx-auto">
           <ListingControls
             sortType={sortType}
             setSortType={setSortType}

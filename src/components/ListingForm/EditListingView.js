@@ -32,60 +32,29 @@ const EditListingView = () => {
     mainImageIndex: 0
   });
   
-  // Funkcja do wymuszenia odświeżenia danych z czyszczeniem cache
-  const forceRefreshListing = useCallback(async () => {
+  // Uproszczona funkcja odświeżania danych
+  const refreshListing = useCallback(async () => {
     try {
-      safeConsole.log('🔄 Wymuszam odświeżenie danych ogłoszenia z czyszczeniem cache...');
+      const response = await AdsService.getById(id);
+      const data = response.data || response;
       
-      // 1. Wyczyść cache dla tego ogłoszenia
-      const cacheKey = `/ads/${id}`;
-      apiClient.clearCache(cacheKey);
+      setListing(data);
+      setSelectedImage(0); // Pierwsze zdjęcie jest zawsze główne
       
-      // 2. Wyczyść cache przeglądarki dla tego endpointu
-      if ('caches' in window) {
-        try {
-          const cacheNames = await caches.keys();
-          for (const cacheName of cacheNames) {
-            const cache = await caches.open(cacheName);
-            await cache.delete(`/api/ads/${id}`);
-            await cache.delete(`http://localhost:5000/api/ads/${id}`);
-          }
-        } catch (cacheError) {
-          safeConsole.warn('Nie udało się wyczyścić cache przeglądarki:', cacheError);
-        }
-      }
-      
-      // 3. Dodaj timestamp do żądania aby wymusić świeże dane
-      const timestamp = Date.now();
-      const response = await apiClient.get(`/ads/${id}?_t=${timestamp}`, {
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
+      // Ustawienie edytowalnych pól
+      setEditableFields({
+        description: data.description || '',
+        price: data.price || '',
+        city: data.city || '',
+        voivodeship: data.voivodeship || '',
+        color: data.color || '',
+        condition: data.condition || '',
+        headline: data.headline || ''
       });
       
-      if (response.data) {
-        safeConsole.log('✅ Pobrano świeże dane z serwera:', response.data);
-        setListing(response.data);
-        setSelectedImage(response.data.mainImageIndex || 0);
-        
-        // Ustawienie edytowalnych pól
-        setEditableFields({
-          description: response.data.description || '',
-          price: response.data.price || '',
-          city: response.data.city || '',
-          voivodeship: response.data.voivodeship || '',
-          color: response.data.color || '',
-          mainImageIndex: response.data.mainImageIndex || 0
-        });
-        
-        return response.data;
-      } else {
-        throw new Error('Brak danych w odpowiedzi');
-      }
+      return data;
     } catch (err) {
-      safeConsole.error('❌ Błąd podczas wymuszenia odświeżenia:', err);
+      safeConsole.error('❌ Błąd podczas odświeżania:', err);
       throw err;
     }
   }, [id]);
@@ -95,7 +64,7 @@ const EditListingView = () => {
     const fetchListing = async () => {
       try {
         setLoading(true);
-        await forceRefreshListing();
+        await refreshListing();
       } catch (err) {
         safeConsole.error('Błąd podczas pobierania ogłoszenia:', err);
         setError('Nie udało się pobrać ogłoszenia. Spróbuj ponownie później.');
@@ -107,7 +76,7 @@ const EditListingView = () => {
     if (id) {
       fetchListing();
     }
-  }, [id, forceRefreshListing]);
+  }, [id, refreshListing]);
 
   // Obsługa zmiany głównego zdjęcia
   const handleSetMainImage = async (index) => {
@@ -281,7 +250,7 @@ const EditListingView = () => {
       safeConsole.log('✅ Ogłoszenie zaktualizowane, wymuszam odświeżenie danych...');
       
       // 🔄 KLUCZOWE: Wymuś odświeżenie danych z czyszczeniem cache
-      await forceRefreshListing();
+      await refreshListing();
       
       // 📢 Powiadom inne komponenty o aktualizacji
       localStorage.setItem(`listing_updated_${id}`, Date.now().toString());

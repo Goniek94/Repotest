@@ -318,18 +318,32 @@ const BasicInfoSection = ({ formData, handleChange, errors, showToast }) => {
           name="headline"
           value={formData.headline || ''}
           onChange={handleChange}
-          placeholder="Wpisz krótki nagłówek ogłoszenia (max 120 znaków)"
+          placeholder="Wpisz nagłówek ogłoszenia (minimum 80 znaków, maksimum 120 znaków)"
           maxLength={120}
           disabled={isFieldLocked('headline')}
           className={`w-full h-9 text-sm px-3 border border-gray-300 rounded-md transition-all duration-200 hover:border-gray-400 focus:border-[#35530A] ${
             isFieldLocked('headline') ? 'cursor-not-allowed bg-gray-50' : ''
+          } ${
+            formData.headline && formData.headline.length < 80 ? 'border-red-300 focus:border-red-500' : ''
           }`}
         />
         {errors.headline && (
           <p className="text-red-500 text-sm mt-1">{errors.headline}</p>
         )}
-        <div className="text-xs text-gray-500 mt-1">
+        <div className={`text-xs mt-1 ${
+          formData.headline && formData.headline.length < 80 
+            ? 'text-red-500' 
+            : formData.headline && formData.headline.length >= 80 
+              ? 'text-green-600' 
+              : 'text-gray-500'
+        }`}>
           {formData.headline ? formData.headline.length : 0}/120 znaków
+          {formData.headline && formData.headline.length < 80 && (
+            <span className="block">Wymagane minimum 80 znaków (pozostało: {80 - formData.headline.length})</span>
+          )}
+          {formData.headline && formData.headline.length >= 80 && formData.headline.length <= 120 && (
+            <span className="block text-green-600">✓ Nagłówek spełnia wymagania</span>
+          )}
         </div>
       </div>
 

@@ -8,35 +8,45 @@ import GearboxIcon from '../../../icons/GearboxIcon';
 import CapacityIcon from '../../../icons/CapacityIcon';
 import DriveIcon from '../../../icons/DriveIcon';
 import { MapPin, User, Globe } from 'lucide-react';
+import SpecItem from '../../../FeaturedListings/SpecItem';
 import getImageUrl from '../../../../utils/responsive/getImageUrl';
 
 const ListingCard = memo(({ listing, onNavigate, onFavorite, isFavorite, message }) => {
   // Sprawdzamy, czy ogłoszenie jest wyróżnione
   const isFeatured = listing.featured || listing.listingType === 'wyróżnione';
   
-  // Tworzenie tytułu z brand/make i model
-  const title = `${listing.brand || listing.make || ''} ${listing.model || ''}`.trim();
-  
-  // Function to truncate title to 80 characters
-  const truncateTitle = (title) => {
+  // Function to format title for two lines (up to 120 characters)
+  const formatTitle = (title) => {
     if (!title) return '';
-    return title.length > 80 ? title.substring(0, 80) + '...' : title;
+    // Allow up to 120 characters, will wrap naturally to two lines
+    return title.length > 120 ? title.substring(0, 120) + '...' : title;
   };
+
+  // Sprawdzenie czy listing istnieje
+  if (!listing) {
+    return null;
+  }
+
+  // Tworzenie tytułu z brand/make i model (zawsze na górze)
+  const brandModel = `${listing.brand || listing.make || ''} ${listing.model || ''}`.trim();
+  // Nagłówek z formularza (wyświetlany pod marką i modelem)
+  const headline = listing.headline || '';
   
   const price = listing.price || 0;
   const year = listing.year || new Date().getFullYear();
   const mileage = listing.mileage || 0;
   const fuelType = listing.fuel || listing.fuelType || 'Benzyna';
   const power = listing.power || '150';
-  const capacity = listing.engineCapacity ? parseInt(listing.engineCapacity) : 2000;
+  const capacity = listing.engineSize || listing.engineCapacity || listing.capacity || 2000;
   const transmission = listing.transmission || listing.gearbox || 'manualna';
   const drive = listing.drive || 'Na przednie koła';
   const sellerType = listing.sellerType || 'Prywatny';
   const city = listing.city || listing.location || 'Polska';
   const countryOfOrigin = listing.countryOfOrigin || (listing.imported === 'Tak' ? 'Import' : 'Polska');
   
-  // Bezpieczny dostęp do obrazu
+  // Bezpieczny dostęp do obrazu (główne zdjęcie ustawione przez użytkownika)
   let imageUrl = null;
+
   if (listing.images && listing.images.length > 0) {
     const mainIdx = typeof listing.mainImageIndex === 'number' &&
                     listing.mainImageIndex >= 0 &&
@@ -48,37 +58,34 @@ const ListingCard = memo(({ listing, onNavigate, onFavorite, isFavorite, message
     imageUrl = getImageUrl(listing.image || null);
   }
 
-  // Tworzenie opisu technicznego w jednej linii jak na obrazku
-  const technicalDescription = `${title} ${year} • ${fuelType} • ${transmission} • ${mileage.toLocaleString('pl-PL')} tys. km • ${power} KM • ${countryOfOrigin}`;
-
   return (
     <div 
-      className={`bg-white shadow-sm hover:shadow-md overflow-hidden flex flex-col cursor-pointer h-full transition-all duration-200 w-full relative ${
-        isFeatured ? 'border-2 border-[#35530A] rounded-lg' : 'border border-gray-200 hover:border-gray-300 rounded-lg'
+      className={`bg-white shadow-lg shadow-gray-400/40 hover:shadow-xl hover:shadow-gray-500/50 rounded-[2px] overflow-hidden flex flex-col cursor-pointer h-full transition-all duration-200 w-full relative ${
+        isFeatured ? 'border-2 border-[#35530A]' : 'border border-gray-300'
       }`}
       onClick={() => onNavigate(listing.id || listing._id)}
     >
-      {/* Zdjęcie */}
-      <div className="relative h-48">
+      {/* Zdjęcie - zwiększone na mobilnych */}
+      <div className="relative h-48 sm:h-40 md:h-36">
         {imageUrl ? (
           <img
             src={imageUrl}
-            alt={title}
-            className="w-full h-full object-cover rounded-t-lg"
+            alt={brandModel}
+            className="w-full h-full object-cover rounded-t-[2px]"
             onError={(e) => {
               e.target.onerror = null;
               e.target.src = '/images/auto-788747_1280.jpg';
             }}
           />
         ) : (
-          <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-sm rounded-t-lg">
+          <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-sm rounded-t-[2px]">
             Brak zdjęcia
           </div>
         )}
         
         {/* Badge wyróżnionej oferty */}
         {isFeatured && (
-          <div className="absolute top-3 left-3 bg-[#35530A] text-white px-3 py-1 text-xs font-medium rounded">
+          <div className="absolute top-2 left-2 bg-[#35530A] text-white px-2 py-1 text-xs font-medium" style={{borderRadius: '2px'}}>
             Wyróżnione
           </div>
         )}
@@ -89,7 +96,7 @@ const ListingCard = memo(({ listing, onNavigate, onFavorite, isFavorite, message
             e.stopPropagation();
             onFavorite(listing.id || listing._id);
           }}
-          className="absolute top-3 right-3 p-2 bg-white rounded-full shadow-sm hover:shadow-md transition-shadow"
+          className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-sm hover:shadow-md transition-shadow"
         >
           <Heart
             className={`w-5 h-5 ${
@@ -99,83 +106,42 @@ const ListingCard = memo(({ listing, onNavigate, onFavorite, isFavorite, message
         </button>
       </div>
 
-      {/* Treść karty */}
-      <div className="p-4 flex-1 flex flex-col">
-        {/* Nagłówek - tytuł w jednej linii */}
-        <h3 className="text-lg font-bold text-gray-900 mb-2 truncate whitespace-nowrap overflow-hidden text-ellipsis" title={title}>
-          {truncateTitle(title)}
+      {/* Tytuł - zwiększone rozmiary na mobilnych */}
+      <div className="p-3 sm:p-3 flex-1 flex flex-col">
+        {/* Marka i model - zawsze na górze */}
+        <h3 className="text-base sm:text-sm font-bold text-gray-900 mb-1 leading-tight">
+          {brandModel}
         </h3>
         
-        {/* Opis techniczny w jednej linii */}
-        <p className="text-sm text-gray-600 mb-4 truncate whitespace-nowrap overflow-hidden text-ellipsis" title={technicalDescription}>
-          {technicalDescription}
-        </p>
+        {/* Nagłówek z formularza - pod marką i modelem */}
+        {headline && (
+          <h4 
+            className="text-xs sm:text-xs font-medium text-gray-700 mb-3 sm:mb-2 leading-relaxed" 
+            style={{
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              wordBreak: 'break-word',
+              hyphens: 'auto',
+              minHeight: '2.5rem',
+              lineHeight: '1.25rem'
+            }}
+          >
+            {formatTitle(headline)}
+          </h4>
+        )}
         
-        {/* Specyfikacje techniczne w układzie 2x4 */}
-        <div className="grid grid-cols-2 gap-x-4 gap-y-3 mb-4 flex-1">
-          <div className="flex items-center gap-2">
-            <YearIcon className="w-4 h-4 text-gray-500" />
-            <div>
-              <div className="text-xs text-gray-500">Rok</div>
-              <div className="text-sm font-semibold text-gray-800">{year}</div>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <FuelIcon className="w-4 h-4 text-gray-500" />
-            <div>
-              <div className="text-xs text-gray-500">Paliwo</div>
-              <div className="text-sm font-semibold text-gray-800">{fuelType}</div>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <MileageIcon className="w-4 h-4 text-gray-500" />
-            <div>
-              <div className="text-xs text-gray-500">Przebieg</div>
-              <div className="text-sm font-semibold text-gray-800">{mileage.toLocaleString('pl-PL')} tys. km</div>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <PowerIcon className="w-4 h-4 text-gray-500" />
-            <div>
-              <div className="text-xs text-gray-500">Moc</div>
-              <div className="text-sm font-semibold text-gray-800">{power}</div>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <CapacityIcon className="w-4 h-4 text-gray-500" />
-            <div>
-              <div className="text-xs text-gray-500">Pojemność</div>
-              <div className="text-sm font-semibold text-gray-800">{capacity} cm³</div>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <GearboxIcon className="w-4 h-4 text-gray-500" />
-            <div>
-              <div className="text-xs text-gray-500">Skrzynia</div>
-              <div className="text-sm font-semibold text-gray-800">{transmission}</div>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <DriveIcon className="w-4 h-4 text-gray-500" />
-            <div>
-              <div className="text-xs text-gray-500">Napęd</div>
-              <div className="text-sm font-semibold text-gray-800">{drive}</div>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Globe className="w-4 h-4 text-gray-500" />
-            <div>
-              <div className="text-xs text-gray-500">Pochodzenie</div>
-              <div className="text-sm font-semibold text-gray-800">{countryOfOrigin}</div>
-            </div>
-          </div>
+        {/* Specyfikacje w 2 kolumny z odpowiednim odstępem - zwiększone ikony na mobilnych */}
+        <div className="grid grid-cols-2 gap-x-2 gap-y-2 sm:gap-y-1.5 mb-2 mt-6 sm:mt-5">
+          <SpecItem icon={<YearIcon className="w-4 h-4 sm:w-3 sm:h-3" />} label="Rok" value={year} />
+          <SpecItem icon={<FuelIcon className="w-4 h-4 sm:w-3 sm:h-3" />} label="Paliwo" value={fuelType} />
+          <SpecItem icon={<MileageIcon className="w-4 h-4 sm:w-3 sm:h-3" />} label="Przebieg" value={`${mileage.toLocaleString('pl-PL')} km`} />
+          <SpecItem icon={<PowerIcon className="w-4 h-4 sm:w-3 sm:h-3" />} label="Moc" value={power} />
+          <SpecItem icon={<CapacityIcon className="w-4 h-4 sm:w-3 sm:h-3" />} label="Pojemność" value={`${capacity} cm³`} />
+          <SpecItem icon={<GearboxIcon className="w-4 h-4 sm:w-3 sm:h-3" />} label="Skrzynia" value={transmission} />
+          <SpecItem icon={<DriveIcon className="w-4 h-4 sm:w-3 sm:h-3" />} label="Napęd" value={drive} />
+          <SpecItem icon={<Globe className="w-4 h-4 sm:w-3 sm:h-3" />} label="Pochodzenie" value={countryOfOrigin} />
         </div>
 
         {/* Match score label */}
@@ -191,39 +157,43 @@ const ListingCard = memo(({ listing, onNavigate, onFavorite, isFavorite, message
             {message}
           </div>
         )}
+        
       </div>
 
-      {/* Sprzedawca i lokalizacja */}
-      <div className="px-4 py-3 border-t border-gray-100">
-        <div className="grid grid-cols-2 gap-x-4">
-          <div className="flex items-center gap-2">
-            <User className="w-4 h-4 text-[#35530A]" />
+      {/* Sprzedawca i lokalizacja - białe tło - zwiększone na mobilnych */}
+      <div className="bg-white px-3 py-2.5 sm:py-2 border-t border-gray-100">
+        <div className="grid grid-cols-2 gap-x-3">
+          <div className="flex items-center gap-2 sm:gap-1.5">
+            <User className="w-4 h-4 sm:w-3 sm:h-3 text-gray-800" />
             <div>
-              <div className="text-xs text-gray-500">Sprzedawca</div>
-              <div className="text-sm font-semibold text-gray-800">{sellerType}</div>
+              <div className="text-xs text-gray-500 font-medium">Sprzedawca</div>
+              <div className="text-sm sm:text-xs font-semibold text-gray-800">{sellerType}</div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-[#35530A]" />
+          <div className="flex items-center gap-2 sm:gap-1.5">
+            <MapPin className="w-4 h-4 sm:w-3 sm:h-3 text-gray-800" />
             <div>
-              <div className="text-xs text-gray-500">Lokalizacja</div>
-              <div className="text-sm font-semibold text-gray-800">{city}</div>
+              <div className="text-xs text-gray-500 font-medium">Lokalizacja</div>
+              <div className="text-sm sm:text-xs font-semibold text-gray-800">{city}</div>
             </div>
           </div>
         </div>
       </div>
       
-      {/* Cena i przycisk */}
-      <div className="bg-[#35530A] px-4 py-3 flex justify-between items-center">
-        <div className="text-white text-xl font-bold">
-          {price.toLocaleString('pl-PL')} zł
+      {/* Cena i przycisk - zielone tło - zwiększone na mobilnych */}
+      <div className="bg-[#35530A] px-3 py-4 sm:py-3 flex justify-between items-center">
+        <div className="text-white">
+          <div className="text-sm sm:text-xs font-medium opacity-80">Cena</div>
+          <div className="text-xl sm:text-lg font-bold">
+            {price.toLocaleString('pl-PL')} zł
+          </div>
         </div>
         <button
           onClick={(e) => {
             e.stopPropagation();
             onNavigate(listing.id || listing._id);
           }}
-          className="bg-white text-[#35530A] px-4 py-2 rounded text-sm font-semibold hover:bg-gray-100 transition-colors"
+          className="bg-white text-[#35530A] px-4 py-2 sm:px-3 sm:py-1.5 rounded-[2px] text-sm sm:text-xs font-semibold hover:bg-gray-100 transition-colors shadow-sm"
         >
           Szczegóły
         </button>

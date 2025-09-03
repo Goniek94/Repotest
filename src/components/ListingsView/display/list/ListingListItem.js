@@ -22,11 +22,9 @@ const ListingListItem = memo(({
   isFavorite, 
   message 
 }) => {
-  // Function to truncate title to 80 characters
-  const truncateTitle = (title) => {
-    if (!title) return '';
-    return title.length > 80 ? title.substring(0, 80) + '...' : title;
-  };
+  // Separacja brandModel i headline
+  const brandModel = `${listing.brand || listing.make || ''} ${listing.model || ''}`.trim();
+  const headline = listing.headline || '';
 
   // Sprawdzamy, czy ogłoszenie jest wyróżnione
   const isFeatured = listing.featured || listing.listingType === 'wyróżnione';
@@ -34,9 +32,9 @@ const ListingListItem = memo(({
   return (
     <div
       onClick={() => onNavigate(listing.id)}
-      className={`bg-white rounded-sm shadow-md overflow-hidden cursor-pointer 
-                  hover:shadow-xl transition-all duration-300 relative group
-                  ${isFeatured ? 'border-2 border-[#35530A]' : 'border border-gray-200'}
+      className={`bg-white rounded-sm shadow-lg shadow-gray-400/40 overflow-hidden cursor-pointer 
+                  hover:shadow-xl hover:shadow-gray-500/50 transition-all duration-300 relative group
+                  ${isFeatured ? 'border-2 border-[#35530A]' : 'border border-gray-300'}
                   flex flex-col sm:flex-row h-auto sm:h-[216px] lg:h-[216px]`}
     >
       {/* Zdjęcie */}
@@ -49,7 +47,7 @@ const ListingListItem = memo(({
                 ? listing.images[listing.mainImageIndex] 
                 : listing.images[0])
             : listing.image)}
-          alt={listing.title}
+          alt={brandModel}
           className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
           loading="lazy"
           onError={(e) => {
@@ -87,21 +85,30 @@ const ListingListItem = memo(({
       <div className="flex flex-col sm:flex-row flex-grow">
         {/* Główne informacje */}
         <div className="flex-grow p-2 sm:p-3 lg:p-3 flex flex-col">
-          {/* Nagłówek ograniczony do 80 znaków w jednej linii */}
-          <div className="h-12 sm:h-12 lg:h-12 mb-1">
-            <h3 className="text-base font-bold truncate whitespace-nowrap overflow-hidden text-ellipsis leading-none h-6" title={listing.title}>
-              {truncateTitle(listing.title)}
-            </h3>
-            <p className="text-sm text-gray-600 line-clamp-1 leading-tight mt-1">{listing.headline || ''}</p>
+          {/* Nagłówek jak na zdjęciu */}
+          <div className="mb-3">
+            {/* Główny tytuł - duży i czarny */}
+            <h2 className="text-xl font-bold text-gray-900 mb-1">
+              {brandModel}
+            </h2>
+            
+            {/* Długi opis pod tytułem - czarny tekst - jedna linia */}
+            {headline && (
+              <p className="text-sm text-gray-900 leading-tight truncate">
+                {headline.length > 90 ? headline.substring(0, 90) + '...' : headline}
+              </p>
+            )}
           </div>
 
-          {/* Parametry w 4 kolumnach po 2 parametry - przesunięte bardziej w dół */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-2 sm:gap-x-4 sm:gap-y-2 mt-6">
+          {/* Parametry - ujednolicone rozmiary ikon i tekstu, idealne pozycjonowanie */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-3 mt-4">
             {/* Kolumna 1 */}
             <div className="space-y-3">
               {/* Paliwo */}
-              <div className="flex items-center gap-2.5 text-gray-700">
-                <FuelIcon className="w-4 h-4 text-gray-600 flex-shrink-0" />
+              <div className="flex items-center gap-2 text-gray-700">
+                <div className="w-4 h-4 flex items-center justify-center flex-shrink-0">
+                  <FuelIcon className="w-4 h-4 text-gray-500" />
+                </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-xs text-gray-500 leading-tight mb-0.5">Paliwo</div>
                   <div className="text-sm text-gray-900 leading-tight">{listing.fuel}</div>
@@ -109,8 +116,10 @@ const ListingListItem = memo(({
               </div>
               
               {/* Przebieg */}
-              <div className="flex items-center gap-2.5 text-gray-700">
-                <MileageIcon className="w-4 h-4 text-gray-600 flex-shrink-0" />
+              <div className="flex items-center gap-2 text-gray-700">
+                <div className="w-4 h-4 flex items-center justify-center flex-shrink-0">
+                  <MileageIcon className="w-4 h-4 text-gray-500" />
+                </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-xs text-gray-500 leading-tight mb-0.5">Przebieg</div>
                   <div className="text-sm text-gray-900 leading-tight">{listing.mileage} km</div>
@@ -121,17 +130,21 @@ const ListingListItem = memo(({
             {/* Kolumna 2 */}
             <div className="space-y-3">
               {/* Pojemność */}
-              <div className="flex items-center gap-2.5 text-gray-700">
-                <CapacityIcon className="w-4 h-4 text-gray-600 flex-shrink-0" />
+              <div className="flex items-center gap-2 text-gray-700">
+                <div className="w-4 h-4 flex items-center justify-center flex-shrink-0">
+                  <CapacityIcon className="w-4 h-4 text-gray-500" />
+                </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-xs text-gray-500 leading-tight mb-0.5">Pojemność</div>
-                  <div className="text-sm text-gray-900 leading-tight">{listing.engineCapacity}</div>
+                  <div className="text-sm text-gray-900 leading-tight">{listing.engineSize || listing.engineCapacity || '2000'} cm³</div>
                 </div>
               </div>
 
               {/* Rok */}
-              <div className="flex items-center gap-2.5 text-gray-700">
-                <YearIcon className="w-4 h-4 text-gray-600 flex-shrink-0" />
+              <div className="flex items-center gap-2 text-gray-700">
+                <div className="w-4 h-4 flex items-center justify-center flex-shrink-0">
+                  <YearIcon className="w-4 h-4 text-gray-500" />
+                </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-xs text-gray-500 leading-tight mb-0.5">Rok</div>
                   <div className="text-sm text-gray-900 leading-tight">{listing.year}</div>
@@ -142,8 +155,10 @@ const ListingListItem = memo(({
             {/* Kolumna 3 */}
             <div className="space-y-3">
               {/* Moc */}
-              <div className="flex items-center gap-2.5 text-gray-700">
-                <PowerIcon className="w-4 h-4 text-gray-600 flex-shrink-0" />
+              <div className="flex items-center gap-2 text-gray-700">
+                <div className="w-4 h-4 flex items-center justify-center flex-shrink-0">
+                  <PowerIcon className="w-4 h-4 text-gray-500" />
+                </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-xs text-gray-500 leading-tight mb-0.5">Moc</div>
                   <div className="text-sm text-gray-900 leading-tight">{listing.power}</div>
@@ -151,8 +166,10 @@ const ListingListItem = memo(({
               </div>
               
               {/* Napęd */}
-              <div className="flex items-center gap-2.5 text-gray-700">
-                <DriveIcon className="w-4 h-4 text-gray-600 flex-shrink-0" />
+              <div className="flex items-center gap-2 text-gray-700">
+                <div className="w-4 h-4 flex items-center justify-center flex-shrink-0">
+                  <DriveIcon className="w-4 h-4 text-gray-500" />
+                </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-xs text-gray-500 leading-tight mb-0.5">Napęd</div>
                   <div className="text-sm text-gray-900 leading-tight">{listing.drive}</div>
@@ -163,8 +180,10 @@ const ListingListItem = memo(({
             {/* Kolumna 4 */}
             <div className="space-y-3">
               {/* Skrzynia biegów */}
-              <div className="flex items-center gap-2.5 text-gray-700">
-                <GearboxIcon className="w-4 h-4 text-gray-600 flex-shrink-0" />
+              <div className="flex items-center gap-2 text-gray-700">
+                <div className="w-4 h-4 flex items-center justify-center flex-shrink-0">
+                  <GearboxIcon className="w-4 h-4 text-gray-500" />
+                </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-xs text-gray-500 leading-tight mb-0.5">Skrzynia</div>
                   <div className="text-sm text-gray-900 leading-tight">{listing.transmission || listing.gearbox || listing.transmissionType || 'N/A'}</div>
@@ -172,8 +191,10 @@ const ListingListItem = memo(({
               </div>
 
               {/* Kraj pochodzenia */}
-              <div className="flex items-center gap-2.5 text-gray-700">
-                <Globe className="w-4 h-4 text-gray-600 flex-shrink-0" />
+              <div className="flex items-center gap-2 text-gray-700">
+                <div className="w-4 h-4 flex items-center justify-center flex-shrink-0">
+                  <Globe className="w-4 h-4 text-gray-500" />
+                </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-xs text-gray-500 leading-tight mb-0.5">Pochodzenie</div>
                   <div className="text-sm text-gray-900 leading-tight">
@@ -201,11 +222,11 @@ const ListingListItem = memo(({
             {/* Sprzedawca */}
             <div className="flex-1 sm:w-full">
               <div className="flex items-start gap-2.5 text-gray-700">
-                <User className="w-4 h-4 sm:w-5 sm:h-5 lg:w-5 lg:h-5 text-[#35530A] flex-shrink-0 mt-0.5" />
+                <User className="w-4 h-4 sm:w-5 sm:h-5 lg:w-5 lg:h-5 text-gray-800 flex-shrink-0 mt-0.5" />
                 <div className="min-w-0 flex-1">
                   <div className="text-xs text-gray-500 leading-tight mb-0.5">Sprzedawca</div>
-                  <div className="text-sm font-semibold text-[#35530A] leading-tight">
-                    {listing.sellerType === 'prywatny' ? 'Prywatny' : 'Firma'}
+                  <div className="text-sm font-semibold text-gray-800 leading-tight">
+                    {listing.sellerType || 'Prywatny'}
                   </div>
                 </div>
               </div>
@@ -214,7 +235,7 @@ const ListingListItem = memo(({
             {/* Lokalizacja */}
             <div className="flex-1 sm:w-full mt-0 sm:mt-2">
               <div className="flex items-start gap-2.5 text-gray-700">
-                <MapPin className="w-4 h-4 sm:w-5 sm:h-5 lg:w-5 lg:h-5 text-[#35530A] flex-shrink-0 mt-0.5" />
+                <MapPin className="w-4 h-4 sm:w-5 sm:h-5 lg:w-5 lg:h-5 text-gray-800 flex-shrink-0 mt-0.5" />
                 <div className="min-w-0 flex-1">
                   <div className="text-xs text-gray-500 leading-tight mb-0.5">Lokalizacja</div>
                   <div className="text-sm font-semibold text-gray-900 leading-tight">

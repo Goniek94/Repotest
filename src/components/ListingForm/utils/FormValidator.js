@@ -79,9 +79,13 @@ class FormValidator {
         }
       }
       
-      // Nagłówek ogłoszenia (opcjonalny)
+      // Nagłówek ogłoszenia - wymagany minimum 80 znaków
       if (!formData.headline) {
-        formData.headline = `${formData.brand} ${formData.model} ${formData.productionYear}`; // Generujemy domyślny nagłówek
+        errors.headline = 'Nagłówek ogłoszenia jest wymagany';
+      } else if (formData.headline.length < 80) {
+        errors.headline = `Nagłówek musi mieć minimum 80 znaków. Aktualnie: ${formData.headline.length} znaków`;
+      } else if (formData.headline.length > 120) {
+        errors.headline = `Nagłówek może mieć maksimum 120 znaków. Aktualnie: ${formData.headline.length} znaków`;
       }
     }
     

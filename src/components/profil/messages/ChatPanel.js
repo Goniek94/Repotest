@@ -1,5 +1,5 @@
 import React, { memo, useState, useRef, useEffect } from 'react';
-import { ArrowLeft, Send, MoreVertical, Phone, Video, UserX, Flag, VolumeX, Archive, Star, Trash2, Search, Paperclip, Smile, Info, Save, Check, Edit3, Copy, RotateCcw, X, Image, FileText, Link, Plus } from 'lucide-react';
+import { ArrowLeft, Send, MoreVertical, Phone, Video, UserX, Flag, VolumeX, Archive, Star, Trash2, Search, Paperclip, Smile, Info, Save, Check, Edit3, Copy, RotateCcw, X, Image, FileText, Link, Plus, Reply } from 'lucide-react';
 import useResponsiveLayout from '../../../hooks/useResponsiveLayout';
 
 /**
@@ -41,6 +41,7 @@ const ChatPanel = memo(({
   const [contextMenu, setContextMenu] = useState({ show: false, messageId: null, x: 0, y: 0, message: null });
   const [editingMessage, setEditingMessage] = useState({ id: null, content: '', originalContent: '' });
   const [locallyDeletedMessages, setLocallyDeletedMessages] = useState(new Set());
+  const [replyingTo, setReplyingTo] = useState(null); // { id, content, senderName }
   
   // ===== ATTACHMENTS STATE =====
   const [attachments, setAttachments] = useState([]);
@@ -66,11 +67,27 @@ const ChatPanel = memo(({
     setSending(true);
     
     try {
-      // Wywołaj onSendMessage z content i attachments (zgodnie z useMessageActions)
-      await onSendMessage(messageText.trim(), attachments);
+      // Przygotuj dane wiadomości
+      let messageData = {
+        content: messageText.trim(),
+        attachments: attachments
+      };
+
+      // Jeśli odpowiadamy na wiadomość, dodaj informację o reply
+      if (replyingTo) {
+        messageData.replyTo = {
+          messageId: replyingTo.id,
+          content: replyingTo.content,
+          senderName: replyingTo.senderName
+        };
+      }
+
+      // Wywołaj onSendMessage z rozszerzonymi danymi
+      await onSendMessage(messageData.content, messageData.attachments, messageData.replyTo);
 
       // Reset formularza
       setMessageText('');
+      setReplyingTo(null); // Wyczyść reply
       
       // Wyczyść załączniki i zwolnij URL-e
       attachments.forEach(att => {
@@ -114,7 +131,18 @@ const ChatPanel = memo(({
   // ===== MESSAGE CONTEXT MENU HANDLERS =====
   const handleMessageRightClick = (e, message) => {
     e.preventDefault();
-    const rect = e.currentTarget.getBoundingClientRect();
+    e.stopPropagation();
+    
+    console.log('🔄 ChatPanel - handleMessageRightClick wywołane dla wiadomości:', message);
+    console.log('🔄 ChatPanel - pozycja kliknięcia:', { x: e.clientX, y: e.clientY });
+    console.log('🔄 ChatPanel - event type:', e.type);
+    
+    // Zamknij istniejące menu jeśli jest otwarte
+    if (contextMenu.show) {
+      setContextMenu({ show: false, messageId: null, x: 0, y: 0, message: null });
+      return;
+    }
+    
     setContextMenu({
       show: true,
       messageId: message.id,
@@ -122,6 +150,73 @@ const ChatPanel = memo(({
       x: e.clientX,
       y: e.clientY
     });
+  };
+
+  // Handler dla zwykłego kliknięcia - mobile i desktop fallback
+  const handleMessageClick = (e, message) => {
+    e.stopPropagation();
+    
+    console.log('🔄 ChatPanel - handleMessageClick wywołane dla wiadomości:', message);
+    console.log('🔄 ChatPanel - isMobile:', isMobile);
+    console.log('🔄 ChatPanel - event type:', e.type);
+    console.log('🔄 ChatPanel - ctrlKey:', e.ctrlKey);
+    console.log('🔄 ChatPanel - metaKey:', e.metaKey);
+    
+    // Na mobile lub Ctrl+Click na desktop pokazuj menu
+    if (isMobile || e.ctrlKey || e.metaKey) {
+      // Zamknij istniejące menu jeśli jest otwarte
+      if (contextMenu.show) {
+        setContextMenu({ show: false, messageId: null, x: 0, y: 0, message: null });
+        return;
+      }
+      
+      setContextMenu({
+        show: true,
+        messageId: message.id,
+        message: message,
+        x: e.clientX || window.innerWidth / 2,
+        y: e.clientY || window.innerHeight / 2
+      });
+    }
+  };
+
+  // Handler dla długiego przytrzymania (touch events)
+  const [longPressTimer, setLongPressTimer] = useState(null);
+  
+  const handleTouchStart = (e, message) => {
+    const timer = setTimeout(() => {
+      console.log('🔄 ChatPanel - długie przytrzymanie wykryte dla wiadomości:', message);
+      
+      // Wibracja jeśli dostępna
+      if (navigator.vibrate) {
+        navigator.vibrate(50);
+      }
+      
+      const touch = e.touches[0];
+      setContextMenu({
+        show: true,
+        messageId: message.id,
+        message: message,
+        x: touch.clientX,
+        y: touch.clientY
+      });
+    }, 500); // 500ms długie przytrzymanie
+    
+    setLongPressTimer(timer);
+  };
+  
+  const handleTouchEnd = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  };
+  
+  const handleTouchMove = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
   };
 
   const handleCloseContextMenu = () => {
@@ -230,6 +325,32 @@ const ChatPanel = memo(({
     });
     
     handleCloseContextMenu();
+  };
+
+  // Odpowiedz na wiadomość
+  const handleReplyToMessage = (message) => {
+    const currentUserId = currentUser?.id || currentUser?._id;
+    const messageSenderId = message.sender;
+    const isOwn = messageSenderId === currentUserId || 
+                  messageSenderId?.toString() === currentUserId?.toString();
+    
+    // Pobierz nazwę nadawcy
+    const senderName = isOwn ? 'Ty' : (conversation.userName || conversation.name || 'Nieznany użytkownik');
+    
+    // Ustaw wiadomość do odpowiedzi
+    setReplyingTo({
+      id: message.id,
+      content: message.content,
+      senderName: senderName
+    });
+    
+    handleCloseContextMenu();
+    showNotification?.(`Odpowiadasz na wiadomość od: ${senderName}`, 'info');
+  };
+
+  // Anuluj odpowiedź
+  const handleCancelReply = () => {
+    setReplyingTo(null);
   };
 
   // ===== ATTACHMENT HANDLERS =====
@@ -559,69 +680,81 @@ const ChatPanel = memo(({
     // Sprawdź czy wiadomość jest edytowana
     const isEditing = editingMessage.id === message.id;
     
-    // Responsywne szerokości wiadomości - lepsze proporcje
+    // Responsywne szerokości wiadomości - lepsze proporcje i lepsze dopasowanie
     const messageMaxWidth = isMobile 
-      ? 'max-w-[85%]' 
-      : 'max-w-[70%] sm:max-w-md lg:max-w-lg';
+      ? 'max-w-[80%]' 
+      : 'max-w-[75%] sm:max-w-md lg:max-w-lg xl:max-w-xl';
     
     return (
-      <div key={message.id} className={`flex items-start gap-2 mb-3 sm:mb-4 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
+      <div key={message.id} className={`flex items-start gap-2 sm:gap-3 mb-3 sm:mb-4 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
         {/* Wiadomość */}
         <div 
           className={`
             ${messageMaxWidth} 
-            px-3 sm:px-4 py-2 sm:py-2.5 
-            rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-shadow
+            px-3 sm:px-4 py-2.5 sm:py-3
+            rounded-2xl shadow-sm cursor-pointer hover:shadow-md transition-all duration-200
             ${isOwn 
-              ? 'bg-[#35530A] text-white rounded-br-sm' 
-              : 'bg-gray-200 text-gray-900 rounded-bl-sm'
+              ? 'bg-[#35530A] text-white rounded-br-md' 
+              : 'bg-gray-100 text-gray-900 rounded-bl-md border border-gray-200'
             }
             ${isEditing ? 'ring-2 ring-blue-500 ring-opacity-50' : ''}
+            ${isMobile ? 'active:scale-[0.98]' : 'hover:scale-[1.02]'}
           `}
           onContextMenu={(e) => handleMessageRightClick(e, message)}
-          onClick={(e) => {
-            // Na mobile - pojedyncze kliknięcie pokazuje menu
-            if (isMobile) {
-              handleMessageRightClick(e, message);
-            }
-          }}
+          onClick={(e) => handleMessageClick(e, message)}
+          onTouchStart={(e) => handleTouchStart(e, message)}
+          onTouchEnd={handleTouchEnd}
+          onTouchMove={handleTouchMove}
         >
           {isEditing ? (
-            // Tryb edycji
-            <div className="space-y-2">
+            // Tryb edycji - lepszy design
+            <div className="space-y-3">
               <textarea
                 value={editingMessage.content}
                 onChange={(e) => setEditingMessage(prev => ({ ...prev, content: e.target.value }))}
-                className="w-full p-2 text-sm bg-white text-gray-900 border border-gray-300 rounded resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                rows="2"
+                className="w-full p-3 text-sm bg-white text-gray-900 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                rows="3"
                 autoFocus
+                placeholder="Edytuj wiadomość..."
               />
               <div className="flex items-center gap-2 justify-end">
                 <button
                   onClick={handleCancelEdit}
-                  className="px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+                  className="px-3 py-1.5 text-xs bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors font-medium"
                 >
                   Anuluj
                 </button>
                 <button
                   onClick={handleSaveEdit}
-                  className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                  className="px-3 py-1.5 text-xs bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
                 >
                   Zapisz
                 </button>
               </div>
             </div>
           ) : (
-            // Normalna wiadomość
+            // Normalna wiadomość - lepszy spacing
             <>
-              <p className="text-sm sm:text-base leading-relaxed break-words">
+              <p className="text-sm sm:text-base leading-relaxed break-words whitespace-pre-wrap">
                 {message.content}
               </p>
-              <p className={`text-xs mt-1 ${
-                isOwn ? 'text-white/80' : 'text-gray-500'
-              }`}>
-                {formatMessageTime(message.createdAt || message.timestamp)}
-              </p>
+              <div className="flex items-center justify-between mt-2">
+                <p className={`text-xs ${
+                  isOwn ? 'text-white/70' : 'text-gray-500'
+                }`}>
+                  {formatMessageTime(message.createdAt || message.timestamp)}
+                </p>
+                
+                {/* Status indicators dla własnych wiadomości */}
+                {isOwn && (
+                  <div className="flex items-center gap-1">
+                    {message.isEdited && (
+                      <span className="text-xs text-white/60 italic">edytowane</span>
+                    )}
+                    {/* Można dodać status dostarczenia/przeczytania */}
+                  </div>
+                )}
+              </div>
             </>
           )}
         </div>
@@ -647,59 +780,91 @@ const ChatPanel = memo(({
           onClick={handleCloseContextMenu}
         />
         
-        {/* Menu kontekstowe */}
+        {/* Menu kontekstowe - responsywne i ładne */}
         <div
-          className="fixed z-50 bg-white border border-gray-200 rounded-lg shadow-lg py-2 min-w-[160px]"
+          className={`
+            fixed z-50 bg-white border border-gray-200 rounded-xl shadow-xl py-2 min-w-[180px]
+            ${isMobile ? 'min-w-[200px]' : 'min-w-[180px]'}
+          `}
           style={{
-            left: Math.min(contextMenu.x, window.innerWidth - 180),
-            top: Math.min(contextMenu.y, window.innerHeight - 200)
+            left: Math.min(contextMenu.x, window.innerWidth - (isMobile ? 220 : 200)),
+            top: Math.min(contextMenu.y, window.innerHeight - 250)
           }}
         >
+          {/* Nagłówek menu */}
+          <div className="px-4 py-2 border-b border-gray-100">
+            <p className="text-xs text-gray-500 font-medium">
+              {isOwn ? 'Twoja wiadomość' : 'Wiadomość użytkownika'}
+            </p>
+          </div>
+
+          {/* Odpowiedz - zawsze dostępne */}
+          <button
+            onClick={() => handleReplyToMessage(message)}
+            className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-blue-50 flex items-center gap-3 transition-colors"
+          >
+            <Reply className="w-4 h-4 text-blue-600" />
+            <span>Odpowiedz</span>
+          </button>
+
           {/* Kopiuj - zawsze dostępne */}
           <button
             onClick={() => handleCopyMessage(message)}
-            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+            className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
           >
-            <Copy className="w-4 h-4" />
-            Kopiuj
+            <Copy className="w-4 h-4 text-gray-600" />
+            <span>Kopiuj tekst</span>
           </button>
+
+          {/* Separator */}
+          <div className="border-t border-gray-100 my-1"></div>
 
           {isOwn ? (
             // Opcje dla własnych wiadomości
             <>
+              {/* Edytuj - tylko własne wiadomości */}
               <button
                 onClick={() => handleEditMessage(message)}
-                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-yellow-50 flex items-center gap-3 transition-colors"
               >
-                <Edit3 className="w-4 h-4" />
-                Edytuj
+                <Edit3 className="w-4 h-4 text-yellow-600" />
+                <span>Edytuj wiadomość</span>
               </button>
               
+              {/* Cofnij - tylko własne wiadomości */}
               <button
                 onClick={() => handleUnsendMessage(message)}
-                className="w-full px-4 py-2 text-left text-sm text-orange-600 hover:bg-orange-50 flex items-center gap-2"
+                className="w-full px-4 py-3 text-left text-sm text-orange-600 hover:bg-orange-50 flex items-center gap-3 transition-colors"
               >
                 <RotateCcw className="w-4 h-4" />
-                Cofnij
+                <span>Cofnij dla wszystkich</span>
               </button>
               
+              {/* Usuń - własne wiadomości */}
               <button
                 onClick={() => handleDeleteMessage(message)}
-                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                className="w-full px-4 py-3 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors"
               >
                 <Trash2 className="w-4 h-4" />
-                Usuń
+                <span>Usuń wiadomość</span>
               </button>
             </>
           ) : (
-            // Opcje dla cudzych wiadomości
-            <button
-              onClick={() => handleDeleteMessage(message)}
-              className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-            >
-              <Trash2 className="w-4 h-4" />
-              Usuń u siebie
-            </button>
+            // Opcje dla cudzych wiadomości - tylko usunięcie lokalne
+            <>
+              <button
+                onClick={() => handleDeleteMessage(message)}
+                className="w-full px-4 py-3 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Usuń tylko u siebie</span>
+              </button>
+              
+              {/* Info o ograniczeniach */}
+              <div className="px-4 py-2 text-xs text-gray-400 border-t border-gray-100">
+                Możesz usunąć tę wiadomość tylko u siebie
+              </div>
+            </>
           )}
         </div>
       </>
@@ -824,6 +989,34 @@ const ChatPanel = memo(({
         onDrop={handleDrop}
         onPaste={handlePaste}
       >
+        {/* Reply preview - pokazuje się gdy odpowiadamy na wiadomość */}
+        {replyingTo && (
+          <div className="mb-3 p-3 bg-blue-50 border-l-4 border-blue-500 rounded-r-lg">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <Reply className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                  <span className="text-sm font-medium text-blue-800">
+                    Odpowiadasz na wiadomość od: {replyingTo.senderName}
+                  </span>
+                </div>
+                <p className="text-sm text-blue-700 truncate bg-white/50 px-2 py-1 rounded">
+                  {replyingTo.content.length > 100 
+                    ? `${replyingTo.content.substring(0, 100)}...` 
+                    : replyingTo.content
+                  }
+                </p>
+              </div>
+              <button
+                onClick={handleCancelReply}
+                className="flex-shrink-0 p-1 hover:bg-blue-200 rounded-full transition-colors"
+                title="Anuluj odpowiedź"
+              >
+                <X className="w-4 h-4 text-blue-600" />
+              </button>
+            </div>
+          </div>
+        )}
         {/* Podgląd załączników */}
         {attachments.length > 0 && (
           <div className="mb-3 p-2 bg-gray-50 rounded-lg">

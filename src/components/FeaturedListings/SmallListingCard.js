@@ -14,10 +14,11 @@ import getImageUrl from '../../utils/responsive/getImageUrl';
 const SmallListingCard = ({ listing, showHotOffer = false }) => {
   const navigate = useNavigate();
 
-  // Function to truncate title to 80 characters
-  const truncateTitle = (title) => {
+  // Function to format title for two lines (up to 120 characters)
+  const formatTitle = (title) => {
     if (!title) return '';
-    return title.length > 80 ? title.substring(0, 80) + '...' : title;
+    // Allow up to 120 characters, will wrap naturally to two lines
+    return title.length > 120 ? title.substring(0, 120) + '...' : title;
   };
 
   // Sprawdzenie czy listing istnieje
@@ -25,15 +26,17 @@ const SmallListingCard = ({ listing, showHotOffer = false }) => {
     return null;
   }
 
-  // Tworzenie tytułu z brand/make i model
-  const title = `${listing.brand || listing.make || ''} ${listing.model || ''}`.trim();
+  // Tworzenie tytułu z brand/make i model (zawsze na górze)
+  const brandModel = `${listing.brand || listing.make || ''} ${listing.model || ''}`.trim();
+  // Nagłówek z formularza (wyświetlany pod marką i modelem)
+  const headline = listing.headline || '';
   
   const price = listing.price || 0;
   const year = listing.year || new Date().getFullYear();
   const mileage = listing.mileage || 0;
   const fuelType = listing.fuelType || 'Benzyna';
   const power = listing.power || '150';
-  const capacity = listing.capacity || 2000;
+  const capacity = listing.engineSize || listing.engineCapacity || listing.capacity || 2000;
   const transmission = listing.transmission || 'manualna';
   const drive = listing.drive || 'Na przednie koła';
   const sellerType = listing.sellerType || 'Prywatny';
@@ -67,7 +70,7 @@ const SmallListingCard = ({ listing, showHotOffer = false }) => {
         {imageUrl ? (
           <img
             src={imageUrl}
-            alt={title}
+            alt={brandModel}
             className="w-full h-full object-cover rounded-t-[2px]"
             onError={(e) => {
               e.target.onerror = null;
@@ -86,14 +89,31 @@ const SmallListingCard = ({ listing, showHotOffer = false }) => {
         )}
       </div>
 
-      {/* Tytuł i opis - zwiększone rozmiary na mobilnych */}
+      {/* Tytuł - zwiększone rozmiary na mobilnych */}
       <div className="p-3 sm:p-3 flex-1 flex flex-col">
-        <h3 className="text-base sm:text-sm font-bold text-gray-900 mb-2 sm:mb-1 truncate whitespace-nowrap overflow-hidden text-ellipsis" title={title}>
-          {truncateTitle(title)}
+        {/* Marka i model - zawsze na górze */}
+        <h3 className="text-base sm:text-sm font-bold text-gray-900 mb-1 leading-tight">
+          {brandModel}
         </h3>
-        <p className="text-sm sm:text-xs text-gray-600 mb-3 sm:mb-2">
-          {description || 'Ogłoszenie: ' + title}
-        </p>
+        
+        {/* Nagłówek z formularza - pod marką i modelem */}
+        {headline && (
+          <h4 
+            className="text-xs sm:text-xs font-medium text-gray-700 mb-3 sm:mb-2 leading-relaxed" 
+            style={{
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              wordBreak: 'break-word',
+              hyphens: 'auto',
+              minHeight: '2.5rem',
+              lineHeight: '1.25rem'
+            }}
+          >
+            {formatTitle(headline)}
+          </h4>
+        )}
         
         {/* Specyfikacje w 2 kolumny z odpowiednim odstępem - zwiększone ikony na mobilnych */}
         <div className="grid grid-cols-2 gap-x-2 gap-y-2 sm:gap-y-1.5 mb-2 mt-6 sm:mt-5">

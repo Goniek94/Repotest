@@ -5,6 +5,64 @@ const DescriptionSection = ({ formData, handleChange, errors }) => {
   // Maksymalna długość opisu
   const maxDescriptionLength = 2000;
 
+  // Handle paste event to clean and format pasted text
+  const handlePaste = (e) => {
+    e.preventDefault();
+    
+    // Get pasted text from clipboard
+    const pastedText = e.clipboardData.getData('text/plain');
+    
+    if (!pastedText) return;
+    
+    // Clean the pasted text
+    let cleanText = pastedText
+      .replace(/\r\n/g, '\n')  // Windows line breaks
+      .replace(/\r/g, '\n')    // Mac line breaks
+      .replace(/\t/g, ' ')     // Replace tabs with spaces
+      .replace(/\u00A0/g, ' ') // Replace non-breaking spaces
+      .replace(/\s+/g, ' ')    // Replace multiple spaces with single space
+      .replace(/\n\s*\n\s*\n/g, '\n\n') // Replace multiple newlines with double newlines
+      .trim();
+    
+    // Limit text length
+    if (cleanText.length > maxDescriptionLength) {
+      cleanText = cleanText.substring(0, maxDescriptionLength);
+    }
+    
+    // Get current cursor position
+    const textarea = e.target;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    
+    // Get current value
+    const currentValue = formData.description || '';
+    
+    // Create new value with pasted text
+    const newValue = currentValue.substring(0, start) + cleanText + currentValue.substring(end);
+    
+    // Limit total length
+    const finalValue = newValue.length > maxDescriptionLength 
+      ? newValue.substring(0, maxDescriptionLength)
+      : newValue;
+    
+    // Create synthetic event for handleChange
+    const syntheticEvent = {
+      target: {
+        name: 'description',
+        value: finalValue
+      }
+    };
+    
+    // Call handleChange with cleaned text
+    handleChange(syntheticEvent);
+    
+    // Set cursor position after paste
+    setTimeout(() => {
+      const newCursorPosition = start + cleanText.length;
+      textarea.setSelectionRange(newCursorPosition, newCursorPosition);
+    }, 0);
+  };
+
   return (
     <div className="max-w-6xl mx-auto p-4 bg-white">
       {/* Jedna główna karta - kompaktowa */}
@@ -31,6 +89,7 @@ const DescriptionSection = ({ formData, handleChange, errors }) => {
               maxLength={maxDescriptionLength}
               value={formData.description || ''}
               onChange={handleChange}
+              onPaste={handlePaste}
               placeholder="Wpisz opis pojazdu..."
               className={`
                 w-full border rounded-[2px] p-6 text-gray-700 text-base

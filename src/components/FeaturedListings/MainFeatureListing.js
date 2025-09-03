@@ -14,10 +14,11 @@ import getImageUrl from '../../utils/responsive/getImageUrl';
 const MainFeatureListing = ({ listing }) => {
   const navigate = useNavigate();
 
-  // Function to truncate title to 80 characters
-  const truncateTitle = (title) => {
+  // Function to format title for two lines (up to 120 characters)
+  const formatTitle = (title) => {
     if (!title) return '';
-    return title.length > 80 ? title.substring(0, 80) + '...' : title;
+    // Allow up to 120 characters, will wrap naturally to two lines
+    return title.length > 120 ? title.substring(0, 120) + '...' : title;
   };
 
   // Sprawdzenie czy listing istnieje
@@ -25,18 +26,20 @@ const MainFeatureListing = ({ listing }) => {
     return null;
   }
 
-  // Tworzenie tytułu z brand/make i model
-  const title = `${listing.brand || listing.make || ''} ${listing.model || ''}`.trim();
+  // Tworzenie tytułu z brand/make i model (zawsze na górze)
+  const brandModel = `${listing.brand || listing.make || ''} ${listing.model || ''}`.trim();
+  // Nagłówek z formularza (wyświetlany pod marką i modelem)
+  const headline = listing.headline || '';
   
-  // Opis z headline lub shortDescription
-  const shortDesc = listing.headline || listing.shortDescription || '';
+  // Opis z shortDescription (nie headline, bo headline jest już wyświetlany osobno)
+  const shortDesc = listing.shortDescription || '';
   const price = listing.price || 0;
   const year = listing.year || new Date().getFullYear();
   const mileage = listing.mileage || 0;
   const fuelType = listing.fuelType || 'Benzyna';
   const power = listing.power || '150 KM';
   const transmission = listing.transmission || 'Automatyczna';
-  const capacity = listing.capacity || 2000;
+  const capacity = listing.engineSize || listing.engineCapacity || listing.capacity || 2000;
   const drive = listing.drive || 'Na przednie koła';
   const sellerType = listing.sellerType || 'Prywatny';
   const city = listing.city || listing.location || 'Polska';
@@ -66,7 +69,7 @@ const MainFeatureListing = ({ listing }) => {
         {imageUrl ? (
           <img
             src={imageUrl}
-            alt={title}
+            alt={brandModel}
             className="w-full h-full object-cover rounded-t-[2px]"
             onError={(e) => {
               e.target.onerror = null;
@@ -85,10 +88,29 @@ const MainFeatureListing = ({ listing }) => {
 
       {/* Main content section - zmniejszone paddingi */}
       <div className="p-3 md:p-4 lg:p-4 flex-1 flex flex-col bg-white">
-        <h2 className="text-lg md:text-lg font-bold text-gray-900 mb-2 md:mb-1.5 truncate whitespace-nowrap overflow-hidden text-ellipsis" title={title}>
-          {truncateTitle(title)}
+        {/* Marka i model - zawsze na górze */}
+        <h2 className="text-lg md:text-lg font-bold text-gray-900 mb-1 leading-tight">
+          {brandModel}
         </h2>
-        <p className="text-sm md:text-sm text-gray-600 mb-4 md:mb-4 line-clamp-2 leading-relaxed">{shortDesc}</p>
+        
+        {/* Nagłówek z formularza - pod marką i modelem */}
+        {headline && (
+          <h3 
+            className="text-sm md:text-sm font-medium text-gray-700 mb-4 md:mb-4 leading-relaxed" 
+            style={{
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              wordBreak: 'break-word',
+              hyphens: 'auto',
+              minHeight: '3rem',
+              lineHeight: '1.5rem'
+            }}
+          >
+            {formatTitle(headline)}
+          </h3>
+        )}
 
         {/* Mobile: Zwiększone rozmiary dla lepszej widoczności */}
         <div className="md:hidden space-y-3 mb-4">

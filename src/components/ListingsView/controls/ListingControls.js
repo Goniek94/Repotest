@@ -1,6 +1,6 @@
 // src/components/listings/controls/ListingControls.jsx
 import React from 'react';
-import { LayoutList, Grid2x2 } from 'lucide-react';
+import { LayoutList, Grid2x2, ChevronDown } from 'lucide-react';
 
 const baseSelect =
   'w-full h-9 rounded-md border border-gray-300 bg-white px-3 pr-8 text-sm ' +
@@ -35,12 +35,7 @@ const ListingControls = ({
   setViewMode,
 }) => {
   return (
-    <div
-      className={
-        // niższy panel: zmniejszony padding góra/dół
-        'rounded-xl bg-white shadow-sm px-4 py-2 sm:py-3'
-      }
-    >
+    <div className="bg-white rounded-lg shadow-md border border-gray-200 px-4 py-3 sm:py-4">
       <div className="grid grid-cols-1 md:grid-cols-12 items-center gap-3 sm:gap-4">
         {/* Lewy blok: Sort / Typ / Opcje */}
         <div className="md:col-span-9 grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -78,7 +73,7 @@ const ListingControls = ({
               >
                 <option value="all">Wszystkie</option>
                 <option value="private">Prywatne</option>
-                <option value="dealer">Dealer</option>
+                <option value="dealer">Firma</option>
               </select>
               <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-gray-400">
                 ⌄
@@ -106,20 +101,14 @@ const ListingControls = ({
         <div className="md:col-span-3">
           <div className="hidden md:flex items-center justify-end gap-2">
             <span className="text-sm text-gray-600 mr-1">Widok</span>
-            <IconButton
-              title="Lista"
-              active={viewMode === 'list'}
-              onClick={() => setViewMode('list')}
+            <button
+              type="button"
+              onClick={() => setViewMode(viewMode === 'list' ? 'grid' : 'list')}
+              className="h-9 px-3 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition flex items-center gap-2"
             >
-              <LayoutList className="w-4 h-4" />
-            </IconButton>
-            <IconButton
-              title="Siatka"
-              active={viewMode === 'grid'}
-              onClick={() => setViewMode('grid')}
-            >
-              <Grid2x2 className="w-4 h-4" />
-            </IconButton>
+              {viewMode === 'list' ? <LayoutList className="w-4 h-4" /> : <Grid2x2 className="w-4 h-4" />}
+              <ChevronDown className="w-3 h-3" />
+            </button>
           </div>
         </div>
       </div>
