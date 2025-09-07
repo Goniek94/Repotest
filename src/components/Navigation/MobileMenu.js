@@ -57,7 +57,7 @@ const MobileMenu = ({
           
           {/* Przycisk Dodaj Ogłoszenie w menu mobilnym - podświetlony na żółto */}
           <Link
-            to={user ? '/createlisting' : '#'}
+            to={user ? '/create-listing' : '#'}
             onClick={(e) => {
               if (!user) {
                 e.preventDefault();

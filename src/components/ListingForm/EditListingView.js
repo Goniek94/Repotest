@@ -29,6 +29,8 @@ const EditListingView = () => {
     city: '',
     voivodeship: '',
     color: '',
+    mileage: '',
+    condition: '',
     mainImageIndex: 0
   });
   
@@ -48,6 +50,7 @@ const EditListingView = () => {
         city: data.city || '',
         voivodeship: data.voivodeship || '',
         color: data.color || '',
+        mileage: data.mileage || '',
         condition: data.condition || '',
         headline: data.headline || ''
       });
@@ -158,12 +161,12 @@ const EditListingView = () => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     
-    // Sprawdzenie limitu zdjęć
+    // Sprawdzenie limitu zdjęć - ZMIENIONE na 15 maksymalnie
     const currentImagesCount = listing.images ? listing.images.length : 0;
     const newImagesCount = currentImagesCount + files.length;
     
-    if (newImagesCount > 20) {
-      setError(`Możesz dodać maksymalnie 20 zdjęć. Obecnie masz ${currentImagesCount}, próbujesz dodać ${files.length}.`);
+    if (newImagesCount > 15) {
+      setError(`Możesz dodać maksymalnie 15 zdjęć. Obecnie masz ${currentImagesCount}, próbujesz dodać ${files.length}.`);
       return;
     }
     
@@ -232,13 +235,15 @@ const EditListingView = () => {
         return;
       }
       
-      // Przygotowanie danych do aktualizacji
+      // Przygotowanie danych do aktualizacji - WSZYSTKIE pola
       const updateData = {
         description: editableFields.description,
         price: editableFields.price,
         city: editableFields.city,
         voivodeship: editableFields.voivodeship,
         color: editableFields.color,
+        mileage: editableFields.mileage,
+        condition: editableFields.condition,
         mainImageIndex: selectedImage
       };
       
@@ -442,7 +447,7 @@ const EditListingView = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Lewa kolumna */}
               <div>
-                <h2 className="text-xl font-bold mb-4">Zdjęcia ({imagesCount}/20)</h2>
+                <h2 className="text-xl font-bold mb-4">Zdjęcia ({imagesCount}/15)</h2>
                 
                 {/* Główne zdjęcie */}
                 <div className="mb-4 aspect-video bg-gray-100 rounded-sm overflow-hidden">
@@ -497,7 +502,7 @@ const EditListingView = () => {
                     ))}
                     
                     {/* Przycisk dodawania zdjęć */}
-                    {imagesCount < 20 && (
+                    {imagesCount < 15 && (
                       <div 
                         onClick={() => fileInputRef.current?.click()}
                         className="cursor-pointer border-2 border-dashed border-gray-300 rounded-sm overflow-hidden aspect-video flex items-center justify-center hover:border-[#35530A] transition-colors"
@@ -583,6 +588,32 @@ const EditListingView = () => {
                     onChange={handleInputChange}
                     className="w-full p-3 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#35530A] focus:outline-none"
                   />
+                </div>
+                
+                <div className="mb-4">
+                  <label className="block text-gray-700 mb-2">Przebieg (km)</label>
+                  <input
+                    type="number"
+                    name="mileage"
+                    value={editableFields.mileage}
+                    onChange={handleInputChange}
+                    className="w-full p-3 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#35530A] focus:outline-none"
+                    min="0"
+                  />
+                </div>
+                
+                <div className="mb-4">
+                  <label className="block text-gray-700 mb-2">Stan</label>
+                  <select
+                    name="condition"
+                    value={editableFields.condition}
+                    onChange={handleInputChange}
+                    className="w-full p-3 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#35530A] focus:outline-none"
+                  >
+                    <option value="">Wybierz stan</option>
+                    <option value="NOWY">Nowy</option>
+                    <option value="UŻYWANY">Używany</option>
+                  </select>
                 </div>
 
                 {/* Informacje o pojeździe (tylko do odczytu) */}

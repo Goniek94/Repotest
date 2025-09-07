@@ -161,7 +161,7 @@ const UserPanel = () => {
         style={panelContainerStyle}
       >
         {/* Zawartość aktywnej zakładki */}
-        <div style={{ padding: '0 0.75rem' }}>
+        <div className={`${isMobileView ? 'px-1 sm:px-2' : 'px-3'}`}>
           {renderContent()}
         </div>
       </div>

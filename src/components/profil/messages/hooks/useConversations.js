@@ -105,7 +105,10 @@ const useConversations = (activeTab) => {
     if (!conversationId) return;
 
     try {
-      await messagesApi.markConversationAsRead(conversationId);
+      // Wyciągnij userId z conversationId (format: userId:adId lub samo userId)
+      const userId = conversationId.includes(':') ? conversationId.split(':')[0] : conversationId;
+      
+      await messagesApi.markConversationAsRead(userId);
 
       setConversations(prev => {
         const unreadBefore = prev.find(c => c.id === conversationId)?.unreadCount || 0;
@@ -282,7 +285,10 @@ const useConversations = (activeTab) => {
     if (!conversationId) return;
     
     try {
-      await messagesApi.toggleConversationStar(conversationId);
+      // Wyciągnij userId z conversationId (format: userId:adId lub samo userId)
+      const userId = conversationId.includes(':') ? conversationId.split(':')[0] : conversationId;
+      
+      await messagesApi.toggleConversationStar(userId);
       
       const conversation = conversations.find(c => c.id === conversationId);
       const isCurrentlyStarred = conversation?.isStarred || false;
@@ -319,8 +325,11 @@ const useConversations = (activeTab) => {
     if (!conversationId) return;
 
     try {
+      // Wyciągnij userId z conversationId (format: userId:adId lub samo userId)
+      const userId = conversationId.includes(':') ? conversationId.split(':')[0] : conversationId;
+      
       // Usuwamy konwersację, przenosząc ją do kosza
-      await messagesApi.deleteConversation(conversationId);
+      await messagesApi.deleteConversation(userId);
 
       // Usunięcie z listy konwersacji
       setConversations(prevConversations =>
@@ -353,13 +362,16 @@ const useConversations = (activeTab) => {
       const targetBackendFolder = FOLDER_MAP[targetFolder];
       if (!targetBackendFolder) return;
       
+      // Wyciągnij userId z conversationId (format: userId:adId lub samo userId)
+      const userId = conversationId.includes(':') ? conversationId.split(':')[0] : conversationId;
+      
       // Wybór odpowiedniej metody API zależnie od folderu docelowego
       if (targetBackendFolder === 'archived') {
-        await messagesApi.archiveConversation(conversationId);
+        await messagesApi.archiveConversation(userId);
       } else if (targetBackendFolder === 'trash') {
-        await messagesApi.deleteConversation(conversationId);
+        await messagesApi.deleteConversation(userId);
       } else {
-        await messagesApi.moveConversationToFolder(conversationId, targetBackendFolder);
+        await messagesApi.moveConversationToFolder(userId, targetBackendFolder);
       }
       
       // Aktualizacja listy konwersacji

@@ -18,7 +18,7 @@ const useAdminApi = () => {
         }
       };
 
-      const response = await fetch(`/api/admin${endpoint}`, {
+      const response = await fetch(`http://localhost:5000/api/admin-panel${endpoint}`, {
         ...defaultOptions,
         ...options
       });
@@ -93,7 +93,7 @@ const useAdminApi = () => {
         formData.append(key, additionalData[key]);
       });
 
-      const response = await fetch(`/api/admin${endpoint}`, {
+      const response = await fetch(`http://localhost:5000/api/admin-panel${endpoint}`, {
         method: 'POST',
         credentials: 'include', // Ważne: wysyła HttpOnly cookies
         // Don't set Content-Type for FormData
@@ -121,7 +121,7 @@ const useAdminApi = () => {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`/api/admin${endpoint}`, {
+      const response = await fetch(`http://localhost:5000/api/admin-panel${endpoint}`, {
         method: 'GET',
         credentials: 'include' // Ważne: wysyła HttpOnly cookies
       });
@@ -220,7 +220,7 @@ const useAdminApi = () => {
   // Check if authenticated by trying to access admin endpoint
   const isAuthenticated = useCallback(async () => {
     try {
-      const response = await fetch('/api/admin/health', {
+      const response = await fetch('http://localhost:5000/api/admin-panel/health', {
         credentials: 'include'
       });
       return response.ok;

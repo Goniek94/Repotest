@@ -35,6 +35,10 @@ const UserListingInfoCard = memo(({
   // Sprawdzamy, czy ogłoszenie jest wyróżnione
   const isFeatured = listing.featured || listing.listingType === 'wyróżnione';
   
+  // Tworzenie spójnego tytułu z brand/make i model (jak w innych komponentach)
+  const brandModel = `${listing.brand || listing.make || ''} ${listing.model || ''}`.trim();
+  const displayTitle = brandModel || listing.title || '';
+  
   // Obliczanie pozostałych dni ważności ogłoszenia
   const getDaysRemaining = () => {
     if (listing.daysRemaining !== undefined) return listing.daysRemaining;
@@ -58,7 +62,7 @@ const UserListingInfoCard = memo(({
            onClick={() => onNavigate(listing.id)}>
         <img
           src={listing.image}
-          alt={listing.title}
+          alt={displayTitle}
           className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
           loading="lazy"
           onError={(e) => {
@@ -105,7 +109,7 @@ const UserListingInfoCard = memo(({
         <div className="flex-grow p-2 sm:p-3 lg:p-3 flex flex-col"
              onClick={() => onNavigate(listing.id)}>
           <div className="mb-2 sm:mb-2.5 lg:mb-3">
-            <h3 className="text-lg sm:text-xl lg:text-xl font-bold mb-0.5 sm:mb-1 lg:mb-1 line-clamp-1">{listing.title}</h3>
+            <h3 className="text-lg sm:text-xl lg:text-xl font-bold mb-0.5 sm:mb-1 lg:mb-1 line-clamp-1">{displayTitle}</h3>
             <p className="text-sm sm:text-base lg:text-base text-gray-600 line-clamp-1">{listing.subtitle}</p>
           </div>
 

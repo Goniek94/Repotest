@@ -43,6 +43,7 @@ const BasicInfoSection = ({ formData, handleChange, errors, showToast }) => {
     const fetchModels = async () => {
       if (!formData.brand) {
         setAvailableModels([]);
+        setAvailableGenerations([]); // Wyczyść generacje gdy nie ma marki
         return;
       }
       
@@ -51,6 +52,15 @@ const BasicInfoSection = ({ formData, handleChange, errors, showToast }) => {
         // Pobieramy modele dla wybranej marki z API
         const models = await getModelsForBrand(formData.brand);
         setAvailableModels(models || []);
+        
+        // Wyczyść model i generację gdy zmienia się marka
+        if (formData.model) {
+          handleChange('model', '');
+        }
+        if (formData.generation) {
+          handleChange('generation', '');
+        }
+        setAvailableGenerations([]);
       } catch (error) {
         console.error('Błąd podczas pobierania modeli:', error);
         // Fallback do statycznych danych w przypadku błędu
@@ -68,10 +78,19 @@ const BasicInfoSection = ({ formData, handleChange, errors, showToast }) => {
     const fetchGenerations = async () => {
       if (!formData.brand || !formData.model) {
         setAvailableGenerations([]);
+        // Wyczyść generację gdy nie ma modelu
+        if (formData.generation) {
+          handleChange('generation', '');
+        }
         return;
       }
       
       try {
+        // Wyczyść poprzednią generację gdy zmienia się model
+        if (formData.generation) {
+          handleChange('generation', '');
+        }
+        
         // Pobieramy generacje dla wybranego modelu - to jest async funkcja!
         const generations = await getGenerationsForModel(formData.brand, formData.model);
         setAvailableGenerations(generations || []);

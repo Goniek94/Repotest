@@ -39,11 +39,11 @@ const ExtendListingModal = ({ isOpen, onClose, listing, onExtend }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[10000] p-2 sm:p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-sm sm:max-w-md w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">Przedłuż ogłoszenie</h2>
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Przedłuż ogłoszenie</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -53,25 +53,25 @@ const ExtendListingModal = ({ isOpen, onClose, listing, onExtend }) => {
         </div>
 
         {/* Listing info */}
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-4 sm:p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
             {listing?.image && (
               <img
                 src={listing.image}
                 alt={listing.title}
-                className="w-16 h-16 object-cover rounded-lg"
+                className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg"
               />
             )}
             <div>
-              <h3 className="font-medium text-gray-900">{listing?.title}</h3>
+              <h3 className="font-medium text-gray-900 text-sm sm:text-base">{listing?.title}</h3>
               <p className="text-sm text-gray-600">{listing?.price?.toLocaleString('pl-PL')} zł</p>
             </div>
           </div>
         </div>
 
         {/* Extension options */}
-        <div className="p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Wybierz opcję przedłużenia</h3>
+        <div className="p-4 sm:p-6">
+          <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">Wybierz opcję przedłużenia</h3>
           <div className="space-y-3">
             {extensionOptions.map((option) => (
               <div

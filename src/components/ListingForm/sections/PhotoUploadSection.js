@@ -13,6 +13,9 @@ const PhotoUploadSection = ({ formData, setFormData, errors, showToast }) => {
 
   // Synchronizacja zdjęć z globalnym stanem formularza
   useEffect(() => {
+    // Pierwsze zdjęcie jest zawsze główne
+    const actualMainIndex = 0;
+    
     // Konwersja zdjęć do formatu odpowiedniego dla API
     if (photos.length > 0) {
       const images = photos.map(photo => ({
@@ -23,13 +26,13 @@ const PhotoUploadSection = ({ formData, setFormData, errors, showToast }) => {
         fileSize: photo.size || 0
       }));
       
-      const mainImage = photos[mainPhotoIndex]?.src || '';
+      const mainImage = photos[actualMainIndex]?.src || '';
       
       // Aktualizacja globalnego stanu formularza
       setFormData(prev => ({
         ...prev,
         photos: photos,
-        mainPhotoIndex: mainPhotoIndex,
+        mainPhotoIndex: actualMainIndex,
         images: images,
         mainImage: mainImage
       }));
@@ -44,7 +47,7 @@ const PhotoUploadSection = ({ formData, setFormData, errors, showToast }) => {
         mainImage: ''
       }));
     }
-  }, [photos, mainPhotoIndex, setFormData]);
+  }, [photos, setFormData]);
 
   const handleFileUpload = useCallback(async (event) => {
     const files = Array.from(event.target.files);
@@ -259,9 +262,12 @@ const PhotoUploadSection = ({ formData, setFormData, errors, showToast }) => {
                   </div>
                 </div>
                 <div className="mt-3 p-3 bg-[#35530A]/10 rounded-md">
-                  <p className="text-xs text-[#35530A]">
+                  <p className="text-xs text-[#35530A] mb-2">
                     <strong>💡 Wskazówka:</strong> Dobre zdjęcia zwiększają zainteresowanie ogłoszeniem o 70%! 
                     Rób zdjęcia w dobrym świetle, najlepiej w dzień przy naturalnym oświetleniu.
+                  </p>
+                  <p className="text-xs text-[#35530A]">
+                    <strong>⭐ Ważne:</strong> Pierwsze dodane zdjęcie będzie automatycznie ustawione jako główne zdjęcie ogłoszenia.
                   </p>
                 </div>
               </div>
@@ -411,16 +417,9 @@ const PhotoUploadSection = ({ formData, setFormData, errors, showToast }) => {
                       />
                     </div>
                     
-                    {/* Overlay */}
+                    {/* Overlay - tylko przycisk usuwania */}
                     <div className="absolute inset-2 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 flex items-center justify-center rounded-md">
-                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                        <button
-                          onClick={(e) => setAsMainPhoto(index, e)}
-                          className="bg-[#35530A] hover:bg-[#2D4A06] text-white p-1 rounded-full transition-colors duration-200"
-                          title="Ustaw jako główne"
-                        >
-                          <Star className="h-3 w-3" />
-                        </button>
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                         <button
                           onClick={() => removePhoto(index)}
                           className="bg-red-500 hover:bg-red-600 text-white p-1 rounded-full transition-colors duration-200"
@@ -431,8 +430,8 @@ const PhotoUploadSection = ({ formData, setFormData, errors, showToast }) => {
                       </div>
                     </div>
 
-                    {/* Main Photo Badge */}
-                    {index === mainPhotoIndex && (
+                    {/* Main Photo Badge - tylko dla pierwszego zdjęcia */}
+                    {index === 0 && (
                       <div className="absolute top-3 left-3 bg-[#35530A] text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
                         <Star className="h-3 w-3 fill-current" />
                         Główne

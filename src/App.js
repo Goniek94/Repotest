@@ -22,6 +22,7 @@ import PWAInstallButton from './components/PWAInstallButton';
 import { FavoritesProvider } from './contexts/FavoritesContext';
 import ScrollToTop from './ScrollToTop';
 import ErrorBoundary from './components/ErrorBoundary';
+import ChunkErrorBoundary from './components/common/ChunkErrorBoundary';
 import ProtectedRoute, { AdminRoute } from './components/ProtectedRoute';
 
 // Komponenty ładowane leniwie dla optymalizacji
@@ -95,71 +96,73 @@ const App = () => {
                       <div className="flex flex-col min-h-screen">
                         <Navigation />
                         <main className="flex-grow">
-                          <Suspense fallback={<LoadingSpinner message="Ładowanie strony..." />}>
-                            <Routes>
-                              <Route path="/" element={<HomePageContent />} />
-                              <Route path="/login" element={<LoginPage />} />
-                              <Route path="/listings" element={<ListingsPage />} />
+                          <ChunkErrorBoundary>
+                            <Suspense fallback={<LoadingSpinner message="Ładowanie strony..." />}>
+                              <Routes>
+                                <Route path="/" element={<HomePageContent />} />
+                                <Route path="/login" element={<LoginPage />} />
+                                <Route path="/listings" element={<ListingsPage />} />
 
-                              <Route
-                                path="/create-listing"
-                                element={
-                                  <ProtectedRoute>
-                                    <CreateListingWithProvider />
-                                  </ProtectedRoute>
-                                }
-                              />
+                                <Route
+                                  path="/create-listing"
+                                  element={
+                                    <ProtectedRoute>
+                                      <CreateListingWithProvider />
+                                    </ProtectedRoute>
+                                  }
+                                />
 
-                              <Route
-                                path="/add-listing-view"
-                                element={
-                                  <ProtectedRoute>
-                                    <AddListingViewWithProvider />
-                                  </ProtectedRoute>
-                                }
-                              />
+                                <Route
+                                  path="/add-listing-view"
+                                  element={
+                                    <ProtectedRoute>
+                                      <AddListingViewWithProvider />
+                                    </ProtectedRoute>
+                                  }
+                                />
 
-                              <Route path="/createlisting" element={<Navigate to="/create-listing" replace />} />
-                              <Route path="/addlistingview" element={<Navigate to="/add-listing-view" replace />} />
-                              <Route path="/listing/:id" element={<ListingDetails />} />
-                              <Route path="/register" element={<Register />} />
-                              <Route path="/contact" element={<Contact />} />
+                                <Route path="/createlisting" element={<Navigate to="/create-listing" replace />} />
+                                <Route path="/addlistingview" element={<Navigate to="/add-listing-view" replace />} />
+                                <Route path="/listing/:id" element={<ListingDetails />} />
+                                <Route path="/register" element={<Register />} />
+                                <Route path="/contact" element={<Contact />} />
 
-                              <Route
-                                path="/favorites"
-                                element={
-                                  <ProtectedRoute>
-                                    <FavoritesPage />
-                                  </ProtectedRoute>
-                                }
-                              />
+                                <Route
+                                  path="/favorites"
+                                  element={
+                                    <ProtectedRoute>
+                                      <FavoritesPage />
+                                    </ProtectedRoute>
+                                  }
+                                />
 
-                              <Route path="/faq" element={<FAQ />} />
-                              <Route path="/about-company" element={<AboutCompany />} />
+                                <Route path="/faq" element={<FAQ />} />
+                                <Route path="/about-company" element={<AboutCompany />} />
 
-                              <Route
-                                path="/admin"
-                                element={
-                                  <AdminRoute>
-                                    <AdminPanel />
-                                  </AdminRoute>
-                                }
-                              />
+                                <Route
+                                  path="/admin"
+                                  element={
+                                    <AdminRoute>
+                                      <AdminPanel />
+                                    </AdminRoute>
+                                  }
+                                />
 
-                              <Route
-                                path="/profil/*"
-                                element={
-                                  <ProtectedRoute>
-                                    <UserProfileRoutes />
-                                  </ProtectedRoute>
-                                }
-                              />
+                                <Route
+                                  path="/profil/*"
+                                  element={
+                                    <ProtectedRoute>
+                                      <UserProfileRoutes />
+                                    </ProtectedRoute>
+                                  }
+                                />
 
-                              <Route path="/profile" element={<Navigate to="/profil" replace />} />
-                              <Route path="/user" element={<Navigate to="/profil" replace />} />
-                              <Route path="/user/:subpage" element={<Navigate to="/profil/:subpage" replace />} />
-                            </Routes>
-                          </Suspense>
+                                <Route path="/profile" element={<Navigate to="/profil" replace />} />
+                                <Route path="/user" element={<Navigate to="/profil" replace />} />
+                                <Route path="/user/:subpage" element={<Navigate to="/profil/:subpage" replace />} />
+                              </Routes>
+                            </Suspense>
+                          </ChunkErrorBoundary>
                         </main>
                         <Footer />
                         <PWAInstallButton />

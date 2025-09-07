@@ -136,7 +136,7 @@ const ListingListItem = memo(({
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-xs text-gray-500 leading-tight mb-0.5">Pojemność</div>
-                  <div className="text-sm text-gray-900 leading-tight">{listing.engineSize || listing.engineCapacity || '2000'} cm³</div>
+                  <div className="text-sm text-gray-900 leading-tight">{listing.engineSize || listing.engineCapacity || '2000'}</div>
                 </div>
               </div>
 

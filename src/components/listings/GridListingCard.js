@@ -85,7 +85,7 @@ const GridListingCard = memo(({ listing, onFavorite, isFavorite }) => {
       <div className="relative">
         <img
           src={imageUrl}
-          alt={title}
+          alt={brandModel}
           className="w-full h-32 sm:h-36 md:h-40 object-cover" // Jeszcze bardziej zmniejszona wysokość obrazka
           onError={(e) => {
             e.target.onerror = null;

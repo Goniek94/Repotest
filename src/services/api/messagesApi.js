@@ -441,7 +441,7 @@ class MessagesApi {
    */
   async unsendMessage(messageId) {
     try {
-      const response = await apiClient.delete(`${this.baseUrl}/${messageId}/unsend`);
+      const response = await apiClient.patch(`${this.baseUrl}/unsend/${messageId}`);
       return response.data;
     } catch (error) {
       console.error('Błąd podczas cofania wiadomości:', error);

@@ -97,8 +97,8 @@ const BodyInfoSection = ({ formData, handleChange, errors }) => {
 
   return (
     <div className="space-y-6">
-      {/* Grid z polami - 5 pól w jednej linii */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      {/* Grid z polami - 4 pola w jednej linii */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {bodyOptions.map((option) => (
           <SelectField 
             key={option.name}

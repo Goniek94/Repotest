@@ -42,6 +42,10 @@ const UserListingListItem = memo(({
     return title.length > 80 ? title.substring(0, 80) + '...' : title;
   };
 
+  // Tworzenie spójnego tytułu z brand/make i model (jak w innych komponentach)
+  const brandModel = `${listing.brand || listing.make || ''} ${listing.model || ''}`.trim();
+  const displayTitle = brandModel || listing.title || '';
+
   const isFeatured = listing.featured || listing.listingType === 'wyróżnione';
 
   // Calculate days remaining (if not provided)
@@ -108,7 +112,7 @@ const UserListingListItem = memo(({
             return (
               <img
                 src={imageUrl}
-                alt={listing.title || 'Zdjęcie ogłoszenia'}
+                alt={displayTitle || 'Zdjęcie ogłoszenia'}
                 className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
                 style={{ 
                   objectFit: 'cover', 
@@ -150,8 +154,8 @@ const UserListingListItem = memo(({
           {/* Info section - normalny */}
           <div className="flex-grow p-3 flex flex-col justify-between">
             <div>
-              <h3 className="text-sm lg:text-base font-bold mb-1 truncate whitespace-nowrap overflow-hidden text-ellipsis" title={listing.title}>
-                {truncateTitle(listing.title)}
+              <h3 className="text-sm lg:text-base font-bold mb-1 truncate whitespace-nowrap overflow-hidden text-ellipsis" title={displayTitle}>
+                {truncateTitle(displayTitle)}
               </h3>
               <p className="text-xs lg:text-sm text-gray-600 line-clamp-1 mb-2">{listing.subtitle}</p>
               

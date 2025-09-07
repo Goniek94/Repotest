@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import ListingsService from '../../../../services/api/listingsApi';
+import { useFavorites } from '../../../../contexts/FavoritesContext';
 
 /**
  * Custom hook for managing listings data and API operations
@@ -11,6 +13,13 @@ const useListingsData = () => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Get location and navigate for URL parameter handling
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Get favorites from context
+  const { favorites } = useFavorites();
 
   // Calculate days remaining until expiry
   const calculateDaysRemaining = (expiresAt) => {
@@ -102,15 +111,53 @@ const useListingsData = () => {
       case 'completed':
         return allListings.filter(listing => listing.status === 'archived' || listing.status === 'sold');
       case 'favorites':
-        return allListings.filter(listing => listing.isFavorite);
+        // Return favorites from context (these are other users' listings that current user favorited)
+        return favorites || [];
       default:
         return allListings;
     }
   };
 
-  // Initialize data on mount
+  // Initialize data on mount and when returning to the page
   useEffect(() => {
     fetchListings();
+  }, []);
+
+  // Handle URL refresh parameter
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    if (searchParams.get('refresh') === 'true') {
+      console.log('🔄 Wykryto parametr refresh=true - wymuszanie odświeżenia danych');
+      fetchListings();
+      
+      // Remove refresh parameter from URL without triggering navigation
+      searchParams.delete('refresh');
+      const newUrl = `${location.pathname}${searchParams.toString() ? '?' + searchParams.toString() : ''}`;
+      navigate(newUrl, { replace: true });
+    }
+  }, [location.search, navigate]);
+
+  // Add visibility change listener to refresh data when user returns to tab
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log('🔄 Strona stała się widoczna - odświeżanie danych');
+        fetchListings();
+      }
+    };
+
+    const handleFocus = () => {
+      console.log('🔄 Okno otrzymało focus - odświeżanie danych');
+      fetchListings();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
 
   return {

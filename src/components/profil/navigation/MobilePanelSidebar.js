@@ -65,13 +65,22 @@ const MobilePanelSidebar = ({ activeItem = 'panel' }) => {
   }
 
   const handleItemClick = (item) => {
-    navigate(item.href);
+    console.log('🔄 MobilePanelSidebar - handleItemClick:', item);
+    console.log('🔄 MobilePanelSidebar - navigating to:', item.href);
+    
+    // Dodaj preventDefault dla lepszej kontroli
+    try {
+      navigate(item.href);
+      console.log('✅ MobilePanelSidebar - nawigacja zakończona pomyślnie');
+    } catch (error) {
+      console.error('❌ MobilePanelSidebar - błąd nawigacji:', error);
+    }
   };
 
   return (
     <aside 
       className="fixed left-0 top-16 w-14 bg-[#35530A] shadow-lg border-r border-[#35530A]/20 z-[9999]" 
-      style={{ bottom: '32px' }}
+      style={{ bottom: '48px' }}
     >
       <div className="flex flex-col h-full py-4 space-y-3 px-2">
         {menuItems.map((item) => {

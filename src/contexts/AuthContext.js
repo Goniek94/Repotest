@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { 
-  setAuthData, 
-  clearAuthData, 
   getUserData, 
   isAuthenticated as checkAuth,
   isAuthenticatedSync,
-  refreshUserData
+  refreshUserData,
+  clearAuthData,
+  setAuthData  // Tylko dla podstawowych danych, BEZ tokenów
 } from '../services/api/config';
 import AuthService from '../services/api/authApi';
 
@@ -25,36 +25,42 @@ export const AuthProvider = ({ children }) => {
     initializeAuth();
   }, []);
 
-  // Initialize authentication state
+  // POPRAWIONA - Initialize authentication state bez localStorage tokenów
   const initializeAuth = async () => {
     try {
-      // Najpierw sprawdź synchronicznie czy mamy dane w localStorage
+      setIsLoading(true);
+      
+      // Sprawdź lokalne dane użytkownika (BEZ tokenów)
       const localUserData = getUserData();
       
-      if (localUserData) {
-        // Ustaw tymczasowo dane z localStorage
-        setUser(localUserData);
-        setIsAuthenticated(true);
-      }
-      
-      // Następnie sprawdź przez API czy sesja jest nadal ważna
+      // ZAWSZE sprawdź przez API - HttpOnly cookies będą wysłane automatycznie
       const authenticated = await checkAuth();
       
       if (authenticated) {
-        // Sesja jest ważna - odśwież dane użytkownika
+        // Pobierz świeże dane z serwera
         const freshUserData = await refreshUserData();
+        
         if (freshUserData) {
           setUser(freshUserData);
           setIsAuthenticated(true);
+          console.log('✅ Użytkownik zalogowany:', freshUserData.email);
+        } else {
+          // Jeśli nie można pobrać danych, wyczyść wszystko
+          setUser(null);
+          setIsAuthenticated(false);
         }
       } else {
-        // Sesja nieważna - wyczyść stan
-        clearAuthData();
+        // Nie zalogowany - wyczyść lokalne dane
+        if (localUserData) {
+          clearAuthData(); // Wyczyści localStorage i wyśle logout do serwera
+        }
         setUser(null);
         setIsAuthenticated(false);
       }
     } catch (error) {
-      console.error('Error initializing auth:', error);
+      console.error('❌ Błąd inicjalizacji auth:', error);
+      
+      // W przypadku błędu wyczyść wszystko
       clearAuthData();
       setUser(null);
       setIsAuthenticated(false);
@@ -63,24 +69,25 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Login function - handles API call and state update
+  // Login function - używa AuthService z axios
   const login = async (email, password) => {
     try {
       setError(null);
       setIsLoading(true);
       
-      // Użyj AuthService zamiast fetch - wszystko przez apiClient z axios
+      // AuthService automatycznie obsługuje cookies
       const data = await AuthService.login(email, password);
 
-      // Update state
+      // Zapisz podstawowe dane użytkownika (BEZ tokenów)
       setUser(data.user);
       setIsAuthenticated(true);
+      setAuthData(data.user); // Tylko podstawowe dane do localStorage
 
-      console.log('User logged in successfully:', data.user.email);
+      console.log('✅ Zalogowano pomyślnie:', data.user.email);
       return data;
     } catch (error) {
-      console.error('Login error:', error);
-      setError(error.message || 'Failed to login');
+      console.error('❌ Błąd logowania:', error);
+      setError(error.message || 'Nie udało się zalogować');
       throw error;
     } finally {
       setIsLoading(false);
@@ -93,48 +100,46 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       setIsLoading(true);
       
-      // Użyj AuthService zamiast fetch - wszystko przez apiClient z axios
       const data = await AuthService.register(userData);
 
-      // Po rejestracji użytkownik może być automatycznie zalogowany
+      // Po rejestracji może być automatyczne logowanie
       if (data.user) {
         setUser(data.user);
         setIsAuthenticated(true);
+        setAuthData(data.user); // Tylko podstawowe dane
       }
 
-      console.log('User registered successfully:', data.user?.email);
+      console.log('✅ Rejestracja pomyślna:', data.user?.email);
       return data;
     } catch (error) {
-      console.error('Registration error:', error);
-      setError(error.message || 'Failed to register');
+      console.error('❌ Błąd rejestracji:', error);
+      setError(error.message || 'Nie udało się zarejestrować');
       throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Logout function
+  // Logout function - wyczyści HttpOnly cookies przez API
   const logout = async () => {
     try {
       setIsLoading(true);
       
-      // Użyj AuthService zamiast fetch - wszystko przez apiClient z axios
+      // AuthService wyśle request do /logout który wyczyści HttpOnly cookies
       await AuthService.logout();
       
-      // Reset state
+      // Wyczyść stan aplikacji
       setUser(null);
       setIsAuthenticated(false);
       setError(null);
 
-      console.log('User logged out successfully');
-      
-      // Don't redirect to login page - stay on current page or go to home
-      // The user should be able to browse the site without being forced to login
+      console.log('✅ Wylogowano pomyślnie');
       
     } catch (error) {
-      console.error('Logout error:', error);
-      // Wyloguj lokalnie nawet jeśli wystąpił błąd
-      clearAuthData();
+      console.error('❌ Błąd wylogowania:', error);
+      
+      // Wyloguj lokalnie nawet jeśli API zwróciło błąd
+      clearAuthData(); // Wyczyści localStorage
       setUser(null);
       setIsAuthenticated(false);
     } finally {
@@ -142,22 +147,9 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Update user data (for profile updates)
-  const updateUser = (updatedUserData) => {
-    try {
-      const newUserData = { ...user, ...updatedUserData };
-      
-      // Zapisz zaktualizowane dane (bez tokenów)
-      setAuthData(newUserData);
-      setUser(newUserData);
-      
-      console.log('User data updated:', newUserData);
-    } catch (error) {
-      console.error('Error updating user:', error);
-      setError('Failed to update user data');
-    }
-  };
-
+  // USUNIĘTA - updateUser nie powinna zapisywać do localStorage
+  // Dane użytkownika powinny być aktualizowane przez API
+  
   // Refresh user data from server
   const refreshUser = async () => {
     try {
@@ -166,9 +158,17 @@ export const AuthProvider = ({ children }) => {
         setUser(userData);
         return userData;
       }
+      
+      // Jeśli nie można odświeżyć, użytkownik może być wylogowany
+      setUser(null);
+      setIsAuthenticated(false);
       return null;
     } catch (error) {
-      console.error('Error refreshing user data:', error);
+      console.error('❌ Błąd odświeżania danych użytkownika:', error);
+      
+      // W przypadku błędu wyloguj użytkownika
+      setUser(null);
+      setIsAuthenticated(false);
       return null;
     }
   };
@@ -177,7 +177,6 @@ export const AuthProvider = ({ children }) => {
   const hasRole = (requiredRole) => {
     if (!user || !user.role) return false;
     
-    // Handle array of roles
     if (Array.isArray(requiredRole)) {
       return requiredRole.includes(user.role);
     }
@@ -215,7 +214,6 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
-    updateUser,
     refreshUser,
     
     // Utilities
@@ -259,7 +257,7 @@ export const withAuth = (Component) => {
     
     if (!isAuthenticated) {
       return <div className="text-center p-8">
-        <p className="text-gray-600">You need to be logged in to access this page.</p>
+        <p className="text-gray-600">Musisz być zalogowany, aby zobaczyć tę stronę.</p>
       </div>;
     }
     

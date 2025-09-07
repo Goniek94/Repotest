@@ -117,8 +117,8 @@ const UserListings = memo(() => {
               </>
             )}
 
-            {/* Kontrolki sortowania - tylko gdy są ogłoszenia */}
-            {!loading && !error && listings.length > 0 && (
+            {/* Kontrolki sortowania - tylko gdy są ogłoszenia i nie na mobilnych */}
+            {!loading && !error && listings.length > 0 && !isMobile && (
               <SortingControls
                 sortBy={sortBy}
                 sortOrder={sortOrder}

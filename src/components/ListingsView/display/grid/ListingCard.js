@@ -138,7 +138,7 @@ const ListingCard = memo(({ listing, onNavigate, onFavorite, isFavorite, message
           <SpecItem icon={<FuelIcon className="w-4 h-4 sm:w-3 sm:h-3" />} label="Paliwo" value={fuelType} />
           <SpecItem icon={<MileageIcon className="w-4 h-4 sm:w-3 sm:h-3" />} label="Przebieg" value={`${mileage.toLocaleString('pl-PL')} km`} />
           <SpecItem icon={<PowerIcon className="w-4 h-4 sm:w-3 sm:h-3" />} label="Moc" value={power} />
-          <SpecItem icon={<CapacityIcon className="w-4 h-4 sm:w-3 sm:h-3" />} label="Pojemność" value={`${capacity} cm³`} />
+          <SpecItem icon={<CapacityIcon className="w-4 h-4 sm:w-3 sm:h-3" />} label="Pojemność" value={`${capacity}`} />
           <SpecItem icon={<GearboxIcon className="w-4 h-4 sm:w-3 sm:h-3" />} label="Skrzynia" value={transmission} />
           <SpecItem icon={<DriveIcon className="w-4 h-4 sm:w-3 sm:h-3" />} label="Napęd" value={drive} />
           <SpecItem icon={<Globe className="w-4 h-4 sm:w-3 sm:h-3" />} label="Pochodzenie" value={countryOfOrigin} />

@@ -111,16 +111,6 @@ const ProfileNavigation = React.forwardRef(
           {isOpen && (
             <div className="absolute right-0 mt-2 w-64 bg-white rounded-[2px] shadow-xl z-50 border border-gray-200">
               <div className="py-2">
-                {isAdmin() && (
-                  <Link
-                    to="/admin"
-                    className="block px-4 py-2 text-[#35530A] font-bold hover:bg-gray-100 uppercase flex items-center gap-2"
-                    onClick={() => setIsOpen && setIsOpen(false)}
-                  >
-                    <Sliders className="w-4 h-4 mr-2" />
-                    Panel Administratora
-                  </Link>
-                )}
                 {navItems.map((item) => (
                   <Link
                     key={item.id}

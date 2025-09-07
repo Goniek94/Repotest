@@ -31,8 +31,27 @@ const AdsService = {
       withCredentials: true
     }),
 
-  // Aktualizacja ogłoszenia
-  update: (id, adData) => apiClient.put(`/ads/${id}`, adData),
+  // Aktualizacja ogłoszenia - NAPRAWIONE: wysyłaj jako FormData
+  update: (id, adData) => {
+    // Jeśli adData to już FormData, wyślij bezpośrednio
+    if (adData instanceof FormData) {
+      return apiClient.put(`/ads/${id}`, adData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+    }
+    
+    // Jeśli to zwykły obiekt, konwertuj na FormData
+    const formData = new FormData();
+    Object.keys(adData).forEach(key => {
+      if (adData[key] !== undefined && adData[key] !== null) {
+        formData.append(key, adData[key]);
+      }
+    });
+    
+    return apiClient.put(`/ads/${id}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
 
   // Usuwanie ogłoszenia
   delete: (id) => apiClient.delete(`/ads/${id}`),

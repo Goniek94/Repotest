@@ -115,21 +115,11 @@ const WelcomeCard = ({ user, userStats, recentAds = [], activities = [] }) => {
   };
 
   return (
-    <div className="rounded-lg overflow-hidden shadow-md mb-4 sm:mb-6 md:mb-8 text-white relative" 
+    <div className="rounded-lg overflow-hidden shadow-md mb-4 sm:mb-6 md:mb-8 text-white relative mx-auto max-w-4xl" 
          style={{ background: PRIMARY_COLOR, borderRadius: '12px' }}>
          
       {/* Przypięte etykiety - nieodczytane powiadomienia/wiadomości */}
       <div className="absolute top-0 right-0 flex space-x-2 m-2 sm:m-3">
-        {/* Przycisk panelu administratora - widoczny tylko na desktopach */}
-        {isAdmin && !isMobileOrTablet && (
-          <button 
-            onClick={() => navigate('/admin')}
-            className="hidden lg:flex bg-amber-500 hover:bg-amber-600 px-3 py-1.5 rounded-md text-xs font-semibold items-center transition-colors"
-          >
-            <UserCog size={14} className="mr-1.5" />
-            Panel Administratora
-          </button>
-        )}
         
         {unreadMessages > 0 && (
           <div className="bg-blue-600 px-2 py-1 rounded-full text-xs font-semibold flex items-center">

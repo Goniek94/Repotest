@@ -101,24 +101,10 @@ const FeaturedListings = () => {
 
           console.log(`✅ ${validAds.length} ważnych ogłoszeń po filtrowaniu`);
 
-          // ✅ Podziel na kategorie według listingType
-          const featured = validAds.filter(ad => {
-            if (!ad.listingType) return false;
-            const type = ad.listingType.toLowerCase();
-            return type === 'wyróżnione' || type === 'featured' || type === 'premium';
-          }).slice(0, 2);
-
-          const hot = validAds.filter(ad => {
-            if (!ad.listingType) return false;
-            const type = ad.listingType.toLowerCase();
-            return type === 'wyróżnione' || type === 'featured' || type === 'premium';
-          }).slice(2, 8);
-
-          const regular = validAds.filter(ad => {
-            if (!ad.listingType) return true;
-            const type = ad.listingType.toLowerCase();
-            return type !== 'wyróżnione' && type !== 'featured' && type !== 'premium';
-          }).slice(0, 6);
+          // ✅ Podziel na kategorie dla układu 2x4x4
+          const featured = validAds.slice(0, 2);  // 2 duże ogłoszenia
+          const hot = validAds.slice(2, 6);       // 4 średnie ogłoszenia  
+          const regular = validAds.slice(6, 10);  // 4 małe ogłoszenia
 
           console.log(`📊 Podział: Featured(${featured.length}), Hot(${hot.length}), Regular(${regular.length})`);
 

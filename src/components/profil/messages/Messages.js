@@ -44,47 +44,68 @@ const Messages = memo(() => {
 
   // ===== EFFECTS =====
   /**
-   * Automatycznie otwórz panel konwersacji z wiadomościami odebranymi po załadowaniu
+   * Inicjalizacja URL parametrów tylko przy pierwszym załadowaniu
    */
   useEffect(() => {
-    // Jeśli nie ma parametru folder w URL, ustaw domyślny
-    if (!searchParams.get('folder')) {
+    const currentFolder = searchParams.get('folder');
+    console.log('🔄 useEffect inicjalizacji - currentFolder:', currentFolder);
+    console.log('🔄 useEffect inicjalizacji - activeTab:', activeTab);
+    
+    // Tylko jeśli nie ma żadnego parametru folder w URL, ustaw domyślny
+    if (!currentFolder) {
+      console.log('✅ Brak parametru folder, ustawiam domyślny:', DEFAULT_FOLDER);
       setSearchParams({ folder: DEFAULT_FOLDER });
-      // Na mobilnych od razu pokaż konwersacje po wybraniu kategorii, na desktop od razu konwersacje
+      setPanelState(isMobile ? 'conversations' : 'conversations');
+    } else if (FOLDER_MAP[currentFolder] && currentFolder !== activeTab) {
+      // Jeśli URL ma prawidłowy folder, ale activeTab jest inny, zsynchronizuj
+      console.log('✅ Synchronizuję activeTab z URL:', currentFolder);
+      setActiveTab(currentFolder);
       setPanelState(isMobile ? 'conversations' : 'conversations');
     }
-  }, [searchParams, setSearchParams, isMobile]);
+  }, []); // Uruchom tylko raz przy mount
 
   /**
-   * Zawsze ustaw domyślną kategorię na "odebrane" przy pierwszym załadowaniu
+   * Synchronizacja activeTab z URL params
    */
   useEffect(() => {
-    // Jeśli activeTab nie jest ustawiony lub jest nieprawidłowy, ustaw na domyślny
-    if (!activeTab || !FOLDER_MAP[activeTab]) {
-      setActiveTab(DEFAULT_FOLDER);
-      setSearchParams({ folder: DEFAULT_FOLDER });
+    const currentFolder = searchParams.get('folder');
+    console.log('🔄 useEffect synchronizacji - currentFolder:', currentFolder, 'activeTab:', activeTab);
+    
+    if (currentFolder && FOLDER_MAP[currentFolder] && currentFolder !== activeTab) {
+      console.log('✅ Synchronizuję activeTab z nowym URL:', currentFolder);
+      setActiveTab(currentFolder);
     }
-  }, []);
+  }, [searchParams]); // Reaguj na zmiany URL
 
   // ===== HANDLERS =====
   /**
    * Obsługa zmiany kategorii wiadomości - na mobile zastępuje cały panel
    */
   const handleTabChange = (tab) => {
+    console.log('🔄 handleTabChange wywołane z tab:', tab);
+    console.log('🔍 FOLDER_MAP[tab]:', FOLDER_MAP[tab]);
+    console.log('🔍 Dostępne foldery:', Object.keys(FOLDER_MAP));
+    
     // Sprawdź czy kategoria jest obsługiwana
     if (!FOLDER_MAP[tab]) {
-      console.warn(`Nieobsługiwana kategoria: ${tab}, przełączam na domyślną`);
-      tab = DEFAULT_FOLDER;
+      console.warn(`❌ Nieobsługiwana kategoria: ${tab}, dostępne: ${Object.keys(FOLDER_MAP).join(', ')}`);
+      // NIE resetuj na DEFAULT_FOLDER - to powoduje przekierowanie na homepage
+      return;
     }
     
+    console.log('✅ Kategoria obsługiwana, ustawiam activeTab na:', tab);
     setActiveTab(tab);
     setSearchParams({ folder: tab });
+    
     // Na mobile po kliknięciu na kategorię od razu pokazujemy konwersacje na pełnym ekranie
     setPanelState('conversations');
+    
     // Wyczyść wybór konwersacji przy zmianie kategorii
     if (conversationsData.selectConversation) {
       conversationsData.selectConversation(null);
     }
+    
+    console.log('✅ handleTabChange zakończone pomyślnie');
   };
 
   /**

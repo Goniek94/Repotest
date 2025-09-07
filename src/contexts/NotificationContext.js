@@ -1,9 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import ActivityLogService from '../services/activityLogService';
-import notificationService from '../services/notifications';
-import axios from 'axios';
-import { API_URL } from '../services/api/config';
+import unifiedNotificationService from '../services/UnifiedNotificationService';
 import { debug } from '../utils/debug';
 import { toast } from 'react-toastify';
 
@@ -84,17 +82,16 @@ export const NotificationProvider = ({ children }) => {
     setIsLoading(true);
     try {
       const [notificationsResponse, countResponse] = await Promise.all([
-        axios.get(`${API_URL}/notifications`, { withCredentials: true }),
-        axios.get(`${API_URL}/notifications/unread/count`, { withCredentials: true })
+        unifiedNotificationService.getNotifications(),
+        unifiedNotificationService.getUnreadCount()
       ]);
 
-      const notificationsData = notificationsResponse.data.notifications || [];
+      const notificationsData = notificationsResponse.notifications || [];
       setNotifications(notificationsData);
       
-      const countData = countResponse.data;
       setUnreadCount({
-        notifications: countData.notifications || 0,
-        messages: countData.messages || 0
+        notifications: countResponse.notifications || 0,
+        messages: countResponse.messages || 0
       });
       
     } catch (error) {
@@ -118,9 +115,7 @@ export const NotificationProvider = ({ children }) => {
     if (!isAuthenticated || !user) return;
 
     try {
-      await axios.patch(`${API_URL}/notifications/${notificationId}/read`, {}, {
-        withCredentials: true
-      });
+      await unifiedNotificationService.markAsRead(notificationId);
 
       setNotifications(prev => 
         prev.map(notification => 
@@ -153,9 +148,7 @@ export const NotificationProvider = ({ children }) => {
     if (!isAuthenticated || !user) return;
 
     try {
-      await axios.patch(`${API_URL}/notifications/read-all`, {}, {
-        withCredentials: true
-      });
+      await unifiedNotificationService.markAllAsRead();
 
       setNotifications(prev => 
         prev.map(notification => ({ ...notification, isRead: true }))
@@ -172,9 +165,7 @@ export const NotificationProvider = ({ children }) => {
     if (!isAuthenticated || !user) return;
 
     try {
-      await axios.delete(`${API_URL}/notifications/${notificationId}`, {
-        withCredentials: true
-      });
+      await unifiedNotificationService.deleteNotification(notificationId);
 
       setNotifications(prev => {
         const notification = prev.find(n => n.id === notificationId);
@@ -204,7 +195,7 @@ export const NotificationProvider = ({ children }) => {
   useEffect(() => {
     if (!isAuthenticated || !user?.token) {
       // Rozłączenie WebSocket po wylogowaniu
-      notificationService.disconnect();
+      unifiedNotificationService.disconnect();
       setIsConnected(false);
       setNotifications([]);
       setUnreadCount({ notifications: 0, messages: 0 });
@@ -217,7 +208,7 @@ export const NotificationProvider = ({ children }) => {
     // Inicjalizacja połączenia WebSocket
     debug('Inicjalizacja połączenia z serwerem powiadomień');
     
-    notificationService.connect()
+    unifiedNotificationService.connect()
       .then(() => {
         debug('Połączono z serwerem powiadomień');
         setIsConnected(true);
@@ -319,24 +310,24 @@ export const NotificationProvider = ({ children }) => {
     };
 
     // Rejestracja event listenerów
-    notificationService.on('notification', handleNewNotification);
-    notificationService.on('new_notification', handleNewNotification);
-    notificationService.on('notification_updated', handleNotificationUpdated);
-    notificationService.on('all_notifications_read', handleAllNotificationsRead);
-    notificationService.on('notification_deleted', handleNotificationDeleted);
-    notificationService.on('connect', () => handleConnectionChange(true));
-    notificationService.on('disconnect', () => handleConnectionChange(false));
+    unifiedNotificationService.on('notification', handleNewNotification);
+    unifiedNotificationService.on('new_notification', handleNewNotification);
+    unifiedNotificationService.on('notification_updated', handleNotificationUpdated);
+    unifiedNotificationService.on('all_notifications_read', handleAllNotificationsRead);
+    unifiedNotificationService.on('notification_deleted', handleNotificationDeleted);
+    unifiedNotificationService.on('connect', () => handleConnectionChange(true));
+    unifiedNotificationService.on('disconnect', () => handleConnectionChange(false));
 
     // Cleanup function - WAŻNE: usuń wszystkie event listenery!
     return () => {
-      notificationService.off('notification', handleNewNotification);
-      notificationService.off('new_notification', handleNewNotification);
-      notificationService.off('notification_updated', handleNotificationUpdated);
-      notificationService.off('all_notifications_read', handleAllNotificationsRead);
-      notificationService.off('notification_deleted', handleNotificationDeleted);
-      notificationService.off('connect', () => handleConnectionChange(true));
-      notificationService.off('disconnect', () => handleConnectionChange(false));
-      notificationService.disconnect();
+      unifiedNotificationService.off('notification', handleNewNotification);
+      unifiedNotificationService.off('new_notification', handleNewNotification);
+      unifiedNotificationService.off('notification_updated', handleNotificationUpdated);
+      unifiedNotificationService.off('all_notifications_read', handleAllNotificationsRead);
+      unifiedNotificationService.off('notification_deleted', handleNotificationDeleted);
+      unifiedNotificationService.off('connect', () => handleConnectionChange(true));
+      unifiedNotificationService.off('disconnect', () => handleConnectionChange(false));
+      unifiedNotificationService.disconnect();
     };
   }, [isAuthenticated, user?.token, user?.id, showToast, fetchNotifications]); // Dodane user.id
 
